@@ -6,18 +6,49 @@
   "engines": {
     "vscode": "^1.100.0"
   },
+  "license": "MIT",
   "categories": [
     "Other"
   ],
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "latex-graphics-helper.cropPdf",
+          "group": "navigation@1",
+          "when": "resourceExtname == .pdf"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "latex-graphics-helper.helloWorld",
-        "title": "Hello World"
+        "command": "latex-graphics-helper.cropPdf",
+        "title": "%cropPdf%",
+        "category": "LaTeX Graphics Helper"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "LaTeX Graphics Helper",
+      "properties": {
+        "latex-graphics-helper.shell": {
+          "type": "string",
+          "default": "",
+          "description": "Shell to use for executing commands. If not specified, the default shell for your operating system will be used (powershell.exe on Windows, /bin/zsh on macOS, /bin/bash on others)."
+        },
+        "latex-graphics-helper.pdfcropCommand": {
+          "type": "string",
+          "default": "pdfcrop",
+          "description": "Path to the pdfcrop executable"
+        },
+        "latex-graphics-helper.pdfcropFile": {
+          "type": "string",
+          "default": "${folderName}/${fileName}-crop.pdf",
+          "description": "Output file name when cropping a pdf file."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
