@@ -4,7 +4,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { getShell } from './shell';
 
-
 function getPdfcropCommand(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
@@ -20,7 +19,7 @@ function getPdfcropFile(): string {
 export function cropPdf(
     inputFile: string,
     outputFile: string = getPdfcropFile(),
-    workspaceFolder: string = "",
+    workspaceFolder: string = '',
 ): void {
     if (!fs.existsSync(inputFile)) {
         vscode.window.showErrorMessage(`File does not exist: ${inputFile}`);
@@ -43,15 +42,15 @@ export function cropPdf(
         execSync(
             `${getPdfcropCommand()} "${path.normalize(inputFile)}" "${path.normalize(replacedOutputFile)}"`,
             {
-                "cwd": folderName,
-                "shell": getShell()
+                'cwd': folderName,
+                'shell': getShell()
             }
         );
     } catch (error) {
         if (error instanceof Error) {
             vscode.window.showErrorMessage(`Failed to crop PDF: ${inputFile} - ${error.message}`);
         }
+
         return;
     }
 }
-
