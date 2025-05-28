@@ -19,6 +19,11 @@
           "command": "latex-graphics-helper.cropPdf",
           "group": "navigation@1",
           "when": "resourceExtname == .pdf"
+        },
+        {
+          "command": "latex-graphics-helper.drawioToPdf",
+          "group": "navigation@1",
+          "when": "resourceExtname == .drawio || resourceExtname == .dio"
         }
       ]
     },
@@ -26,6 +31,11 @@
       {
         "command": "latex-graphics-helper.cropPdf",
         "title": "%cropPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.drawioToPdf",
+        "title": "%drawioToPdf%",
         "category": "LaTeX Graphics Helper"
       }
     ],
@@ -46,6 +56,16 @@
           "type": "string",
           "default": "${folderName}/${fileName}-crop.pdf",
           "description": "Output file name when cropping a pdf file."
+        },
+        "latex-graphics-helper.drawioCommand": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
+        },
+        "latex-graphics-helper.drawioToPdfFile": {
+          "type": "string",
+          "default": "${folderName}/${fileName}/${tabName}.pdf",
+          "description": "Output file name when converting a PDF file."
         }
       }
     }

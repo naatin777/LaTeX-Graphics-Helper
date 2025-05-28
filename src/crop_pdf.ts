@@ -2,19 +2,7 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getShell } from './shell';
-
-function getPdfcropCommand(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-
-    return config.get<string>('pdfcropCommand') ?? 'pdfcrop';
-}
-
-function getPdfcropFile(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-
-    return config.get<string>('pdfcropFile') ?? '${folderName}/${fileName}-crop.pdf';
-}
+import { getShell, getPdfcropFile, getPdfcropCommand } from './configuration';
 
 export function cropPdf(
     inputFile: string,
