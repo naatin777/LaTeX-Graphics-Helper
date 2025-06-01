@@ -17,12 +17,12 @@
       "explorer/context": [
         {
           "command": "latex-graphics-helper.cropPdf",
-          "group": "navigation@1",
+          "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         },
         {
           "command": "latex-graphics-helper.drawioToPdf",
-          "group": "navigation@1",
+          "group": "latex-graphics-helper",
           "when": "resourceExtname == .drawio || resourceExtname == .dio"
         }
       ]
