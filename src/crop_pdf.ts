@@ -2,33 +2,33 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getShell, getPdfcropFile, getPdfcropCommand } from './configuration';
+import { getShell, getPdfcropOutputPath, getPdfcropCommand } from './configuration';
 
 export function cropPdf(
-    inputFile: string,
-    outputFile: string = getPdfcropFile(),
+    inputPath: string,
+    outputPath: string = getPdfcropOutputPath(),
     workspaceFolder: string = '',
 ): void {
-    if (!fs.existsSync(inputFile)) {
-        vscode.window.showErrorMessage(`File does not exist: ${inputFile}`);
+    if (!fs.existsSync(inputPath)) {
+        vscode.window.showErrorMessage(`File does not exist: ${inputPath}`);
         return;
     }
 
-    const fileName = path.basename(inputFile, path.extname(inputFile));
-    const folderName = path.dirname(inputFile);
-    const replacedOutputFile = outputFile
+    const fileName = path.basename(inputPath, path.extname(inputPath));
+    const folderName = path.dirname(inputPath);
+    const replacedOutputPath = outputPath
         .replace(/\${fileName}/g, fileName)
         .replace(/\${folderName}/g, folderName)
         .replace(/\${workspaceFolder}/g, workspaceFolder);
-    const replacedOutputFolder = path.dirname(replacedOutputFile);
+    const replacedOutputFolderPath = path.dirname(replacedOutputPath);
 
-    if (!fs.existsSync(replacedOutputFolder)) {
-        fs.mkdirSync(replacedOutputFolder, { recursive: true });
+    if (!fs.existsSync(replacedOutputFolderPath)) {
+        fs.mkdirSync(replacedOutputFolderPath, { recursive: true });
     }
 
     try {
         execSync(
-            `${getPdfcropCommand()} "${path.normalize(inputFile)}" "${path.normalize(replacedOutputFile)}"`,
+            `${getPdfcropCommand()} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`,
             {
                 'cwd': folderName,
                 'shell': getShell()
@@ -36,7 +36,7 @@ export function cropPdf(
         );
     } catch (error) {
         if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Failed to crop PDF: ${inputFile} - ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to crop PDF: ${inputPath} - ${error.message}`);
         }
 
         return;

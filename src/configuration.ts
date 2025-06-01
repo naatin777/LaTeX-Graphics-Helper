@@ -21,10 +21,10 @@ export function getPdfcropCommand(): string {
     return config.get<string>('pdfcropCommand') ?? 'pdfcrop';
 }
 
-export function getPdfcropFile(): string {
+export function getPdfcropOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
-    return config.get<string>('pdfcropFile') ?? '${folderName}/${fileName}-crop.pdf';
+    return config.get<string>('pdfcropOutputPath') ?? '${folderName}/${fileName}-crop.pdf';
 }
 
 export function getDrawioCommand(): string {
@@ -41,8 +41,8 @@ export function getDrawioCommand(): string {
     }
 }
 
-export function getDrawioToPdfFile(): string {
+export function getDrawioToPdfOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
-    return config.get<string>('drawioToPdfFile') ?? '${folderName}/${fileName}/${tabName}.pdf';
+    return config.get<string>('drawioToPdfOutputPath') ?? '${folderName}/${fileName}/${tabName}.pdf';
 }

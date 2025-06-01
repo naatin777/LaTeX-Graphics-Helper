@@ -52,7 +52,7 @@
           "default": "pdfcrop",
           "description": "Path to the pdfcrop executable"
         },
-        "latex-graphics-helper.pdfcropFile": {
+        "latex-graphics-helper.pdfcropOutputPath": {
           "type": "string",
           "default": "${folderName}/${fileName}-crop.pdf",
           "description": "Output file name when cropping a pdf file."
@@ -62,7 +62,7 @@
           "default": "",
           "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
         },
-        "latex-graphics-helper.drawioToPdfFile": {
+        "latex-graphics-helper.drawioToPdfOutputPath": {
           "type": "string",
           "default": "${folderName}/${fileName}/${tabName}.pdf",
           "description": "Output file name when converting a PDF file."
