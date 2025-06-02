@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 				cancellable: false
 			}, async (progress) => {
 				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
+					uris.map((uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 						cropPdf(uri.fsPath, undefined, workspaceFolder?.uri.fsPath);
 					})
@@ -41,7 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						drawioToPdf(uri.fsPath, undefined, workspaceFolder?.uri.fsPath);
+						await drawioToPdf(uri.fsPath, undefined, workspaceFolder?.uri.fsPath);
 					})
 				);
 			});
