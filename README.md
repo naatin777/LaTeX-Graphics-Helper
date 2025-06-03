@@ -11,8 +11,8 @@ This VS Code extension helps you process graphic files for use in LaTeX document
 
 Select PDF or Draw.io files in the Explorer view and choose one of the following commands from the right-click context menu:
 
--   `LaTeX Graphics Helper: Crop PDF`: Crops the selected PDF files.
--   `LaTeX Graphics Helper: Convert Drawio to PDF`: Converts the selected Draw.io files to PDF.
+-   `Crop`: Crops the selected PDF files.
+-   `Convert to PDF`: Converts the selected Draw.io files to PDF.
 
 ## Configuration
 

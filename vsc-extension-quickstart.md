@@ -24,5 +24,5 @@ You can customize certain aspects of the extension's behavior through VS Code se
 
 Select PDF or Draw.io files in the Explorer view and choose one of the following commands from the right-click context menu:
 
--   `Crop PDF`: Crops the selected PDF files.
--   `Convert drawio to PDF`: Converts the selected Draw.io files to PDF.
+-   `Crop`: Crops the selected PDF files.
+-   `Convert to PDF`: Converts the selected Draw.io files to PDF.
