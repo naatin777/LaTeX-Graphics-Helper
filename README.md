@@ -1,71 +1,34 @@
-# latex-graphics-helper README
+# LaTeX Graphics Helper
 
-This is the README for your extension "latex-graphics-helper". After writing up a brief description, we recommend including the following sections.
+This VS Code extension helps you process graphic files for use in LaTeX documents.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+-   **Crop PDF**: Automatically crops the margins of selected PDF files.
+-   **Convert Draw.io to PDF**: Converts selected Draw.io files (.drawio or .dio) to PDF. Each tab is exported as a separate PDF file.
 
-For example if there is an image subfolder under your extension project workspace:
+## Usage
 
-\!\[feature X\]\(images/feature-x.png\)
+Select PDF or Draw.io files in the Explorer view and choose one of the following commands from the right-click context menu:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+-   `LaTeX Graphics Helper: Crop PDF`: Crops the selected PDF files.
+-   `LaTeX Graphics Helper: Convert Drawio to PDF`: Converts the selected Draw.io files to PDF.
+
+## Configuration
+
+The following configuration options are available. Search for `latex-graphics-helper` in your VS Code settings (`settings.json`).
+
+-   `latex-graphics-helper.shell`: Specifies the shell to use for executing commands. If not specified, the default shell for your operating system will be used (Windows: powershell.exe, macOS: /bin/zsh, others: /bin/bash).
+-   `latex-graphics-helper.pdfcropCommand`: Specifies the path to the `pdfcrop` executable. Defaults to `pdfcrop`.
+-   `latex-graphics-helper.pdfcropOutputPath`: Specifies the output file name when cropping a PDF file. Variables `${folderName}`, `${fileName}`, and `${workspaceFolder}` can be used. Defaults to `${folderName}/${fileName}-crop.pdf`.
+-   `latex-graphics-helper.drawioCommand`: Specifies the path to the Draw.io executable. If not specified, the default path for your operating system will be used (Windows: "C:\\Program Files\\draw.io\\draw.io.exe", macOS: /Applications/draw.io.app/Contents/MacOS/draw.io, others: drawio).
+-   `latex-graphics-helper.drawioToPdfOutputPath`: Specifies the output file name when converting a Draw.io file to PDF. Variables `${folderName}`, `${fileName}`, `${tabName}`, and `${workspaceFolder}` can be used. Defaults to `${folderName}/${fileName}/${tabName}.pdf`.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+-   To use the PDF cropping feature, `pdfcrop` must be installed on your system. It is typically included with TeX Live or MiKTeX.
+-   To use the Draw.io to PDF conversion feature, the Draw.io desktop application and `pdfcrop` must be installed on your system.
 
-## Extension Settings
+## License
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+MIT License
