@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { cropPdf } from './crop_pdf';
 import { drawioToPdf } from './drawio_to_pdf';
+import { PdfToLatexDropEditProvider } from './pdf_to_latex';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -46,6 +47,13 @@ export function activate(context: vscode.ExtensionContext) {
 				);
 			});
 		})
+	);
+
+	context.subscriptions.push(
+		vscode.languages.registerDocumentDropEditProvider(
+			{ language: 'latex' },
+			new PdfToLatexDropEditProvider(),
+		)
 	);
 }
 
