@@ -46,3 +46,13 @@ export function getDrawioToPdfOutputPath(): string {
 
     return config.get<string>('drawioToPdfOutputPath') ?? '${folderName}/${fileName}/${tabName}.pdf';
 }
+
+export function getDefaultPlacementSpecifiers(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('defaultPlacementSpecifiers') ?? 'H';
+}
+
+export function getDefaultGraphicsOptions(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('defaultGraphicsOptions') ?? 'width=0.8\\linewidth';
+}

@@ -68,6 +68,16 @@
           "type": "string",
           "default": "${folderName}/${fileName}/${tabName}.pdf",
           "description": "Output file name when converting a PDF file."
+        },
+        "latex-graphics-helper.defaultPlacementSpecifiers": {
+          "type": "string",
+          "default": "H",
+          "description": "Default placement specifiers for LaTeX figures and tables."
+        },
+        "latex-graphics-helper.defaultGraphicsOptions": {
+          "type": "string",
+          "default": "width=0.8\\linewidth",
+          "description": "Default graphics options for LaTeX figures and tables."
         }
       }
     }
