@@ -47,12 +47,39 @@ export function getDrawioToPdfOutputPath(): string {
     return config.get<string>('drawioToPdfOutputPath') ?? '${folderName}/${fileName}/${tabName}.pdf';
 }
 
-export function getDefaultPlacementSpecifiers(): string {
+export function getPlacementSpecifiersUseDefault(): boolean {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('defaultPlacementSpecifiers') ?? 'H';
+    return config.get<boolean>('placementSpecifiers.useDefault') ?? false;
 }
 
-export function getDefaultGraphicsOptions(): string {
+export function getPlacementSpecifiersDefault(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('defaultGraphicsOptions') ?? 'width=0.8\\linewidth';
+    return config.get<string>('placementSpecifiers.default') ?? '[H]';
+}
+
+export function getPlacementSpecifiersChoice(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('placementSpecifiers.choice') ?? [
+        '[H]',
+        '[h]',
+        '[t]',
+        '[b]',
+        '[p]',
+        '[ht]',
+        '[hb]',
+        '[hp]',
+        '[tb]',
+        '[tp]',
+        '[bp]',
+        '[htb]',
+        '[htp]',
+        '[hbp]',
+        '[tbp]',
+        '[htbp]'
+    ];
+}
+
+export function getGraphicsOptionsDefault(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('graphicsOptions.default') ?? '[width=0.8\\linewidth]';
 }

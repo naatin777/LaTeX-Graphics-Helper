@@ -69,14 +69,41 @@
           "default": "${folderName}/${fileName}/${tabName}.pdf",
           "description": "Output file name when converting a PDF file."
         },
-        "latex-graphics-helper.defaultPlacementSpecifiers": {
+        "latex-graphics-helper.placementSpecifiers.useDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to use the default placement specifiers for LaTeX figures and tables."
+        },
+        "latex-graphics-helper.placementSpecifiers.default": {
           "type": "string",
-          "default": "H",
+          "default": "[H]",
           "description": "Default placement specifiers for LaTeX figures and tables."
         },
-        "latex-graphics-helper.defaultGraphicsOptions": {
+        "latex-graphics-helper.placementSpecifiers.choice": {
+          "type": "array",
+          "default": [
+            "[H]",
+            "[h]",
+            "[t]",
+            "[b]",
+            "[p]",
+            "[ht]",
+            "[hb]",
+            "[hp]",
+            "[tb]",
+            "[tp]",
+            "[bp]",
+            "[htb]",
+            "[htp]",
+            "[hbp]",
+            "[tbp]",
+            "[htbp]"
+          ],
+          "description": "Available placement specifiers for LaTeX figures and tables."
+        },
+        "latex-graphics-helper.graphicsOptions.default": {
           "type": "string",
-          "default": "width=0.8\\linewidth",
+          "default": "[width=0.8\\linewidth]",
           "description": "Default graphics options for LaTeX figures and tables."
         }
       }
