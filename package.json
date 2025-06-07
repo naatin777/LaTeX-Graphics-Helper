@@ -105,6 +105,25 @@
           "type": "string",
           "default": "[width=0.8\\linewidth]",
           "description": "Default graphics options for LaTeX figures and tables."
+        },
+        "latex-graphics-helper.minipageOptions.useDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to use the default options for LaTeX minipage environments."
+        },
+        "latex-graphics-helper.minipageOptions.default": {
+          "type": "string",
+          "default": "[b]",
+          "description": "Default options for LaTeX minipage environments."
+        },
+        "latex-graphics-helper.minipageOptions.choice": {
+          "type": "array",
+          "default": [
+            "[t]",
+            "[c]",
+            "[b]"
+          ],
+          "description": "Available options for LaTeX minipage environments."
         }
       }
     }

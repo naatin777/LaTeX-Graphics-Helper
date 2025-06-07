@@ -83,3 +83,22 @@ export function getGraphicsOptionsDefault(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string>('graphicsOptions.default') ?? '[width=0.8\\linewidth]';
 }
+
+export function getMinipageOptionsUseDefault(): boolean {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<boolean>('minipageOptions.useDefault') ?? false;
+}
+
+export function getMinipageOptionsDefault(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('minipageOptions.default') ?? '[b]';
+}
+
+export function getMinipageOptionsChoice(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('minipageOptions.choice') ?? [
+        '[t]',
+        '[c]',
+        '[b]'
+    ];
+}
