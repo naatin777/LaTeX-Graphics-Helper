@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { escapeLatex, escapeLatexLabel, toPosixPath } from './utils';
-import { getGraphicsOptionsDefault, getPlacementSpecifiersChoice, getPlacementSpecifiersDefault, getPlacementSpecifiersUseDefault } from './configuration';
+import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from './utils';
+import { getGraphicsOptionsDefault, getMinipageOptionsChoice, getMinipageOptionsDefault, getMinipageOptionsUseDefault, getPlacementSpecifiersChoice, getPlacementSpecifiersDefault, getPlacementSpecifiersUseDefault } from './configuration';
 
 export class PdfToLatexDropEditProvider implements vscode.DocumentDropEditProvider {
     async provideDocumentDropEdits(
@@ -9,7 +9,7 @@ export class PdfToLatexDropEditProvider implements vscode.DocumentDropEditProvid
         position: vscode.Position,
         dataTransfer: vscode.DataTransfer,
         token: vscode.CancellationToken
-    ): Promise<vscode.DocumentDropEdit | undefined> {
+    ): Promise<vscode.DocumentDropEdit[] | vscode.DocumentDropEdit | undefined> {
         const dataTransferItem = dataTransfer.get('text/uri-list');
         if (!dataTransferItem) {
             return undefined;
@@ -25,14 +25,19 @@ export class PdfToLatexDropEditProvider implements vscode.DocumentDropEditProvid
                 const fileName = path.basename(uri.fsPath, extName);
                 const relativeFilePath = path.relative(documentDir, uri.fsPath);
 
-                if (extName === '.pdf') {
-                    const singlePdfSnippet = this.createSinglePdfSnippet(fileName, relativeFilePath);
-                    return new vscode.DocumentDropEdit(singlePdfSnippet);
-                } else {
-                    return undefined;
-                }
+                const singlePdfSnippet = this.createSinglePdfSnippet(fileName, relativeFilePath);
+                return new vscode.DocumentDropEdit(singlePdfSnippet, 'Insert LaTeX text');
             } else if (uris.length > 1) {
-                return undefined;
+                const [fileNames, relativeFilePaths] = transpose(
+                    uris
+                        .map(uri => [
+                            path.basename(uri.fsPath, path.extname(uri.fsPath)),
+                            path.relative(documentDir, uri.fsPath)
+                        ])
+                );
+
+                const multiplePdfSnippet = this.createMultiplePdfSnippet(fileNames, relativeFilePaths);
+                return new vscode.DocumentDropEdit(multiplePdfSnippet, 'Insert LaTeX text');
             } else {
                 return undefined;
             }
@@ -41,21 +46,55 @@ export class PdfToLatexDropEditProvider implements vscode.DocumentDropEditProvid
 
     createSinglePdfSnippet(fileName: string, relativeFilePath: string): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
-        let number = 0;
 
         snippet.appendText('\\begin{figure}');
         if (getPlacementSpecifiersUseDefault()) {
             snippet.appendText(getPlacementSpecifiersDefault());
         } else {
-            snippet.appendChoice(getPlacementSpecifiersChoice(), ++number);
+            snippet.appendChoice(getPlacementSpecifiersChoice(), 1);
         }
         snippet.appendText('\n');
         snippet.appendText('\t\\centering\n');
         snippet.appendText(`\t\\includegraphics${getGraphicsOptionsDefault()}{${toPosixPath(relativeFilePath)}}\n`);
         snippet.appendText('\t\\caption{');
-        snippet.appendPlaceholder(escapeLatex(fileName), ++number);
+        snippet.appendPlaceholder(escapeLatex(fileName), 2);
         snippet.appendText('}');
         snippet.appendText(`\\label{fig:${escapeLatexLabel(fileName)}}\n`);
+        snippet.appendText('\\end{figure}');
+
+        return snippet;
+    }
+
+    createMultiplePdfSnippet(fileNames: string[], relativeFilePaths: string[]): vscode.SnippetString {
+        const snippet = new vscode.SnippetString();
+
+        snippet.appendText('\\begin{figure}');
+        if (getPlacementSpecifiersUseDefault()) {
+            snippet.appendText(getPlacementSpecifiersDefault());
+        } else {
+            snippet.appendChoice(getPlacementSpecifiersChoice(), 1);
+        }
+        snippet.appendText('\n');
+        snippet.appendText('\t\\centering\n');
+        for (let i = 0; i < relativeFilePaths.length; i++) {
+            snippet.appendText('\t\\begin{minipage}');
+            if (getMinipageOptionsUseDefault()) {
+                snippet.appendText(getMinipageOptionsDefault());
+            } else {
+                snippet.appendChoice(getMinipageOptionsChoice(), i + 2);
+            }
+            snippet.appendText(`{${Math.round(0.9 / relativeFilePaths.length * 100.0) / 100.0}\\linewidth}\n`);
+            snippet.appendText('\t\t\\centering\n');
+            snippet.appendText(`\t\t\\includegraphics${getGraphicsOptionsDefault()}{${toPosixPath(relativeFilePaths[i])}}\n`);
+            snippet.appendText('\t\t\\caption{');
+            snippet.appendPlaceholder(escapeLatex(fileNames[i]), i + relativeFilePaths.length + 2);
+            snippet.appendText('}');
+            snippet.appendText(`\\label{fig:${escapeLatexLabel(fileNames[i])}}\n`);
+            snippet.appendText('\t\\end{minipage}\n');
+            if (relativeFilePaths.length !== i + 1) {
+                snippet.appendText('\t\\hspace{0.01\\linewidth}\n');
+            }
+        }
         snippet.appendText('\\end{figure}');
 
         return snippet;
