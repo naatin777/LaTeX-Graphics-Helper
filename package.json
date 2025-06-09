@@ -132,18 +132,42 @@
         },
         "latex-graphics-helper.pdfToPngOutputPath": {
           "type": "string",
-          "default": "${folderName}/${fileName}.png",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
+          "default": "${folderName}/${fileName}",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.pdfToJpegOutputPath": {
           "type": "string",
-          "default": "${folderName}/${fileName}.jpeg",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
+          "default": "${folderName}/${fileName}",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.pdfToSvgOutputPath": {
           "type": "string",
           "default": "${folderName}/${fileName}.svg",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
+        },
+        "latex-graphics-helper.pdfToPngOptions": {
+          "type": "array",
+          "default": [
+            "-png",
+            "-singlefile",
+            "-transp"
+          ],
+          "description": "Options passed to pdftocairo when converting PDF to PNG."
+        },
+        "latex-graphics-helper.pdfToJpegOptions": {
+          "type": "array",
+          "default": [
+            "-jpeg",
+            "-singlefile"
+          ],
+          "description": "Options passed to pdftocairo when converting PDF to JPEG."
+        },
+        "latex-graphics-helper.pdfToSvgOptions": {
+          "type": "array",
+          "default": [
+            "-svg"
+          ],
+          "description": "Options passed to pdftocairo when converting PDF to SVG."
         }
       }
     }

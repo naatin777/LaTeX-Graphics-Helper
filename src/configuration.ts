@@ -110,15 +110,30 @@ export function getPdftocairoCommand(): string {
 
 export function getPdfToPngOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdfToPngOutputPath') ?? '${folderName}/${fileName}.png';
+    return config.get<string>('pdfToPngOutputPath') ?? '${folderName}/${fileName}';
 }
 
 export function getPdfToJpegOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdfToJpegOutputPath') ?? '${folderName}/${fileName}.jpeg';
+    return config.get<string>('pdfToJpegOutputPath') ?? '${folderName}/${fileName}';
 }
 
 export function getPdfToSvgOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string>('pdfToSvgOutputPath') ?? '${folderName}/${fileName}.svg';
+}
+
+export function getPdfToPngOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdfToPngOptions') ?? ['-png', '-singlefile', '-transp'];
+}
+
+export function getPdfToJpegOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdfToJpegOptions') ?? ['-jpeg', '-singlefile'];
+}
+
+export function getPdfToSvgOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdfToSvgOptions') ?? ['-svg'];
 }
