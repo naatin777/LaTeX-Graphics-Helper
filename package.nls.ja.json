@@ -1,4 +1,8 @@
 {
 	"cropPdf": "クロップ",
-	"drawioToPdf": "PDFに変換"
+	"drawioToPdf": "PDFに変換",
+	"pdfTo": "画像に変換",
+	"pdfToPng": "PNGに変換",
+	"pdfToJpeg": "JPEGに変換",
+	"pdfToSvg": "SVGに変換"
 }

@@ -1,4 +1,8 @@
 {
 	"cropPdf": "Crop",
-	"drawioToPdf": "Convert to PDF"
+	"drawioToPdf": "Convert to PDF",
+	"pdfTo": "Convert to Image",
+	"pdfToPng": "Convert to PNG",
+	"pdfToJpeg": "Convert to JPEG",
+	"pdfToSvg": "Convert to SVG"
 }

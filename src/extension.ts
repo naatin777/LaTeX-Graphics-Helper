@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { cropPdf } from './crop_pdf';
 import { drawioToPdf } from './drawio_to_pdf';
 import { PdfToLatexDropEditProvider } from './pdf_to_latex';
+import { pdfToImage } from './pdf_to_image';
+import { getPdfToJpegOptions, getPdfToJpegOutputPath, getPdfToPngOptions, getPdfToPngOutputPath, getPdfToSvgOptions, getPdfToSvgOutputPath } from './configuration';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -54,6 +56,72 @@ export function activate(context: vscode.ExtensionContext) {
 			{ language: 'latex' },
 			new PdfToLatexDropEditProvider(),
 		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.pdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			if (!uris) {
+				vscode.window.showErrorMessage('No PDF files selected.');
+				return;
+			}
+
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Converting PDF files to png files...',
+				cancellable: false
+			}, async (progress) => {
+				await Promise.allSettled(
+					uris.map(async (uri: vscode.Uri) => {
+						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+						pdfToImage(uri.fsPath, getPdfToPngOutputPath(), workspaceFolder?.uri.fsPath, getPdfToPngOptions(), 'png');
+					})
+				);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.pdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			if (!uris) {
+				vscode.window.showErrorMessage('No PDF files selected.');
+				return;
+			}
+
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Converting PDF files to jpeg files...',
+				cancellable: false
+			}, async (progress) => {
+				await Promise.allSettled(
+					uris.map(async (uri: vscode.Uri) => {
+						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+						pdfToImage(uri.fsPath, getPdfToJpegOutputPath(), workspaceFolder?.uri.fsPath, getPdfToJpegOptions(), 'jpeg');
+					})
+				);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.pdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			if (!uris) {
+				vscode.window.showErrorMessage('No PDF files selected.');
+				return;
+			}
+
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Converting PDF files to svg files...',
+				cancellable: false
+			}, async (progress) => {
+				await Promise.allSettled(
+					uris.map(async (uri: vscode.Uri) => {
+						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+						pdfToImage(uri.fsPath, getPdfToSvgOutputPath(), workspaceFolder?.uri.fsPath, getPdfToSvgOptions(), 'svg');
+					})
+				);
+			});
+		})
 	);
 }
 

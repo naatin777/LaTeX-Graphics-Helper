@@ -26,9 +26,37 @@
           "command": "latex-graphics-helper.drawioToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .drawio || resourceExtname == .dio"
+        },
+        {
+          "submenu": "latex-graphics-helper.pdfTo",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
+        }
+      ],
+      "latex-graphics-helper.pdfTo": [
+        {
+          "command": "latex-graphics-helper.pdfToPng",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
+        },
+        {
+          "command": "latex-graphics-helper.pdfToJpeg",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
+        },
+        {
+          "command": "latex-graphics-helper.pdfToSvg",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "latex-graphics-helper.pdfTo",
+        "label": "%pdfTo%"
+      }
+    ],
     "commands": [
       {
         "command": "latex-graphics-helper.cropPdf",
@@ -38,6 +66,21 @@
       {
         "command": "latex-graphics-helper.drawioToPdf",
         "title": "%drawioToPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.pdfToPng",
+        "title": "%pdfToPng%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.pdfToJpeg",
+        "title": "%pdfToJpeg%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.pdfToSvg",
+        "title": "%pdfToSvg%",
         "category": "LaTeX Graphics Helper"
       }
     ],
