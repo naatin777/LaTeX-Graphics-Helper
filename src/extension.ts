@@ -67,13 +67,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 			vscode.window.withProgress({
 				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to png files...',
+				title: 'Converting PDF files to PNG files...',
 				cancellable: false
 			}, async (progress) => {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToPngOutputPath(), workspaceFolder?.uri.fsPath, getPdfToPngOptions(), 'png');
+						pdfToImage(uri.fsPath, getPdfToPngOutputPath(), workspaceFolder?.uri.fsPath, getPdfToPngOptions(), 'PNG');
 					})
 				);
 			});
@@ -89,13 +89,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 			vscode.window.withProgress({
 				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to jpeg files...',
+				title: 'Converting PDF files to JPEG files...',
 				cancellable: false
 			}, async (progress) => {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToJpegOutputPath(), workspaceFolder?.uri.fsPath, getPdfToJpegOptions(), 'jpeg');
+						pdfToImage(uri.fsPath, getPdfToJpegOutputPath(), workspaceFolder?.uri.fsPath, getPdfToJpegOptions(), 'JPEG');
 					})
 				);
 			});
@@ -111,13 +111,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 			vscode.window.withProgress({
 				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to svg files...',
+				title: 'Converting PDF files to SVG files...',
 				cancellable: false
 			}, async (progress) => {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToSvgOutputPath(), workspaceFolder?.uri.fsPath, getPdfToSvgOptions(), 'svg');
+						pdfToImage(uri.fsPath, getPdfToSvgOutputPath(), workspaceFolder?.uri.fsPath, getPdfToSvgOptions(), 'SVG');
 					})
 				);
 			});
