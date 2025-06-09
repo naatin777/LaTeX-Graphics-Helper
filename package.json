@@ -192,7 +192,6 @@
           "type": "array",
           "default": [
             "-png",
-            "-singlefile",
             "-transp"
           ],
           "description": "Options passed to pdftocairo when converting PDF to PNG."
@@ -200,8 +199,7 @@
         "latex-graphics-helper.pdfToJpegOptions": {
           "type": "array",
           "default": [
-            "-jpeg",
-            "-singlefile"
+            "-jpeg"
           ],
           "description": "Options passed to pdftocairo when converting PDF to JPEG."
         },

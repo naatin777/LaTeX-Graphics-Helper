@@ -125,12 +125,12 @@ export function getPdfToSvgOutputPath(): string {
 
 export function getPdfToPngOptions(): string[] {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('pdfToPngOptions') ?? ['-png', '-singlefile', '-transp'];
+    return config.get<string[]>('pdfToPngOptions') ?? ['-png', '-transp'];
 }
 
 export function getPdfToJpegOptions(): string[] {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('pdfToJpegOptions') ?? ['-jpeg', '-singlefile'];
+    return config.get<string[]>('pdfToJpegOptions') ?? ['-jpeg'];
 }
 
 export function getPdfToSvgOptions(): string[] {
