@@ -8,6 +8,7 @@ This VS Code extension provides helpful tools for working with graphics in LaTeX
 
 *   **Crop PDF**: Crop the margins of PDF files.
 *   **Convert Draw.io to PDF**: Convert Draw.io files (.drawio or .dio) to PDF, with each tab saved as a separate PDF.
+*   **Convert PDF to Image**: Convert PDF files to PNG, JPEG, or SVG format using `pdftocairo`.
 *   **Insert LaTeX for PDF**: Drag and drop PDF files into your LaTeX document to automatically insert the corresponding LaTeX code (`figure` or `minipage` environment).
 
 ## Requirements
@@ -16,6 +17,7 @@ To use this extension, you need:
 
 *   `pdfcrop` installed on your system (typically included with TeX Live or MiKTeX).
 *   The Draw.io desktop application installed on your system for Draw.io to PDF conversion.
+*   `pdftocairo` installed on your system (typically included with Poppler utilities) for PDF to Image conversion.
 
 ## Configuration
 
@@ -27,5 +29,9 @@ Select PDF or Draw.io files in the Explorer view and choose one of the following
 
 -   `Crop`: Crops the selected PDF files.
 -   `Convert to PDF`: Converts the selected Draw.io files to PDF.
+-   Under the "PDF To" submenu:
+    - `Convert to PNG`: Converts the selected PDF files to PNG.
+    - `Convert to JPEG`: Converts the selected PDF files to JPEG.
+    - `Convert to SVG`: Converts the selected PDF files to SVG.
 
 Alternatively, you can drag and drop PDF files directly into your LaTeX editor.
