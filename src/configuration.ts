@@ -102,3 +102,23 @@ export function getMinipageOptionsChoice(): string[] {
         '[b]'
     ];
 }
+
+export function getPdftocairoCommand(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('pdftocairoCommand') ?? 'pdftocairo';
+}
+
+export function getPdfToPngOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('pdfToPngOutputPath') ?? '${folderName}/${fileName}.png';
+}
+
+export function getPdfToJpegOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('pdfToJpegOutputPath') ?? '${folderName}/${fileName}.jpeg';
+}
+
+export function getPdfToSvgOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('pdfToSvgOutputPath') ?? '${folderName}/${fileName}.svg';
+}

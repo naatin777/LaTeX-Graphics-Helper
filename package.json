@@ -124,6 +124,26 @@
             "[b]"
           ],
           "description": "Available options for LaTeX minipage environments."
+        },
+        "latex-graphics-helper.pdftocairoCommand": {
+          "type": "string",
+          "default": "pdftocairo",
+          "description": "Path to the pdftocairo executable"
+        },
+        "latex-graphics-helper.pdfToPngOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.png",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
+        },
+        "latex-graphics-helper.pdfToJpegOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.jpeg",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
+        },
+        "latex-graphics-helper.pdfToSvgOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.svg",
+          "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         }
       }
     }
