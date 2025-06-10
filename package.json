@@ -210,6 +210,26 @@
             "-svg"
           ],
           "description": "Options passed to pdftocairo when converting PDF to SVG."
+        },
+        "latex-graphics-helper.inkscapeCommand": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the inkscape executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\Inkscape\\bin\\inkscape.exe\" on Windows, inkscape on others)."
+        },
+        "latex-graphics-helper.pngToPdfOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.pdf",
+          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.jpegToPdfOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.pdf",
+          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.svgToPdfOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.pdf",
+          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
         }
       }
     }

@@ -137,3 +137,30 @@ export function getPdfToSvgOptions(): string[] {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string[]>('pdfToSvgOptions') ?? ['-svg'];
 }
+
+export function getInkscapeCommand(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const inkscapeCommand = config.get<string>('inkscapeCommand');
+    const platform = os.platform();
+
+    if (platform === 'win32') {
+        return inkscapeCommand || '"C:\\Program Files\\Inkscape\\bin\\inkscape.exe"';
+    } else {
+        return inkscapeCommand || 'inkscape';
+    }
+}
+
+export function getPngToPdfOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('pngToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+}
+
+export function getJpegToPdfOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('jpegToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+}
+
+export function getSvgToPdfOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('svgToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+}
