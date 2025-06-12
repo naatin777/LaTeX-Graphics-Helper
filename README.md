@@ -7,6 +7,7 @@ This VS Code extension helps you process graphic files for use in LaTeX document
 -   **Crop PDF**: Automatically crops the margins of selected PDF files.
 -   **Convert Draw.io to PDF**: Converts selected Draw.io files (.drawio or .dio) to PDF. Each tab is exported as a separate PDF file.
 -   **Convert PDF to Image**: Converts selected PDF files to PNG, JPEG, or SVG format using `pdftocairo`.
+-   **Convert Image to PDF**: Converts selected PNG, JPEG, or SVG files to PDF format using `inkscape`.
 -   **Insert LaTeX for PDF**: Drag and drop PDF files into your LaTeX document to automatically insert the corresponding LaTeX code (`figure` or `minipage` environment).
 
 ## Usage
@@ -19,6 +20,10 @@ Select PDF or Draw.io files in the Explorer view and choose one of the following
     - `Convert to PNG`: Converts the selected PDF files to PNG.
     - `Convert to JPEG`: Converts the selected PDF files to JPEG.
     - `Convert to SVG`: Converts the selected PDF files to SVG.
+-   Under the "Image To PDF" submenu:
+    - `Convert to PDF (PNG)`: Converts the selected PNG files to PDF.
+    - `Convert to PDF (JPEG)`: Converts the selected JPEG files to PDF.
+    - `Convert to PDF (SVG)`: Converts the selected SVG files to PDF.
 
 Alternatively, you can drag and drop PDF files directly into your LaTeX editor.
 
@@ -45,12 +50,17 @@ The following configuration options are available. Search for `latex-graphics-he
 -   `latex-graphics-helper.minipageOptions.useDefault`: Whether to use the default options for LaTeX minipage environments.
 -   `latex-graphics-helper.minipageOptions.default`: Default options for LaTeX minipage environments (e.g., `[b]`).
 -   `latex-graphics-helper.minipageOptions.choice`: Available options for LaTeX minipage environments.
+-   `latex-graphics-helper.inkscapeCommand`: Specifies the path to the Inkscape executable. If not specified, the default path for your operating system will be used (Windows: "C:\\Program Files\\Inkscape\\bin\\inkscape.exe", others: inkscape).
+-   `latex-graphics-helper.pngToPdfOutputPath`: Specifies the output file name when converting a PNG file to PDF. Depends on Inkscape.
+-   `latex-graphics-helper.jpegToPdfOutputPath`: Specifies the output file name when converting a JPEG file to PDF. Depends on Inkscape.
+-   `latex-graphics-helper.svgToPdfOutputPath`: Specifies the output file name when converting a SVG file to PDF. Depends on Inkscape.
 
 ## Requirements
 
 -   To use the PDF cropping feature, `pdfcrop` must be installed on your system. It is typically included with TeX Live or MiKTeX.
 -   To use the Draw.io to PDF conversion feature, the Draw.io desktop application and `pdfcrop` must be installed on your system.
 -   To use the PDF to Image conversion features, `pdftocairo` must be installed on your system. It is typically included with Poppler utilities.
+-   To use the Image to PDF conversion features, Inkscape must be installed on your system.
 
 ## License
 
