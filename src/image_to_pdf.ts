@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-export function pngToPdf(
+export function imageToPdf(
     inputPath: string,
     outputPath: string,
     workspaceFolder: string = '',
@@ -14,7 +14,8 @@ export function pngToPdf(
         return;
     }
 
-    const fileName = path.basename(inputPath, path.extname(inputPath));
+    const extname = path.extname(inputPath);
+    const fileName = path.basename(inputPath, extname);
     const folderName = path.dirname(inputPath);
     const replacedOutputPath = outputPath
         .replace(/\${fileName}/g, fileName)
@@ -35,7 +36,7 @@ export function pngToPdf(
         );
     } catch (error) {
         if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Failed to convert PNG to PDF: ${inputPath} - ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to convert ${extname.toUpperCase()} to PDF: ${inputPath} - ${error.message}`);
         }
 
         return;
