@@ -32,6 +32,21 @@
           "submenu": "latex-graphics-helper.pdfTo",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
+        },
+        {
+          "command": "latex-graphics-helper.pngToPdf",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .png"
+        },
+        {
+          "command": "latex-graphics-helper.jpegToPdf",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .jpeg || resourceExtname == .jpg"
+        },
+        {
+          "command": "latex-graphics-helper.svgToPdf",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .svg"
         }
       ],
       "latex-graphics-helper.pdfTo": [
@@ -82,6 +97,21 @@
       {
         "command": "latex-graphics-helper.pdfToSvg",
         "title": "%pdfToSvg%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.pngToPdf",
+        "title": "%pngToPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.jpegToPdf",
+        "title": "%jpegToPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.svgToPdf",
+        "title": "%svgToPdf%",
         "category": "LaTeX Graphics Helper"
       }
     ],

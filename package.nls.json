@@ -4,5 +4,8 @@
 	"pdfTo": "Convert to Image",
 	"pdfToPng": "Convert to PNG",
 	"pdfToJpeg": "Convert to JPEG",
-	"pdfToSvg": "Convert to SVG"
+	"pdfToSvg": "Convert to SVG",
+	"pngToPdf": "Convert to PDF",
+	"jpegToPdf": "Convert to PDF",
+	"svgToPdf": "Convert to PDF"
 }

@@ -4,5 +4,8 @@
 	"pdfTo": "画像に変換",
 	"pdfToPng": "PNGに変換",
 	"pdfToJpeg": "JPEGに変換",
-	"pdfToSvg": "SVGに変換"
+	"pdfToSvg": "SVGに変換",
+	"pngToPdf": "PDFに変換",
+	"jpegToPdf": "PDFに変換",
+	"svgToPdf": "PDFに変換"
 }
