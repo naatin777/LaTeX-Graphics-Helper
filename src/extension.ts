@@ -5,6 +5,7 @@ import { PdfToLatexDropEditProvider } from './pdf_to_latex';
 import { pdfToImage } from './pdf_to_image';
 import { getJpegToPdfOutputPath, getPdfToJpegOptions, getPdfToJpegOutputPath, getPdfToPngOptions, getPdfToPngOutputPath, getPdfToSvgOptions, getPdfToSvgOutputPath, getPngToPdfOutputPath, getSvgToPdfOutputPath } from './configuration';
 import { imageToPdf } from './image_to_pdf';
+import { ImageToLatexPasteEditProvider } from './image_to_latex';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -189,6 +190,17 @@ export function activate(context: vscode.ExtensionContext) {
 				);
 			});
 		})
+	);
+
+	context.subscriptions.push(
+		vscode.languages.registerDocumentPasteEditProvider(
+			{ language: 'latex' },
+			new ImageToLatexPasteEditProvider(),
+			{
+				pasteMimeTypes: ['image/png', 'image/jpeg', 'image/svg+xml'],
+				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
+			}
+		)
 	);
 }
 
