@@ -164,3 +164,8 @@ export function getSvgToPdfOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string>('svgToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
 }
+
+export function getClipboardImageOutputPath(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('clipboardImageOutputPath') ?? '${folderName}/${fileName}.pdf';
+}

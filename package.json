@@ -260,6 +260,11 @@
           "type": "string",
           "default": "${folderName}/${fileName}.pdf",
           "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.clipboardImageOutputPath": {
+          "type": "string",
+          "default": "${folderName}/${fileName}.pdf",
+          "description": "Output file name when saving clipboard images to a file"
         }
       }
     }
