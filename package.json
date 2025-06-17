@@ -263,8 +263,13 @@
         },
         "latex-graphics-helper.clipboardImageOutputPath": {
           "type": "string",
-          "default": "${folderName}/${fileName}.pdf",
-          "description": "Output file name when saving clipboard images to a file"
+          "default": "${folderName}/${fileName}",
+          "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
+        },
+        "latex-graphics-helper.autoConvertToPdfOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically convert images to PDF on save."
         }
       }
     }

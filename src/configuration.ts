@@ -167,5 +167,10 @@ export function getSvgToPdfOutputPath(): string {
 
 export function getClipboardImageOutputPath(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('clipboardImageOutputPath') ?? '${folderName}/${fileName}.pdf';
+    return config.get<string>('clipboardImageOutputPath') ?? '${folderName}/${fileName}';
+}
+
+export function getAutoConvertToPdfOnSave(): boolean {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<boolean>('autoConvertToPdfOnSave') ?? true;
 }
