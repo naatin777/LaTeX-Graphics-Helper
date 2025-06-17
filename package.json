@@ -263,7 +263,7 @@
         },
         "latex-graphics-helper.clipboardImageOutputPath": {
           "type": "string",
-          "default": "${folderName}/${fileName}",
+          "default": "${folderName}/${dateNow}",
           "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
         },
         "latex-graphics-helper.autoConvertToPdfOnSave": {
