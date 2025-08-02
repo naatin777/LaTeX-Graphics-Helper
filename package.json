@@ -295,6 +295,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "pdf-lib": "^1.17.1",
     "xml2js": "^0.6.2"
   }
