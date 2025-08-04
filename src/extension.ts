@@ -6,7 +6,7 @@ import { pdfToImage } from './pdf_to_image';
 import { getJpegToPdfOutputPath, getPdfToJpegOptions, getPdfToJpegOutputPath, getPdfToPngOptions, getPdfToPngOutputPath, getPdfToSvgOptions, getPdfToSvgOutputPath, getPngToPdfOutputPath, getSvgToPdfOutputPath } from './configuration';
 import { imageToPdf } from './image_to_pdf';
 import { ImageToLatexPasteEditProvider } from './image_to_latex';
-import { getGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
+import { deleteGeminiApiKey, getGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
@@ -216,6 +216,14 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.window.showInformationMessage('Stored Gemini API Key');
 			}
 		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.deleteGeminiApiKey', async () => {
+			await deleteGeminiApiKey(secretStorage);
+			vscode.window.showInformationMessage('Deleted Gemini API Key');
+		})
+
 	);
 }
 

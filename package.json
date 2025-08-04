@@ -118,6 +118,11 @@
         "command": "latex-graphics-helper.setGeminiApiKey",
         "title": "%setGeminiApiKey%",
         "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.deleteGeminiApiKey",
+        "title": "%deleteGeminiApiKey%",
+        "category": "LaTeX Graphics Helper"
       }
     ],
     "configuration": {
