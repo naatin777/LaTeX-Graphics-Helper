@@ -7,5 +7,6 @@
 	"pdfToSvg": "Convert to SVG",
 	"pngToPdf": "Convert to PDF",
 	"jpegToPdf": "Convert to PDF",
-	"svgToPdf": "Convert to PDF"
+	"svgToPdf": "Convert to PDF",
+	"setGeminiApiKey": "Set Gemini API Key"
 }

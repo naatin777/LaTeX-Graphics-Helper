@@ -7,5 +7,6 @@
 	"pdfToSvg": "SVGに変換",
 	"pngToPdf": "PDFに変換",
 	"jpegToPdf": "PDFに変換",
-	"svgToPdf": "PDFに変換"
+	"svgToPdf": "PDFに変換",
+	"setGeminiApiKey": "Gemini APIキーを設定"
 }

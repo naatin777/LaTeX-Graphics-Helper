@@ -6,8 +6,10 @@ import { pdfToImage } from './pdf_to_image';
 import { getJpegToPdfOutputPath, getPdfToJpegOptions, getPdfToJpegOutputPath, getPdfToPngOptions, getPdfToPngOutputPath, getPdfToSvgOptions, getPdfToSvgOutputPath, getPngToPdfOutputPath, getSvgToPdfOutputPath } from './configuration';
 import { imageToPdf } from './image_to_pdf';
 import { ImageToLatexPasteEditProvider } from './image_to_latex';
+import { getGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
 
 export function activate(context: vscode.ExtensionContext) {
+	const secretStorage = context.secrets;
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
@@ -201,6 +203,19 @@ export function activate(context: vscode.ExtensionContext) {
 				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
 			}
 		)
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.setGeminiApiKey', async () => {
+			const apiKey = await vscode.window.showInputBox({
+				password: true,
+				title: 'pasteEnter your Gemini API Key',
+			});
+			if (apiKey) {
+				await storeGeminiApiKey(secretStorage, apiKey);
+				vscode.window.showInformationMessage('Stored Gemini API Key');
+			}
+		})
 	);
 }
 

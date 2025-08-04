@@ -113,6 +113,11 @@
         "command": "latex-graphics-helper.svgToPdf",
         "title": "%svgToPdf%",
         "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.setGeminiApiKey",
+        "title": "%setGeminiApiKey%",
+        "category": "LaTeX Graphics Helper"
       }
     ],
     "configuration": {
