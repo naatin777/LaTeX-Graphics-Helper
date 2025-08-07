@@ -174,3 +174,8 @@ export function getAutoConvertToPdfOnSave(): boolean {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<boolean>('autoConvertToPdfOnSave') ?? true;
 }
+
+export function getGeminiAIModel(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('geminiAIModel') ?? 'gemini-2.5-flash';
+}

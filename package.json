@@ -280,6 +280,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically convert images to PDF on save."
+        },
+        "latex-graphics.helper.geminiAIModel": {
+          "type": "string",
+          "default": "gemini-2.5-flash",
+          "description": "Selects the Gemini AI model to be used for generating LaTeX code from images."
         }
       }
     }
