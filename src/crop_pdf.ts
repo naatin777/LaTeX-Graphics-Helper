@@ -2,11 +2,11 @@ import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { getShell, getPdfcropOutputPath, getPdfcropCommand } from './configuration';
+import { getShell, getOutputPathCropPdf, getExecPathPdfcrop } from './configuration';
 
 export function cropPdf(
     inputPath: string,
-    outputPath: string = getPdfcropOutputPath(),
+    outputPath: string,
     workspaceFolder: string = '',
 ): void {
     if (!fs.existsSync(inputPath)) {
@@ -16,9 +16,14 @@ export function cropPdf(
 
     const fileName = path.basename(inputPath, path.extname(inputPath));
     const folderName = path.dirname(inputPath);
+    const fileBasenameNoExtension = path.basename(inputPath, path.extname(inputPath));
+    const fileExtname = path.extname(inputPath);
+    const fileDirname = path.dirname(inputPath);
+
     const replacedOutputPath = outputPath
-        .replace(/\${fileName}/g, fileName)
-        .replace(/\${folderName}/g, folderName)
+        .replace(/\${fileBasenameNoExtension}/g, fileBasenameNoExtension)
+        .replace(/\${fileExtname}/g, fileExtname)
+        .replace(/\${fileDirname}/g, fileDirname)
         .replace(/\${workspaceFolder}/g, workspaceFolder);
     const replacedOutputFolderPath = path.dirname(replacedOutputPath);
 
@@ -28,9 +33,9 @@ export function cropPdf(
 
     try {
         execSync(
-            `${getPdfcropCommand()} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`,
+            `${getExecPathPdfcrop()} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`,
             {
-                'cwd': folderName,
+                'cwd': fileDirname,
                 'shell': getShell()
             }
         );

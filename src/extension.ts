@@ -3,10 +3,10 @@ import { cropPdf } from './crop_pdf';
 import { drawioToPdf } from './drawio_to_pdf';
 import { PdfToLatexDropEditProvider } from './pdf_to_latex';
 import { pdfToImage } from './pdf_to_image';
-import { getJpegToPdfOutputPath, getPdfToJpegOptions, getPdfToJpegOutputPath, getPdfToPngOptions, getPdfToPngOutputPath, getPdfToSvgOptions, getPdfToSvgOutputPath, getPngToPdfOutputPath, getSvgToPdfOutputPath } from './configuration';
+import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf } from './configuration';
 import { imageToPdf } from './image_to_pdf';
 import { ImageToLatexPasteEditProvider } from './image_to_latex';
-import { deleteGeminiApiKey, getGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
+import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map((uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						cropPdf(uri.fsPath, undefined, workspaceFolder?.uri.fsPath);
+						cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder?.uri.fsPath);
 					})
 				);
 			});
@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToPngOutputPath(), workspaceFolder?.uri.fsPath, getPdfToPngOptions(), 'PNG');
+						pdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder?.uri.fsPath, getPdftocairoPngOptions(), 'PNG');
 					})
 				);
 			});
@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToJpegOutputPath(), workspaceFolder?.uri.fsPath, getPdfToJpegOptions(), 'JPEG');
+						pdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder?.uri.fsPath, getPdftocairoJpegOptions(), 'JPEG');
 					})
 				);
 			});
@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getPdfToSvgOutputPath(), workspaceFolder?.uri.fsPath, getPdfToSvgOptions(), 'SVG');
+						pdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder?.uri.fsPath, getPdftocairoSvgOptions(), 'SVG');
 					})
 				);
 			});
@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getPngToPdfOutputPath(), workspaceFolder?.uri.fsPath);
+						imageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder?.uri.fsPath);
 					})
 				);
 			});
@@ -165,7 +165,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getJpegToPdfOutputPath(), workspaceFolder?.uri.fsPath);
+						imageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder?.uri.fsPath);
 					})
 				);
 			});
@@ -187,7 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
 				await Promise.allSettled(
 					uris.map(async (uri: vscode.Uri) => {
 						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getSvgToPdfOutputPath(), workspaceFolder?.uri.fsPath);
+						imageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder?.uri.fsPath);
 					})
 				);
 			});

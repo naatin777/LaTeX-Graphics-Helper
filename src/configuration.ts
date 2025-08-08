@@ -15,21 +15,14 @@ export function getShell(): string {
     }
 }
 
-export function getPdfcropCommand(): string {
+export function getExecPathPdfcrop(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-
-    return config.get<string>('pdfcropCommand') ?? 'pdfcrop';
+    return config.get<string>('execPath.pdfcrop') as string;
 }
 
-export function getPdfcropOutputPath(): string {
+export function getExecPathDrawio(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-
-    return config.get<string>('pdfcropOutputPath') ?? '${folderName}/${fileName}-crop.pdf';
-}
-
-export function getDrawioCommand(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const drawioCommand = config.get<string>('drawioCommand');
+    const drawioCommand = config.get<string>('execPath.drawio');
     const platform = os.platform();
 
     if (platform === 'win32') {
@@ -41,106 +34,14 @@ export function getDrawioCommand(): string {
     }
 }
 
-export function getDrawioToPdfOutputPath(): string {
+export function getExecPathPdftocairo(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-
-    return config.get<string>('drawioToPdfOutputPath') ?? '${folderName}/${fileName}/${tabName}.pdf';
+    return config.get<string>('execPath.pdftocairo') as string;
 }
 
-export function getPlacementSpecifiersUseDefault(): boolean {
+export function getExecPathInkscape(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<boolean>('placementSpecifiers.useDefault') ?? false;
-}
-
-export function getPlacementSpecifiersDefault(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('placementSpecifiers.default') ?? '[H]';
-}
-
-export function getPlacementSpecifiersChoice(): string[] {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('placementSpecifiers.choice') ?? [
-        '[H]',
-        '[h]',
-        '[t]',
-        '[b]',
-        '[p]',
-        '[ht]',
-        '[hb]',
-        '[hp]',
-        '[tb]',
-        '[tp]',
-        '[bp]',
-        '[htb]',
-        '[htp]',
-        '[hbp]',
-        '[tbp]',
-        '[htbp]'
-    ];
-}
-
-export function getGraphicsOptionsDefault(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('graphicsOptions.default') ?? '[width=0.8\\linewidth]';
-}
-
-export function getMinipageOptionsUseDefault(): boolean {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<boolean>('minipageOptions.useDefault') ?? false;
-}
-
-export function getMinipageOptionsDefault(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('minipageOptions.default') ?? '[b]';
-}
-
-export function getMinipageOptionsChoice(): string[] {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('minipageOptions.choice') ?? [
-        '[t]',
-        '[c]',
-        '[b]'
-    ];
-}
-
-export function getPdftocairoCommand(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdftocairoCommand') ?? 'pdftocairo';
-}
-
-export function getPdfToPngOutputPath(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdfToPngOutputPath') ?? '${folderName}/${fileName}';
-}
-
-export function getPdfToJpegOutputPath(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdfToJpegOutputPath') ?? '${folderName}/${fileName}';
-}
-
-export function getPdfToSvgOutputPath(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pdfToSvgOutputPath') ?? '${folderName}/${fileName}.svg';
-}
-
-export function getPdfToPngOptions(): string[] {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('pdfToPngOptions') ?? ['-png', '-transp'];
-}
-
-export function getPdfToJpegOptions(): string[] {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('pdfToJpegOptions') ?? ['-jpeg'];
-}
-
-export function getPdfToSvgOptions(): string[] {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('pdfToSvgOptions') ?? ['-svg'];
-}
-
-export function getInkscapeCommand(): string {
-    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const inkscapeCommand = config.get<string>('inkscapeCommand');
+    const inkscapeCommand = config.get<string>('execPath.inkscape');
     const platform = os.platform();
 
     if (platform === 'win32') {
@@ -150,35 +51,102 @@ export function getInkscapeCommand(): string {
     }
 }
 
-export function getPngToPdfOutputPath(): string {
+export function getOutputPathCropPdf(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('pngToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+    return config.get<string>('outputPath.cropPdf') as string;
 }
 
-export function getJpegToPdfOutputPath(): string {
+export function getOutputPathConvertDrawioToPdf(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('jpegToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+    return config.get<string>('outputPath.convertDrawioToPdf') as string;
 }
 
-export function getSvgToPdfOutputPath(): string {
+export function getOutputPathConvertPdfToPng(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('svgToPdfOutputPath') ?? '${folderName}/${fileName}.pdf';
+    return config.get<string>('outputPath.convertPdfToPng') as string;
 }
 
-export function getClipboardImageOutputPath(): string {
+export function getOutputPathConvertPdfToJpeg(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('clipboardImageOutputPath') ?? '${folderName}/${dateNow}';
+    return config.get<string>('outputPath.convertPdfToJpeg') as string;
 }
 
-export function getGeminiAIModel(): string {
+export function getOutputPathConvertPdfToSvg(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string>('geminiAIModel') ?? 'gemini-2.5-flash';
+    return config.get<string>('outputPath.convertPdfToSvg') as string;
 }
 
-export function getGeminiRequestList(): string[] {
+export function getOutputPathConvertPngToPdf(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return config.get<string[]>('geminiRequestList') ?? [
-        'Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.',
-        'Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.'
-    ];
+    return config.get<string>('outputPath.convertPngToPdf') as string;
+}
+
+export function getOutputPathConvertJpegToPdf(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('outputPath.convertJpegToPdf') as string;
+}
+
+export function getOutputPathConvertSvgToPdf(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('outputPath.convertSvgToPdf') as string;
+}
+
+export function getOutputPathClipboardImage(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('outputPath.clipboardImage') as string;
+}
+
+export function getChoiceFigurePlacement(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.figurePlacement') as string[];
+}
+
+export function getChoiceFigureAlignment(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.figureAlignment') as string[];
+}
+
+export function getChoiceGraphicsOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.graphicsOptions') as string[];
+}
+
+export function getChoiceSubVerticalAlignment(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.subVerticalAlignment') as string[];
+}
+
+export function getChoiceSubWidth(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.subWidth') as string[];
+}
+
+export function getChoiceSpaceBetweenSubs(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('choice.spaceBetweenSubs') as string[];
+}
+
+export function getPdftocairoPngOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdftocairo.pngOptions') as string[];
+}
+
+export function getPdftocairoJpegOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdftocairo.jpegOptions') as string[];
+}
+
+export function getPdftocairoSvgOptions(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('pdftocairo.svgOptions') as string[];
+}
+
+export function getGeminiModel(): string {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string>('gemini.model') as string;
+}
+
+export function getGeminiRequests(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('gemini.requests') as string[];
 }
