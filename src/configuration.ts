@@ -179,3 +179,11 @@ export function getGeminiAIModel(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string>('geminiAIModel') ?? 'gemini-2.5-flash';
 }
+
+export function getGeminiRequestList(): string[] {
+    const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return config.get<string[]>('geminiRequestList') ?? [
+        "Convert the uploaded file into a LaTeX equation and output it.",
+        "Convert the uploaded file into a LaTeX table and output it."
+    ];
+}
