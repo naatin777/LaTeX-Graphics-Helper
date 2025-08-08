@@ -276,11 +276,6 @@
           "default": "${folderName}/${dateNow}",
           "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
         },
-        "latex-graphics-helper.autoConvertToPdfOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically convert images to PDF on save."
-        },
         "latex-graphics.helper.geminiAIModel": {
           "type": "string",
           "default": "gemini-2.5-flash",
