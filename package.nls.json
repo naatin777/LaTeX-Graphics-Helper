@@ -1,13 +1,13 @@
 {
-	"cropPdf": "Crop",
-	"drawioToPdf": "Convert to PDF",
-	"pdfTo": "Convert to Image",
-	"pdfToPng": "Convert to PNG",
-	"pdfToJpeg": "Convert to JPEG",
-	"pdfToSvg": "Convert to SVG",
-	"pngToPdf": "Convert to PDF",
-	"jpegToPdf": "Convert to PDF",
-	"svgToPdf": "Convert to PDF",
+	"cropPdf": "Crop PDF",
+	"convertDrawioToPdf": "Convert to PDF",
+	"convertPdfToImage": "Convert to Image",
+	"convertPdfToPng": "Convert to PNG",
+	"convertPdfToJpeg": "Convert to JPEG",
+	"convertPdfToSvg": "Convert to SVG",
+	"convertPngToPdf": "Convert to PDF",
+	"convertJpegToPdf": "Convert to PDF",
+	"convertSvgToPdf": "Convert to PDF",
 	"setGeminiApiKey": "Set Gemini API Key",
 	"deleteGeminiApiKey": "Delete Gemini API Key"
 }

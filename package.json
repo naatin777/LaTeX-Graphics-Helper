@@ -24,44 +24,44 @@
           "when": "resourceExtname == .pdf"
         },
         {
-          "command": "latex-graphics-helper.drawioToPdf",
+          "command": "latex-graphics-helper.convertDrawioToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .drawio || resourceExtname == .dio"
         },
         {
-          "submenu": "latex-graphics-helper.pdfTo",
+          "submenu": "latex-graphics-helper.convertPdfToImage",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         },
         {
-          "command": "latex-graphics-helper.pngToPdf",
+          "command": "latex-graphics-helper.convertPngToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .png"
         },
         {
-          "command": "latex-graphics-helper.jpegToPdf",
+          "command": "latex-graphics-helper.convertJpegToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .jpeg || resourceExtname == .jpg"
         },
         {
-          "command": "latex-graphics-helper.svgToPdf",
+          "command": "latex-graphics-helper.convertSvgToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .svg"
         }
       ],
-      "latex-graphics-helper.pdfTo": [
+      "latex-graphics-helper.convertPdfToImage": [
         {
-          "command": "latex-graphics-helper.pdfToPng",
+          "command": "latex-graphics-helper.convertPdfToPng",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         },
         {
-          "command": "latex-graphics-helper.pdfToJpeg",
+          "command": "latex-graphics-helper.convertPdfToJpeg",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         },
         {
-          "command": "latex-graphics-helper.pdfToSvg",
+          "command": "latex-graphics-helper.convertPdfToSvg",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         }
@@ -69,8 +69,8 @@
     },
     "submenus": [
       {
-        "id": "latex-graphics-helper.pdfTo",
-        "label": "%pdfTo%"
+        "id": "latex-graphics-helper.convertPdfToImage",
+        "label": "%convertPdfToImage%"
       }
     ],
     "commands": [
@@ -80,38 +80,38 @@
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.drawioToPdf",
-        "title": "%drawioToPdf%",
+        "command": "latex-graphics-helper.convertDrawioToPdf",
+        "title": "%convertDrawioToPdf%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.pdfToPng",
-        "title": "%pdfToPng%",
+        "command": "latex-graphics-helper.convertPdfToPng",
+        "title": "%convertPdfToPng%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.pdfToJpeg",
-        "title": "%pdfToJpeg%",
+        "command": "latex-graphics-helper.convertPdfToJpeg",
+        "title": "%convertPdfToJpeg%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.pdfToSvg",
-        "title": "%pdfToSvg%",
+        "command": "latex-graphics-helper.convertPdfToSvg",
+        "title": "%convertPdfToSvg%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.pngToPdf",
-        "title": "%pngToPdf%",
+        "command": "latex-graphics-helper.convertPngToPdf",
+        "title": "%convertPngToPdf%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.jpegToPdf",
-        "title": "%jpegToPdf%",
+        "command": "latex-graphics-helper.convertJpegToPdf",
+        "title": "%convertJpegToPdf%",
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.svgToPdf",
-        "title": "%svgToPdf%",
+        "command": "latex-graphics-helper.convertSvgToPdf",
+        "title": "%convertSvgToPdf%",
         "category": "LaTeX Graphics Helper"
       },
       {
@@ -133,37 +133,72 @@
           "default": "",
           "description": "Shell to use for executing commands. If not specified, the default shell for your operating system will be used (powershell.exe on Windows, /bin/zsh on macOS, /bin/bash on others)."
         },
-        "latex-graphics-helper.pdfcropCommand": {
+        "latex-graphics-helper.execPath.pdfcrop": {
           "type": "string",
           "default": "pdfcrop",
           "description": "Path to the pdfcrop executable"
         },
-        "latex-graphics-helper.pdfcropOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}-crop.pdf",
-          "description": "Output file name when cropping a pdf file."
-        },
-        "latex-graphics-helper.drawioCommand": {
+        "latex-graphics-helper.execPath.drawio": {
           "type": "string",
           "default": "",
           "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
         },
-        "latex-graphics-helper.drawioToPdfOutputPath": {
+        "latex-graphics-helper.execPath.pdftocairo": {
           "type": "string",
-          "default": "${folderName}/${fileName}/${tabName}.pdf",
+          "default": "pdftocairo",
+          "description": "Path to the pdftocairo executable"
+        },
+        "latex-graphics-helper.execPath.inkscape": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the inkscape executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\Inkscape\\bin\\inkscape.exe\" on Windows, inkscape on others)."
+        },
+        "latex-graphics-helper.outputPath.cropPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-crop${fileExtname}",
+          "description": "Output file name when cropping a pdf file."
+        },
+        "latex-graphics-helper.outputPath.convertDrawioToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${tabname}${fileExtname}",
           "description": "Output file name when converting a PDF file."
         },
-        "latex-graphics-helper.placementSpecifiers.useDefault": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to use the default placement specifiers for LaTeX figures and tables."
-        },
-        "latex-graphics-helper.placementSpecifiers.default": {
+        "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
-          "default": "[H]",
-          "description": "Default placement specifiers for LaTeX figures and tables."
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
         },
-        "latex-graphics-helper.placementSpecifiers.choice": {
+        "latex-graphics-helper.outputPath.convertPdfToJpeg": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
+        },
+        "latex-graphics-helper.outputPath.convertPdfToSvg": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
+        },
+        "latex-graphics-helper.outputPath.convertPngToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.outputPath.convertJpegToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.outputPath.convertSvgToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasename}",
+          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
+        },
+        "latex-graphics-helper.outputPath.clipboardImage": {
+          "type": "string",
+          "default": "${fileDirname}/${dateNow}${fileExtname}",
+          "description": "Output file name when saving clipboard images to a file."
+        },
+        "latex-graphics-helper.choice.figurePlacement": {
           "type": "array",
           "default": [
             "[H]",
@@ -185,22 +220,28 @@
           ],
           "description": "Available placement specifiers for LaTeX figures and tables."
         },
-        "latex-graphics-helper.graphicsOptions.default": {
-          "type": "string",
-          "default": "[width=0.8\\linewidth]",
+        "latex-graphics-helper.choice.figureAlignment": {
+          "type": "array",
+          "default": [
+            "\\centering",
+            "\\raggedright",
+            "\\raggedleft"
+          ],
+          "description": "Available placement specifiers for LaTeX figures and tables."
+        },
+        "latex-graphics-helper.choice.graphicsOptions": {
+          "type": "array",
+          "default": [
+            "[width=1.0\\linewidth]",
+            "[width=0.9\\linewidth]",
+            "[width=0.8\\linewidth]",
+            "[width=0.7\\linewidth]",
+            "[width=0.6\\linewidth]",
+            "[width=0.5\\linewidth]"
+          ],
           "description": "Default graphics options for LaTeX figures and tables."
         },
-        "latex-graphics-helper.minipageOptions.useDefault": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether to use the default options for LaTeX minipage environments."
-        },
-        "latex-graphics-helper.minipageOptions.default": {
-          "type": "string",
-          "default": "[b]",
-          "description": "Default options for LaTeX minipage environments."
-        },
-        "latex-graphics-helper.minipageOptions.choice": {
+        "latex-graphics-helper.choice.subVerticalAlignment": {
           "type": "array",
           "default": [
             "[t]",
@@ -209,27 +250,27 @@
           ],
           "description": "Available options for LaTeX minipage environments."
         },
-        "latex-graphics-helper.pdftocairoCommand": {
-          "type": "string",
-          "default": "pdftocairo",
-          "description": "Path to the pdftocairo executable"
+        "latex-graphics-helper.choice.subWidth": {
+          "type": "array",
+          "default": [
+            "{0.45\\linewidth}",
+            "{0.45\\linewidth}",
+            "{0.45\\linewidth}"
+          ],
+          "description": "Available options for LaTeX minipage environments."
         },
-        "latex-graphics-helper.pdfToPngOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
+        "latex-graphics-helper.choice.spaceBetweenSubs": {
+          "type": "array",
+          "default": [
+            "\\hspace{0.01\\linewidth}",
+            "\\hspace{0.02\\linewidth}",
+            "\\hspace{0.03\\linewidth}",
+            "\\hspace{0.04\\linewidth}",
+            "\\hspace{0.05\\linewidth}"
+          ],
+          "description": "Available options for LaTeX minipage environments."
         },
-        "latex-graphics-helper.pdfToJpegOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
-        },
-        "latex-graphics-helper.pdfToSvgOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}.svg",
-          "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
-        },
-        "latex-graphics-helper.pdfToPngOptions": {
+        "latex-graphics-helper.pdftocairo.pngOptions": {
           "type": "array",
           "default": [
             "-png",
@@ -237,51 +278,26 @@
           ],
           "description": "Options passed to pdftocairo when converting PDF to PNG."
         },
-        "latex-graphics-helper.pdfToJpegOptions": {
+        "latex-graphics-helper.pdftocairo.jpegOptions": {
           "type": "array",
           "default": [
             "-jpeg"
           ],
           "description": "Options passed to pdftocairo when converting PDF to JPEG."
         },
-        "latex-graphics-helper.pdfToSvgOptions": {
+        "latex-graphics-helper.pdftocairo.svgOptions": {
           "type": "array",
           "default": [
             "-svg"
           ],
           "description": "Options passed to pdftocairo when converting PDF to SVG."
         },
-        "latex-graphics-helper.inkscapeCommand": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the inkscape executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\Inkscape\\bin\\inkscape.exe\" on Windows, inkscape on others)."
-        },
-        "latex-graphics-helper.pngToPdfOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}.pdf",
-          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
-        },
-        "latex-graphics-helper.jpegToPdfOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}.pdf",
-          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
-        },
-        "latex-graphics-helper.svgToPdfOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${fileName}.pdf",
-          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
-        },
-        "latex-graphics-helper.clipboardImageOutputPath": {
-          "type": "string",
-          "default": "${folderName}/${dateNow}",
-          "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
-        },
-        "latex-graphics.helper.geminiAIModel": {
+        "latex-graphics.helper.gemini.model": {
           "type": "string",
           "default": "gemini-2.5-flash",
           "description": "Selects the Gemini AI model to be used for generating LaTeX code from images."
         },
-        "latex-graphics-helper.geminiRequestList": {
+        "latex-graphics-helper.gemini.requests": {
           "type": "array",
           "default": [
             "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.",

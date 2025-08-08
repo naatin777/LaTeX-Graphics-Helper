@@ -1,13 +1,13 @@
 {
-	"cropPdf": "クロップ",
-	"drawioToPdf": "PDFに変換",
-	"pdfTo": "画像に変換",
-	"pdfToPng": "PNGに変換",
-	"pdfToJpeg": "JPEGに変換",
-	"pdfToSvg": "SVGに変換",
-	"pngToPdf": "PDFに変換",
-	"jpegToPdf": "PDFに変換",
-	"svgToPdf": "PDFに変換",
+	"cropPdf": "PDFをクロップ",
+	"convertDrawioToPdf": "PDFに変換",
+	"convertPdfToImage": "画像に変換",
+	"convertPdfToPng": "PNGに変換",
+	"convertPdfToJpeg": "JPEGに変換",
+	"convertPdfToSvg": "SVGに変換",
+	"convertPngToPdf": "PDFに変換",
+	"convertJpegToPdf": "PDFに変換",
+	"convertSvgToPdf": "PDFに変換",
 	"setGeminiApiKey": "Gemini APIキーを設定",
 	"deleteGeminiApiKey": "Gemini APIキーを削除"
 }
