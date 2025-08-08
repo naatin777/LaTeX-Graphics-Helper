@@ -183,7 +183,7 @@ export function getGeminiAIModel(): string {
 export function getGeminiRequestList(): string[] {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');
     return config.get<string[]>('geminiRequestList') ?? [
-        "Convert the uploaded file into a LaTeX equation and output it.",
-        "Convert the uploaded file into a LaTeX table and output it."
+        'Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.',
+        'Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.'
     ];
 }

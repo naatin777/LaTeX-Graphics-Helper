@@ -289,10 +289,10 @@
         "latex-graphics-helper.geminiRequestList": {
           "type": "array",
           "default": [
-            "Convert the uploaded file into a LaTeX equation and output it.",
-            "Convert the uploaded file into a LaTeX table and output it."
+            "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.",
+            "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
           ],
-          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images. These requests appear as options in the context menu."
+          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images."
         }
       }
     }
