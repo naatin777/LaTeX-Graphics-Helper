@@ -1,11 +1,22 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getAutoConvertToPdfOnSave, getClipboardImageOutputPath, getGraphicsOptionsDefault, getPlacementSpecifiersChoice, getPlacementSpecifiersDefault, getPlacementSpecifiersUseDefault } from './configuration';
+import { getClipboardImageOutputPath, getGeminiRequestList, getGraphicsOptionsDefault, getPlacementSpecifiersChoice, getPlacementSpecifiersDefault, getPlacementSpecifiersUseDefault } from './configuration';
 import { imageToPdf } from './image_to_pdf';
 import { escapeLatex, escapeLatexLabel, toPosixPath } from './utils';
+import { askGemini } from './gemini';
 
 export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
+    private static readonly CUSTOM_REQUEST_LABEL = 'Write a custom request';
+    private static readonly PASTE_DEFAULT_IMAGE_FORMAT_LABEL = 'Paste as default image format';
+    private static readonly PASTE_PDF_FORMAT_LABEL = 'Paste as PDF format';
+
+    secretStorage: vscode.SecretStorage;
+
+    constructor(secretStorage: vscode.SecretStorage) {
+        this.secretStorage = secretStorage;
+    }
+
     async provideDocumentPasteEdits(
         document: vscode.TextDocument,
         ranges: readonly vscode.Range[],
@@ -17,6 +28,7 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
         const imagePngEntry = dataTransfer.get('image/png');
         const imageJpegEntry = dataTransfer.get('image/jpeg');
         const imageSvgEntry = dataTransfer.get('image/svg+xml');
+
         const entry = applicationPdfEntry || imagePngEntry || imageJpegEntry || imageSvgEntry;
 
         if (!entry) {
@@ -34,6 +46,12 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
             : imagePngEntry ? '.png'
                 : imageJpegEntry ? '.jpeg'
                     : imageSvgEntry ? '.svg'
+                        : '';
+
+        const fileMimeType = applicationPdfEntry ? 'application/pdf'
+            : imagePngEntry ? 'image/png'
+                : imageJpegEntry ? 'image/jpeg'
+                    : imageSvgEntry ? 'image/svg+xml'
                         : '';
 
         const uri = document.uri;
@@ -54,26 +72,43 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
             fs.mkdirSync(replacedOutputFolderPath, { recursive: true });
         }
 
-        let imagePath = `${replacedOutputPath}${fileExtension}`;
+        const imagePath = `${replacedOutputPath}${fileExtension}`;
+
+        const buffer = Buffer.from(fileContent);
 
         try {
-            fs.writeFileSync(imagePath, Buffer.from(fileContent));
+            const geminiRequests = getGeminiRequestList().map((value) => ({ label: value }));
+            const items: vscode.QuickPickItem[] = [
+                { label: ImageToLatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL },
+                { label: ImageToLatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL },
+                { label: '', kind: vscode.QuickPickItemKind.Separator },
+                ...geminiRequests,
+                { label: '', kind: vscode.QuickPickItemKind.Separator },
+                { label: ImageToLatexPasteEditProvider.CUSTOM_REQUEST_LABEL },
+            ];
 
-            const autoConvertToPdfOnSave = getAutoConvertToPdfOnSave();
+            const pickedItem = await vscode.window.showQuickPick(items);
 
-            if (autoConvertToPdfOnSave && (imagePngEntry || imageJpegEntry || imageSvgEntry)) {
-                imageToPdf(imagePath, `${replacedOutputPath}.pdf`);
-                if (fs.existsSync(imagePath)) {
-                    fs.unlinkSync(imagePath);
+            let snippet: vscode.SnippetString | undefined;
+
+            if (pickedItem) {
+                if (pickedItem.label === ImageToLatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL) {
+                    snippet = await this.handleDefaultImagePaste(imagePath, buffer, folderName);
+                } else if (pickedItem.label === ImageToLatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL) {
+                    snippet = await this.handlePdfPaste(imagePath, buffer, (imagePngEntry || imageJpegEntry || imageSvgEntry) !== undefined, replacedOutputPath, folderName);
+                } else if (pickedItem.label === ImageToLatexPasteEditProvider.CUSTOM_REQUEST_LABEL) {
+                    snippet = await this.handleCustomGeminiRequest(buffer, fileMimeType);
+                } else {
+                    snippet = await this.handleGeminiRequest(pickedItem.label, buffer, fileMimeType);
                 }
-                imagePath = `${replacedOutputPath}.pdf`;
             }
 
-            const relativeFilePath = path.relative(folderName, imagePath);
+            if (snippet) {
+                const edit = new vscode.DocumentPasteEdit(snippet, '', vscode.DocumentDropOrPasteEditKind.Empty);
+                return [edit];
+            }
 
-            const edit = new vscode.DocumentPasteEdit(this.createSinglePdfSnippet('', relativeFilePath), 'graphics', vscode.DocumentDropOrPasteEditKind.Empty);
-
-            return [edit];
+            return undefined;
 
         } catch (error) {
             if (error instanceof Error) {
@@ -81,6 +116,39 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
             }
             return undefined;
         }
+    }
+
+    private async handleDefaultImagePaste(imagePath: string, buffer: Buffer<ArrayBuffer>, folderName: string): Promise<vscode.SnippetString | undefined> {
+        fs.writeFileSync(imagePath, buffer);
+        const relativeFilePath = path.relative(folderName, imagePath);
+        return this.createSinglePdfSnippet('', relativeFilePath);
+    }
+
+    private async handlePdfPaste(imagePath: string, buffer: Buffer<ArrayBuffer>, isImage: boolean, replacedOutputPath: string, folderName: string): Promise<vscode.SnippetString | undefined> {
+        fs.writeFileSync(imagePath, buffer);
+        if (isImage) {
+            imageToPdf(imagePath, `${replacedOutputPath}.pdf`);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+            imagePath = `${replacedOutputPath}.pdf`;
+        }
+        const relativeFilePath = path.relative(folderName, imagePath);
+        return this.createSinglePdfSnippet('', relativeFilePath);
+    }
+
+    private async handleCustomGeminiRequest(buffer: Buffer<ArrayBuffer>, fileMimeType: string): Promise<vscode.SnippetString | undefined> {
+        const customRequest = await vscode.window.showInputBox({ prompt: 'Enter your custom request for Gemini' });
+        if (customRequest) {
+            const geminiResponse = await askGemini(this.secretStorage, customRequest, buffer, fileMimeType);
+            return new vscode.SnippetString(geminiResponse);
+        }
+        return undefined;
+    }
+
+    private async handleGeminiRequest(label: string, buffer: Buffer<ArrayBuffer>, fileMimeType: string): Promise<vscode.SnippetString | undefined> {
+        const geminiResponse = await askGemini(this.secretStorage, label, buffer, fileMimeType);
+        return new vscode.SnippetString(geminiResponse);
     }
 
     createSinglePdfSnippet(fileName: string = '', relativeFilePath: string): vscode.SnippetString {

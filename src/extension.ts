@@ -197,7 +197,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.languages.registerDocumentPasteEditProvider(
 			{ language: 'latex' },
-			new ImageToLatexPasteEditProvider(),
+			new ImageToLatexPasteEditProvider(secretStorage),
 			{
 				pasteMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
 				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
