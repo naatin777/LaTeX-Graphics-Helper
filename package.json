@@ -155,48 +155,48 @@
         },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-crop${fileExtname}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
           "description": "Output file name when cropping a pdf file."
         },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}",
-          "description": "Output file name when converting a Draw.io file to PDF."
+          "description": "Output file name when converting a Draw.io file to PDF. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
+          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertPdfToJpeg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
+          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertPdfToSvg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.svg",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
-          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
+          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertJpegToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
-          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
+          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertSvgToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasename}",
-          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
+          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.clipboardImage": {
           "type": "string",
-          "default": "${fileDirname}/${dateNow}${fileExtname}",
-          "description": "Output file name when saving clipboard images to a file."
+          "default": "${fileDirname}/${dateNow}",
+          "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
         },
         "latex-graphics-helper.choice.figurePlacement": {
           "type": "array",
@@ -275,14 +275,16 @@
           "type": "array",
           "default": [
             "-png",
-            "-transp"
+            "-transp",
+            "-singlefile"
           ],
           "description": "Options passed to pdftocairo when converting PDF to PNG."
         },
         "latex-graphics-helper.pdftocairo.jpegOptions": {
           "type": "array",
           "default": [
-            "-jpeg"
+            "-jpeg",
+            "-singlefile"
           ],
           "description": "Options passed to pdftocairo when converting PDF to JPEG."
         },
@@ -293,7 +295,7 @@
           ],
           "description": "Options passed to pdftocairo when converting PDF to SVG."
         },
-        "latex-graphics.helper.gemini.model": {
+        "latex-graphics-helper.gemini.model": {
           "type": "string",
           "default": "gemini-2.0-flash",
           "description": "Selects the Gemini AI model to be used for generating LaTeX code from images."

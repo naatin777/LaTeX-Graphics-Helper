@@ -41,16 +41,15 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const outputPath = getOutputPathClipboardImage();
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)!;
 
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-        createFolder(replacedOutputPath);
-
         const items = this.createQuickPickItems();
         const pickedItem = await vscode.window.showQuickPick(items);
+
+        const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
+        createFolder(replacedOutputPath);
 
         let snippet: vscode.SnippetString | undefined;
 
         try {
-
             if (pickedItem) {
                 if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
@@ -105,7 +104,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
     private async handleDefaultImagePaste(imagePath: string, info: FileInfo, fileDirname: string): Promise<vscode.SnippetString | undefined> {
         fs.writeFileSync(`${imagePath}${info.ext}`, info.buffer);
-        const relativeFilePath = path.relative(fileDirname, imagePath);
+        const relativeFilePath = path.relative(fileDirname, `${imagePath}${info.ext}`);
         return this.createSinglePdfSnippet('', relativeFilePath);
     }
 

@@ -33,7 +33,5 @@ export async function askGemini(secretStorage: vscode.SecretStorage, message: st
         ]
     });
 
-    console.log(response);
-
     return response.text;
 }
