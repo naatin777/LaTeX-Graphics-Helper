@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { cropPdf } from './context_menu/crop_pdf';
 import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
-import { pdfToImage } from './context_menu/convert_pdf_to_image';
+import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
 import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf } from './configuration';
-import { imageToPdf } from './context_menu/convert_image_to_pdf';
+import { convertImageToPdf } from './context_menu/convert_image_to_pdf';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { runExplorerContextItem } from './context_menu/run_context_menu_item';
@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting PDF files to PNG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				pdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder, getPdftocairoPngOptions());
+				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder, getPdftocairoPngOptions());
 			});
 		})
 	);
@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting PDF files to JPEG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				pdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder, getPdftocairoJpegOptions());
+				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder, getPdftocairoJpegOptions());
 			});
 		})
 	);
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting PDF files to SVG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				pdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder, getPdftocairoSvgOptions());
+				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder, getPdftocairoSvgOptions());
 			});
 		})
 	);
@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPngToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting PNG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				imageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder?.uri.fsPath);
+				convertImageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder);
 			});
 		})
 	);
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertJpegToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting JPEG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				imageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder?.uri.fsPath);
+				convertImageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder);
 			});
 		})
 	);
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertSvgToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, 'Converting SVG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				imageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder?.uri.fsPath);
+				convertImageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder);
 			});
 		})
 	);

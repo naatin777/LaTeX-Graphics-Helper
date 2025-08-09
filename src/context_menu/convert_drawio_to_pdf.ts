@@ -51,7 +51,7 @@ export async function convertDrawioToPdf(
     for (let i = 0; i < pdfPages.length; i++) {
         const tab = drawioTabs[i];
 
-        const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder, tab);
+        const replacedOutputPath = `${replaceOutputPath(inputPath, outputPath, workspaceFolder, tab)}.pdf`;
         createFolder(replacedOutputPath);
 
         savePdfFile(pdfDocument, replacedOutputPath, i);

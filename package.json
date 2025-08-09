@@ -160,7 +160,7 @@
         },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}/${tabname}${fileExtname}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}",
           "description": "Output file name when converting a PDF file."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {

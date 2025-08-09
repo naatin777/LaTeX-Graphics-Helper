@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { getExecPathPdftocairo } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
-export function pdfToImage(
+export function convertPdfToImage(
     inputPath: string,
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
