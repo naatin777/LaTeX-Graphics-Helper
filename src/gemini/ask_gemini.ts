@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getGeminiApiKey } from './gemini_api_key';
-import { getGeminiAIModel } from './configuration';
+import { getGeminiModel } from '../configuration';
 
 export async function askGemini(secretStorage: vscode.SecretStorage, message: string, buffer?: Buffer<ArrayBuffer>, fileMimeType?: string) {
     const { GoogleGenAI, createPartFromUri } = await import('@google/genai');
@@ -33,7 +33,7 @@ export async function askGemini(secretStorage: vscode.SecretStorage, message: st
     contents.push({ text: message });
 
     const res = await ai.models.generateContent({
-        model: getGeminiAIModel(),
+        model: getGeminiModel(),
         contents: contents
     });
 

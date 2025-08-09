@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getClipboardImageOutputPath, getGeminiRequestList, getGraphicsOptionsDefault, getPlacementSpecifiersChoice, getPlacementSpecifiersDefault, getPlacementSpecifiersUseDefault } from './configuration';
-import { imageToPdf } from './image_to_pdf';
-import { escapeLatex, escapeLatexLabel, toPosixPath } from './utils';
-import { askGemini } from './gemini';
+import { imageToPdf } from '../context_menu/convert_image_to_pdf';
+import { escapeLatex, escapeLatexLabel, toPosixPath } from '../utils';
+import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
+import { askGemini } from '../gemini/ask_gemini';
 
-export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
+export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
     private static readonly CUSTOM_REQUEST_LABEL = 'Write a custom request';
     private static readonly PASTE_DEFAULT_IMAGE_FORMAT_LABEL = 'Paste as default image format';
     private static readonly PASTE_PDF_FORMAT_LABEL = 'Paste as PDF format';
@@ -58,7 +58,7 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
         const extname = path.extname(uri.fsPath);
         const fileName = path.basename(uri.fsPath, extname);
         const folderName = path.dirname(uri.fsPath);
-        const outputPath = getClipboardImageOutputPath();
+        const outputPath = getOutputPathClipboardImage();
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath ?? '';
 
         const replacedOutputPath = outputPath
@@ -77,14 +77,14 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
         const buffer = Buffer.from(fileContent);
 
         try {
-            const geminiRequests = getGeminiRequestList().map((value) => ({ label: value }));
+            const geminiRequests = getGeminiRequests().map((value) => ({ label: value }));
             const items: vscode.QuickPickItem[] = [
-                { label: ImageToLatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL },
-                { label: ImageToLatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL },
+                { label: LatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL },
+                { label: LatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL },
                 { label: '', kind: vscode.QuickPickItemKind.Separator },
                 ...geminiRequests,
                 { label: '', kind: vscode.QuickPickItemKind.Separator },
-                { label: ImageToLatexPasteEditProvider.CUSTOM_REQUEST_LABEL },
+                { label: LatexPasteEditProvider.CUSTOM_REQUEST_LABEL },
             ];
 
             const pickedItem = await vscode.window.showQuickPick(items);
@@ -92,11 +92,11 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
             let snippet: vscode.SnippetString | undefined;
 
             if (pickedItem) {
-                if (pickedItem.label === ImageToLatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL) {
+                if (pickedItem.label === LatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL) {
                     snippet = await this.handleDefaultImagePaste(imagePath, buffer, folderName);
-                } else if (pickedItem.label === ImageToLatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL) {
+                } else if (pickedItem.label === LatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL) {
                     snippet = await this.handlePdfPaste(imagePath, buffer, (imagePngEntry || imageJpegEntry || imageSvgEntry) !== undefined, replacedOutputPath, folderName);
-                } else if (pickedItem.label === ImageToLatexPasteEditProvider.CUSTOM_REQUEST_LABEL) {
+                } else if (pickedItem.label === LatexPasteEditProvider.CUSTOM_REQUEST_LABEL) {
                     snippet = await this.handleCustomGeminiRequest(buffer, fileMimeType);
                 } else {
                     snippet = await this.handleGeminiRequest(pickedItem.label, buffer, fileMimeType);
@@ -155,14 +155,14 @@ export class ImageToLatexPasteEditProvider implements vscode.DocumentPasteEditPr
         const snippet = new vscode.SnippetString();
 
         snippet.appendText('\\begin{figure}');
-        if (getPlacementSpecifiersUseDefault()) {
-            snippet.appendText(getPlacementSpecifiersDefault());
-        } else {
-            snippet.appendChoice(getPlacementSpecifiersChoice(), 1);
-        }
+        snippet.appendChoice(getChoiceFigurePlacement(), 1);
         snippet.appendText('\n');
-        snippet.appendText('\t\\centering\n');
-        snippet.appendText(`\t\\includegraphics${getGraphicsOptionsDefault()}{${toPosixPath(relativeFilePath)}}\n`);
+        snippet.appendText('\t');
+        snippet.appendChoice(getChoiceFigureAlignment(), 1);
+        snippet.appendText('\n');
+        snippet.appendText('\t\\includegraphics');
+        snippet.appendChoice(getChoiceGraphicsOptions(), 1);
+        snippet.appendText(`{${toPosixPath(relativeFilePath)}}\n`);
         snippet.appendText('\t\\caption{');
         snippet.appendPlaceholder(escapeLatex(fileName), 2);
         snippet.appendText('}');

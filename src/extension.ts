@@ -1,56 +1,77 @@
 import * as vscode from 'vscode';
-import { cropPdf } from './crop_pdf';
-import { drawioToPdf } from './drawio_to_pdf';
-import { PdfToLatexDropEditProvider } from './pdf_to_latex';
-import { pdfToImage } from './pdf_to_image';
-import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf } from './configuration';
-import { imageToPdf } from './image_to_pdf';
-import { ImageToLatexPasteEditProvider } from './image_to_latex';
-import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini_api_key';
+import { cropPdf } from './context_menu/crop_pdf';
+import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
+import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
+import { pdfToImage } from './context_menu/convert_pdf_to_image';
+import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf } from './configuration';
+import { imageToPdf } from './context_menu/convert_image_to_pdf';
+import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
+import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
+import { runExplorerContextItem } from './context_menu/run_context_menu_item';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Cropping PDF files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map((uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder?.uri.fsPath);
-					})
-				);
+			runExplorerContextItem(uris, 'Cropping PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
 			});
 		})
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.drawioToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No drawio files selected.');
-				return;
-			}
+		vscode.commands.registerCommand('latex-graphics-helper.convertDrawioToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting drawio files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				await convertDrawioToPdf(uri.fsPath, getOutputPathConvertDrawioToPdf(), workspaceFolder);
+			});
+		})
+	);
 
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting drawio files to PDF files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						await drawioToPdf(uri.fsPath, undefined, workspaceFolder?.uri.fsPath);
-					})
-				);
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting PDF files to PNG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				pdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder, getPdftocairoPngOptions());
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting PDF files to JPEG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				pdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder, getPdftocairoJpegOptions());
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting PDF files to SVG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				pdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder, getPdftocairoSvgOptions());
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertPngToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting PNG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				imageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder?.uri.fsPath);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertJpegToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting JPEG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				imageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder?.uri.fsPath);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.convertSvgToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, 'Converting SVG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				imageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder?.uri.fsPath);
 			});
 		})
 	);
@@ -58,146 +79,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.languages.registerDocumentDropEditProvider(
 			{ language: 'latex' },
-			new PdfToLatexDropEditProvider(),
+			new LatexDropEditProvider(),
 		)
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.pdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to PNG files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder?.uri.fsPath, getPdftocairoPngOptions(), 'PNG');
-					})
-				);
-			});
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.pdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to JPEG files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder?.uri.fsPath, getPdftocairoJpegOptions(), 'JPEG');
-					})
-				);
-			});
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.pdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PDF files to SVG files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						pdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder?.uri.fsPath, getPdftocairoSvgOptions(), 'SVG');
-					})
-				);
-			});
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.pngToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting PNG files to PDF files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder?.uri.fsPath);
-					})
-				);
-			});
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.jpegToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting JPEG files to PDF files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder?.uri.fsPath);
-					})
-				);
-			});
-		})
-	);
-
-	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.svgToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			if (!uris) {
-				vscode.window.showErrorMessage('No PDF files selected.');
-				return;
-			}
-
-			vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Converting SVG files to PDF files...',
-				cancellable: false
-			}, async (progress) => {
-				await Promise.allSettled(
-					uris.map(async (uri: vscode.Uri) => {
-						const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-						imageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder?.uri.fsPath);
-					})
-				);
-			});
-		})
 	);
 
 	context.subscriptions.push(
 		vscode.languages.registerDocumentPasteEditProvider(
 			{ language: 'latex' },
-			new ImageToLatexPasteEditProvider(secretStorage),
+			new LatexPasteEditProvider(secretStorage),
 			{
 				pasteMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
 				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
@@ -209,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.setGeminiApiKey', async () => {
 			const apiKey = await vscode.window.showInputBox({
 				password: true,
-				title: 'pasteEnter your Gemini API Key',
+				title: 'Enter your Gemini API Key',
 			});
 			if (apiKey) {
 				await storeGeminiApiKey(secretStorage, apiKey);
@@ -223,7 +112,6 @@ export function activate(context: vscode.ExtensionContext) {
 			await deleteGeminiApiKey(secretStorage);
 			vscode.window.showInformationMessage('Deleted Gemini API Key');
 		})
-
 	);
 }
 

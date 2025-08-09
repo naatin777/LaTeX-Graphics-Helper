@@ -1,22 +1,21 @@
-import { getPdftocairoCommand, getPdfToPngOptions, getPdfToPngOutputPath, getShell } from './configuration';
+import { getExecPathInkscape, getShell } from '../configuration';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-export function pdfToImage(
+export function imageToPdf(
     inputPath: string,
     outputPath: string,
     workspaceFolder: string = '',
-    pdfToImageOptions: string[],
-    fileType: string,
 ): void {
     if (!fs.existsSync(inputPath)) {
         vscode.window.showErrorMessage(`File does not exist: ${inputPath}`);
         return;
     }
 
-    const fileName = path.basename(inputPath, path.extname(inputPath));
+    const extname = path.extname(inputPath);
+    const fileName = path.basename(inputPath, extname);
     const folderName = path.dirname(inputPath);
     const replacedOutputPath = outputPath
         .replace(/\${fileName}/g, fileName)
@@ -29,7 +28,7 @@ export function pdfToImage(
     }
     try {
         execSync(
-            `${getPdftocairoCommand()} ${pdfToImageOptions.join(' ')} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`,
+            `${getExecPathInkscape()} "${path.normalize(inputPath)}" -o "${path.normalize(replacedOutputPath)}" --export-type=pdf --export-area-drawing`,
             {
                 'cwd': folderName,
                 'shell': getShell()
@@ -37,7 +36,7 @@ export function pdfToImage(
         );
     } catch (error) {
         if (error instanceof Error) {
-            vscode.window.showErrorMessage(`Failed to convert PDF to ${fileType}: ${inputPath} - ${error.message}`);
+            vscode.window.showErrorMessage(`Failed to convert ${extname.toUpperCase()} to PDF: ${inputPath} - ${error.message}`);
         }
 
         return;

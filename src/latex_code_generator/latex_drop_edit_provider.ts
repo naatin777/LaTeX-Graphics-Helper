@@ -1,9 +1,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from './utils';
-import { getChoiceFigurePlacement, getChoiceFigureAlignment, getChoiceGraphicsOptions, getChoiceSubVerticalAlignment, getChoiceSubWidth, getChoiceSpaceBetweenSubs } from './configuration';
+import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from '../utils';
+import { getChoiceFigurePlacement, getChoiceFigureAlignment, getChoiceGraphicsOptions, getChoiceSubVerticalAlignment, getChoiceSubWidth, getChoiceSpaceBetweenSubs } from '../configuration';
 
-export class PdfToLatexDropEditProvider implements vscode.DocumentDropEditProvider {
+export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     async provideDocumentDropEdits(
         document: vscode.TextDocument,
         position: vscode.Position,

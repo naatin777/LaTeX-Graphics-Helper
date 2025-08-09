@@ -1,4 +1,8 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import { execSync } from 'child_process';
+import { getShell } from './configuration';
 
 export function toPosixPath(p: string): string {
     return path.normalize(p).split(/[\\\/]/g).join(path.posix.sep);
@@ -32,4 +36,36 @@ export function escapeLatexLabel(text: string): string {
 
 export function transpose<T>(a: T[][]): T[][] {
     return a[0].map((_, c) => a.map(r => r[c]));
+}
+
+export function replaceOutputPath(inputPath: string, outputPath: string, workspaceFolder: vscode.WorkspaceFolder, tab: string = '') {
+    return outputPath
+        .replace(/\${workspaceFolder}/g, workspaceFolder.uri.fsPath)
+        .replace(/\${workspaceFolderBasename}/g, workspaceFolder.name)
+        .replace(/\${file}/g, inputPath)
+        .replace(/\${relativeFile}/g, path.relative(workspaceFolder.name, inputPath))
+        .replace(/\${relativeFileDirname}/g, path.dirname(path.relative(workspaceFolder.name, inputPath)))
+        .replace(/\${fileBasename}/g, path.basename(inputPath))
+        .replace(/\${fileBasenameNoExtension}/g, path.basename(inputPath, path.extname(inputPath)))
+        .replace(/\${fileDirname}/g, path.dirname(inputPath))
+        .replace(/\${fileExtname}/g, path.extname(inputPath))
+        .replace(/\${tab}/g, tab);
+}
+
+export function createFolder(p: string) {
+    const folder = path.dirname(p);
+
+    if (!fs.existsSync(folder)) {
+        fs.mkdirSync(folder, { recursive: true });
+    }
+}
+
+export function runCommand(command: string, workspaceFolder: vscode.WorkspaceFolder) {
+    execSync(
+        command,
+        {
+            'cwd': workspaceFolder.uri.fsPath,
+            'shell': getShell()
+        }
+    );
 }
