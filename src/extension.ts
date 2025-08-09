@@ -9,13 +9,14 @@ import { runExplorerContextItem } from './context_menu/run_context_menu_item';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
+import { localeMap } from './locale_map';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Cropping PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('cropPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
 			});
 		})
@@ -23,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertDrawioToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting drawio files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertDrawioToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				await convertDrawioToPdf(uri.fsPath, getOutputPathConvertDrawioToPdf(), workspaceFolder);
 			});
 		})
@@ -31,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting PDF files to PNG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertPdfToPngProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToPng(), workspaceFolder, getPdftocairoPngOptions());
 			});
 		})
@@ -39,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting PDF files to JPEG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertPdfToJpegProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToJpeg(), workspaceFolder, getPdftocairoJpegOptions());
 			});
 		})
@@ -47,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting PDF files to SVG files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertPdfToSvgProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertPdfToImage(uri.fsPath, getOutputPathConvertPdfToSvg(), workspaceFolder, getPdftocairoSvgOptions());
 			});
 		})
@@ -55,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertPngToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting PNG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertPngToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertImageToPdf(uri.fsPath, getOutputPathConvertPngToPdf(), workspaceFolder);
 			});
 		})
@@ -63,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertJpegToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting JPEG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertJpegToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertImageToPdf(uri.fsPath, getOutputPathConvertJpegToPdf(), workspaceFolder);
 			});
 		})
@@ -71,7 +72,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertSvgToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, 'Converting SVG files to PDF files...', async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+			runExplorerContextItem(uris, localeMap('convertSvgToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				convertImageToPdf(uri.fsPath, getOutputPathConvertSvgToPdf(), workspaceFolder);
 			});
 		})
@@ -99,11 +100,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.setGeminiApiKey', async () => {
 			const apiKey = await vscode.window.showInputBox({
 				password: true,
-				title: 'Enter your Gemini API Key',
+				title: localeMap('enterGeminiApiKey'),
 			});
 			if (apiKey) {
 				await storeGeminiApiKey(secretStorage, apiKey);
-				vscode.window.showInformationMessage('Stored Gemini API Key');
+				vscode.window.showInformationMessage(localeMap('storedGeminiApiKey'));
 			}
 		})
 	);
@@ -111,7 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.deleteGeminiApiKey', async () => {
 			await deleteGeminiApiKey(secretStorage);
-			vscode.window.showInformationMessage('Deleted Gemini API Key');
+			vscode.window.showInformationMessage(localeMap('deletedGeminiApiKey'));
 		})
 	);
 }

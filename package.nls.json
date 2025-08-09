@@ -9,5 +9,16 @@
 	"convertJpegToPdf": "Convert to PDF",
 	"convertSvgToPdf": "Convert to PDF",
 	"setGeminiApiKey": "Set Gemini API Key",
-	"deleteGeminiApiKey": "Delete Gemini API Key"
+	"deleteGeminiApiKey": "Delete Gemini API Key",
+	"cropPdfProcess": "Cropping PDF files...",
+	"convertDrawioToPdfProcess": "Converting Draw.io files to PDF files...",
+	"convertPdfToPngProcess": "Converting PDF files to PNG files...",
+	"convertPdfToJpegProcess": "Converting PDF files to JPEG files...",
+	"convertPdfToSvgProcess": "Converting PDF files to SVG files...",
+	"convertPngToPdfProcess": "Converting PNG files to PDF files...",
+	"convertJpegToPdfProcess": "Converting JPEG files to PDF files...",
+	"convertSvgToPdfProcess": "Converting SVG files to PDF files...",
+	"enterGeminiApiKey": "Enter your Gemini API Key",
+	"storedGeminiApiKey": "Stored Gemini API Key",
+	"deletedGeminiApiKey": "Deleted Gemini API Key"
 }

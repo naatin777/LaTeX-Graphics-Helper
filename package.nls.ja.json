@@ -9,5 +9,16 @@
 	"convertJpegToPdf": "PDFに変換",
 	"convertSvgToPdf": "PDFに変換",
 	"setGeminiApiKey": "Gemini APIキーを設定",
-	"deleteGeminiApiKey": "Gemini APIキーを削除"
+	"deleteGeminiApiKey": "Gemini APIキーを削除",
+	"cropPdfProcess": "PDFファイルをクロップ中...",
+	"convertDrawioToPdfProcess": "Draw.ioファイルをPDFに変換中...",
+	"convertPdfToPngProcess": "PDFファイルをPNGファイルに変換中...",
+	"convertPdfToJpegProcess": "PDFファイルをJPEGファイルに変換中...",
+	"convertPdfToSvgProcess": "PDFファイルをSVGファイルに変換中...",
+	"convertPngToPdfProcess": "PNGファイルをPDFファイルに変換中...",
+	"convertJpegToPdfProcess": "JPEGファイルをPDFファイルに変換中...",
+	"convertSvgToPdfProcess": "SVGファイルをPDFファイルに変換中...",
+	"enterGeminiApiKey": "Gemini APIキーを入力",
+	"storedGeminiApiKey": "Gemini APIキーを保存しました",
+	"deletedGeminiApiKey": "Gemini APIキーを削除しました"
 }
