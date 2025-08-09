@@ -5,8 +5,10 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
-import { getExecPathDrawio, getExecPathPdfcrop } from '../configuration';
+import { getExecPathDrawio } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
+
+import { cropPdf } from './crop_pdf';
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
     const xmlData = fs.readFileSync(inputPath, 'utf-8');
@@ -29,20 +31,13 @@ export async function convertDrawioToPdf(
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<void> {
-    if (!fs.existsSync(inputPath)) {
-        throw new Error(`File does not exist: ${inputPath}`);
-    }
-
     const temporaryPdfPath = `${inputPath}.pdf`;
 
     runCommand(
         `${getExecPathDrawio()} -xf pdf -t -a -o "${path.normalize(temporaryPdfPath)}" "${path.normalize(inputPath)}"`,
         workspaceFolder
     );
-    runCommand(
-        `${getExecPathPdfcrop()} "${path.normalize(temporaryPdfPath)}" "${path.normalize(temporaryPdfPath)}"`,
-        workspaceFolder
-    );
+    cropPdf(temporaryPdfPath, temporaryPdfPath, workspaceFolder);
 
     const drawioTabs = await getDrawioTabs(inputPath);
 

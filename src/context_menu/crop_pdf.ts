@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as path from 'path';
 
 import * as vscode from 'vscode';
@@ -11,10 +10,6 @@ export function cropPdf(
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
 ): void {
-    if (!fs.existsSync(inputPath)) {
-        throw new Error(`File does not exist: ${inputPath}`);
-    }
-
     const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
 
