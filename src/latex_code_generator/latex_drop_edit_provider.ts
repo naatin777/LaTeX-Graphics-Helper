@@ -91,8 +91,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
     createMultiplePdfSnippet(fileNames: string[], relativeFilePaths: string[]): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
-
-        snippet.appendText('\\begin{figure}');
+        
         const choiceFigurePlacement = getChoiceFigurePlacement();
         const choiceFigureAlignment = getChoiceFigureAlignment();
         const choiceGraphicsOptions = getChoiceGraphicsOptions();

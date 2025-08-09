@@ -51,7 +51,8 @@ export function replaceOutputPath(inputPath: string, outputPath: string, workspa
         .replace(/\${fileBasenameNoExtension}/g, path.basename(inputPath, path.extname(inputPath)))
         .replace(/\${fileDirname}/g, path.dirname(inputPath))
         .replace(/\${fileExtname}/g, path.extname(inputPath))
-        .replace(/\${tab}/g, tab);
+        .replace(/\${tab}/g, tab)
+        .replace(/\${dateNow}/g, Date.now().toString());
 }
 
 export function createFolder(p: string) {

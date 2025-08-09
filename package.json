@@ -295,7 +295,7 @@
         },
         "latex-graphics.helper.gemini.model": {
           "type": "string",
-          "default": "gemini-2.5-flash",
+          "default": "gemini-2.0-flash",
           "description": "Selects the Gemini AI model to be used for generating LaTeX code from images."
         },
         "latex-graphics-helper.gemini.requests": {

@@ -49,21 +49,29 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
         let snippet: vscode.SnippetString | undefined;
 
-        if (pickedItem) {
-            if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
-                snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
-            } else if (pickedItem.label === localeMap('pastePdfFormatLabel')) {
-                snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
-            } else if (pickedItem.label === localeMap('customRequestLabel')) {
-                snippet = await this.handleCustomGeminiRequest(info);
-            } else {
-                snippet = await this.handleGeminiRequest(pickedItem.label, info);
-            }
-        }
+        try {
 
-        if (snippet) {
-            const edit = new vscode.DocumentPasteEdit(snippet, '', vscode.DocumentDropOrPasteEditKind.Empty);
-            return [edit];
+            if (pickedItem) {
+                if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
+                    snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
+                } else if (pickedItem.label === localeMap('pastePdfFormatLabel')) {
+                    snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
+                } else if (pickedItem.label === localeMap('customRequestLabel')) {
+                    snippet = await this.handleCustomGeminiRequest(info);
+                } else {
+                    snippet = await this.handleGeminiRequest(pickedItem.label, info);
+                }
+            }
+
+            if (snippet) {
+                const edit = new vscode.DocumentPasteEdit(snippet, '', vscode.DocumentDropOrPasteEditKind.Empty);
+                return [edit];
+            }
+
+        } catch (e) {
+            if (e instanceof Error) {
+                vscode.window.showErrorMessage(e.message.toString());
+            }
         }
 
         return undefined;
@@ -105,8 +113,8 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         fs.writeFileSync(`${imagePath}${info.ext}`, info.buffer);
         if (info.mime !== 'application/pdf') {
             convertImageToPdf(`${imagePath}${info.ext}`, imagePath, workspaceFolder);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+            if (fs.existsSync(`${imagePath}${info.ext}`)) {
+                fs.unlinkSync(`${imagePath}${info.ext}`);
             }
         }
         const relativeFilePath = path.relative(fileDirname, `${imagePath}.pdf`);
@@ -130,19 +138,41 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     createSinglePdfSnippet(fileName: string = '', relativeFilePath: string): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
+        const choiceFigurePlacement = getChoiceFigurePlacement();
+        const choiceFigureAlignment = getChoiceFigureAlignment();
+        const choiceGraphicsOptions = getChoiceGraphicsOptions();
+
         snippet.appendText('\\begin{figure}');
-        snippet.appendChoice(getChoiceFigurePlacement(), 1);
+        if (choiceFigurePlacement.length >= 2) {
+            snippet.appendChoice(getChoiceFigurePlacement(), 1);
+        } else {
+            snippet.appendText(choiceFigurePlacement[0] ?? '');
+        }
         snippet.appendText('\n');
+
         snippet.appendText('\t');
-        snippet.appendChoice(getChoiceFigureAlignment(), 1);
+        if (choiceFigureAlignment.length >= 2) {
+            snippet.appendChoice(choiceFigureAlignment, 2);
+        } else {
+            snippet.appendText(choiceFigureAlignment[0] ?? '');
+        }
         snippet.appendText('\n');
+
         snippet.appendText('\t\\includegraphics');
-        snippet.appendChoice(getChoiceGraphicsOptions(), 1);
-        snippet.appendText(`{${toPosixPath(relativeFilePath)}}\n`);
+        if (choiceGraphicsOptions.length >= 2) {
+            snippet.appendChoice(getChoiceGraphicsOptions(), 3);
+        } else {
+            snippet.appendText(choiceGraphicsOptions[0] ?? '');
+        }
+        snippet.appendText(`{${toPosixPath(relativeFilePath)}}`);
+        snippet.appendText('\n');
+
         snippet.appendText('\t\\caption{');
-        snippet.appendPlaceholder(escapeLatex(fileName), 2);
+        snippet.appendPlaceholder(escapeLatex(fileName), 4);
         snippet.appendText('}');
-        snippet.appendText(`\\label{fig:${escapeLatexLabel(fileName)}}\n`);
+        snippet.appendText(`\\label{fig:${escapeLatexLabel(fileName)}}`);
+        snippet.appendText('\n');
+
         snippet.appendText('\\end{figure}');
 
         return snippet;

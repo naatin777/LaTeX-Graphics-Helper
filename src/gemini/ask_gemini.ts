@@ -15,24 +15,25 @@ export async function askGemini(secretStorage: vscode.SecretStorage, message: st
 
     let getFile = await ai.files.get({ name: file.name as string });
     while (getFile.state === 'PROCESSING') {
-        getFile = await ai.files.get({ name: file.name as string });
         await new Promise((resolve) => {
-            setTimeout(resolve, 5000);
+            setTimeout(resolve, 1000);
         });
+        getFile = await ai.files.get({ name: file.name as string });
     }
     if (file.state === 'FAILED') {
         throw new Error('File processing failed.');
     }
 
     const part = createPartFromUri(file.uri!, file.mimeType!);
-
     const response = await ai.models.generateContent({
         model: getGeminiModel(),
         contents: [
             part,
-            message
+            { text: message }
         ]
     });
+
+    console.log(response);
 
     return response.text;
 }
