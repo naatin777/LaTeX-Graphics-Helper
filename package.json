@@ -161,7 +161,7 @@
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}",
-          "description": "Output file name when converting a PDF file."
+          "description": "Output file name when converting a Draw.io file to PDF."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
@@ -227,7 +227,7 @@
             "\\raggedright",
             "\\raggedleft"
           ],
-          "description": "Available placement specifiers for LaTeX figures and tables."
+          "description": "Available alignment options for LaTeX figures and tables."
         },
         "latex-graphics-helper.choice.graphicsOptions": {
           "type": "array",
@@ -248,7 +248,7 @@
             "[c]",
             "[b]"
           ],
-          "description": "Available options for LaTeX minipage environments."
+          "description": "Available vertical alignment options for LaTeX minipage environments."
         },
         "latex-graphics-helper.choice.subWidth": {
           "type": "array",
@@ -257,7 +257,7 @@
             "{0.45\\linewidth}",
             "{0.45\\linewidth}"
           ],
-          "description": "Available options for LaTeX minipage environments."
+          "description": "Available width options for LaTeX minipage environments."
         },
         "latex-graphics-helper.choice.spaceBetweenSubs": {
           "type": "array",
@@ -268,7 +268,7 @@
             "\\hspace{0.04\\linewidth}",
             "\\hspace{0.05\\linewidth}"
           ],
-          "description": "Available options for LaTeX minipage environments."
+          "description": "Available spacing options between subfigures/subtables in LaTeX minipage environments."
         },
         "latex-graphics-helper.pdftocairo.pngOptions": {
           "type": "array",
