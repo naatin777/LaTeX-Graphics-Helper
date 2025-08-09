@@ -2,7 +2,7 @@
 
 ## About this Extension
 
-This VS Code extension provides helpful tools for working with graphics in LaTeX documents. It allows you to easily crop PDF files and convert Draw.io diagrams to PDF format directly within VS Code. It also allows you to insert LaTeX code for PDF files by dragging and dropping them into your editor.
+This VS Code extension provides helpful tools for working with graphics in LaTeX documents. It allows you to easily crop PDF files, convert image formats, convert Draw.io diagrams to PDF, and generate LaTeX code using Gemini AI, all directly within VS Code. It also allows you to insert LaTeX code for PDF files by dragging and dropping them into your editor.
 
 ## Features
 
@@ -11,6 +11,8 @@ This VS Code extension provides helpful tools for working with graphics in LaTeX
 *   **Convert PDF to Image**: Convert PDF files to PNG, JPEG, or SVG format using `pdftocairo`.
 *   **Convert Image to PDF**: Convert PNG, JPEG, or SVG files to PDF format using `inkscape`.
 *   **Insert LaTeX for PDF**: Drag and drop PDF files into your LaTeX document to automatically insert the corresponding LaTeX code (`figure` or `minipage` environment).
+*   **Generate LaTeX Code with Gemini AI**: Generate LaTeX code (equations, tables, etc.) from images using Gemini AI.
+*   **Manage Gemini API Key**: Set and delete your Gemini API key within VS Code.
 
 ## Requirements
 
@@ -20,6 +22,7 @@ To use this extension, you need:
 *   `The Draw.io desktop application` installed on your system for Draw.io to PDF conversion.
 *   `pdftocairo` installed on your system (typically included with Poppler utilities) for PDF to Image conversion.
 *   `Inkscape` installed on your system for Image to PDF conversion.
+*   A Gemini API key for generating LaTeX code with Gemini AI. You can obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ## Configuration
 
@@ -28,14 +31,16 @@ You can customize certain aspects of the extension's behavior through VS Code se
 Some key configuration options include:
 
 *   `latex-graphics-helper.shell`: Specifies the shell to use for executing commands.
-*   `latex-graphics-helper.pdfcropCommand`: Specifies the path to the `pdfcrop` executable.
-*   `latex-graphics-helper.drawioCommand`: Specifies the path to the Draw.io executable.
-*   `latex-graphics-helper.pdftocairoCommand`: Specifies the path to the `pdftocairo` executable.
-*   `latex-graphics-helper.inkscapeCommand`: Specifies the path to the Inkscape executable.
-*   `latex-graphics-helper.pdfcropOutputPath`: Specifies the output file name when cropping a PDF file.
-*   `latex-graphics-helper.drawioToPdfOutputPath`: Specifies the output file name when converting a Draw.io file to PDF.
-*   `latex-graphics-helper.pdfToPngOutputPath`: Specifies the output file name when converting a PDF file to PNG.
-*   `latex-graphics-helper.pngToPdfOutputPath`: Specifies the output file name when converting a PNG file to PDF.
+*   `latex-graphics-helper.execPath.pdfcrop`: Specifies the path to the `pdfcrop` executable.
+*   `latex-graphics-helper.execPath.drawio`: Specifies the path to the Draw.io executable.
+*   `latex-graphics-helper.execPath.pdftocairo`: Specifies the path to the `pdftocairo` executable.
+*   `latex-graphics-helper.execPath.inkscape`: Specifies the path to the Inkscape executable.
+*   `latex-graphics-helper.outputPath.cropPdf`: Specifies the output file name when cropping a PDF file.
+*   `latex-graphics-helper.outputPath.convertDrawioToPdf`: Specifies the output file name when converting a Draw.io file to PDF.
+*   `latex-graphics-helper.outputPath.convertPdfToPng`: Specifies the output file name when converting a PDF file to PNG.
+*   `latex-graphics-helper.outputPath.convertPngToPdf`: Specifies the output file name when converting a PNG file to PDF.
+*   `latex-graphics-helper.gemini.model`: Selects the Gemini AI model to be used for generating LaTeX code from images.
+*   `latex-graphics-helper.gemini.requests`: List of predefined requests for the Gemini AI model to generate LaTeX code from images.
 
 Refer to the README for a complete list of configuration options.
 
@@ -55,3 +60,5 @@ Select PDF or Draw.io files in the Explorer view and choose one of the following
     - `Convert to PDF (SVG)`: Converts the selected SVG files to PDF.
 
 Alternatively, you can drag and drop PDF files directly into your LaTeX editor.
+
+To generate LaTeX code using Gemini AI, right-click on an image file in the Explorer view and select "Generate LaTeX Code with Gemini AI". You will be prompted to select a predefined request or enter a custom one.
