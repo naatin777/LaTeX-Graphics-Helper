@@ -254,8 +254,9 @@
           "type": "array",
           "default": [
             "{0.45\\linewidth}",
-            "{0.45\\linewidth}",
-            "{0.45\\linewidth}"
+            "{0.35\\linewidth}",
+            "{0.25\\linewidth}",
+            "{0.15\\linewidth}"
           ],
           "description": "Available width options for LaTeX minipage environments."
         },

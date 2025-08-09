@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getChoiceFigurePlacement, getChoiceFigureAlignment, getChoiceGraphicsOptions, getChoiceSubVerticalAlignment, getChoiceSubWidth, getChoiceSpaceBetweenSubs } from '../configuration';
+import { getChoiceFigureAlignment, getChoiceGraphicsOptions, getChoiceSubVerticalAlignment, getChoiceSubWidth, getChoiceSpaceBetweenSubs, getChoiceFigurePlacement } from '../configuration';
 import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from '../utils';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
@@ -22,12 +22,12 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
             .split('\r\n')
             .map(value => vscode.Uri.parse(value));
 
-        const documentDir = path.dirname(document.uri.fsPath);
+        const documentDirname = path.dirname(document.uri.fsPath);
 
         if (uris.length === 1) {
             const uri = uris[0];
             const fileName = path.basename(uri.fsPath, path.extname(uri.fsPath));
-            const relativeFilePath = path.relative(documentDir, uri.fsPath);
+            const relativeFilePath = path.relative(documentDirname, uri.fsPath);
 
             const singlePdfSnippet = this.createSinglePdfSnippet(fileName, relativeFilePath);
             return new vscode.DocumentDropEdit(singlePdfSnippet, 'Insert LaTeX text');
@@ -36,7 +36,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
                 uris
                     .map(uri => [
                         path.basename(uri.fsPath, path.extname(uri.fsPath)),
-                        path.relative(documentDir, uri.fsPath)
+                        path.relative(documentDirname, uri.fsPath)
                     ])
             );
 
@@ -50,17 +50,40 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     createSinglePdfSnippet(fileName: string, relativeFilePath: string): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
+        const choiceFigurePlacement = getChoiceFigurePlacement();
+        const choiceFigureAlignment = getChoiceFigureAlignment();
+        const choiceGraphicsOptions = getChoiceGraphicsOptions();
+
         snippet.appendText('\\begin{figure}');
-        snippet.appendChoice(getChoiceFigurePlacement(), 1);
+        if (choiceFigurePlacement.length >= 2) {
+            snippet.appendChoice(getChoiceFigurePlacement(), 1);
+        } else {
+            snippet.appendText(choiceFigurePlacement[0] ?? '');
+        }
         snippet.appendText('\n');
-        snippet.appendChoice(getChoiceFigureAlignment(), 2);
+
+        snippet.appendText('\t');
+        if (choiceFigureAlignment.length >= 2) {
+            snippet.appendChoice(choiceFigureAlignment, 2);
+        } else {
+            snippet.appendText(choiceFigureAlignment[0] ?? '');
+        }
         snippet.appendText('\n');
-        snippet.appendChoice(getChoiceGraphicsOptions(), 3);
-        snippet.appendText(`{${toPosixPath(relativeFilePath)}}\n`);
+
+        snippet.appendText('\t\\includegraphics');
+        if (choiceGraphicsOptions.length >= 2) {
+            snippet.appendChoice(getChoiceGraphicsOptions(), 3);
+        } else {
+            snippet.appendText(choiceGraphicsOptions[0] ?? '');
+        }
+        snippet.appendText(`{${toPosixPath(relativeFilePath)}}`);
+        snippet.appendText('\n');
+
         snippet.appendText('\t\\caption{');
         snippet.appendPlaceholder(escapeLatex(fileName), 4);
-        snippet.appendText('}');
-        snippet.appendText(`\\label{fig:${escapeLatexLabel(fileName)}}\n`);
+        snippet.appendText(`}\\label{fig:${escapeLatexLabel(fileName)}}`);
+        snippet.appendText('\n');
+
         snippet.appendText('\\end{figure}');
 
         return snippet;
@@ -70,28 +93,80 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
         const snippet = new vscode.SnippetString();
 
         snippet.appendText('\\begin{figure}');
-        snippet.appendChoice(getChoiceFigurePlacement(), 1);
+        const choiceFigurePlacement = getChoiceFigurePlacement();
+        const choiceFigureAlignment = getChoiceFigureAlignment();
+        const choiceGraphicsOptions = getChoiceGraphicsOptions();
+        const choiceSubVerticalAlignment = getChoiceSubVerticalAlignment();
+        const choiceSubWidth = getChoiceSubWidth();
+        const choiceSpaceBetweenSubs = getChoiceSpaceBetweenSubs();
+
+        snippet.appendText('\\begin{figure}');
+        if (choiceFigurePlacement.length >= 2) {
+            snippet.appendChoice(choiceFigurePlacement, 1);
+        } else {
+            snippet.appendText(choiceFigurePlacement[0] ?? '');
+        }
         snippet.appendText('\n');
-        snippet.appendChoice(getChoiceFigureAlignment(), 2);
+
+        snippet.appendText('\t');
+        if (choiceFigureAlignment.length >= 2) {
+            snippet.appendChoice(choiceFigureAlignment, 2);
+        } else {
+            snippet.appendText(choiceFigureAlignment[0] ?? '');
+        }
         snippet.appendText('\n');
+
         for (let i = 0; i < relativeFilePaths.length; i++) {
             snippet.appendText('\t\\begin{minipage}');
-            snippet.appendChoice(getChoiceSubVerticalAlignment(), i + 3);
-            snippet.appendChoice(getChoiceSubWidth(), i + relativeFilePaths.length + 3);
+            if (choiceSubVerticalAlignment.length >= 2) {
+                snippet.appendChoice(choiceSubVerticalAlignment, i * 6 + 3);
+            } else {
+                snippet.appendText(choiceSubVerticalAlignment[0] ?? '');
+            }
+            if (choiceSubWidth.length >= 2) {
+                snippet.appendChoice(choiceSubWidth, i * 6 + 4);
+            } else {
+                snippet.appendText(choiceSubWidth[0] ?? '');
+            }
             snippet.appendText('\n');
-            snippet.appendText('\t\t\\centering\n');
-            snippet.appendChoice(getChoiceGraphicsOptions(), i + relativeFilePaths.length * 2 + 3);
-            snippet.appendText(`{${toPosixPath(relativeFilePaths[i])}}\n`);
+
+            snippet.appendText('\t\t');
+            if (choiceFigureAlignment.length >= 2) {
+                snippet.appendChoice(choiceFigureAlignment, i * 6 + 5);
+            } else {
+                snippet.appendText(choiceFigureAlignment[0] ?? '');
+            }
+            snippet.appendText('\n');
+
+            snippet.appendText('\t\t');
+            snippet.appendText('\\includegraphics');
+            if (choiceGraphicsOptions.length >= 2) {
+                snippet.appendChoice(choiceGraphicsOptions, i * 6 + 6);
+            } else {
+                snippet.appendText(choiceGraphicsOptions[0] ?? '');
+            }
+            snippet.appendText(`{${toPosixPath(relativeFilePaths[i])}}`);
+            snippet.appendText('\n');
+
             snippet.appendText('\t\t\\caption{');
-            snippet.appendPlaceholder(escapeLatex(fileNames[i]), i + relativeFilePaths.length * 3 + 3);
-            snippet.appendText('}');
-            snippet.appendText(`\\label{fig:${escapeLatexLabel(fileNames[i])}}\n`);
-            snippet.appendText('\t\\end{minipage}\n');
+            snippet.appendPlaceholder(escapeLatex(fileNames[i]), i * 6 + 7);
+            snippet.appendText(`}\\label{fig:${escapeLatexLabel(fileNames[i])}}`);
+            snippet.appendText('\n');
+
+            snippet.appendText('\t\\end{minipage}');
+            snippet.appendText('\n');
+
             if (relativeFilePaths.length !== i + 1) {
-                snippet.appendChoice(getChoiceSpaceBetweenSubs(), i + relativeFilePaths.length * 4 + 3);
+                snippet.appendText('\t');
+                if (choiceSpaceBetweenSubs.length >= 2) {
+                    snippet.appendChoice(choiceSpaceBetweenSubs, i * 6 + 8);
+                } else {
+                    snippet.appendText(choiceSpaceBetweenSubs[0] ?? '');
+                }
                 snippet.appendText('\n');
             }
         }
+
         snippet.appendText('\\end{figure}');
 
         return snippet;
