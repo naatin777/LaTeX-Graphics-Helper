@@ -1,10 +1,12 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
 import * as fs from 'fs';
-import { convertImageToPdf } from '../context_menu/convert_image_to_pdf';
-import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
+import * as path from 'path';
+
+import * as vscode from 'vscode';
+
 import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
+import { convertImageToPdf } from '../context_menu/convert_image_to_pdf';
 import { askGemini } from '../gemini/ask_gemini';
+import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
 
 type FileInfo = {
     buffer: Buffer<ArrayBuffer>;

@@ -1,5 +1,6 @@
-import * as vscode from 'vscode';
 import * as os from 'os';
+
+import * as vscode from 'vscode';
 
 export function getShell(): string {
     const config = vscode.workspace.getConfiguration('latex-graphics-helper');

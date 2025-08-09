@@ -1,8 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as vscode from 'vscode';
+
 import { PDFDocument } from 'pdf-lib';
+import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
+
 import { getExecPathDrawio, getExecPathPdfcrop } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 

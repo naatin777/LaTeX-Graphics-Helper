@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
-import { cropPdf } from './context_menu/crop_pdf';
-import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
-import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
-import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
+
 import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf } from './configuration';
+import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
 import { convertImageToPdf } from './context_menu/convert_image_to_pdf';
-import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
-import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
+import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
+import { cropPdf } from './context_menu/crop_pdf';
 import { runExplorerContextItem } from './context_menu/run_context_menu_item';
+import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
+import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
+import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
