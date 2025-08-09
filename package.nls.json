@@ -20,5 +20,10 @@
 	"convertSvgToPdfProcess": "Converting SVG files to PDF files...",
 	"enterGeminiApiKey": "Enter your Gemini API Key",
 	"storedGeminiApiKey": "Stored Gemini API Key",
-	"deletedGeminiApiKey": "Deleted Gemini API Key"
+	"deletedGeminiApiKey": "Deleted Gemini API Key",
+	"customRequestLabel": "Send a custom request",
+	"pasteDefaultImageFormatLabel": "Paste as default image format",
+	"pastePdfFormatLabel": "Paste as PDF format",
+	"noFilesSelected": "No files selected.",
+	"workspaceFolderNotFound": "Workspace folder not found."
 }

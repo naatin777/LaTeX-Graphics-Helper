@@ -26,7 +26,7 @@ export async function askGemini(secretStorage: vscode.SecretStorage, message: st
 
     const part = createPartFromUri(file.uri!, file.mimeType!);
 
-    const res = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
         model: getGeminiModel(),
         contents: [
             part,
@@ -34,5 +34,5 @@ export async function askGemini(secretStorage: vscode.SecretStorage, message: st
         ]
     });
 
-    return res.text;
+    return response.text;
 }

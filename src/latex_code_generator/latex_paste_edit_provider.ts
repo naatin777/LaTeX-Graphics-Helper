@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
 import { convertImageToPdf } from '../context_menu/convert_image_to_pdf';
 import { askGemini } from '../gemini/ask_gemini';
+import { localeMap } from '../locale_map';
 import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
 
 type FileInfo = {
@@ -15,9 +16,6 @@ type FileInfo = {
 }
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
-    private static readonly CUSTOM_REQUEST_LABEL = 'Write a custom request';
-    private static readonly PASTE_DEFAULT_IMAGE_FORMAT_LABEL = 'Paste as default image format';
-    private static readonly PASTE_PDF_FORMAT_LABEL = 'Paste as PDF format';
 
     secretStorage: vscode.SecretStorage;
 
@@ -52,11 +50,11 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         let snippet: vscode.SnippetString | undefined;
 
         if (pickedItem) {
-            if (pickedItem.label === LatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL) {
+            if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
                 snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
-            } else if (pickedItem.label === LatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL) {
+            } else if (pickedItem.label === localeMap('pastePdfFormatLabel')) {
                 snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
-            } else if (pickedItem.label === LatexPasteEditProvider.CUSTOM_REQUEST_LABEL) {
+            } else if (pickedItem.label === localeMap('customRequestLabel')) {
                 snippet = await this.handleCustomGeminiRequest(info);
             } else {
                 snippet = await this.handleGeminiRequest(pickedItem.label, info);
@@ -153,12 +151,12 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     private createQuickPickItems(): vscode.QuickPickItem[] {
         const geminiRequests = getGeminiRequests().map((value) => ({ label: value }));
         return [
-            { label: LatexPasteEditProvider.PASTE_PDF_FORMAT_LABEL },
-            { label: LatexPasteEditProvider.PASTE_DEFAULT_IMAGE_FORMAT_LABEL },
+            { label: localeMap('pastePdfFormatLabel') },
+            { label: localeMap('pasteDefaultImageFormatLabel') },
             { label: '', kind: vscode.QuickPickItemKind.Separator },
             ...geminiRequests,
             { label: '', kind: vscode.QuickPickItemKind.Separator },
-            { label: LatexPasteEditProvider.CUSTOM_REQUEST_LABEL },
+            { label: localeMap('customRequestLabel') },
         ];
     }
 }

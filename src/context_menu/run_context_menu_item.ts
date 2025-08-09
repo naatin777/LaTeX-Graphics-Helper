@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 
+import { localeMap } from '../locale_map';
+
 export function runExplorerContextItem(uris: vscode.Uri[], title: string, task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => void) {
     if (!uris) {
-        vscode.window.showErrorMessage('No files selected.');
+        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
 
@@ -17,7 +19,7 @@ export function runExplorerContextItem(uris: vscode.Uri[], title: string, task: 
                 if (workspaceFolder) {
                     await task(uri, workspaceFolder);
                 } else {
-                    throw new Error('Workspace folder not found.');
+                    throw new Error(localeMap('workspaceFolderNotFound'));
                 }
             })
         );

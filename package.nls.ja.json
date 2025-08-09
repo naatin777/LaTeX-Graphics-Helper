@@ -20,5 +20,10 @@
 	"convertSvgToPdfProcess": "SVGファイルをPDFファイルに変換中...",
 	"enterGeminiApiKey": "Gemini APIキーを入力",
 	"storedGeminiApiKey": "Gemini APIキーを保存しました",
-	"deletedGeminiApiKey": "Gemini APIキーを削除しました"
+	"deletedGeminiApiKey": "Gemini APIキーを削除しました",
+	"customRequestLabel": "カスタムリクエストを送信",
+	"pasteDefaultImageFormatLabel": "デフォルト画像形式で貼り付け",
+	"pastePdfFormatLabel": "PDF形式で貼り付け",
+	"noFilesSelected": "ファイルが選択されていません。",
+	"workspaceFolderNotFound": "ワークスペースフォルダーが見つかりません。"
 }
