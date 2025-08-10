@@ -44,16 +44,17 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const items = this.createQuickPickItems();
         const pickedItem = await vscode.window.showQuickPick(items);
 
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-        createFolder(replacedOutputPath);
-
         let snippet: vscode.SnippetString | undefined;
 
         try {
             if (pickedItem) {
                 if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
+                    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
+                    createFolder(replacedOutputPath);
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
                 } else if (pickedItem.label === localeMap('pastePdfFormatLabel')) {
+                    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
+                    createFolder(replacedOutputPath);
                     snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
                 } else if (pickedItem.label === localeMap('customRequestLabel')) {
                     snippet = await this.handleCustomGeminiRequest(info);
@@ -103,17 +104,19 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     }
 
     private async handleDefaultImagePaste(imagePath: string, info: FileInfo, fileDirname: string): Promise<vscode.SnippetString | undefined> {
-        fs.writeFileSync(`${imagePath}${info.ext}`, info.buffer);
-        const relativeFilePath = path.relative(fileDirname, `${imagePath}${info.ext}`);
+        const imagePathWithExt = `${imagePath}${info.ext}`;
+        fs.writeFileSync(imagePathWithExt, info.buffer);
+        const relativeFilePath = path.relative(fileDirname, imagePathWithExt);
         return this.createSinglePdfSnippet('', relativeFilePath);
     }
 
     private async handlePdfPaste(imagePath: string, info: FileInfo, fileDirname: string, workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.SnippetString | undefined> {
-        fs.writeFileSync(`${imagePath}${info.ext}`, info.buffer);
+        const imagePathWithExt = `${imagePath}${info.ext}`;
+        fs.writeFileSync(imagePathWithExt, info.buffer);
         if (info.mime !== 'application/pdf') {
-            convertImageToPdf(`${imagePath}${info.ext}`, imagePath, workspaceFolder);
-            if (fs.existsSync(`${imagePath}${info.ext}`)) {
-                fs.unlinkSync(`${imagePath}${info.ext}`);
+            convertImageToPdf(imagePathWithExt, imagePath, workspaceFolder);
+            if (fs.existsSync(imagePathWithExt)) {
+                fs.unlinkSync(imagePathWithExt);
             }
         }
         const relativeFilePath = path.relative(fileDirname, `${imagePath}.pdf`);
