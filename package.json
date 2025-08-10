@@ -65,6 +65,48 @@
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .pdf"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "latex-graphics-helper.cropPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertDrawioToPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertPdfToPng",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertPdfToJpeg",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertPdfToSvg",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertPngToPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertJpegToPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertSvgToPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.setGeminiApiKey",
+          "when": "true"
+        },
+        {
+          "command": "latex-graphics-helper.deleteGeminiApiKey",
+          "when": "true"
+        }
       ]
     },
     "submenus": [
