@@ -202,8 +202,8 @@
         },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}",
-          "description": "Output file name when converting a Draw.io file to PDF. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}.pdf",
+          "description": "Output file name when converting a Draw.io file to PDF."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
@@ -222,18 +222,18 @@
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}",
-          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
         },
         "latex-graphics-helper.outputPath.convertJpegToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}",
-          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
         },
         "latex-graphics-helper.outputPath.convertSvgToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}",
-          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
         },
         "latex-graphics-helper.outputPath.clipboardImage": {
           "type": "string",

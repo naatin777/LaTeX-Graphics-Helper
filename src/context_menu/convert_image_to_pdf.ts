@@ -10,7 +10,7 @@ export function convertImageToPdf(
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
 ): void {
-    const replacedOutputPath = `${replaceOutputPath(inputPath, outputPath, workspaceFolder)}.pdf`;
+    const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
 
     runCommand(

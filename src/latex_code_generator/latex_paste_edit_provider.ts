@@ -112,14 +112,15 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
     private async handlePdfPaste(imagePath: string, info: FileInfo, fileDirname: string, workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.SnippetString | undefined> {
         const imagePathWithExt = `${imagePath}${info.ext}`;
+        const pdfPath = `${imagePath}.pdf`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
         if (info.mime !== 'application/pdf') {
-            convertImageToPdf(imagePathWithExt, imagePath, workspaceFolder);
+            convertImageToPdf(imagePathWithExt, pdfPath, workspaceFolder);
             if (fs.existsSync(imagePathWithExt)) {
                 fs.unlinkSync(imagePathWithExt);
             }
         }
-        const relativeFilePath = path.relative(fileDirname, `${imagePath}.pdf`);
+        const relativeFilePath = path.relative(fileDirname, pdfPath);
         return this.createSinglePdfSnippet('', relativeFilePath);
     }
 
