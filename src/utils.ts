@@ -6,8 +6,8 @@ import * as vscode from 'vscode';
 
 import { getShell } from './configuration';
 
-export function toPosixPath(p: string): string {
-    return path.normalize(p).split(/[\\\/]/g).join(path.posix.sep);
+export function toPosixPath(filePath: string): string {
+    return path.normalize(filePath).split(/[\\\/]/g).join(path.posix.sep);
 }
 
 export function escapeLatex(text: string): string {
@@ -55,8 +55,8 @@ export function replaceOutputPath(inputPath: string, outputPath: string, workspa
         .replace(/\${dateNow}/g, Date.now().toString());
 }
 
-export function createFolder(p: string) {
-    const folder = path.dirname(p);
+export function createFolder(filePath: string) {
+    const folder = path.dirname(filePath);
 
     if (!fs.existsSync(folder)) {
         fs.mkdirSync(folder, { recursive: true });
