@@ -1,6 +1,6 @@
 # LaTeX Graphics Helper
 
-This VS Code extension helps you process graphic files for use in LaTeX documents.
+A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
 
 ## Features
 
@@ -43,13 +43,13 @@ The following configuration options are available. Search for `latex-graphics-he
 | `latex-graphics-helper.execPath.pdftocairo` | Path to the `pdftocairo` executable. | `pdftocairo` |
 | `latex-graphics-helper.execPath.inkscape` | Path to the Inkscape executable. If not specified, the default path for your operating system will be used (Windows: "C:\\Program Files\\Inkscape\\bin\\inkscape.exe", others: inkscape). | `""` |
 | `latex-graphics-helper.outputPath.cropPdf` | Output file name when cropping a PDF file. | `${fileDirname}/${fileBasenameNoExtension}-crop.pdf` |
-| `latex-graphics-helper.outputPath.convertDrawioToPdf` | Output file name when converting a Draw.io file to PDF. | `${fileDirname}/${fileBasenameNoExtension}/${tab}` |
-| `latex-graphics-helper.outputPath.convertPdfToPng` | Output file name when converting a PDF file to PNG. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
-| `latex-graphics-helper.outputPath.convertPdfToJpeg` | Output file name when converting a PDF file to JPEG. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
-| `latex-graphics-helper.outputPath.convertPdfToSvg` | Output file name when converting a PDF file to SVG. | `${fileDirname}/${fileBasenameNoExtension}.svg` |
-| `latex-graphics-helper.outputPath.convertPngToPdf` | Output file name when converting a PNG file to PDF. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
-| `latex-graphics-helper.outputPath.convertJpegToPdf` | Output file name when converting a JPEG file to PDF. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
-| `latex-graphics-helper.outputPath.convertSvgToPdf` | Output file name when converting a SVG file to PDF. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
+| `latex-graphics-helper.outputPath.convertDrawioToPdf` | Output file name when converting a Draw.io file to PDF. | `${fileDirname}/${fileBasenameNoExtension}/${tab}.pdf` |
+| `latex-graphics-helper.outputPath.convertPdfToPng` | Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
+| `latex-graphics-helper.outputPath.convertPdfToJpeg` | Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically. | `${fileDirname}/${fileBasenameNoExtension}` |
+| `latex-graphics-helper.outputPath.convertPdfToSvg` | Output file name when converting a PDF file to SVG. Depends on pdftocairo. | `${fileDirname}/${fileBasenameNoExtension}.svg` |
+| `latex-graphics-helper.outputPath.convertPngToPdf` | Output file name when converting a PNG file to PDF. Depends on inkscape. | `${fileDirname}/${fileBasenameNoExtension}.pdf` |
+| `latex-graphics-helper.outputPath.convertJpegToPdf` | Output file name when converting a JPEG file to PDF. Depends on inkscape. | `${fileDirname}/${fileBasenameNoExtension}.pdf` |
+| `latex-graphics-helper.outputPath.convertSvgToPdf` | Output file name when converting a SVG file to PDF. Depends on inkscape. | `${fileDirname}/${fileBasenameNoExtension}.pdf` |
 | `latex-graphics-helper.outputPath.clipboardImage` | Output file name when saving clipboard images to a file. The file extension is added automatically. | `${fileDirname}/${dateNow}` |
 | `latex-graphics-helper.choice.figurePlacement` | Available placement specifiers for LaTeX figures and tables. | `["[H]", "[h]", "[t]", "[b]", "[p]", "[ht]", "[hb]", "[hp]", "[tb]", "[tp]", "[bp]", "[htb]", "[htp]", "[hbp]", "[tbp]", "[htbp]"]` |
 | `latex-graphics-helper.choice.figureAlignment` | Available alignment options for LaTeX figures and tables. | `["\\centering", "\\raggedright", "\\raggedleft"]` |

@@ -2,7 +2,7 @@
 
 ## About this Extension
 
-This VS Code extension provides helpful tools for working with graphics in LaTeX documents. It allows you to easily crop PDF files, convert image formats, convert Draw.io diagrams to PDF, and generate LaTeX code using Gemini AI, all directly within VS Code. It also allows you to insert LaTeX code for PDF files by dragging and dropping them into your editor.
+A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
 
 ## Features
 
@@ -37,8 +37,13 @@ Some key configuration options include:
 *   `latex-graphics-helper.execPath.inkscape`: Specifies the path to the Inkscape executable.
 *   `latex-graphics-helper.outputPath.cropPdf`: Specifies the output file name when cropping a PDF file.
 *   `latex-graphics-helper.outputPath.convertDrawioToPdf`: Specifies the output file name when converting a Draw.io file to PDF.
-*   `latex-graphics-helper.outputPath.convertPdfToPng`: Specifies the output file name when converting a PDF file to PNG.
-*   `latex-graphics-helper.outputPath.convertPngToPdf`: Specifies the output file name when converting a PNG file to PDF.
+*   `latex-graphics-helper.outputPath.convertPdfToPng`: Specifies the output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically.
+*   `latex-graphics-helper.outputPath.convertPdfToJpeg`: Specifies the output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically.
+*   `latex-graphics-helper.outputPath.convertPdfToSvg`: Specifies the output file name when converting a PDF file to SVG. Depends on pdftocairo.
+*   `latex-graphics-helper.outputPath.convertPngToPdf`: Specifies the output file name when converting a PNG file to PDF. Depends on inkscape.
+*   `latex-graphics-helper.outputPath.convertJpegToPdf`: Specifies the output file name when converting a JPEG file to PDF. Depends on inkscape.
+*   `latex-graphics-helper.outputPath.convertSvgToPdf`: Specifies the output file name when converting a SVG file to PDF. Depends on inkscape.
+*   `latex-graphics-helper.outputPath.clipboardImage`: Specifies the output file name when saving clipboard images to a file. The file extension is added automatically.
 *   `latex-graphics-helper.gemini.model`: Selects the Gemini AI model to be used for generating LaTeX code from images.
 *   `latex-graphics-helper.gemini.requests`: List of predefined requests for the Gemini AI model to generate LaTeX code from images.
 
