@@ -2,7 +2,7 @@
   "name": "latex-graphics-helper",
   "displayName": "LaTeX Graphics Helper",
   "description": "A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "engines": {
     "vscode": "^1.100.0"
   },
