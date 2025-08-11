@@ -1,0 +1,36 @@
+name: Release VSCode Extension
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to Visual Studio Marketplace
+        run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to Open VSX Registry
+        run: npx ovsx publish --pat ${{ secrets.OVSX_PAT }}
+
+      - name: Package Extension
+        run: npx vsce package
+
+      - name: Create GitHub Release and Upload VSIX
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: "*.vsix"
