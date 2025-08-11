@@ -12,6 +12,10 @@ import {
 } from '../utils';
 
 suite('Utils Test Suite', () => {
+    suiteTeardown(() => {
+        vscode.window.showInformationMessage('All tests done!');
+    });
+
     test('toPosixPath', () => {
         assert.strictEqual(toPosixPath('C:\\Users\\test\\file.txt'), 'C:/Users/test/file.txt');
         assert.strictEqual(toPosixPath('C:/Users/test/file.txt'), 'C:/Users/test/file.txt');
