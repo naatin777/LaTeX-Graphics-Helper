@@ -2,6 +2,9 @@
 
 A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
 
+- [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=naatin777.latex-graphics-helper)
+- [Open VSX](https://open-vsx.org/extension/naatin777/latex-graphics-helper)
+
 ## Features
 
 -   **Crop PDF**: Automatically crops the margins of selected PDF files.
