@@ -8,6 +8,11 @@
   },
   "license": "MIT",
   "publisher": "naatin777",
+  "homepage": "https://github.com/naatin777/LaTeX-Graphics-Helper",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naatin777/LaTeX-Graphics-Helper"
+  },
   "categories": [
     "Other"
   ],
