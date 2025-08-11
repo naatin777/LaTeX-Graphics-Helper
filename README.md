@@ -66,7 +66,7 @@ The following configuration options are available. Search for `latex-graphics-he
 ## Requirements
 
 -   To use the PDF cropping feature, `pdfcrop` must be installed on your system. It is typically included with TeX Live or MiKTeX.
--   To use the Draw.io to PDF conversion feature, the Draw.io desktop application and `pdfcrop` must be installed on your system.
+-   To use the Draw.io to PDF conversion feature, the Draw.io desktop application must be installed on your system.
 -   To use the PDF to Image conversion features, `pdftocairo` must be installed on your system. It is typically included with Poppler utilities.
 -   To use the Image to PDF conversion features, Inkscape must be installed on your system.
 -   To use the Gemini AI features, you need a Gemini API key. You can obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).

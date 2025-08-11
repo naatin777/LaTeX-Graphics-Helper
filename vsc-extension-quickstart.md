@@ -47,7 +47,6 @@ Some key configuration options include:
 *   `latex-graphics-helper.gemini.model`: Selects the Gemini AI model to be used for generating LaTeX code from images.
 *   `latex-graphics-helper.gemini.requests`: List of predefined requests for the Gemini AI model to generate LaTeX code from images.
 
-Refer to the README for a complete list of configuration options.
 
 ## Usage
 
