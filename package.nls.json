@@ -12,6 +12,7 @@
 	"setGeminiApiKey": "Set Gemini API Key",
 	"deleteGeminiApiKey": "Delete Gemini API Key",
 	"cropPdfProcess": "Cropping PDF files...",
+	"splitPdfProcess": "Splitting PDF files ...",
 	"convertDrawioToPdfProcess": "Converting Draw.io files to PDF files...",
 	"convertPdfToPngProcess": "Converting PDF files to PNG files...",
 	"convertPdfToJpegProcess": "Converting PDF files to JPEG files...",

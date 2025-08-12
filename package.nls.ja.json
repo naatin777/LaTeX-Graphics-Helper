@@ -12,6 +12,7 @@
 	"setGeminiApiKey": "Gemini APIキーを設定",
 	"deleteGeminiApiKey": "Gemini APIキーを削除",
 	"cropPdfProcess": "PDFファイルをクロップ中...",
+	"splitPdfProcess": "PDFファイルを分割中...",
 	"convertDrawioToPdfProcess": "Draw.ioファイルをPDFに変換中...",
 	"convertPdfToPngProcess": "PDFファイルをPNGファイルに変換中...",
 	"convertPdfToJpegProcess": "PDFファイルをJPEGファイルに変換中...",

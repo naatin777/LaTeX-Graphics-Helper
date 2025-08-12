@@ -6,6 +6,7 @@ import { convertImageToPdf } from './context_menu/convert_image_to_pdf';
 import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
 import { cropPdf } from './context_menu/crop_pdf';
 import { runExplorerContextItem } from './context_menu/run_context_menu_item';
+import { splitPdf } from './context_menu/split_pdf';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
@@ -18,6 +19,14 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('cropPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.splitPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, localeMap('splitPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				splitPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
 			});
 		})
 	);
