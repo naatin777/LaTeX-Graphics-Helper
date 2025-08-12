@@ -29,6 +29,11 @@
           "when": "resourceExtname == .pdf"
         },
         {
+          "command": "latex-graphics-helper.splitPdf",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
+        },
+        {
           "command": "latex-graphics-helper.convertDrawioToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .drawio || resourceExtname == .dio"
@@ -74,6 +79,10 @@
       "commandPalette": [
         {
           "command": "latex-graphics-helper.cropPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.splitPdf",
           "when": "false"
         },
         {
@@ -124,6 +133,11 @@
       {
         "command": "latex-graphics-helper.cropPdf",
         "title": "%cropPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.splitPdf",
+        "title": "%splitPdf%",
         "category": "LaTeX Graphics Helper"
       },
       {

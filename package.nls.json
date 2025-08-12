@@ -1,5 +1,6 @@
 {
 	"cropPdf": "Crop PDF",
+	"splitPdf": "Split PDF",
 	"convertDrawioToPdf": "Convert to PDF",
 	"convertPdfToImage": "Convert to Image",
 	"convertPdfToPng": "Convert to PNG",

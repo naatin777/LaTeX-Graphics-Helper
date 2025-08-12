@@ -1,5 +1,6 @@
 {
 	"cropPdf": "PDFをクロップ",
+	"splitPdf": "PDFを分割",
 	"convertDrawioToPdf": "PDFに変換",
 	"convertPdfToImage": "画像に変換",
 	"convertPdfToPng": "PNGに変換",
