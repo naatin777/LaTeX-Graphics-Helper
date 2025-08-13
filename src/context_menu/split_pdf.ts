@@ -17,7 +17,7 @@ export async function splitPdf(
     for (let i = 0; i < pdfPages.length; i++) {
         const tab = i;
 
-        const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder, tab.toString());
+        const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder, (tab+1).toString());
         createFolder(replacedOutputPath);
 
         const newPdfDocument = await PDFDocument.create();
