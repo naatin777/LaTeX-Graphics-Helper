@@ -34,6 +34,11 @@
           "when": "resourceExtname == .pdf"
         },
         {
+          "command": "latex-graphics-helper.mergePdf",
+          "group": "latex-graphics-helper",
+          "when": "resourceExtname == .pdf"
+        },
+        {
           "command": "latex-graphics-helper.convertDrawioToPdf",
           "group": "latex-graphics-helper",
           "when": "resourceExtname == .drawio || resourceExtname == .dio"
@@ -83,6 +88,10 @@
         },
         {
           "command": "latex-graphics-helper.splitPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.mergePdf",
           "when": "false"
         },
         {
@@ -138,6 +147,11 @@
       {
         "command": "latex-graphics-helper.splitPdf",
         "title": "%splitPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.mergePdf",
+        "title": "%mergePdf%",
         "category": "LaTeX Graphics Helper"
       },
       {

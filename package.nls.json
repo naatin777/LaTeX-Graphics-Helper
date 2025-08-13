@@ -1,6 +1,7 @@
 {
 	"cropPdf": "Crop PDF",
 	"splitPdf": "Split PDF",
+	"mergePdf": "Merge PDF",
 	"convertDrawioToPdf": "Convert to PDF",
 	"convertPdfToImage": "Convert to Image",
 	"convertPdfToPng": "Convert to PNG",
@@ -13,6 +14,7 @@
 	"deleteGeminiApiKey": "Delete Gemini API Key",
 	"cropPdfProcess": "Cropping PDF files...",
 	"splitPdfProcess": "Splitting PDF files ...",
+	"mergePdfProcess": "Merging PDF files ...",
 	"convertDrawioToPdfProcess": "Converting Draw.io files to PDF files...",
 	"convertPdfToPngProcess": "Converting PDF files to PNG files...",
 	"convertPdfToJpegProcess": "Converting PDF files to JPEG files...",

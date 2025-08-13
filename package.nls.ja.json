@@ -1,6 +1,7 @@
 {
 	"cropPdf": "PDFをクロップ",
 	"splitPdf": "PDFを分割",
+	"mergePdf": "PDFを結合",
 	"convertDrawioToPdf": "PDFに変換",
 	"convertPdfToImage": "画像に変換",
 	"convertPdfToPng": "PNGに変換",
@@ -13,6 +14,7 @@
 	"deleteGeminiApiKey": "Gemini APIキーを削除",
 	"cropPdfProcess": "PDFファイルをクロップ中...",
 	"splitPdfProcess": "PDFファイルを分割中...",
+	"mergePdfProcess": "PDFファイルを結合中...",
 	"convertDrawioToPdfProcess": "Draw.ioファイルをPDFに変換中...",
 	"convertPdfToPngProcess": "PDFファイルをPNGファイルに変換中...",
 	"convertPdfToJpegProcess": "PDFファイルをJPEGファイルに変換中...",

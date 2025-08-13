@@ -5,6 +5,7 @@ import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
 import { convertImageToPdf } from './context_menu/convert_image_to_pdf';
 import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
 import { cropPdf } from './context_menu/crop_pdf';
+import { mergePdf } from './context_menu/merge_pdf';
 import { runExplorerContextItem } from './context_menu/run_context_menu_item';
 import { splitPdf } from './context_menu/split_pdf';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
@@ -27,6 +28,14 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.splitPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('splitPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
 				splitPdf(uri.fsPath, getOutputPathSplitPdf(), workspaceFolder);
+			});
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('latex-graphics-helper.mergePdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			runExplorerContextItem(uris, localeMap('mergePdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+				mergePdf(uri.fsPath, getOutputPathSplitPdf(), workspaceFolder);
 			});
 		})
 	);
