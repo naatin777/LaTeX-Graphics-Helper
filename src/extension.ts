@@ -33,10 +33,31 @@ export function activate(context: vscode.ExtensionContext) {
 	);
 
 	context.subscriptions.push(
-		vscode.commands.registerCommand('latex-graphics-helper.mergePdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
-			runExplorerContextItem(uris, localeMap('mergePdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				mergePdf(uri.fsPath, getOutputPathSplitPdf(), workspaceFolder);
-			});
+		vscode.commands.registerCommand('latex-graphics-helper.mergePdf', async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+			try {
+				if (!uris) {
+					throw new Error(localeMap('noFilesSelected'));
+				}
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					title: localeMap('mergePdfProcess'),
+					cancellable: false
+				}, async (progress) => {
+					const outputPath = await vscode.window.showSaveDialog({
+						filters: {
+							'PDF': ['pdf']
+						},
+					});
+					const inputPaths = uris.map((uri) => uri.fsPath);
+					if (outputPath) {
+						await mergePdf(inputPaths, outputPath.fsPath);
+					}
+				});
+			} catch (error) {
+				if (error instanceof Error) {
+					vscode.window.showErrorMessage(`${error.message}`);
+				}
+			}
 		})
 	);
 
