@@ -53,6 +53,10 @@ export function getOutputPathCropPdf(): string {
     return config.get<string>('outputPath.cropPdf') as string;
 }
 
+export function getOutputPathSplitPdf(): string {
+    return config.get<string>('outputPath.splitPdf') as string;
+}
+
 export function getOutputPathConvertDrawioToPdf(): string {
     return config.get<string>('outputPath.convertDrawioToPdf') as string;
 }

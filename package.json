@@ -219,6 +219,11 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
           "description": "Output file name when cropping a pdf file."
         },
+        "latex-graphics-helper.outputPath.splitPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}.pdf",
+          "description": "Output file name when splitting a pdf file."
+        },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}.pdf",
