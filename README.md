@@ -1,18 +1,22 @@
 # LaTeX Graphics Helper
 
-A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
+A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw\.io files to PDF, and generating LaTeX code using Gemini AI.
 
 - [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=naatin777.latex-graphics-helper)
 - [Open VSX](https://open-vsx.org/extension/naatin777/latex-graphics-helper)
 
 ## Demonstration
 
-<div style="display: flex; flex-wrap: wrap; gap: 8px;">
-  <img src="gif/1.gif" alt="GIF 1" style="width: calc(50% - 8px);">
-  <img src="gif/2.gif" alt="GIF 2" style="width: calc(50% - 8px);">
-  <img src="gif/3.gif" alt="GIF 3" style="width: calc(50% - 8px);">
-  <img src="gif/4.gif" alt="GIF 4" style="width: calc(50% - 8px);">
-</div>
+<table>
+  <tr>
+    <td><img src="gif/1.gif"></td>
+    <td><img src="gif/2.gif"></td>
+  </tr>
+  <tr>
+    <td><img src="gif/3.gif"></td>
+    <td><img src="gif/4.gif"></td>
+  </tr>
+</table>
 
 ## Features
 
