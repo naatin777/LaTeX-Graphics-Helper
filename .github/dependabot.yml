@@ -6,10 +6,14 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "/" 
-    schedule:
-      interval: "daily"
-  - package-ecosystem: "npm" 
     directory: "/"
     schedule:
       interval: "daily"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    groups:
+      npm-all-dependencies:
+        patterns:
+          - "*"
