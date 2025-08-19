@@ -8,11 +8,11 @@ suite('Extension Test Suite', () => {
     });
 
     test('Extension should be present', () => {
-        assert.ok(vscode.extensions.getExtension('Naatin.latex-graphics-helper'));
+        assert.ok(vscode.extensions.getExtension('naatin777.latex-graphics-helper'));
     });
 
     test('Should activate the extension', async () => {
-        await vscode.extensions.getExtension('Naatin.latex-graphics-helper')!.activate();
+        await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
         assert.ok(true);
     });
 });
