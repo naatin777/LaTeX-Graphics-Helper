@@ -17,3 +17,6 @@ updates:
       npm-all-dependencies:
         patterns:
           - "*"
+        update-types:
+          - "minor"
+          - "patch"
