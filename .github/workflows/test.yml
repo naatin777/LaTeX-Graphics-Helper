@@ -19,5 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Xvfb
+        run: sudo apt-get install xvfb
+
       - name: Run test
-        run: npm run test
+        run: xvfb-run npm run test
