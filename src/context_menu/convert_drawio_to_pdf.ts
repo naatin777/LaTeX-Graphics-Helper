@@ -5,10 +5,9 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
+import { createCropPdfCommand } from '../commands/crop_pdf';
 import { getExecPathDrawio } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
-
-import { cropPdf } from './crop_pdf';
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
     const xmlData = fs.readFileSync(inputPath, 'utf-8');
@@ -37,7 +36,9 @@ export async function convertDrawioToPdf(
         `${getExecPathDrawio()} -xf pdf -t -a -o "${path.normalize(temporaryPdfPath)}" "${path.normalize(inputPath)}"`,
         workspaceFolder
     );
-    cropPdf(temporaryPdfPath, temporaryPdfPath, workspaceFolder);
+
+    const cropPdfCommand = createCropPdfCommand(temporaryPdfPath, temporaryPdfPath, workspaceFolder);
+    runCommand(cropPdfCommand, workspaceFolder);
 
     const drawioTabs = await getDrawioTabs(inputPath);
 

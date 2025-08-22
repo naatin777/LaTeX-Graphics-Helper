@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 
+import { createCropPdfCommand } from './commands/crop_pdf';
 import { getOutputPathCropPdf, getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf, getOutputPathSplitPdf } from './configuration';
 import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
 import { convertImageToPdf } from './context_menu/convert_image_to_pdf';
 import { convertPdfToImage } from './context_menu/convert_pdf_to_image';
-import { cropPdf } from './context_menu/crop_pdf';
 import { mergePdf } from './context_menu/merge_pdf';
 import { runExplorerContextItem } from './context_menu/run_context_menu_item';
 import { splitPdf } from './context_menu/split_pdf';
@@ -12,6 +12,7 @@ import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
 import { localeMap } from './locale_map';
+import { runCommand } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
@@ -19,7 +20,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('cropPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				cropPdf(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
+				const cropPdfCommand = createCropPdfCommand(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
+				runCommand(cropPdfCommand, workspaceFolder);
 			});
 		})
 	);
