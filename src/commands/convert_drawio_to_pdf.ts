@@ -2,10 +2,10 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getExecPathInkscape } from '../configuration';
+import { getExecPathDrawio } from '../configuration';
 import { createFolder, replaceOutputPath } from '../utils';
 
-export function createConvertImageToPdfCommand(
+export function createConvertDrawioToPdfCommand(
     inputPath: string,
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
@@ -13,5 +13,5 @@ export function createConvertImageToPdfCommand(
     const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
 
-    return `${getExecPathInkscape()} "${path.normalize(inputPath)}" -o "${path.normalize(replacedOutputPath)}" --export-type=pdf --export-area-drawing`;
+    return `${getExecPathDrawio()} -xf pdf -t -a -o "${replacedOutputPath}" "${path.normalize(inputPath)}"`;
 }

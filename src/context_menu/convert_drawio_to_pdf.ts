@@ -32,10 +32,8 @@ export async function convertDrawioToPdf(
 ): Promise<void> {
     const temporaryPdfPath = `${inputPath}.pdf`;
 
-    runCommand(
-        `${getExecPathDrawio()} -xf pdf -t -a -o "${path.normalize(temporaryPdfPath)}" "${path.normalize(inputPath)}"`,
-        workspaceFolder
-    );
+    const convertDrawioToPdfCommand = createCropPdfCommand(inputPath, temporaryPdfPath, workspaceFolder);
+    runCommand(convertDrawioToPdfCommand, workspaceFolder);
 
     const cropPdfCommand = createCropPdfCommand(temporaryPdfPath, temporaryPdfPath, workspaceFolder);
     runCommand(cropPdfCommand, workspaceFolder);
