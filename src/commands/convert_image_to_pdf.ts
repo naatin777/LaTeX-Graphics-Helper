@@ -1,17 +1,19 @@
-import * as path from 'path';
-
 import * as vscode from 'vscode';
 
 import { getExecPathInkscape } from '../configuration';
-import { createFolder, replaceOutputPath } from '../utils';
+import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 export function createConvertImageToPdfCommand(
+    execPath: string,
     inputPath: string,
     outputPath: string,
-    workspaceFolder: vscode.WorkspaceFolder,
 ): string {
-    const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
-    createFolder(replacedOutputPath);
+    return `${execPath} "${inputPath}" -o "${outputPath}" --export-type=pdf --export-area-drawing`;
+}
 
-    return `${getExecPathInkscape()} "${path.normalize(inputPath)}" -o "${path.normalize(replacedOutputPath)}" --export-type=pdf --export-area-drawing`;
+export function convertImageToPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) {
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, 'TODO', workspaceFolder);
+    createFolder(replacedOutputPath);
+    const convertImageToPdfCommand = createConvertImageToPdfCommand(getExecPathInkscape(), uri.fsPath, replacedOutputPath);
+    runCommand(convertImageToPdfCommand, workspaceFolder);
 }

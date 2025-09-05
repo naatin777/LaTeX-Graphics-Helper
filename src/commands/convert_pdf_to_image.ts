@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import * as vscode from 'vscode';
 
 import { getExecPathPdftocairo } from '../configuration';
@@ -14,5 +12,5 @@ export function createConvertPdfToImageCommand(
     const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
 
-    return `${getExecPathPdftocairo()} ${pdfToImageOptions.join(' ')} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`;
+    return `${getExecPathPdftocairo()} ${pdfToImageOptions.join(' ')} "${inputPath}" "${replacedOutputPath}"`;
 }

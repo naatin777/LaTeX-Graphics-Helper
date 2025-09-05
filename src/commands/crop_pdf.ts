@@ -1,17 +1,19 @@
-import * as path from 'path';
-
 import * as vscode from 'vscode';
 
-import { getExecPathPdfcrop } from '../configuration';
-import { createFolder, replaceOutputPath } from '../utils';
+import { getExecPathPdfcrop, getOutputPathCropPdf } from '../configuration';
+import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 export function createCropPdfCommand(
+    execPath: string,
     inputPath: string,
     outputPath: string,
-    workspaceFolder: vscode.WorkspaceFolder,
 ): string {
-    const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
-    createFolder(replacedOutputPath);
+    return `${execPath} "${inputPath}" "${outputPath}"`;
+}
 
-    return `${getExecPathPdfcrop()} "${path.normalize(inputPath)}" "${path.normalize(replacedOutputPath)}"`;
+export function cropPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder): void {
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, getOutputPathCropPdf(), workspaceFolder);
+    createFolder(replacedOutputPath);
+    const cropPdfCommand = createCropPdfCommand(getExecPathPdfcrop(), uri.fsPath, replacedOutputPath);
+    runCommand(cropPdfCommand, workspaceFolder);
 }

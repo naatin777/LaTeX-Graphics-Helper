@@ -1,12 +1,12 @@
 import * as fs from 'fs';
-import * as path from 'path';
 
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
+import { createConvertDrawioToPdfCommand } from '../commands/convert_drawio_to_pdf';
 import { createCropPdfCommand } from '../commands/crop_pdf';
-import { getExecPathDrawio } from '../configuration';
+import { getExecPathPdfcrop } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
@@ -32,10 +32,10 @@ export async function convertDrawioToPdf(
 ): Promise<void> {
     const temporaryPdfPath = `${inputPath}.pdf`;
 
-    const convertDrawioToPdfCommand = createCropPdfCommand(inputPath, temporaryPdfPath, workspaceFolder);
+    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(inputPath, temporaryPdfPath, workspaceFolder);
     runCommand(convertDrawioToPdfCommand, workspaceFolder);
 
-    const cropPdfCommand = createCropPdfCommand(temporaryPdfPath, temporaryPdfPath, workspaceFolder);
+    const cropPdfCommand = createCropPdfCommand(getExecPathPdfcrop(), temporaryPdfPath, temporaryPdfPath);
     runCommand(cropPdfCommand, workspaceFolder);
 
     const drawioTabs = await getDrawioTabs(inputPath);

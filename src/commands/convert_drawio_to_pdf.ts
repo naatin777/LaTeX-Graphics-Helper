@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import * as vscode from 'vscode';
 
 import { getExecPathDrawio } from '../configuration';
@@ -13,5 +11,5 @@ export function createConvertDrawioToPdfCommand(
     const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
 
-    return `${getExecPathDrawio()} -xf pdf -t -a -o "${replacedOutputPath}" "${path.normalize(inputPath)}"`;
+    return `${getExecPathDrawio()} "${inputPath}" -o "${replacedOutputPath}" -xf pdf -t -a`;
 }
