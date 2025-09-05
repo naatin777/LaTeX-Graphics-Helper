@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
 
+import { convertDrawioToPdf } from './commands/convert_drawio_to_pdf';
 import { convertImageToPdf } from './commands/convert_image_to_pdf';
 import { createConvertPdfToImageCommand } from './commands/convert_pdf_to_image';
 import { cropPdf } from './commands/crop_pdf';
+import { mergePdf } from './commands/merge_pdf';
+import { splitPdf } from './commands/split_pdf';
 import { getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf, getOutputPathSplitPdf } from './configuration';
-import { convertDrawioToPdf } from './context_menu/convert_drawio_to_pdf';
-import { mergePdf } from './context_menu/merge_pdf';
-import { runExplorerContextItem } from './context_menu/run_context_menu_item';
-import { splitPdf } from './context_menu/split_pdf';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
 import { localeMap } from './locale_map';
+import { runExplorerContextItem } from './run_context_menu_item';
 import { runCommand } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
