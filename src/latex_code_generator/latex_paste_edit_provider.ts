@@ -3,11 +3,11 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
+import { createConvertImageToPdfCommand } from '../commands/convert_image_to_pdf';
 import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
-import { convertImageToPdf } from '../context_menu/convert_image_to_pdf';
 import { askGemini } from '../gemini/ask_gemini';
 import { localeMap } from '../locale_map';
-import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
+import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, runCommand, toPosixPath } from '../utils';
 
 type FileInfo = {
     buffer: Buffer<ArrayBuffer>;
@@ -115,7 +115,8 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const pdfPath = `${imagePath}.pdf`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
         if (info.mime !== 'application/pdf') {
-            convertImageToPdf(imagePathWithExt, pdfPath, workspaceFolder);
+            const convertImageToPdfCommand = createConvertImageToPdfCommand(imagePathWithExt, pdfPath, workspaceFolder);
+            runCommand(convertImageToPdfCommand, workspaceFolder);
             if (fs.existsSync(imagePathWithExt)) {
                 fs.unlinkSync(imagePathWithExt);
             }
