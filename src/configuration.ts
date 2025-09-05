@@ -2,6 +2,8 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
+import { ImageOutputPath, PdfOutputPath } from './type';
+
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
 export function getShell(): string {
@@ -61,28 +63,28 @@ export function getOutputPathConvertDrawioToPdf(): string {
     return config.get<string>('outputPath.convertDrawioToPdf') as string;
 }
 
-export function getOutputPathConvertPdfToPng(): string {
-    return config.get<string>('outputPath.convertPdfToPng') as string;
+export function getOutputPathConvertPdfToPng(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToPng') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPdfToJpeg(): string {
-    return config.get<string>('outputPath.convertPdfToJpeg') as string;
+export function getOutputPathConvertPdfToJpeg(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToJpeg') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPdfToSvg(): string {
-    return config.get<string>('outputPath.convertPdfToSvg') as string;
+export function getOutputPathConvertPdfToSvg(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToSvg') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPngToPdf(): string {
-    return config.get<string>('outputPath.convertPngToPdf') as string;
+export function getOutputPathConvertPngToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertPngToPdf') as PdfOutputPath;
 }
 
-export function getOutputPathConvertJpegToPdf(): string {
-    return config.get<string>('outputPath.convertJpegToPdf') as string;
+export function getOutputPathConvertJpegToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertJpegToPdf') as PdfOutputPath;
 }
 
-export function getOutputPathConvertSvgToPdf(): string {
-    return config.get<string>('outputPath.convertSvgToPdf') as string;
+export function getOutputPathConvertSvgToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertSvgToPdf') as PdfOutputPath;
 }
 
 export function getOutputPathClipboardImage(): string {
