@@ -2,7 +2,7 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
-import { ExecPath, ImageOutputPath, PdfOutputPath, PdftocairoOptions, Shell } from './type';
+import { ExecPath, ImageOutputPath, PdfOutputPath, Shell } from './type';
 
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
@@ -113,18 +113,6 @@ export function getChoiceSubWidth(): string[] {
 
 export function getChoiceSpaceBetweenSubs(): string[] {
     return config.get<string[]>('choice.spaceBetweenSubs') as string[];
-}
-
-export function getPdftocairoPngOptions(): PdftocairoOptions {
-    return config.get<string[]>('pdftocairo.pngOptions') as PdftocairoOptions;
-}
-
-export function getPdftocairoJpegOptions(): PdftocairoOptions {
-    return config.get<string[]>('pdftocairo.jpegOptions') as PdftocairoOptions;
-}
-
-export function getPdftocairoSvgOptions(): PdftocairoOptions {
-    return config.get<string[]>('pdftocairo.svgOptions') as PdftocairoOptions;
 }
 
 export function getGeminiModel(): string {

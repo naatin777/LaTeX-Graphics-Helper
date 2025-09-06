@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 
 import { getExecPathInkscape } from '../configuration';
-import { PdfOutputPath } from '../type';
+import { ExecPath, PdfOutputPath } from '../type';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 export function createConvertImageToPdfCommand(
-    execPath: string,
+    execPath: ExecPath,
     inputPath: string,
     outputPath: string,
 ): string {

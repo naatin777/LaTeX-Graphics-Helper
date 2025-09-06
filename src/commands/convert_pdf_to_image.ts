@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { getExecPathPdftocairo } from '../configuration';
 import { ImageOutputPath, PdftocairoOptions } from '../type';
-import { createFolder, replaceOutputPath } from '../utils';
+import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 import { splitPdf } from './split_pdf';
 
@@ -12,20 +12,17 @@ export function createConvertPdfToImageCommand(
     outputPath: string,
     options: string[],
 ): string {
-
-    return `${execPath} ${options.join(' ')} "${inputPath}" "${outputPath}"`;
+    return `${execPath} "${inputPath}" "${outputPath}" ${options.join(' ')}`;
 }
 
 export async function convertPdfToImage(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, outputPath: ImageOutputPath, options: PdftocairoOptions) {
     const outputPaths = await splitPdf(uri.fsPath, outputPath, workspaceFolder, []);
 
-    outputPaths.forEach((path) => {
-
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-
+    outputPaths.forEach((path: string) => {
+        const replacedOutputPath = replaceOutputPath(uri.fsPath, path, workspaceFolder);
         createFolder(replacedOutputPath);
 
-        const convertPdfToImageCommand = createConvertPdfToImageCommand(getExecPathPdftocairo(), uri.fsPath, path, options);
-
+        const convertPdfToImageCommand = createConvertPdfToImageCommand(getExecPathPdftocairo(), uri.fsPath, replacedOutputPath, options);
+        runCommand(convertPdfToImageCommand, workspaceFolder);
     });
 }

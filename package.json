@@ -360,30 +360,6 @@
           ],
           "description": "Available spacing options between subfigures/subtables in LaTeX minipage environments."
         },
-        "latex-graphics-helper.pdftocairo.pngOptions": {
-          "type": "array",
-          "default": [
-            "-png",
-            "-transp",
-            "-singlefile"
-          ],
-          "description": "Options passed to pdftocairo when converting PDF to PNG."
-        },
-        "latex-graphics-helper.pdftocairo.jpegOptions": {
-          "type": "array",
-          "default": [
-            "-jpeg",
-            "-singlefile"
-          ],
-          "description": "Options passed to pdftocairo when converting PDF to JPEG."
-        },
-        "latex-graphics-helper.pdftocairo.svgOptions": {
-          "type": "array",
-          "default": [
-            "-svg"
-          ],
-          "description": "Options passed to pdftocairo when converting PDF to SVG."
-        },
         "latex-graphics-helper.gemini.model": {
           "type": "string",
           "default": "gemini-2.0-flash",
