@@ -2,52 +2,52 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
-import { ImageOutputPath, PdfOutputPath } from './type';
+import { ExecPath, ImageOutputPath, PdfOutputPath, Shell } from './type';
 
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
-export function getShell(): string {
+export function getShell(): Shell {
     const shell = config.get<string>('shell');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return shell || 'powershell.exe';
+        return (shell || 'powershell.exe') as Shell;
     } else if (platform === 'darwin') {
-        return shell || '/bin/zsh';
+        return (shell || '/bin/zsh') as Shell;
     } else {
-        return shell || '/bin/bash';
+        return (shell || '/bin/bash') as Shell;
     }
 }
 
-export function getExecPathPdfcrop(): string {
-    return config.get<string>('execPath.pdfcrop') as string;
+export function getExecPathPdfcrop(): ExecPath {
+    return config.get<string>('execPath.pdfcrop') as ExecPath;
 }
 
-export function getExecPathDrawio(): string {
+export function getExecPathDrawio(): ExecPath {
     const drawioCommand = config.get<string>('execPath.drawio');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return drawioCommand || '"C:\\Program Files\\draw.io\\draw.io.exe"';
+        return (drawioCommand || '"C:\\Program Files\\draw.io\\draw.io.exe"') as ExecPath;
     } else if (platform === 'darwin') {
-        return drawioCommand || '/Applications/draw.io.app/Contents/MacOS/draw.io';
+        return (drawioCommand || '/Applications/draw.io.app/Contents/MacOS/draw.io') as ExecPath;
     } else {
-        return drawioCommand || 'drawio';
+        return (drawioCommand || 'drawio') as ExecPath;
     }
 }
 
-export function getExecPathPdftocairo(): string {
-    return config.get<string>('execPath.pdftocairo') as string;
+export function getExecPathPdftocairo(): ExecPath {
+    return config.get<string>('execPath.pdftocairo') as ExecPath;
 }
 
-export function getExecPathInkscape(): string {
+export function getExecPathInkscape(): ExecPath {
     const inkscapeCommand = config.get<string>('execPath.inkscape');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return inkscapeCommand || '"C:\\Program Files\\Inkscape\\bin\\inkscape.exe"';
+        return (inkscapeCommand || '"C:\\Program Files\\Inkscape\\bin\\inkscape.exe"') as ExecPath;
     } else {
-        return inkscapeCommand || 'inkscape';
+        return (inkscapeCommand || 'inkscape') as ExecPath;
     }
 }
 

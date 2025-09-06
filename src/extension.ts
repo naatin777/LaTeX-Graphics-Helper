@@ -6,7 +6,7 @@ import { createConvertPdfToImageCommand } from './commands/convert_pdf_to_image'
 import { cropPdf } from './commands/crop_pdf';
 import { mergePdf } from './commands/merge_pdf';
 import { splitPdf } from './commands/split_pdf';
-import { getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathConvertDrawioToPdf, getOutputPathSplitPdf } from './configuration';
+import { getOutputPathConvertPdfToPng, getOutputPathConvertPdfToJpeg, getOutputPathConvertPdfToSvg, getPdftocairoPngOptions, getPdftocairoJpegOptions, getPdftocairoSvgOptions, getOutputPathConvertPngToPdf, getOutputPathConvertJpegToPdf, getOutputPathConvertSvgToPdf, getOutputPathSplitPdf } from './configuration';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
@@ -65,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.convertDrawioToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertDrawioToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				await convertDrawioToPdf(uri.fsPath, getOutputPathConvertDrawioToPdf(), workspaceFolder);
+				await convertDrawioToPdf(uri, workspaceFolder);
 			});
 		})
 	);
