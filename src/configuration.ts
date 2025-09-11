@@ -6,6 +6,60 @@ import { ExecPath, ImageOutputPath, PdfOutputPath, Shell } from './type';
 
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
+export interface AppConfig {
+    shell: Shell;
+    execPathPdfcrop: ExecPath;
+    execPathDrawio: ExecPath;
+    execPathPdftocairo: ExecPath;
+    execPathInkscape: ExecPath;
+    outputPathCropPdf: string;
+    outputPathSplitPdf: string;
+    outputPathConvertDrawioToPdf: string;
+    outputPathConvertPdfToPng: ImageOutputPath;
+    outputPathConvertPdfToJpeg: ImageOutputPath;
+    outputPathConvertPdfToSvg: ImageOutputPath;
+    outputPathConvertPngToPdf: PdfOutputPath;
+    outputPathConvertJpegToPdf: PdfOutputPath;
+    outputPathConvertSvgToPdf: PdfOutputPath;
+    outputPathClipboardImage: string;
+    choiceFigurePlacement: string[];
+    choiceFigureAlignment: string[];
+    choiceGraphicsOptions: string[];
+    choiceSubVerticalAlignment: string[];
+    choiceSubWidth: string[];
+    choiceSpaceBetweenSubs: string[];
+    geminiModel: string;
+    geminiRequests: string[];
+}
+
+export function getAppConfig(): AppConfig {
+    return {
+        shell: getShell(),
+        execPathPdfcrop: getExecPathPdfcrop(),
+        execPathDrawio: getExecPathDrawio(),
+        execPathPdftocairo: getExecPathPdftocairo(),
+        execPathInkscape: getExecPathInkscape(),
+        outputPathCropPdf: getOutputPathCropPdf(),
+        outputPathSplitPdf: getOutputPathSplitPdf(),
+        outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
+        outputPathConvertPdfToPng: getOutputPathConvertPdfToPng(),
+        outputPathConvertPdfToJpeg: getOutputPathConvertPdfToJpeg(),
+        outputPathConvertPdfToSvg: getOutputPathConvertPdfToSvg(),
+        outputPathConvertPngToPdf: getOutputPathConvertPngToPdf(),
+        outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
+        outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
+        outputPathClipboardImage: getOutputPathClipboardImage(),
+        choiceFigurePlacement: getChoiceFigurePlacement(),
+        choiceFigureAlignment: getChoiceFigureAlignment(),
+        choiceGraphicsOptions: getChoiceGraphicsOptions(),
+        choiceSubVerticalAlignment: getChoiceSubVerticalAlignment(),
+        choiceSubWidth: getChoiceSubWidth(),
+        choiceSpaceBetweenSubs: getChoiceSpaceBetweenSubs(),
+        geminiModel: getGeminiModel(),
+        geminiRequests: getGeminiRequests(),
+    };
+}
+
 export function getShell(): Shell {
     const shell = config.get<string>('shell');
     const platform = os.platform();

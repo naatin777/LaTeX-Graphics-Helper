@@ -4,7 +4,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
-import { getExecPathDrawio, getExecPathPdfcrop, getOutputPathConvertDrawioToPdf } from '../configuration';
+import { AppConfig } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 import { createCropPdfCommand } from './crop_pdf';
@@ -40,13 +40,14 @@ async function savePdfFile(pdfDocument: PDFDocument, outputPath: string, i: numb
 export async function convertDrawioToPdf(
     uri: vscode.Uri,
     workspaceFolder: vscode.WorkspaceFolder,
+    config: AppConfig, // 追加
 ) {
     const temporaryPdfPath = `${uri.fsPath}.pdf`;
 
-    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(getExecPathDrawio(), uri.fsPath, temporaryPdfPath, workspaceFolder);
+    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(config.execPathDrawio, uri.fsPath, temporaryPdfPath, workspaceFolder);
     runCommand(convertDrawioToPdfCommand, workspaceFolder);
 
-    const cropPdfCommand = createCropPdfCommand(getExecPathPdfcrop(), temporaryPdfPath, temporaryPdfPath);
+    const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, temporaryPdfPath, temporaryPdfPath);
     runCommand(cropPdfCommand, workspaceFolder);
 
     const drawioTabs = await getDrawioTabs(uri.fsPath);
@@ -58,7 +59,7 @@ export async function convertDrawioToPdf(
     for (let i = 0; i < pdfPages.length; i++) {
         const tab = drawioTabs[i];
 
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, getOutputPathConvertDrawioToPdf(), workspaceFolder, tab);
+        const replacedOutputPath = replaceOutputPath(uri.fsPath, config.outputPathConvertDrawioToPdf, workspaceFolder, tab);
         createFolder(replacedOutputPath);
 
         savePdfFile(pdfDocument, replacedOutputPath, i);
