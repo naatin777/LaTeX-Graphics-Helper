@@ -14,9 +14,22 @@ updates:
     schedule:
       interval: "daily"
     groups:
-      npm-all-dependencies:
+      eslint-dependencies:
         patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+      types-dependencies:
+        patterns:
+          - "@types/*"
+      vscode-dependencies:
+        patterns:
+          - "@vscode/*"
+      production-dependencies:
+        patterns:
+          - "@google/genai"
+          - "pdf-lib"
+          - "xml2js"
+    ignore:
+      - dependency-name: "@types/node"
+      - dependency-name: "@types/vscode"
