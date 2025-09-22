@@ -14,12 +14,8 @@ export function createConvertDrawioToPdfCommand(
     execPath: ExecPath,
     inputPath: string,
     outputPath: string,
-    workspaceFolder: vscode.WorkspaceFolder,
 ): string {
-    const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder);
-    createFolder(replacedOutputPath);
-
-    return `${execPath} "${inputPath}" -o "${replacedOutputPath}" -xf pdf -t -a`;
+    return `${execPath} "${inputPath}" -o "${outputPath}" -xf pdf -t -a`;
 }
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
@@ -45,7 +41,9 @@ export async function convertDrawioToPdf(
 ) {
     const temporaryPdfPath = `${uri.fsPath}.pdf`;
 
-    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(config.execPathDrawio, uri.fsPath, temporaryPdfPath, workspaceFolder);
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, temporaryPdfPath, workspaceFolder);
+    createFolder(replacedOutputPath);
+    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(config.execPathDrawio, uri.fsPath, replacedOutputPath);
     runCommand(convertDrawioToPdfCommand, workspaceFolder);
 
     const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, temporaryPdfPath, temporaryPdfPath);
