@@ -5,12 +5,13 @@ import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
 import { AppConfig } from '../configuration';
+import { ExecPath } from '../type';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 import { createCropPdfCommand } from './crop_pdf';
 
 export function createConvertDrawioToPdfCommand(
-    execPath: string,
+    execPath: ExecPath,
     inputPath: string,
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,

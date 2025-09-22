@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
+import { ExecPath } from '../type';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 export function createCropPdfCommand(
-    execPath: string,
+    execPath: ExecPath,
     inputPath: string,
     outputPath: string,
 ): string {

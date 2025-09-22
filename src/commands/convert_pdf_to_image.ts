@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
-import { ImageOutputPath, PdftocairoOptions } from '../type';
+import { ExecPath, ImageOutputPath, PdftocairoOptions } from '../type';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 import { splitPdf } from './split_pdf';
 
 export function createConvertPdfToImageCommand(
-    execPath: string,
+    execPath: ExecPath,
     inputPath: string,
     outputPath: string,
     options: string[],
