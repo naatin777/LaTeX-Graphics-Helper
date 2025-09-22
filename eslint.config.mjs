@@ -1,6 +1,7 @@
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import importPlugin from 'eslint-plugin-import';
+import unusedImports from 'eslint-plugin-unused-imports';
 
 export default [{
     files: ['**/*.ts'],
@@ -8,6 +9,7 @@ export default [{
     plugins: {
         '@typescript-eslint': typescriptEslint,
         import: importPlugin,
+        'unused-imports': unusedImports,
     },
 
     languageOptions: {
@@ -53,5 +55,7 @@ export default [{
                 caseInsensitive: true,
             },
         }],
+
+        'unused-imports/no-unused-imports': 'error',
     },
 }];

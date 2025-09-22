@@ -2,51 +2,100 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
+import { ExecPath, ImageOutputPath, PdfOutputPath, Shell } from './type';
+
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
-export function getShell(): string {
+export interface AppConfig {
+    shell: Shell;
+    execPathPdfcrop: ExecPath;
+    execPathDrawio: ExecPath;
+    execPathPdftocairo: ExecPath;
+    execPathInkscape: ExecPath;
+    outputPathCropPdf: string;
+    outputPathSplitPdf: string;
+    outputPathConvertDrawioToPdf: string;
+    outputPathConvertPdfToPng: ImageOutputPath;
+    outputPathConvertPdfToJpeg: ImageOutputPath;
+    outputPathConvertPdfToSvg: ImageOutputPath;
+    outputPathConvertPngToPdf: PdfOutputPath;
+    outputPathConvertJpegToPdf: PdfOutputPath;
+    outputPathConvertSvgToPdf: PdfOutputPath;
+    outputPathClipboardImage: string;
+    choiceFigurePlacement: string[];
+    choiceFigureAlignment: string[];
+    choiceGraphicsOptions: string[];
+    choiceSubVerticalAlignment: string[];
+    choiceSubWidth: string[];
+    choiceSpaceBetweenSubs: string[];
+    geminiModel: string;
+    geminiRequests: string[];
+}
+
+export function getAppConfig(): AppConfig {
+    return {
+        shell: getShell(),
+        execPathPdfcrop: getExecPathPdfcrop(),
+        execPathDrawio: getExecPathDrawio(),
+        execPathPdftocairo: getExecPathPdftocairo(),
+        execPathInkscape: getExecPathInkscape(),
+        outputPathCropPdf: getOutputPathCropPdf(),
+        outputPathSplitPdf: getOutputPathSplitPdf(),
+        outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
+        outputPathConvertPdfToPng: getOutputPathConvertPdfToPng(),
+        outputPathConvertPdfToJpeg: getOutputPathConvertPdfToJpeg(),
+        outputPathConvertPdfToSvg: getOutputPathConvertPdfToSvg(),
+        outputPathConvertPngToPdf: getOutputPathConvertPngToPdf(),
+        outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
+        outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
+        outputPathClipboardImage: getOutputPathClipboardImage(),
+        choiceFigurePlacement: getChoiceFigurePlacement(),
+        choiceFigureAlignment: getChoiceFigureAlignment(),
+        choiceGraphicsOptions: getChoiceGraphicsOptions(),
+        choiceSubVerticalAlignment: getChoiceSubVerticalAlignment(),
+        choiceSubWidth: getChoiceSubWidth(),
+        choiceSpaceBetweenSubs: getChoiceSpaceBetweenSubs(),
+        geminiModel: getGeminiModel(),
+        geminiRequests: getGeminiRequests(),
+    };
+}
+
+export function getShell(): Shell {
     const shell = config.get<string>('shell');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return shell || 'powershell.exe';
+        return (shell || 'powershell.exe') as Shell;
     } else if (platform === 'darwin') {
-        return shell || '/bin/zsh';
+        return (shell || '/bin/zsh') as Shell;
     } else {
-        return shell || '/bin/bash';
+        return (shell || '/bin/bash') as Shell;
     }
 }
 
-export function getExecPathPdfcrop(): string {
-    return config.get<string>('execPath.pdfcrop') as string;
-}
-
-export function getExecPathDrawio(): string {
+export function getExecPathDrawio(): ExecPath {
     const drawioCommand = config.get<string>('execPath.drawio');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return drawioCommand || '"C:\\Program Files\\draw.io\\draw.io.exe"';
+        return (drawioCommand || '"C:\\Program Files\\draw.io\\draw.io.exe"') as ExecPath;
     } else if (platform === 'darwin') {
-        return drawioCommand || '/Applications/draw.io.app/Contents/MacOS/draw.io';
+        return (drawioCommand || '/Applications/draw.io.app/Contents/MacOS/draw.io') as ExecPath;
     } else {
-        return drawioCommand || 'drawio';
+        return (drawioCommand || 'drawio') as ExecPath;
     }
 }
 
-export function getExecPathPdftocairo(): string {
-    return config.get<string>('execPath.pdftocairo') as string;
+export function getExecPathPdfcrop(): ExecPath {
+    return config.get<string>('execPath.pdfcrop') as ExecPath;
 }
 
-export function getExecPathInkscape(): string {
-    const inkscapeCommand = config.get<string>('execPath.inkscape');
-    const platform = os.platform();
+export function getExecPathPdftocairo(): ExecPath {
+    return config.get<string>('execPath.pdftocairo') as ExecPath;
+}
 
-    if (platform === 'win32') {
-        return inkscapeCommand || '"C:\\Program Files\\Inkscape\\bin\\inkscape.exe"';
-    } else {
-        return inkscapeCommand || 'inkscape';
-    }
+export function getExecPathInkscape(): ExecPath {
+    return config.get<string>('execPath.inkscape') as ExecPath;
 }
 
 export function getOutputPathCropPdf(): string {
@@ -61,28 +110,28 @@ export function getOutputPathConvertDrawioToPdf(): string {
     return config.get<string>('outputPath.convertDrawioToPdf') as string;
 }
 
-export function getOutputPathConvertPdfToPng(): string {
-    return config.get<string>('outputPath.convertPdfToPng') as string;
+export function getOutputPathConvertPdfToPng(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToPng') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPdfToJpeg(): string {
-    return config.get<string>('outputPath.convertPdfToJpeg') as string;
+export function getOutputPathConvertPdfToJpeg(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToJpeg') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPdfToSvg(): string {
-    return config.get<string>('outputPath.convertPdfToSvg') as string;
+export function getOutputPathConvertPdfToSvg(): ImageOutputPath {
+    return config.get<string>('outputPath.convertPdfToSvg') as ImageOutputPath;
 }
 
-export function getOutputPathConvertPngToPdf(): string {
-    return config.get<string>('outputPath.convertPngToPdf') as string;
+export function getOutputPathConvertPngToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertPngToPdf') as PdfOutputPath;
 }
 
-export function getOutputPathConvertJpegToPdf(): string {
-    return config.get<string>('outputPath.convertJpegToPdf') as string;
+export function getOutputPathConvertJpegToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertJpegToPdf') as PdfOutputPath;
 }
 
-export function getOutputPathConvertSvgToPdf(): string {
-    return config.get<string>('outputPath.convertSvgToPdf') as string;
+export function getOutputPathConvertSvgToPdf(): PdfOutputPath {
+    return config.get<string>('outputPath.convertSvgToPdf') as PdfOutputPath;
 }
 
 export function getOutputPathClipboardImage(): string {
@@ -111,18 +160,6 @@ export function getChoiceSubWidth(): string[] {
 
 export function getChoiceSpaceBetweenSubs(): string[] {
     return config.get<string[]>('choice.spaceBetweenSubs') as string[];
-}
-
-export function getPdftocairoPngOptions(): string[] {
-    return config.get<string[]>('pdftocairo.pngOptions') as string[];
-}
-
-export function getPdftocairoJpegOptions(): string[] {
-    return config.get<string[]>('pdftocairo.jpegOptions') as string[];
-}
-
-export function getPdftocairoSvgOptions(): string[] {
-    return config.get<string[]>('pdftocairo.svgOptions') as string[];
 }
 
 export function getGeminiModel(): string {

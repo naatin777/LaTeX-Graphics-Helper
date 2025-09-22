@@ -9,15 +9,17 @@ export async function splitPdf(
     inputPath: string,
     outputPath: string,
     workspaceFolder: vscode.WorkspaceFolder,
-): Promise<void> {
+    tabs: string[] = [],
+): Promise<string[]> {
     const pdfBuffer = fs.readFileSync(inputPath);
     const pdfDocument = await PDFDocument.load(pdfBuffer);
     const pdfPages = pdfDocument.getPages();
 
-    for (let i = 0; i < pdfPages.length; i++) {
-        const tab = i;
+    const outputPaths: string[] = [];
 
-        const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder, (tab + 1).toString());
+    for (let i = 0; i < pdfPages.length; i++) {
+        const replacedOutputPath = replaceOutputPath(inputPath, outputPath, workspaceFolder, tabs[i] ?? (i + 1).toString());
+        outputPaths.push(replacedOutputPath);
         createFolder(replacedOutputPath);
 
         const newPdfDocument = await PDFDocument.create();
@@ -26,4 +28,6 @@ export async function splitPdf(
         const newPdfBytes = await newPdfDocument.save();
         fs.writeFileSync(replacedOutputPath, newPdfBytes);
     }
+
+    return outputPaths;
 }

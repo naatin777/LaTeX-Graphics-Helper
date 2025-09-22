@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { localeMap } from '../locale_map';
+import { localeMap } from './locale_map';
 
 export function runExplorerContextItem(uris: vscode.Uri[], title: string, task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => void) {
     if (!uris) {
