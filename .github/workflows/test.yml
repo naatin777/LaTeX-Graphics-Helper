@@ -1,7 +1,6 @@
 name: Test VSCode Extension
 
 on:
-  push:
   pull_request:
 
 jobs:
