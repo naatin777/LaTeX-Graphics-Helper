@@ -40,7 +40,7 @@ async function savePdfFile(pdfDocument: PDFDocument, outputPath: string, i: numb
 export async function convertDrawioToPdf(
     uri: vscode.Uri,
     workspaceFolder: vscode.WorkspaceFolder,
-    config: AppConfig, // 追加
+    config: AppConfig,
 ) {
     const temporaryPdfPath = `${uri.fsPath}.pdf`;
 

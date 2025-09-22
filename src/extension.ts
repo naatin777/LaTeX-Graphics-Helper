@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 
-import { convertDrawioToPdf } from './commands/convert_drawio_to_pdf'; // 追加
+import { convertDrawioToPdf } from './commands/convert_drawio_to_pdf';
 import { convertImageToPdf } from './commands/convert_image_to_pdf';
 import { convertPdfToImage } from './commands/convert_pdf_to_image';
-import { cropPdf } from './commands/crop_pdf'; // 追加
+import { cropPdf } from './commands/crop_pdf';
 import { mergePdf } from './commands/merge_pdf';
-import { splitPdf } from './commands/split_pdf'; // 追加
-import { AppConfig, getAppConfig } from './configuration'; // 変更
+import { splitPdf } from './commands/split_pdf';
+import { AppConfig, getAppConfig } from './configuration';
 import { PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS } from './constants';
 import { deleteGeminiApiKey, storeGeminiApiKey } from './gemini/gemini_api_key';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
@@ -16,17 +16,17 @@ import { runExplorerContextItem } from './run_context_menu_item';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
-    const config: AppConfig = getAppConfig(); // 追加
+	const config: AppConfig = getAppConfig();
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('cropPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                cropPdf(uri, workspaceFolder, config); // 変更
+				cropPdf(uri, workspaceFolder, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.splitPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('splitPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                splitPdf(uri.fsPath, config.outputPathSplitPdf, workspaceFolder); // 変更
+				splitPdf(uri.fsPath, config.outputPathSplitPdf, workspaceFolder);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.mergePdf', async (uri: vscode.Uri, uris: vscode.Uri[]) => {
@@ -57,37 +57,37 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertDrawioToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertDrawioToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                convertDrawioToPdf(uri, workspaceFolder, config); // 変更
+				convertDrawioToPdf(uri, workspaceFolder, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToPng', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertPdfToPngProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToPng, PDFTOCAIRO_PNG_OPTIONS, config); // 変更
+				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToPng, PDFTOCAIRO_PNG_OPTIONS, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToJpeg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertPdfToJpegProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToJpeg, PDFTOCAIRO_JPEG_OPTIONS, config); // 変更
+				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToJpeg, PDFTOCAIRO_JPEG_OPTIONS, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertPdfToSvg', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertPdfToSvgProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToSvg, PDFTOCAIRO_SVG_OPTIONS, config); // 変更
+				convertPdfToImage(uri, workspaceFolder, config.outputPathConvertPdfToSvg, PDFTOCAIRO_SVG_OPTIONS, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertPngToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertPngToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertPngToPdf, config); // 変更
+				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertPngToPdf, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertJpegToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertJpegToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertJpegToPdf, config); // 変更
+				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertJpegToPdf, config);
 			});
 		}),
 		vscode.commands.registerCommand('latex-graphics-helper.convertSvgToPdf', (uri: vscode.Uri, uris: vscode.Uri[]) => {
 			runExplorerContextItem(uris, localeMap('convertSvgToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertSvgToPdf, config); // 変更
+				convertImageToPdf(uri, workspaceFolder, config.outputPathConvertSvgToPdf, config);
 			});
 		}),
 		vscode.languages.registerDocumentDropEditProvider(

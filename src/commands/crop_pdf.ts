@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { AppConfig } from '../configuration'; // 追加
+import { AppConfig } from '../configuration';
 import { createFolder, replaceOutputPath, runCommand } from '../utils';
 
 export function createCropPdfCommand(
@@ -11,9 +11,9 @@ export function createCropPdfCommand(
     return `${execPath} "${inputPath}" "${outputPath}"`;
 }
 
-export function cropPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, config: AppConfig): void { // 追加
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, config.outputPathCropPdf, workspaceFolder); // 変更
+export function cropPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, config: AppConfig): void {
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, config.outputPathCropPdf, workspaceFolder);
     createFolder(replacedOutputPath);
-    const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, uri.fsPath, replacedOutputPath); // 変更
+    const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, uri.fsPath, replacedOutputPath);
     runCommand(cropPdfCommand, workspaceFolder);
 }
