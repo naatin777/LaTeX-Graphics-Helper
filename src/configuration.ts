@@ -73,10 +73,6 @@ export function getShell(): Shell {
     }
 }
 
-export function getExecPathPdfcrop(): ExecPath {
-    return config.get<string>('execPath.pdfcrop') as ExecPath;
-}
-
 export function getExecPathDrawio(): ExecPath {
     const drawioCommand = config.get<string>('execPath.drawio');
     const platform = os.platform();
@@ -90,19 +86,16 @@ export function getExecPathDrawio(): ExecPath {
     }
 }
 
+export function getExecPathPdfcrop(): ExecPath {
+    return config.get<string>('execPath.pdfcrop') as ExecPath;
+}
+
 export function getExecPathPdftocairo(): ExecPath {
     return config.get<string>('execPath.pdftocairo') as ExecPath;
 }
 
 export function getExecPathInkscape(): ExecPath {
-    const inkscapeCommand = config.get<string>('execPath.inkscape');
-    const platform = os.platform();
-
-    if (platform === 'win32') {
-        return (inkscapeCommand || '"C:\\Program Files\\Inkscape\\bin\\inkscape.exe"') as ExecPath;
-    } else {
-        return (inkscapeCommand || 'inkscape') as ExecPath;
-    }
+    return config.get<string>('execPath.inkscape') as ExecPath;
 }
 
 export function getOutputPathCropPdf(): string {

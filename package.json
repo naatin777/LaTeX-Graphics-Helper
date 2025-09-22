@@ -204,38 +204,29 @@
       "title": "LaTeX Graphics Helper",
       "properties": {
         "latex-graphics-helper.shell": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": "null",
+          "type": "string",
+          "default": "",
           "description": "Shell to use for executing commands. If not specified, the default shell for your operating system will be used (powershell.exe on Windows, /bin/zsh on macOS, /bin/bash on others)."
+        },
+        "latex-graphics-helper.execPath.drawio": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
         },
         "latex-graphics-helper.execPath.pdfcrop": {
           "type": "string",
           "default": "pdfcrop",
-          "description": "Path to the pdfcrop executable"
-        },
-        "latex-graphics-helper.execPath.drawio": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": "null",
-          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
+          "description": "Path to the pdfcrop executable."
         },
         "latex-graphics-helper.execPath.pdftocairo": {
           "type": "string",
           "default": "pdftocairo",
-          "description": "Path to the pdftocairo executable"
+          "description": "Path to the pdftocairo executable."
         },
         "latex-graphics-helper.execPath.inkscape": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "default": "null",
-          "description": "Path to the inkscape executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\Inkscape\\bin\\inkscape.exe\" on Windows, inkscape on others)."
+          "type": "string",
+          "default": "inkscape",
+          "description": "Path to the inkscape executable."
         },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
