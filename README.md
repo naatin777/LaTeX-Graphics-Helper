@@ -9,12 +9,12 @@ A VS Code extension for LaTeX users to efficiently process graphic files. It pro
 
 <table>
   <tr>
-    <td><img src="gif/1.gif"></td>
-    <td><img src="gif/2.gif"></td>
+    <td><img src="./assets/1.gif"></td>
+    <td><img src="./assets/2.gif"></td>
   </tr>
   <tr>
-    <td><img src="gif/3.gif"></td>
-    <td><img src="gif/4.gif"></td>
+    <td><img src="./assets/3.gif"></td>
+    <td><img src="./assets/4.gif"></td>
   </tr>
 </table>
 
