@@ -211,7 +211,7 @@
         "latex-graphics-helper.execPath.drawio": {
           "type": "string",
           "default": "",
-          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (\"C:\\Program Files\\draw.io\\draw.io.exe\" on Windows, /Applications/draw.io.app/Contents/MacOS/draw.io on macOS, drawio on others)."
+          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (draw.io.exe on Windows, draw.io on macOS, drawio on others)."
         },
         "latex-graphics-helper.execPath.pdfcrop": {
           "type": "string",
