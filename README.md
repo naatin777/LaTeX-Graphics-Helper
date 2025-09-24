@@ -3,6 +3,8 @@
   <h1>LaTeX Graphics Helper</h1>
 </div>
 
+|English|[日本語](README.ja.md)|
+
 A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw\.io files to PDF, and generating LaTeX code using Gemini AI.
 
 - [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=naatin777.latex-graphics-helper)
