@@ -1,3 +1,5 @@
+![LaTeX Graphics Helper Icon](assets/rectangle_icon.dio.png)
+
 # LaTeX Graphics Helper
 
 A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw\.io files to PDF, and generating LaTeX code using Gemini AI.
