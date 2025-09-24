@@ -129,6 +129,10 @@
         {
           "command": "latex-graphics-helper.deleteGeminiApiKey",
           "when": "true"
+        },
+        {
+          "command": "latex-graphics-helper.doctor",
+          "when": "true"
         }
       ]
     },
@@ -197,6 +201,11 @@
       {
         "command": "latex-graphics-helper.deleteGeminiApiKey",
         "title": "%deleteGeminiApiKey%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.doctor",
+        "title": "%doctor%",
         "category": "LaTeX Graphics Helper"
       }
     ],

@@ -12,6 +12,7 @@
 	"convertSvgToPdf": "Convert to PDF",
 	"setGeminiApiKey": "Set Gemini API Key",
 	"deleteGeminiApiKey": "Delete Gemini API Key",
+	"doctor": "Check for missing tools",
 	"cropPdfProcess": "Cropping PDF files...",
 	"splitPdfProcess": "Splitting PDF files ...",
 	"mergePdfProcess": "Merging PDF files ...",

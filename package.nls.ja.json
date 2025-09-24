@@ -12,6 +12,7 @@
 	"convertSvgToPdf": "PDFに変換",
 	"setGeminiApiKey": "Gemini APIキーを設定",
 	"deleteGeminiApiKey": "Gemini APIキーを削除",
+	"doctor": "不足しているツールのチェック",
 	"cropPdfProcess": "PDFファイルをクロップ中...",
 	"splitPdfProcess": "PDFファイルを分割中...",
 	"mergePdfProcess": "PDFファイルを結合中...",

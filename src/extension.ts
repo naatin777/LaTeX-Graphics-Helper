@@ -4,6 +4,7 @@ import { convertDrawioToPdf } from './commands/convert_drawio_to_pdf';
 import { convertImageToPdf } from './commands/convert_image_to_pdf';
 import { convertPdfToImage } from './commands/convert_pdf_to_image';
 import { cropPdf } from './commands/crop_pdf';
+import { doctor } from './commands/doctor';
 import { mergePdf } from './commands/merge_pdf';
 import { splitPdf } from './commands/split_pdf';
 import { AppConfig, getAppConfig } from './configuration';
@@ -115,7 +116,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.deleteGeminiApiKey', async () => {
 			await deleteGeminiApiKey(secretStorage);
 			vscode.window.showInformationMessage(localeMap('deletedGeminiApiKey'));
-		})
+		}),
+		vscode.commands.registerCommand('latex-graphics-helper.doctor', () => {
+			doctor(config);
+		}),
 	);
 }
 
