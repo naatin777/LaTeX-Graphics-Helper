@@ -78,9 +78,9 @@ export function getExecPathDrawio(): ExecPath {
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return (drawioCommand || 'draw.io.exe') as ExecPath;
+        return (drawioCommand || '"C:\\Program Files\\draw.io\\draw.io.exe"') as ExecPath;
     } else if (platform === 'darwin') {
-        return (drawioCommand || 'draw.io') as ExecPath;
+        return (drawioCommand || '/Applications/draw.io.app/Contents/MacOS/draw.io') as ExecPath;
     } else {
         return (drawioCommand || 'drawio') as ExecPath;
     }

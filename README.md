@@ -1,7 +1,4 @@
-<div align="center">
-  <img src="./assets/rectangle_icon.dio.png">
-  <h1>LaTeX Graphics Helper</h1>
-</div>
+# LaTeX Graphics Helper
 
 A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw\.io files to PDF, and generating LaTeX code using Gemini AI.
 
@@ -12,12 +9,12 @@ A VS Code extension for LaTeX users to efficiently process graphic files. It pro
 
 <table>
   <tr>
-    <td><img src="./assets/1.gif"></td>
-    <td><img src="./assets/2.gif"></td>
+    <td><img src="gif/1.gif"></td>
+    <td><img src="gif/2.gif"></td>
   </tr>
   <tr>
-    <td><img src="./assets/3.gif"></td>
-    <td><img src="./assets/4.gif"></td>
+    <td><img src="gif/3.gif"></td>
+    <td><img src="gif/4.gif"></td>
   </tr>
 </table>
 
