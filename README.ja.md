@@ -56,27 +56,8 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 
 ## 必要なツール
 
-### Draw\.io
-
-Draw.io ファイル (.drawio, .dio) を PDF に変換するには、Draw.io デスクトップアプリケーションが必要です。
-[Draw.io](https://www.draw.io/) よりダウンロードしてください。
-
-### pdfcrop
-
-PDF トリミング機能には pdfcrop が必要です。
-通常、TeX Live または MiKTeX に含まれています。
-
-### pdftocairo
-
-PDF を画像に変換する機能には pdftocairo が必要です。
-通常、Poppler ユーティリティに含まれています。
-
-### Inkscape
-
-画像を PDF に変換するには Inkscape が必要です。
-[Inkscape](https://inkscape.org/) よりダウンロードしてください。
-
-### Gemini AI
-
-Gemini AI 機能を利用するには、Gemini API キーが必要です。
-[Google AI Studio](https://aistudio.google.com/app/apikey) で取得してください。
+* **Draw.io**: Draw.io ファイル (.drawio, .dio) を PDF に変換するには、Draw.io デスクトップアプリケーションが必要です。 [Draw.io](https://github.com/jgraph/drawio-desktop/releases) からダウンロードしてください。
+* **pdfcrop**: PDF のクロップ機能には **pdfcrop** が必要です。これは通常、TeX Live または MiKTeX に含まれています。
+* **pdftocairo**: PDF を画像に変換する機能には **pdftocairo** が必要です。これは通常、Poppler ユーティリティに含まれています。
+* **Inkscape**: 画像を PDF に変換するには、**Inkscape** が必要です。 [Inkscape](https://inkscape.org/release) からダウンロードしてください。
+* **Gemini AI**: Gemini AI 機能を使用するには、Gemini API キーが必要です。 [Google AI Studio](https://aistudio.google.com/app/apikey) で取得してください。
