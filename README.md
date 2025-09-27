@@ -56,8 +56,8 @@ You can install this extension in one of the following ways:
 
 ## Required Tools
 
-*   **Draw.io**: The Draw.io desktop application is required to convert Draw.io files (.drawio, .dio) to PDF. Download it from [Draw.io](https://www.draw.io/).
+*   **Draw.io**: The Draw.io desktop application is required to convert Draw.io files (.drawio, .dio) to PDF. Download it from [Draw.io](https://github.com/jgraph/drawio-desktop/releases).
 *   **pdfcrop**: The PDF cropping feature requires pdfcrop. It is usually included with TeX Live or MiKTeX.
 *   **pdftocairo**: The feature to convert PDFs to images requires pdftocairo. It is usually included with Poppler utilities.
-*   **Inkscape**: Inkscape is required to convert images to PDF. Download it from [Inkscape](https://inkscape.org/).
+*   **Inkscape**: Inkscape is required to convert images to PDF. Download it from [Inkscape](https://inkscape.org/release).
 *   **Gemini AI**: A Gemini API key is required to use the Gemini AI feature. Obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).
