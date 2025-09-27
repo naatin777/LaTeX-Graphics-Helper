@@ -1,11 +1,18 @@
-# LaTeX Graphics Helper
+<div align="center">
+  <img src="./assets/rectangle_icon.dio.png">
+  <h1>LaTeX Graphics Helper</h1>
+  <img alt="GitHub License" src="https://img.shields.io/github/license/naatin777/LaTeX-Graphics-Helper">
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/naatin777/LaTeX-Graphics-Helper">
+  <img alt="Visual Studio Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/naatin777.latex-graphics-helper">
+  <!-- <img alt="Open VSX Downloads" src="https://img.shields.io/open-vsx/dt/naatin777/LaTeX-Graphics-Helper"> -->
+</div>
 
-A VS Code extension for LaTeX users to efficiently process graphic files. It provides features such as PDF cropping, image format conversion, converting Draw\.io files to PDF, and generating LaTeX code using Gemini AI.
+English | [日本語](README.ja.md)
 
-- [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=naatin777.latex-graphics-helper)
-- [Open VSX](https://open-vsx.org/extension/naatin777/latex-graphics-helper)
+LaTeX Graphics Helper is a VS Code extension designed for intuitive handling of PDF and image files.
+It offers a variety of features, including PDF merging, splitting, and cropping, mutual conversion of image formats, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
 
-## Demonstration
+## Demo
 
 <table>
   <tr>
@@ -20,19 +27,37 @@ A VS Code extension for LaTeX users to efficiently process graphic files. It pro
 
 ## Features
 
--   **Crop PDF**: Automatically crops the margins of selected PDF files.
--   **Split PDF**: Splits a selected PDF file into multiple single-page PDF files.
--   **Merge PDF**: Merges multiple selected PDF files into a single PDF file.
--   **Convert Draw\.io to PDF**: Converts selected Draw\.io files (.drawio or .dio) to PDF. Each tab is exported as a separate PDF file.
--   **Convert PDF to Image**: Converts selected PDF files to PNG, JPEG, or SVG format using pdftocairo.
--   **Convert Image to PDF**: Converts selected PNG, JPEG, or SVG files to PDF format using inkscape.
--   **Insert LaTeX for PDF**: Drag and drop PDF files into your LaTeX document to automatically insert the corresponding LaTeX code.
--   **Generate LaTeX Code with Gemini AI**: Generate LaTeX code (equations, tables, etc.) from images using Gemini AI.
+### PDF Operations
+*   **Crop**: Crops the margins of the selected PDF file.
+*   **Split**: Splits the selected PDF file into single-page PDFs.
+*   **Merge**: Merges multiple selected PDF files into one.
+*   **Convert to Image**: Converts PDF files to PNG, JPEG, or SVG format.
 
-## Requirements
+### Image & Draw.io Operations
+*   **Convert to PDF**: Converts PNG, JPEG, or SVG files to PDF format.
+*   **Convert Draw.io to PDF**: Converts Draw.io files (.drawio, .dio) to PDF. Each tab is exported as a separate PDF.
 
--   To use the PDF cropping feature, pdfcrop must be installed on your system. It is typically included with TeX Live or MiKTeX.
--   To use the Draw\.io to PDF conversion feature, the Draw\.io desktop application must be installed on your system.
--   To use the PDF to Image conversion features, pdftocairo must be installed on your system. It is typically included with Poppler utilities.
--   To use the Image to PDF conversion features, Inkscape must be installed on your system.
--   To use the Gemini AI features, you need a Gemini API key. You can obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).
+### LaTeX Code Generation
+*   **Insert from PDF**: Drag and drop a PDF file into a LaTeX document to automatically insert the corresponding LaTeX code.
+*   **Insert from Image**: Paste an image from the clipboard into LaTeX to automatically insert the LaTeX code and save the image file.
+*   **Gemini AI**: Uses Gemini AI to generate LaTeX code (equations, tables, etc.) from an image on the clipboard.
+
+## Installation
+
+You can install this extension in one of the following ways:
+
+*   **Visual Studio Code Marketplace**:
+    Search for "LaTeX Graphics Helper" in the Extensions Marketplace within VS Code and install it.
+    [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=naatin777.latex-graphics-helper)
+
+*   **Open VSX Registry**:
+    It can also be installed from Open VSX, an alternative marketplace for VS Code.
+    [Open VSX](https://open-vsx.org/extension/naatin777/latex-graphics-helper)
+
+## Required Tools
+
+*   **Draw.io**: The Draw.io desktop application is required to convert Draw.io files (.drawio, .dio) to PDF. Download it from [Draw.io](https://www.draw.io/).
+*   **pdfcrop**: The PDF cropping feature requires pdfcrop. It is usually included with TeX Live or MiKTeX.
+*   **pdftocairo**: The feature to convert PDFs to images requires pdftocairo. It is usually included with Poppler utilities.
+*   **Inkscape**: Inkscape is required to convert images to PDF. Download it from [Inkscape](https://inkscape.org/).
+*   **Gemini AI**: A Gemini API key is required to use the Gemini AI feature. Obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).
