@@ -5,15 +5,11 @@ import * as vscode from 'vscode';
 
 import { createConvertImageToPdfCommand } from '../commands/convert_image_to_pdf';
 import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getExecPathInkscape, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
+import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../gemini/ask_gemini';
 import { localeMap } from '../locale_map';
+import { FileInfo } from '../type';
 import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, runCommand, toPosixPath } from '../utils';
-
-type FileInfo = {
-    buffer: Buffer<ArrayBuffer>;
-    ext: string;
-    mime: string;
-}
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
 
@@ -30,33 +26,45 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         context: vscode.DocumentPasteEditContext,
         token: vscode.CancellationToken
     ): Promise<vscode.DocumentPasteEdit[] | undefined> {
+        token.onCancellationRequested(() => {
+            vscode.window.showWarningMessage(localeMap('cancelled'));
+        });
+
         const info = await this.getDataTransferInformation(dataTransfer);
 
         if (!info) {
             return;
         }
 
+        const pickedItem = await vscode.window.showQuickPick([
+            { label: localeMap('pasteAsPdfLabel'), detail: localeMap('pasteAsPdfDetail') },
+            { label: localeMap('pasteAsImageLabel'), detail: localeMap('pasteAsImageDetail') },
+            { label: localeMap('aiRequestLabel'), detail: localeMap('aiRequestDetail') },
+            ...getGeminiRequests().map(request => ({ label: request, detail: '' })),
+        ]);
+
         const uri = document.uri;
         const fileDirname = path.dirname(uri.fsPath);
         const outputPath = getOutputPathClipboardImage();
-        const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri)!;
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 
-        const items = this.createQuickPickItems();
-        const pickedItem = await vscode.window.showQuickPick(items);
+        if (!workspaceFolder) {
+            return;
+        }
 
         let snippet: vscode.SnippetString | undefined;
 
         try {
             if (pickedItem) {
-                if (pickedItem.label === localeMap('pasteDefaultImageFormatLabel')) {
+                if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
                     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
                     createFolder(replacedOutputPath);
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
-                } else if (pickedItem.label === localeMap('pastePdfFormatLabel')) {
+                } else if (pickedItem.detail === localeMap('pasteAsPdfDetail')) {
                     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
                     createFolder(replacedOutputPath);
                     snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
-                } else if (pickedItem.label === localeMap('customRequestLabel')) {
+                } else if (pickedItem.detail === localeMap('aiRequestDetail')) {
                     snippet = await this.handleCustomGeminiRequest(info);
                 } else {
                     snippet = await this.handleGeminiRequest(pickedItem.label, info);
@@ -77,26 +85,14 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         return undefined;
     }
 
-    private async getFileBufferFromDataTransferItem(dataTransferItem: vscode.DataTransferItem) {
-        const file = dataTransferItem.asFile();
-        const data = await file?.data();
-        return data ? Buffer.from(data) : undefined;
-    }
-
     private async getDataTransferInformation(dataTransfer: vscode.DataTransfer) {
-        const mimeTypes = [
-            { mime: 'application/pdf', ext: '.pdf' },
-            { mime: 'image/png', ext: '.png' },
-            { mime: 'image/jpeg', ext: '.jpeg' },
-            { mime: 'image/svg+xml', ext: '.svg' }
-        ];
-
-        for (const { mime, ext } of mimeTypes) {
-            const item = dataTransfer.get(mime);
+        for (const type of CLIPBOARD_IMAGE_TYPES) {
+            const item = dataTransfer.get(type.mime);
             if (item) {
-                const buffer = await this.getFileBufferFromDataTransferItem(item);
-                if (buffer) {
-                    return { buffer, ext, mime };
+                const file = item.asFile();
+                const data = await file?.data();
+                if (data) {
+                    return { type, buffer: Buffer.from(data) };
                 }
             }
         }
@@ -104,17 +100,17 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     }
 
     private async handleDefaultImagePaste(imagePath: string, info: FileInfo, fileDirname: string): Promise<vscode.SnippetString | undefined> {
-        const imagePathWithExt = `${imagePath}${info.ext}`;
+        const imagePathWithExt = `${imagePath}.${info.type.ext}`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
         const relativeFilePath = path.relative(fileDirname, imagePathWithExt);
         return this.createSinglePdfSnippet('', relativeFilePath);
     }
 
     private async handlePdfPaste(imagePath: string, info: FileInfo, fileDirname: string, workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.SnippetString | undefined> {
-        const imagePathWithExt = `${imagePath}${info.ext}`;
+        const imagePathWithExt = `${imagePath}.${info.type.ext}`;
         const pdfPath = `${imagePath}.pdf`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
-        if (info.mime !== 'application/pdf') {
+        if (info.type.mime !== 'application/pdf') {
             const convertImageToPdfCommand = createConvertImageToPdfCommand(getExecPathInkscape(), imagePathWithExt, pdfPath);
             runCommand(convertImageToPdfCommand, workspaceFolder);
             if (fs.existsSync(imagePathWithExt)) {
@@ -128,7 +124,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     private async handleCustomGeminiRequest(info: FileInfo): Promise<vscode.SnippetString | undefined> {
         const customRequest = await vscode.window.showInputBox({ prompt: 'Enter your custom request for Gemini' });
         if (customRequest) {
-            const geminiResponse = await askGemini(this.secretStorage, customRequest, info.buffer, info.mime);
+            const geminiResponse = await askGemini(this.secretStorage, customRequest, info);
             if (geminiResponse) {
                 return new vscode.SnippetString(geminiResponse);
             }
@@ -137,7 +133,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     }
 
     private async handleGeminiRequest(label: string, info: FileInfo): Promise<vscode.SnippetString | undefined> {
-        const geminiResponse = await askGemini(this.secretStorage, label, info.buffer, info.mime);
+        const geminiResponse = await askGemini(this.secretStorage, label, info);
         if (!geminiResponse) {
             return undefined;
         }
@@ -185,17 +181,5 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         snippet.appendText('\\end{figure}');
 
         return snippet;
-    }
-
-    private createQuickPickItems(): vscode.QuickPickItem[] {
-        const geminiRequests = getGeminiRequests().map((value) => ({ label: value }));
-        return [
-            { label: localeMap('pastePdfFormatLabel') },
-            { label: localeMap('pasteDefaultImageFormatLabel') },
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            ...geminiRequests,
-            { label: '', kind: vscode.QuickPickItemKind.Separator },
-            { label: localeMap('customRequestLabel') },
-        ];
     }
 }
