@@ -393,7 +393,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "@google/genai": "^1.21.0",
+    "openai": "^5.23.1",
     "pdf-lib": "^1.17.1",
     "xml2js": "^0.6.2"
   }

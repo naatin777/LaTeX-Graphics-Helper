@@ -129,13 +129,18 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const customRequest = await vscode.window.showInputBox({ prompt: 'Enter your custom request for Gemini' });
         if (customRequest) {
             const geminiResponse = await askGemini(this.secretStorage, customRequest, info.buffer, info.mime);
-            return new vscode.SnippetString(geminiResponse);
+            if (geminiResponse) {
+                return new vscode.SnippetString(geminiResponse);
+            }
         }
         return undefined;
     }
 
     private async handleGeminiRequest(label: string, info: FileInfo): Promise<vscode.SnippetString | undefined> {
         const geminiResponse = await askGemini(this.secretStorage, label, info.buffer, info.mime);
+        if (!geminiResponse) {
+            return undefined;
+        }
         return new vscode.SnippetString(geminiResponse);
     }
 
