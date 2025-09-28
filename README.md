@@ -9,8 +9,8 @@
 
 English | [日本語](README.ja.md)
 
-LaTeX Graphics Helper is a VS Code extension designed for intuitive handling of PDF and image files.
-It offers a variety of features, including PDF merging, splitting, and cropping, mutual conversion of image formats, converting Draw.io files to PDF, and generating LaTeX code using Gemini AI.
+This is an extension designed to intuitively handle PDF and image files within VS Code.
+It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, PDF conversion of Draw.io files, and LaTeX code generation using Gemini AI.
 
 ## Demo
 
