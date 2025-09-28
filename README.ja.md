@@ -9,7 +9,7 @@
 
 [English](README.md) | 日本語
 
-LaTeX Graphics Helper は、VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
+VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
 PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io ファイルの PDF 変換、Gemini AI を利用した LaTeX コード生成など、多彩な機能を提供します。
 
 ## デモ
