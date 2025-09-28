@@ -6,18 +6,7 @@ import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
 import { AppConfig } from '../configuration';
-import { ExecPath } from '../type';
 import { createFolder, replaceOutputPath } from '../utils';
-
-import { createCropPdfCommand } from './crop_pdf';
-
-export function createConvertDrawioToPdfCommand(
-    execPath: ExecPath,
-    inputPath: string,
-    outputPath: string,
-): string {
-    return `${execPath} "${inputPath}" -o "${outputPath}" -xf pdf -t -a`;
-}
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
     const xmlData = fs.readFileSync(inputPath, 'utf-8');
@@ -44,11 +33,8 @@ export async function convertDrawioToPdf(
 
     const replacedOutputPath = replaceOutputPath(uri.fsPath, temporaryPdfPath, workspaceFolder);
     createFolder(replacedOutputPath);
-    const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(config.execPathDrawio, uri.fsPath, replacedOutputPath);
-    execFileSync(convertDrawioToPdfCommand);
-
-    const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, temporaryPdfPath, temporaryPdfPath);
-    execFileSync(cropPdfCommand);
+    execFileSync(config.execPathDrawio, [uri.fsPath, '-o', replacedOutputPath, '-xf', 'pdf', '-t', '-a'], { cwd: workspaceFolder.uri.fsPath });
+    execFileSync(config.execPathPdfcrop, [temporaryPdfPath, temporaryPdfPath], { cwd: workspaceFolder.uri.fsPath });
 
     const drawioTabs = await getDrawioTabs(uri.fsPath);
 
