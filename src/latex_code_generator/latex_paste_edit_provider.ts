@@ -40,6 +40,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             { label: localeMap('pasteAsPdfLabel'), detail: localeMap('pasteAsPdfDetail') },
             { label: localeMap('pasteAsImageLabel'), detail: localeMap('pasteAsImageDetail') },
             { label: localeMap('aiRequestLabel'), detail: localeMap('aiRequestDetail') },
+            { label: localeMap('registered'), detail: '', kind: vscode.QuickPickItemKind.Separator },
             ...getGeminiRequests().map(request => ({ label: request, detail: '' })),
         ]);
 

@@ -33,5 +33,6 @@
 	"aiRequestDetail": "Send a custom request to Gemini",
 	"noFilesSelected": "No files selected.",
 	"workspaceFolderNotFound": "Workspace folder not found.",
-	"cancelled": "Cancelled."
+	"cancelled": "Cancelled.",
+	"registered": "Registered"
 }

@@ -33,5 +33,6 @@
 	"aiRequestDetail": "Geminiに要求",
 	"noFilesSelected": "ファイルが選択されていません。",
 	"workspaceFolderNotFound": "ワークスペースフォルダーが見つかりません。",
-	"cancelled": "キャンセルされました。"
+	"cancelled": "キャンセルされました。",
+	"registered": "登録された"
 }
