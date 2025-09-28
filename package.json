@@ -17,6 +17,14 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "latex",
+    "tex",
+    "pdf",
+    "image",
+    "drawio",
+    "gemini"
+  ],
   "activationEvents": [
     "onStartupFinished"
   ],
