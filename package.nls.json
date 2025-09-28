@@ -25,9 +25,14 @@
 	"enterGeminiApiKey": "Enter your Gemini API Key",
 	"storedGeminiApiKey": "Stored Gemini API Key",
 	"deletedGeminiApiKey": "Deleted Gemini API Key",
-	"customRequestLabel": "Send a custom request",
-	"pasteDefaultImageFormatLabel": "Paste as default image format",
-	"pastePdfFormatLabel": "Paste as PDF format",
+	"pasteAsImageLabel": "Paste as image",
+	"pasteAsImageDetail": "Placing images in the figure environment",
+	"pasteAsPdfLabel": "Paste as PDF",
+	"pasteAsPdfDetail": "Placing PDFs in the figure environment",
+	"aiRequestLabel": "Send a custom request to Gemini",
+	"aiRequestDetail": "Send a custom request to Gemini",
 	"noFilesSelected": "No files selected.",
-	"workspaceFolderNotFound": "Workspace folder not found."
+	"workspaceFolderNotFound": "Workspace folder not found.",
+	"cancelled": "Cancelled.",
+	"registered": "Registered"
 }
