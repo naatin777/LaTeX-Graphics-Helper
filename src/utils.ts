@@ -1,10 +1,7 @@
-import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import * as vscode from 'vscode';
-
-import { getShell } from './configuration';
 
 export function toPosixPath(filePath: string): string {
     return path.normalize(filePath).split(/[\\\/]/g).join(path.posix.sep);
@@ -65,14 +62,4 @@ export function createFolder(filePath: string) {
     if (!fs.existsSync(folder)) {
         fs.mkdirSync(folder, { recursive: true });
     }
-}
-
-export function runCommand(command: string, workspaceFolder: vscode.WorkspaceFolder) {
-    execSync(
-        command,
-        {
-            'cwd': workspaceFolder.uri.fsPath,
-            'shell': getShell()
-        }
-    );
 }

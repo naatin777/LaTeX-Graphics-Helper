@@ -1,8 +1,10 @@
+import { execFileSync } from 'child_process';
+
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
 import { ExecPath, PdfOutputPath } from '../type';
-import { createFolder, replaceOutputPath, runCommand } from '../utils';
+import { createFolder, replaceOutputPath } from '../utils';
 
 export function createConvertImageToPdfCommand(
     execPath: ExecPath,
@@ -16,5 +18,5 @@ export function convertImageToPdf(uri: vscode.Uri, workspaceFolder: vscode.Works
     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
     const convertImageToPdfCommand = createConvertImageToPdfCommand(config.execPathInkscape, uri.fsPath, replacedOutputPath);
-    runCommand(convertImageToPdfCommand, workspaceFolder);
+    execFileSync(convertImageToPdfCommand);
 }

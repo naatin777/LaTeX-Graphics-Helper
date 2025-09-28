@@ -1,8 +1,10 @@
+import { execFileSync } from 'child_process';
+
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
 import { ExecPath } from '../type';
-import { createFolder, replaceOutputPath, runCommand } from '../utils';
+import { createFolder, replaceOutputPath } from '../utils';
 
 export function createCropPdfCommand(
     execPath: ExecPath,
@@ -16,5 +18,5 @@ export function cropPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder
     const replacedOutputPath = replaceOutputPath(uri.fsPath, config.outputPathCropPdf, workspaceFolder);
     createFolder(replacedOutputPath);
     const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, uri.fsPath, replacedOutputPath);
-    runCommand(cropPdfCommand, workspaceFolder);
+    execFileSync(cropPdfCommand);
 }

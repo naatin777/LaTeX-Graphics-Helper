@@ -203,11 +203,6 @@
     "configuration": {
       "title": "LaTeX Graphics Helper",
       "properties": {
-        "latex-graphics-helper.shell": {
-          "type": "string",
-          "default": "",
-          "description": "Shell to use for executing commands. If not specified, the default shell for your operating system will be used (powershell.exe on Windows, /bin/zsh on macOS, /bin/bash on others)."
-        },
         "latex-graphics-helper.execPath.drawio": {
           "type": "string",
           "default": "",

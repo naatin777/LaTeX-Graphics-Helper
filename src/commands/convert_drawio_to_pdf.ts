@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 
 import { PDFDocument } from 'pdf-lib';
@@ -6,7 +7,7 @@ import { Parser } from 'xml2js';
 
 import { AppConfig } from '../configuration';
 import { ExecPath } from '../type';
-import { createFolder, replaceOutputPath, runCommand } from '../utils';
+import { createFolder, replaceOutputPath } from '../utils';
 
 import { createCropPdfCommand } from './crop_pdf';
 
@@ -44,10 +45,10 @@ export async function convertDrawioToPdf(
     const replacedOutputPath = replaceOutputPath(uri.fsPath, temporaryPdfPath, workspaceFolder);
     createFolder(replacedOutputPath);
     const convertDrawioToPdfCommand = createConvertDrawioToPdfCommand(config.execPathDrawio, uri.fsPath, replacedOutputPath);
-    runCommand(convertDrawioToPdfCommand, workspaceFolder);
+    execFileSync(convertDrawioToPdfCommand);
 
     const cropPdfCommand = createCropPdfCommand(config.execPathPdfcrop, temporaryPdfPath, temporaryPdfPath);
-    runCommand(cropPdfCommand, workspaceFolder);
+    execFileSync(cropPdfCommand);
 
     const drawioTabs = await getDrawioTabs(uri.fsPath);
 

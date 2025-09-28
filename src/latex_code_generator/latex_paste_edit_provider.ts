@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,7 +10,7 @@ import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../gemini/ask_gemini';
 import { localeMap } from '../locale_map';
 import { FileInfo } from '../type';
-import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, runCommand, toPosixPath } from '../utils';
+import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
 
@@ -113,7 +114,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         fs.writeFileSync(imagePathWithExt, info.buffer);
         if (info.type.mime !== 'application/pdf') {
             const convertImageToPdfCommand = createConvertImageToPdfCommand(getExecPathInkscape(), imagePathWithExt, pdfPath);
-            runCommand(convertImageToPdfCommand, workspaceFolder);
+            execFileSync(convertImageToPdfCommand);
             if (fs.existsSync(imagePathWithExt)) {
                 fs.unlinkSync(imagePathWithExt);
             }
