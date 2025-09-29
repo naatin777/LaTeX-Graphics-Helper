@@ -22,7 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.deleteGeminiApiKey', () => commands.deleteGeminiApiKey(secretStorage)),
 		vscode.languages.registerDocumentDropEditProvider(
 			{ language: 'latex' },
-			new LatexDropEditProvider()
+			new LatexDropEditProvider(),
+			{
+				dropMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
+				providedDropEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
+			}
 		),
 		vscode.languages.registerDocumentPasteEditProvider(
 			{ language: 'latex' },
