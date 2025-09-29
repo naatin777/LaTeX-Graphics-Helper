@@ -9,7 +9,19 @@ class Logger {
         this.channel = vscode.window.createOutputChannel('LaTeX Graphics Helper');
     }
 
-    public log(type: LogLevel, message: string): void {
+    public info(message: string): void {
+        this.log('info', message);
+    }
+
+    public warn(message: string): void {
+        this.log('warn', message);
+    }
+
+    public error(message: string): void {
+        this.log('error', message);
+    }
+
+    private log(type: LogLevel, message: string): void {
         const time = new Date().toLocaleTimeString();
         this.channel.appendLine(`[${time}] ${type}: ${message}`);
     }
