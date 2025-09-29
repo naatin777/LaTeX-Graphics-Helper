@@ -2,12 +2,11 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
-import { ExecPath, ImageOutputPath, PdfOutputPath, Shell } from './type';
+import { ExecPath, ImageOutputPath, PdfOutputPath } from './type';
 
 const config = vscode.workspace.getConfiguration('latex-graphics-helper');
 
 export interface AppConfig {
-    shell: Shell;
     execPathPdfcrop: ExecPath;
     execPathDrawio: ExecPath;
     execPathPdftocairo: ExecPath;
@@ -34,7 +33,6 @@ export interface AppConfig {
 
 export function getAppConfig(): AppConfig {
     return {
-        shell: getShell(),
         execPathPdfcrop: getExecPathPdfcrop(),
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
@@ -58,19 +56,6 @@ export function getAppConfig(): AppConfig {
         geminiModel: getGeminiModel(),
         geminiRequests: getGeminiRequests(),
     };
-}
-
-export function getShell(): Shell {
-    const shell = config.get<string>('shell');
-    const platform = os.platform();
-
-    if (platform === 'win32') {
-        return (shell || 'powershell.exe') as Shell;
-    } else if (platform === 'darwin') {
-        return (shell || '/bin/zsh') as Shell;
-    } else {
-        return (shell || '/bin/bash') as Shell;
-    }
 }
 
 export function getExecPathDrawio(): ExecPath {
