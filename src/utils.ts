@@ -52,10 +52,6 @@ export function replaceOutputPath(inputPath: string, outputPath: string, workspa
         .replace(/\${dateNow}/g, Date.now().toString());
 }
 
-export function createOutputPaths(filePath: string, tabs: string[] = []) {
-    return tabs;
-}
-
 export function createFolder(filePath: string) {
     const folder = path.dirname(filePath);
 
