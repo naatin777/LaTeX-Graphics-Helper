@@ -5,7 +5,9 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
-import { AppConfig } from '../configuration';
+import { AppConfig, getAppConfig } from '../configuration';
+import { localeMap } from '../locale_map';
+import { runExplorerContextItem } from '../run_context_menu_item';
 import { createFolder, replaceOutputPath } from '../utils';
 
 async function getDrawioTabs(inputPath: string): Promise<string[]> {
@@ -52,4 +54,15 @@ export async function convertDrawioToPdf(
     }
 
     fs.unlinkSync(temporaryPdfPath);
+}
+
+export function runConvertDrawioToPdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+    if (!uris || uris.length === 0) {
+        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        return;
+    }
+
+    runExplorerContextItem(uris, localeMap('convertDrawioToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+        convertDrawioToPdf(uri, workspaceFolder, getAppConfig());
+    });
 }

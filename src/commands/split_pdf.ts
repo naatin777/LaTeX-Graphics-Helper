@@ -3,6 +3,9 @@ import * as fs from 'fs';
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
+import { getAppConfig } from '../configuration';
+import { localeMap } from '../locale_map';
+import { runExplorerContextItem } from '../run_context_menu_item';
 import { createFolder, replaceOutputPath } from '../utils';
 
 export async function splitPdf(
@@ -30,4 +33,15 @@ export async function splitPdf(
     }
 
     return outputPaths;
+}
+
+export function runSplitPdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+    if (!uris || uris.length === 0) {
+        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        return;
+    }
+
+    runExplorerContextItem(uris, localeMap('splitPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+        splitPdf(uri.fsPath, getAppConfig().outputPathSplitPdf, workspaceFolder);
+    });
 }

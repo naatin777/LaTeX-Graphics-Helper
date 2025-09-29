@@ -13,6 +13,6 @@ export async function getGeminiApiKey(secretStorage: vscode.SecretStorage) {
     return await secretStorage.get(GEMINI_API_KEY);
 }
 
-export async function deleteGeminiApiKey(secretStorage: vscode.SecretStorage) {
+export async function removeGeminiApiKey(secretStorage: vscode.SecretStorage) {
     await secretStorage.delete(GEMINI_API_KEY);
 }

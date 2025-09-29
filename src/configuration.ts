@@ -154,3 +154,44 @@ export function getGeminiModel(): string {
 export function getGeminiRequests(): string[] {
     return config.get<string[]>('gemini.requests') as string[];
 }
+
+// import * as vscode from 'vscode';
+// import * as os from 'os';
+
+// class Config {
+//     private get config() {
+//         return vscode.workspace.getConfiguration('myExtension');
+//     }
+
+//     /**
+//      * draw.ioの実行コマンドを取得する。
+//      * ユーザー設定を最優先し、なければOSから最適なデフォルトを推測する。
+//      */
+//     public getDrawioCommand(): string {
+//         // 1. ユーザーによる明示的な設定値を取得
+//         const userPath = this.config.get<string>('drawio.executablePath');
+
+//         // 2. ユーザー設定があれば、それを最優先で返す
+//         if (userPath) {
+//             return userPath;
+//         }
+
+//         // 3. ユーザー設定がなければ、OSを判定してデフォルト値を決める
+//         const platform = os.platform();
+//         if (platform === 'darwin') { // 'darwin' は macOS
+//             return 'draw.io';
+//         }
+//         if (platform === 'linux') {
+//             return 'drawio';
+//         }
+//         if (platform === 'win32') {
+//             // Windows用のデフォルト値 (もしあれば)
+//             return 'draw.io.exe';
+//         }
+
+//         // どのOSにも一致しない場合の最終的なフォールバック
+//         return 'drawio';
+//     }
+// }
+
+// export const config = new Config();
