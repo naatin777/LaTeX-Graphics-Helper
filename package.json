@@ -397,7 +397,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "openai": "^5.23.1",
+    "openai": "^6.0.0",
     "pdf-lib": "^1.17.1",
     "xml2js": "^0.6.2"
   }
