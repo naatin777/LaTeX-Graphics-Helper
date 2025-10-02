@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as commands from './commands';
 import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
 import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
+import { logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
 	const secretStorage = context.secrets;
@@ -37,6 +38,8 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		),
 	);
+
+	logger.info('LaTeX Graphics Helper activated');
 }
 
 export function deactivate() { }

@@ -14,3 +14,5 @@ export type FileInfo = {
     type: FileType;
     buffer: Buffer<ArrayBuffer>;
 }
+
+export type LogLevel = 'info' | 'warn' | 'error'
