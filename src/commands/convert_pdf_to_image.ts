@@ -11,14 +11,14 @@ import { createFolder, replaceOutputPath } from '../utils';
 
 import { splitPdf } from './split_pdf';
 
-export async function convertPdfToImage(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, outputPath: ImageOutputPath, options: PdftocairoOptions, config: AppConfig) {
-    const outputPaths = await splitPdf(uri.fsPath, outputPath, workspaceFolder, []);
+export async function convertPdfToImage(inputPath: string, workspaceFolder: vscode.WorkspaceFolder, outputPath: ImageOutputPath, options: PdftocairoOptions, config: AppConfig) {
+    const outputPaths = await splitPdf(inputPath, outputPath, workspaceFolder, []);
 
     outputPaths.forEach((path: string) => {
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, path, workspaceFolder);
+        const replacedOutputPath = replaceOutputPath(inputPath, path, workspaceFolder);
         createFolder(replacedOutputPath);
 
-        execFileSync(config.execPathPdftocairo, [uri.fsPath, replacedOutputPath, ...options], { cwd: workspaceFolder.uri.fsPath });
+        execFileSync(config.execPathPdftocairo, [inputPath, replacedOutputPath, ...options], { cwd: workspaceFolder.uri.fsPath });
     });
 }
 
@@ -29,7 +29,9 @@ export function runConvertPdfToPngCommand(uri: vscode.Uri, uris?: vscode.Uri[]) 
     }
 
     runExplorerContextItem(uris, localeMap('convertPdfToPngProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToPng, PDFTOCAIRO_PNG_OPTIONS, getAppConfig());
+        const outputPaths = await splitPdf(uri.fsPath, `${uri.fsPath}-{tab}.pdf`, workspaceFolder);
+        const promises = outputPaths.map(async (path) => convertPdfToImage(path, workspaceFolder, getAppConfig().outputPathConvertPdfToPng, PDFTOCAIRO_PNG_OPTIONS, getAppConfig()));
+        await Promise.all(promises);
     });
 }
 
@@ -40,7 +42,9 @@ export function runConvertPdfToJpegCommand(uri: vscode.Uri, uris?: vscode.Uri[])
     }
 
     runExplorerContextItem(uris, localeMap('convertPdfToJpegProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToJpeg, PDFTOCAIRO_JPEG_OPTIONS, getAppConfig());
+        const outputPaths = await splitPdf(uri.fsPath, `${uri.fsPath}-{tab}.pdf`, workspaceFolder);
+        const promises = outputPaths.map(async (path) => convertPdfToImage(path, workspaceFolder, getAppConfig().outputPathConvertPdfToJpeg, PDFTOCAIRO_JPEG_OPTIONS, getAppConfig()));
+        await Promise.all(promises);
     });
 }
 
@@ -51,6 +55,8 @@ export function runConvertPdfToSvgCommand(uri: vscode.Uri, uris?: vscode.Uri[]) 
     }
 
     runExplorerContextItem(uris, localeMap('convertPdfToSvgProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToSvg, PDFTOCAIRO_SVG_OPTIONS, getAppConfig());
+        const outputPaths = await splitPdf(uri.fsPath, `${uri.fsPath}-{tab}.pdf`, workspaceFolder);
+        const promises = outputPaths.map(async (path) => convertPdfToImage(path, workspaceFolder, getAppConfig().outputPathConvertPdfToSvg, PDFTOCAIRO_SVG_OPTIONS, getAppConfig()));
+        await Promise.all(promises);
     });
 }
