@@ -7,18 +7,25 @@ import { PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS
 import { localeMap } from '../locale_map';
 import { runExplorerContextItem } from '../run_context_menu_item';
 import { ImageOutputPath, PdftocairoOptions } from '../type';
-import { createFolder, replaceOutputPath } from '../utils';
 
 import { splitPdf } from './split_pdf';
 
 export async function convertPdfToImage(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, outputPath: ImageOutputPath, options: PdftocairoOptions, config: AppConfig) {
-    const outputPaths = await splitPdf(uri.fsPath, outputPath, workspaceFolder, []);
-
+    const outputPaths = await splitPdf(uri.fsPath, `${outputPath}.pdf`, workspaceFolder, []);
     outputPaths.forEach((path: string) => {
-        const replacedOutputPath = replaceOutputPath(uri.fsPath, path, workspaceFolder);
-        createFolder(replacedOutputPath);
+        try {
+            if (options === PDFTOCAIRO_PNG_OPTIONS) {
+                execFileSync(config.execPathPdftocairo, [path, path + '.png', ...options], { cwd: workspaceFolder.uri.fsPath });
+            } else if (options === PDFTOCAIRO_JPEG_OPTIONS) {
+                execFileSync(config.execPathPdftocairo, [path, path + '.jpeg', ...options], { cwd: workspaceFolder.uri.fsPath });
+            } else if (options === PDFTOCAIRO_SVG_OPTIONS) {
+                execFileSync(config.execPathPdftocairo, [path, path + '.svg', ...options], { cwd: workspaceFolder.uri.fsPath });
+            }
+        } catch (error: any) {
+            vscode.window.showErrorMessage(error.toString());
+        }
 
-        execFileSync(config.execPathPdftocairo, [uri.fsPath, replacedOutputPath, ...options], { cwd: workspaceFolder.uri.fsPath });
+        vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
     });
 }
 
