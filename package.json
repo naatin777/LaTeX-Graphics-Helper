@@ -249,17 +249,17 @@
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
           "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertPdfToJpeg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
           "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
         },
         "latex-graphics-helper.outputPath.convertPdfToSvg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}.svg",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}.svg",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
