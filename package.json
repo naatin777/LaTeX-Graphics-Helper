@@ -259,7 +259,7 @@
         },
         "latex-graphics-helper.outputPath.convertPdfToSvg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}.svg",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
