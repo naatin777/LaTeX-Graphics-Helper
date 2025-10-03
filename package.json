@@ -399,6 +399,8 @@
   "dependencies": {
     "openai": "^6.0.1",
     "pdf-lib": "^1.17.1",
+    "puppeteer-core": "^24.23.0",
+    "sharp": "^0.34.4",
     "xml2js": "^0.6.2"
   }
 }
