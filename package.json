@@ -227,11 +227,6 @@
           "default": "pdftocairo",
           "description": "Path to the pdftocairo executable."
         },
-        "latex-graphics-helper.execPath.inkscape": {
-          "type": "string",
-          "default": "inkscape",
-          "description": "Path to the inkscape executable."
-        },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
@@ -265,17 +260,17 @@
         "latex-graphics-helper.outputPath.convertPngToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a PNG file to PDF. Depends on inkscape."
+          "description": "Output file name when converting a PNG file to PDF."
         },
         "latex-graphics-helper.outputPath.convertJpegToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a JPEG file to PDF. Depends on inkscape."
+          "description": "Output file name when converting a JPEG file to PDF."
         },
         "latex-graphics-helper.outputPath.convertSvgToPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a SVG file to PDF. Depends on inkscape."
+          "description": "Output file name when converting a SVG file to PDF."
         },
         "latex-graphics-helper.outputPath.clipboardImage": {
           "type": "string",

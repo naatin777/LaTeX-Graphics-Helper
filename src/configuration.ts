@@ -10,7 +10,6 @@ export interface AppConfig {
     execPathPdfcrop: ExecPath;
     execPathDrawio: ExecPath;
     execPathPdftocairo: ExecPath;
-    execPathInkscape: ExecPath;
     outputPathCropPdf: string;
     outputPathSplitPdf: string;
     outputPathConvertDrawioToPdf: string;
@@ -36,7 +35,6 @@ export function getAppConfig(): AppConfig {
         execPathPdfcrop: getExecPathPdfcrop(),
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
-        execPathInkscape: getExecPathInkscape(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -77,10 +75,6 @@ export function getExecPathPdfcrop(): ExecPath {
 
 export function getExecPathPdftocairo(): ExecPath {
     return config.get<string>('execPath.pdftocairo') as ExecPath;
-}
-
-export function getExecPathInkscape(): ExecPath {
-    return config.get<string>('execPath.inkscape') as ExecPath;
 }
 
 export function getOutputPathCropPdf(): string {
