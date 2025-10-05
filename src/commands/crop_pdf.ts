@@ -7,8 +7,8 @@ import { localeMap } from '../locale_map';
 import { runExplorerContextItem } from '../run_context_menu_item';
 import { createFolder, replaceOutputPath } from '../utils';
 
-export function cropPdf(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, config: AppConfig): void {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, config.outputPathCropPdf, workspaceFolder);
+export function cropPdf(uri: vscode.Uri, outputPath: string, workspaceFolder: vscode.WorkspaceFolder, config: AppConfig): void {
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
     createFolder(replacedOutputPath);
     execFileSync(config.execPathPdfcrop, [uri.fsPath, replacedOutputPath], { cwd: workspaceFolder.uri.fsPath });
 }
@@ -20,7 +20,7 @@ export function runCropPdfCommand(_: vscode.Uri, uris?: vscode.Uri[]) {
     }
 
     runExplorerContextItem(uris, localeMap('cropPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        cropPdf(uri, workspaceFolder, getAppConfig());
+        cropPdf(uri, getAppConfig().outputPathCropPdf, workspaceFolder, getAppConfig());
     });
 
     // vscode.window.withProgress({

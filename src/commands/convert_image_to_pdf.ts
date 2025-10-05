@@ -8,6 +8,8 @@ import { runExplorerContextItem } from '../run_context_menu_item';
 import { PdfOutputPath } from '../type';
 import { replaceOutputPath } from '../utils';
 
+import { cropPdf } from './crop_pdf';
+
 export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfOutputPath, workspaceFolder: vscode.WorkspaceFolder) {
     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
 
@@ -57,23 +59,10 @@ export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfOutputP
             waitUntil: 'networkidle2'
         });
 
-        const svgDimensions = await page.evaluate(() => {
-            const svg = document.querySelector('svg');
-            if (!svg) { return null; }
-            const width = svg.getAttribute('width');
-            const height = svg.getAttribute('height');
-            return { width, height };
+        await page.pdf({
+            path: replacedOutputPath,
         });
-
-        if (!svgDimensions || !svgDimensions.width || !svgDimensions.height) {
-        } else {
-            await page.pdf({
-                path: replacedOutputPath,
-                width: Number(svgDimensions?.width.slice(0, -2)) + 1,
-                height: Number(svgDimensions?.height.slice(0, -2)) + 1,
-                printBackground: true,
-            });
-        }
+        cropPdf(vscode.Uri.file(replacedOutputPath), replacedOutputPath, workspaceFolder, getAppConfig());
 
     } catch (error) {
     } finally {
