@@ -1,10 +1,9 @@
-import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getExecPathInkscape, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
+import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../gemini/ask_gemini';
 import { localeMap } from '../locale_map';
@@ -112,7 +111,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const pdfPath = `${imagePath}.pdf`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
         if (info.type.mime !== 'application/pdf') {
-            execFileSync(getExecPathInkscape(), [imagePathWithExt, '-o', pdfPath, '--export-type=pdf', '--export-area-drawing'], { cwd: workspaceFolder.uri.fsPath });
+            // execFileSync(getExecPathInkscape(), [imagePathWithExt, '-o', pdfPath, '--export-type=pdf', '--export-area-drawing'], { cwd: workspaceFolder.uri.fsPath });
 
             if (fs.existsSync(imagePathWithExt)) {
                 fs.unlinkSync(imagePathWithExt);
