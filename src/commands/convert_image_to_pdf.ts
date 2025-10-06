@@ -1,102 +1,91 @@
-import { PDFDocument } from 'pdf-lib';
-import puppeteer from 'puppeteer-core';
 import * as vscode from 'vscode';
 
-import { getAppConfig } from '../configuration';
-import { cropPdf } from '../core/crop_pdf';
+import { AppConfig, getAppConfig } from '../configuration';
+import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
+import { convertVectorToPdf } from '../core/convert_vector_to_pdf';
 import { localeMap } from '../locale_map';
-import { runExplorerContextItem } from '../run_context_menu_item';
-import { PdfPath, PdfTemplatePath } from '../type';
-import { replaceOutputPath } from '../utils';
+import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
-export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-
-    const pdfDoc = await PDFDocument.create();
-
-    const imageBytes = await vscode.workspace.fs.readFile(uri);
-
-    let image;
-    if (uri.fsPath.toLowerCase().endsWith('.png')) {
-        image = await pdfDoc.embedPng(imageBytes);
-    } else if (uri.fsPath.toLowerCase().endsWith('.jpg') || uri.fsPath.toLowerCase().endsWith('.jpeg')) {
-        image = await pdfDoc.embedJpg(imageBytes);
-    }
-
-    if (!image) {
-        return;
-    }
-
-    const page = pdfDoc.addPage([image.width, image.height]);
-
-    page.drawImage(image, {
-        x: 0,
-        y: 0,
-        width: image.width,
-        height: image.height,
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    await vscode.workspace.fs.writeFile(vscode.Uri.file(replacedOutputPath), pdfBytes);
-}
-
-export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder) as PdfPath;
-
-    let browser;
-    try {
-        const svgContent = await vscode.workspace.fs.readFile(uri);
-
-        browser = await puppeteer.launch({
-            browser: 'chrome',
-            channel: 'chrome'
-        });
-
-        const page = await browser.newPage();
-
-        await page.setContent(svgContent.toString(), {
-            waitUntil: 'networkidle2'
-        });
-
-        await page.pdf({
-            path: replacedOutputPath,
-        });
-        await cropPdf(getAppConfig(), replacedOutputPath, replacedOutputPath, workspaceFolder);
-
-    } catch (error) {
-    } finally {
-        if (browser) {
-            await browser.close();
-        }
-    }
-}
-
-export function runConvertPngToPdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
-    if (!uris || uris.length === 0) {
+export function runConvertPngToPdfCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    config: AppConfig = getAppConfig()
+) {
+    if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
-    runExplorerContextItem(uris, localeMap('convertPngToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertBitmapToPdf(uri, getAppConfig().outputPathConvertPngToPdf, workspaceFolder);
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: localeMap('convertPngToPdfProcess'),
+        cancellable: false
+    }, async (progress) => {
+        const error = await processUrisWithProgress(
+            progress,
+            uris,
+            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                await convertBitmapToPdf(uri, config.outputPathConvertPngToPdf, workspaceFolder);
+            }
+        );
+        error.forEach((value) => {
+            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+        });
     });
 }
 
-export function runConvertJpegToPdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
-    if (!uris || uris.length === 0) {
+export function runConvertJpegToPdfCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    config: AppConfig = getAppConfig()
+) {
+    if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
-    runExplorerContextItem(uris, localeMap('convertJpegToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertBitmapToPdf(uri, getAppConfig().outputPathConvertJpegToPdf, workspaceFolder);
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: localeMap('convertJpegToPdfProcess'),
+        cancellable: false
+    }, async (progress) => {
+        const error = await processUrisWithProgress(
+            progress,
+            uris,
+            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                await convertBitmapToPdf(uri, config.outputPathConvertJpegToPdf, workspaceFolder);
+            }
+        );
+        error.forEach((value) => {
+            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+        });
     });
 }
 
-export function runConvertSvgToPdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
-    if (!uris || uris.length === 0) {
+export function runConvertSvgToPdfCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    config: AppConfig = getAppConfig()
+) {
+    if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
-    runExplorerContextItem(uris, localeMap('convertSvgToPdfProcess'), async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-        convertVectorToPdf(uri, getAppConfig().outputPathConvertSvgToPdf, workspaceFolder);
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: localeMap('convertSvgToPdfProcess'),
+        cancellable: false
+    }, async (progress) => {
+        const error = await processUrisWithProgress(
+            progress,
+            uris,
+            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                await convertVectorToPdf(uri, config.outputPathConvertSvgToPdf, workspaceFolder);
+            }
+        );
+        error.forEach((value) => {
+            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+        });
     });
 }

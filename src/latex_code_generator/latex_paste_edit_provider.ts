@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 
 import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
-import { askGemini } from '../gemini/ask_gemini';
+import { askGemini } from '../core/ask_gemini';
 import { localeMap } from '../locale_map';
 import { FileInfo } from '../type';
 import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';

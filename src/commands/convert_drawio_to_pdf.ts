@@ -7,7 +7,7 @@ import { DrawioPath } from '../type';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertDrawioToPdfCommand(
-    uri: vscode.Uri,
+    uri?: vscode.Uri,
     uris?: vscode.Uri[],
     config: AppConfig = getAppConfig()
 ) {

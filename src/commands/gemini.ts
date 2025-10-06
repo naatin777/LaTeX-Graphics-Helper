@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { removeGeminiApiKey, storeGeminiApiKey } from '../gemini/gemini_api_key';
+import { removeGeminiApiKey, storeGeminiApiKey } from '../core/gemini_api_key';
 import { localeMap } from '../locale_map';
 
 export async function setGeminiApiKey(
