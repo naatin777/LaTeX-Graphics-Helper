@@ -2,12 +2,12 @@ import * as vscode from 'vscode';
 
 import { localeMap } from '../locale_map';
 
-async function processUrisWithProgress(
+export async function processUrisWithProgress(
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
     uris: vscode.Uri[],
-    task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => Promise<void>,
-    progress: vscode.Progress<{ message?: string; increment?: number }>
-): Promise<{ uri: vscode.Uri, reason: any }[]> {
-    const errors: { uri: vscode.Uri, reason: any }[] = [];
+    task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => Promise<void>
+): Promise<{ uri: vscode.Uri, reason: Error }[]> {
+    const errors: { uri: vscode.Uri, reason: Error }[] = [];
     const increment = 100 / uris.length;
     let completedCount = 0;
 
@@ -20,7 +20,9 @@ async function processUrisWithProgress(
                 throw new Error(localeMap('workspaceFolderNotFound'));
             }
         } catch (error) {
-            errors.push({ uri, reason: error });
+            if (error instanceof Error) {
+                errors.push({ uri, reason: error });
+            }
         } finally {
             completedCount++;
             const fileName = uri.path.split('/').pop();

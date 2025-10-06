@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getChoiceFigureAlignment, getChoiceFigurePlacement, getChoiceGraphicsOptions, getGeminiRequests, getOutputPathClipboardImage } from '../configuration';
+import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../gemini/ask_gemini';
 import { localeMap } from '../locale_map';
@@ -40,12 +40,12 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             { label: localeMap('pasteAsImageLabel'), detail: localeMap('pasteAsImageDetail') },
             { label: localeMap('aiRequestLabel'), detail: localeMap('aiRequestDetail') },
             { label: localeMap('registered'), detail: '', kind: vscode.QuickPickItemKind.Separator },
-            ...getGeminiRequests().map(request => ({ label: request, detail: '' })),
+            ...getAppConfig().geminiRequests.map(request => ({ label: request, detail: '' })),
         ]);
 
         const uri = document.uri;
         const fileDirname = path.dirname(uri.fsPath);
-        const outputPath = getOutputPathClipboardImage();
+        const outputPath = getAppConfig().outputPathClipboardImage;
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 
         if (!workspaceFolder) {
@@ -58,11 +58,11 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             if (pickedItem) {
                 if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
                     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-                    createFolder(replacedOutputPath);
+                    createFolder(vscode.Uri.file(replacedOutputPath));
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
                 } else if (pickedItem.detail === localeMap('pasteAsPdfDetail')) {
                     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-                    createFolder(replacedOutputPath);
+                    createFolder(vscode.Uri.file(replacedOutputPath));
                     snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
                 } else if (pickedItem.detail === localeMap('aiRequestDetail')) {
                     snippet = await this.handleCustomGeminiRequest(info);
@@ -143,13 +143,13 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     createSinglePdfSnippet(fileName: string = '', relativeFilePath: string): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
-        const choiceFigurePlacement = getChoiceFigurePlacement();
-        const choiceFigureAlignment = getChoiceFigureAlignment();
-        const choiceGraphicsOptions = getChoiceGraphicsOptions();
+        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
+        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
+        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
 
         snippet.appendText('\\begin{figure}');
         if (choiceFigurePlacement.length >= 2) {
-            snippet.appendChoice(getChoiceFigurePlacement(), 1);
+            snippet.appendChoice(choiceFigurePlacement, 1);
         } else {
             snippet.appendText(choiceFigurePlacement[0] ?? '');
         }
@@ -165,7 +165,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
         snippet.appendText('\t\\includegraphics');
         if (choiceGraphicsOptions.length >= 2) {
-            snippet.appendChoice(getChoiceGraphicsOptions(), 3);
+            snippet.appendChoice(choiceGraphicsOptions, 3);
         } else {
             snippet.appendText(choiceGraphicsOptions[0] ?? '');
         }

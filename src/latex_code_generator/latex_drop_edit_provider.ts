@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getChoiceFigureAlignment, getChoiceGraphicsOptions, getChoiceSubVerticalAlignment, getChoiceSubWidth, getChoiceSpaceBetweenSubs, getChoiceFigurePlacement } from '../configuration';
+import { getAppConfig } from '../configuration';
 import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from '../utils';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
@@ -50,13 +50,13 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     createSinglePdfSnippet(fileName: string, relativeFilePath: string): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
-        const choiceFigurePlacement = getChoiceFigurePlacement();
-        const choiceFigureAlignment = getChoiceFigureAlignment();
-        const choiceGraphicsOptions = getChoiceGraphicsOptions();
+        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
+        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
+        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
 
         snippet.appendText('\\begin{figure}');
         if (choiceFigurePlacement.length >= 2) {
-            snippet.appendChoice(getChoiceFigurePlacement(), 1);
+            snippet.appendChoice(choiceFigurePlacement, 1);
         } else {
             snippet.appendText(choiceFigurePlacement[0] ?? '');
         }
@@ -72,7 +72,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
         snippet.appendText('\t\\includegraphics');
         if (choiceGraphicsOptions.length >= 2) {
-            snippet.appendChoice(getChoiceGraphicsOptions(), 3);
+            snippet.appendChoice(choiceGraphicsOptions, 3);
         } else {
             snippet.appendText(choiceGraphicsOptions[0] ?? '');
         }
@@ -91,13 +91,13 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
     createMultiplePdfSnippet(fileNames: string[], relativeFilePaths: string[]): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
-        
-        const choiceFigurePlacement = getChoiceFigurePlacement();
-        const choiceFigureAlignment = getChoiceFigureAlignment();
-        const choiceGraphicsOptions = getChoiceGraphicsOptions();
-        const choiceSubVerticalAlignment = getChoiceSubVerticalAlignment();
-        const choiceSubWidth = getChoiceSubWidth();
-        const choiceSpaceBetweenSubs = getChoiceSpaceBetweenSubs();
+
+        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
+        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
+        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
+        const choiceSubVerticalAlignment = getAppConfig().choiceSubVerticalAlignment;
+        const choiceSubWidth = getAppConfig().choiceSubWidth;
+        const choiceSpaceBetweenSubs = getAppConfig().choiceSpaceBetweenSubs;
 
         snippet.appendText('\\begin{figure}');
         if (choiceFigurePlacement.length >= 2) {

@@ -4,14 +4,13 @@ import * as vscode from 'vscode';
 
 import { AppConfig, getAppConfig } from '../configuration';
 import { PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS } from '../constants';
+import { splitPdf } from '../core/split_pdf';
 import { localeMap } from '../locale_map';
 import { runExplorerContextItem } from '../run_context_menu_item';
-import { ImageOutputPath, PdftocairoOptions } from '../type';
+import { JpegTemplatePath, PdfPath, PdfTemplatePath, PdftocairoOptions, PngTemplatePath, SvgTemplatePath } from '../type';
 
-import { splitPdf } from './split_pdf';
-
-export async function convertPdfToImage(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, outputPath: ImageOutputPath, options: PdftocairoOptions, config: AppConfig) {
-    const outputPaths = await splitPdf(uri.fsPath, `${outputPath}.pdf`, workspaceFolder, []);
+export async function convertPdfToImage(uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder, outputPath: PngTemplatePath | JpegTemplatePath | SvgTemplatePath, options: PdftocairoOptions, config: AppConfig) {
+    const outputPaths = await splitPdf(uri.fsPath as PdfPath, (outputPath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
     outputPaths.forEach((path: string) => {
         try {
             if (options === PDFTOCAIRO_PNG_OPTIONS) {

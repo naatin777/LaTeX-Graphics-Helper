@@ -2,23 +2,23 @@ import * as os from 'os';
 
 import * as vscode from 'vscode';
 
-import { ExecPath, ImageOutputPath, PdfOutputPath } from './type';
+import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from './type';
 
-const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
 
 export interface AppConfig {
-    execPathPdfcrop: ExecPath;
-    execPathDrawio: ExecPath;
-    execPathPdftocairo: ExecPath;
-    outputPathCropPdf: string;
-    outputPathSplitPdf: string;
-    outputPathConvertDrawioToPdf: string;
-    outputPathConvertPdfToPng: ImageOutputPath;
-    outputPathConvertPdfToJpeg: ImageOutputPath;
-    outputPathConvertPdfToSvg: ImageOutputPath;
-    outputPathConvertPngToPdf: PdfOutputPath;
-    outputPathConvertJpegToPdf: PdfOutputPath;
-    outputPathConvertSvgToPdf: PdfOutputPath;
+    execPathPdfcrop: ExecutablePath;
+    execPathDrawio: ExecutablePath;
+    execPathPdftocairo: ExecutablePath;
+    outputPathCropPdf: PdfTemplatePath;
+    outputPathSplitPdf: PdfTemplatePath;
+    outputPathConvertDrawioToPdf: PdfTemplatePath;
+    outputPathConvertPdfToPng: PngTemplatePath;
+    outputPathConvertPdfToJpeg: JpegTemplatePath;
+    outputPathConvertPdfToSvg: SvgTemplatePath;
+    outputPathConvertPngToPdf: PdfTemplatePath;
+    outputPathConvertJpegToPdf: PdfTemplatePath;
+    outputPathConvertSvgToPdf: PdfTemplatePath;
     outputPathClipboardImage: string;
     choiceFigurePlacement: string[];
     choiceFigureAlignment: string[];
@@ -56,136 +56,95 @@ export function getAppConfig(): AppConfig {
     };
 }
 
-export function getExecPathDrawio(): ExecPath {
-    const drawioCommand = config.get<string>('execPath.drawio');
+function getExecPathDrawio(): ExecutablePath {
+    const drawioCommand = configuration.get<string>('execPath.drawio');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return (drawioCommand || 'draw.io.exe') as ExecPath;
+        return (drawioCommand || 'draw.io.exe') as ExecutablePath;
     } else if (platform === 'darwin') {
-        return (drawioCommand || 'draw.io') as ExecPath;
+        return (drawioCommand || 'draw.io') as ExecutablePath;
     } else {
-        return (drawioCommand || 'drawio') as ExecPath;
+        return (drawioCommand || 'drawio') as ExecutablePath;
     }
 }
 
-export function getExecPathPdfcrop(): ExecPath {
-    return config.get<string>('execPath.pdfcrop') as ExecPath;
+function getExecPathPdfcrop(): ExecutablePath {
+    return configuration.get<string>('execPath.pdfcrop') as ExecutablePath;
 }
 
-export function getExecPathPdftocairo(): ExecPath {
-    return config.get<string>('execPath.pdftocairo') as ExecPath;
+function getExecPathPdftocairo(): ExecutablePath {
+    return configuration.get<string>('execPath.pdftocairo') as ExecutablePath;
 }
 
-export function getOutputPathCropPdf(): string {
-    return config.get<string>('outputPath.cropPdf') as string;
+function getOutputPathCropPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.cropPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathSplitPdf(): string {
-    return config.get<string>('outputPath.splitPdf') as string;
+function getOutputPathSplitPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.splitPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertDrawioToPdf(): string {
-    return config.get<string>('outputPath.convertDrawioToPdf') as string;
+function getOutputPathConvertDrawioToPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.convertDrawioToPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertPdfToPng(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToPng') as ImageOutputPath;
+function getOutputPathConvertPdfToPng(): PngTemplatePath {
+    return configuration.get<string>('outputPath.convertPdfToPng') as PngTemplatePath;
 }
 
-export function getOutputPathConvertPdfToJpeg(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToJpeg') as ImageOutputPath;
+function getOutputPathConvertPdfToJpeg(): JpegTemplatePath {
+    return configuration.get<string>('outputPath.convertPdfToJpeg') as JpegTemplatePath;
 }
 
-export function getOutputPathConvertPdfToSvg(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToSvg') as ImageOutputPath;
+function getOutputPathConvertPdfToSvg(): SvgTemplatePath {
+    return configuration.get<string>('outputPath.convertPdfToSvg') as SvgTemplatePath;
 }
 
-export function getOutputPathConvertPngToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertPngToPdf') as PdfOutputPath;
+function getOutputPathConvertPngToPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.convertPngToPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertJpegToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertJpegToPdf') as PdfOutputPath;
+function getOutputPathConvertJpegToPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.convertJpegToPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertSvgToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertSvgToPdf') as PdfOutputPath;
+function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
+    return configuration.get<string>('outputPath.convertSvgToPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathClipboardImage(): string {
-    return config.get<string>('outputPath.clipboardImage') as string;
+function getOutputPathClipboardImage(): string {
+    return configuration.get<string>('outputPath.clipboardImage') as string;
 }
 
-export function getChoiceFigurePlacement(): string[] {
-    return config.get<string[]>('choice.figurePlacement') as string[];
+function getChoiceFigurePlacement(): string[] {
+    return configuration.get<string[]>('choice.figurePlacement') as string[];
 }
 
-export function getChoiceFigureAlignment(): string[] {
-    return config.get<string[]>('choice.figureAlignment') as string[];
+function getChoiceFigureAlignment(): string[] {
+    return configuration.get<string[]>('choice.figureAlignment') as string[];
 }
 
-export function getChoiceGraphicsOptions(): string[] {
-    return config.get<string[]>('choice.graphicsOptions') as string[];
+function getChoiceGraphicsOptions(): string[] {
+    return configuration.get<string[]>('choice.graphicsOptions') as string[];
 }
 
-export function getChoiceSubVerticalAlignment(): string[] {
-    return config.get<string[]>('choice.subVerticalAlignment') as string[];
+function getChoiceSubVerticalAlignment(): string[] {
+    return configuration.get<string[]>('choice.subVerticalAlignment') as string[];
 }
 
-export function getChoiceSubWidth(): string[] {
-    return config.get<string[]>('choice.subWidth') as string[];
+function getChoiceSubWidth(): string[] {
+    return configuration.get<string[]>('choice.subWidth') as string[];
 }
 
-export function getChoiceSpaceBetweenSubs(): string[] {
-    return config.get<string[]>('choice.spaceBetweenSubs') as string[];
+function getChoiceSpaceBetweenSubs(): string[] {
+    return configuration.get<string[]>('choice.spaceBetweenSubs') as string[];
 }
 
-export function getGeminiModel(): string {
-    return config.get<string>('gemini.model') as string;
+function getGeminiModel(): string {
+    return configuration.get<string>('gemini.model') as string;
 }
 
-export function getGeminiRequests(): string[] {
-    return config.get<string[]>('gemini.requests') as string[];
+function getGeminiRequests(): string[] {
+    return configuration.get<string[]>('gemini.requests') as string[];
 }
-
-// import * as vscode from 'vscode';
-// import * as os from 'os';
-
-// class Config {
-//     private get config() {
-//         return vscode.workspace.getConfiguration('myExtension');
-//     }
-
-//     /**
-//      * draw.ioの実行コマンドを取得する。
-//      * ユーザー設定を最優先し、なければOSから最適なデフォルトを推測する。
-//      */
-//     public getDrawioCommand(): string {
-//         // 1. ユーザーによる明示的な設定値を取得
-//         const userPath = this.config.get<string>('drawio.executablePath');
-
-//         // 2. ユーザー設定があれば、それを最優先で返す
-//         if (userPath) {
-//             return userPath;
-//         }
-
-//         // 3. ユーザー設定がなければ、OSを判定してデフォルト値を決める
-//         const platform = os.platform();
-//         if (platform === 'darwin') { // 'darwin' は macOS
-//             return 'draw.io';
-//         }
-//         if (platform === 'linux') {
-//             return 'drawio';
-//         }
-//         if (platform === 'win32') {
-//             // Windows用のデフォルト値 (もしあれば)
-//             return 'draw.io.exe';
-//         }
-
-//         // どのOSにも一致しない場合の最終的なフォールバック
-//         return 'drawio';
-//     }
-// }
-
-// export const config = new Config();

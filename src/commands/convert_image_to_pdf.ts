@@ -3,14 +3,13 @@ import puppeteer from 'puppeteer-core';
 import * as vscode from 'vscode';
 
 import { getAppConfig } from '../configuration';
+import { cropPdf } from '../core/crop_pdf';
 import { localeMap } from '../locale_map';
 import { runExplorerContextItem } from '../run_context_menu_item';
-import { PdfOutputPath } from '../type';
+import { PdfPath, PdfTemplatePath } from '../type';
 import { replaceOutputPath } from '../utils';
 
-import { cropPdf } from './crop_pdf';
-
-export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfOutputPath, workspaceFolder: vscode.WorkspaceFolder) {
+export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
     const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
 
     const pdfDoc = await PDFDocument.create();
@@ -41,8 +40,8 @@ export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfOutputP
     await vscode.workspace.fs.writeFile(vscode.Uri.file(replacedOutputPath), pdfBytes);
 }
 
-export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfOutputPath, workspaceFolder: vscode.WorkspaceFolder) {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
+export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
+    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder) as PdfPath;
 
     let browser;
     try {
@@ -62,7 +61,7 @@ export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfOutputP
         await page.pdf({
             path: replacedOutputPath,
         });
-        cropPdf(vscode.Uri.file(replacedOutputPath), replacedOutputPath, workspaceFolder, getAppConfig());
+        await cropPdf(getAppConfig(), replacedOutputPath, replacedOutputPath, workspaceFolder);
 
     } catch (error) {
     } finally {
