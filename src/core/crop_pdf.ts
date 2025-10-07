@@ -12,10 +12,7 @@ export async function cropPdf(
     workspaceFolder: vscode.WorkspaceFolder
 ): Promise<PdfPath> {
     const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
-    console.log('あいうえお');
     await createFolder(outputPath);
-    console.log('あいうえお１');
     await execFileInWorkspace(appConfig.execPathPdfcrop, [inputPath, outputPath], workspaceFolder);
-    console.log('あいうえお２');
     return outputPath as PdfPath;
 }

@@ -26,7 +26,11 @@ export function runConvertPngToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri.fsPath as BitmapPath, appConfig.outputPathConvertPngToPdf, workspaceFolder);
+                await convertBitmapToPdf(
+                    uri.fsPath as BitmapPath,
+                    appConfig.outputPathConvertPngToPdf,
+                    workspaceFolder
+                );
             }
         );
         error.forEach((value) => {
@@ -54,7 +58,11 @@ export function runConvertJpegToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri.fsPath as BitmapPath, appConfig.outputPathConvertJpegToPdf, workspaceFolder);
+                await convertBitmapToPdf(
+                    uri.fsPath as BitmapPath,
+                    appConfig.outputPathConvertJpegToPdf,
+                    workspaceFolder
+                );
             }
         );
         error.forEach((value) => {
@@ -82,7 +90,11 @@ export function runConvertSvgToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertVectorToPdf(uri, appConfig.outputPathConvertSvgToPdf, workspaceFolder);
+                await convertVectorToPdf(
+                    uri,
+                    appConfig.outputPathConvertSvgToPdf,
+                    workspaceFolder
+                );
             }
         );
         error.forEach((value) => {

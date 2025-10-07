@@ -17,7 +17,7 @@ export async function splitPdf(
     const outputPaths: PdfPath[] = [];
 
     for (let i = 0; i < pdfPages.length; i++) {
-        const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder, pages[i] ?? (i + 1).toString()) as PdfPath;
+        const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder, pages[i] ?? (i + 1).toString());
         outputPaths.push(outputPath);
         await createFolder(outputPath);
 

@@ -25,7 +25,12 @@ export function runConvertDrawioToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertDrawioToPdf(appConfig, uri.fsPath as DrawioPath, appConfig.outputPathConvertDrawioToPdf, workspaceFolder);
+                await convertDrawioToPdf(
+                    appConfig,
+                    uri.fsPath as DrawioPath,
+                    appConfig.outputPathConvertDrawioToPdf,
+                    workspaceFolder
+                );
             }
         );
         error.forEach((value) => {

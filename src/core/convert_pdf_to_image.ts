@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
 import { splitPdf } from '../core/split_pdf';
-import { JpegTemplatePath, PdfPath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from '../type';
+import { JpegPath, JpegTemplatePath, PdfPath, PdfTemplatePath, PngPath, PngTemplatePath, SvgPath, SvgTemplatePath } from '../type';
 import { execFileInWorkspace } from '../utils/exec_file_in_workspace';
 
 export async function convertPdfToPng(
@@ -10,13 +10,19 @@ export async function convertPdfToPng(
     inputPath: PdfPath,
     outputTemplatePath: PngTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
-) {
-    const outputPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPaths.forEach((path: string) => {
-        execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-png', '-transp', '-singlefile'], workspaceFolder);
-        vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4).slice(0, -4)));
-        vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+): Promise<PngPath[]> {
+    const outputPaths: PngPath[] = [];
+
+    const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
+    outputPdfPaths.forEach(async (path: string) => {
+        await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-png', '-transp', '-singlefile'], workspaceFolder);
+        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4)));
+        await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+
+        outputPaths.push(path.slice(0, -4) as PngPath);
     });
+
+    return outputPaths;
 }
 
 export async function convertPdfToJpeg(
@@ -24,13 +30,19 @@ export async function convertPdfToJpeg(
     inputPath: PdfPath,
     outputTemplatePath: JpegTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
-) {
-    const outputPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPaths.forEach((path: string) => {
-        execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-jpeg', '-singlefile'], workspaceFolder);
-        vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpeg'), vscode.Uri.file(path.slice(0, -4).slice(0, -4)));
-        vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+): Promise<JpegPath[]> {
+    const outputPaths: JpegPath[] = [];
+
+    const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
+    outputPdfPaths.forEach(async (path: string) => {
+        await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-jpeg', '-singlefile'], workspaceFolder);
+        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpg'), vscode.Uri.file(path.slice(0, -4)));
+        await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+
+        outputPaths.push(path.slice(0, -4) as JpegPath);
     });
+
+    return outputPaths;
 }
 
 export async function convertPdfToSvg(
@@ -38,10 +50,16 @@ export async function convertPdfToSvg(
     inputPath: PdfPath,
     outputTemplatePath: SvgTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
-) {
-    const outputPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPaths.forEach((path: string) => {
-        execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-svg'], workspaceFolder);
-        vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+): Promise<SvgPath[]> {
+    const outputPaths: SvgPath[] = [];
+
+    const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
+    outputPdfPaths.forEach(async (path: string) => {
+        await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-svg'], workspaceFolder);
+        await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
+
+        outputPaths.push(path.slice(0, -4) as SvgPath);
     });
+
+    return outputPaths;
 }
