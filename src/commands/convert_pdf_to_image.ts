@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 
 import { AppConfig, getAppConfig } from '../configuration';
-import { PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS } from '../constants';
 import { convertPdfToImage } from '../core/convert_pdf_to_image';
 import { localeMap } from '../locale_map';
 import { PdfPath } from '../type';
@@ -26,7 +25,7 @@ export function runConvertPdfToPngCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToPng, workspaceFolder, PDFTOCAIRO_PNG_OPTIONS);
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToPng, workspaceFolder);
             }
         );
         error.forEach((value) => {
@@ -54,7 +53,7 @@ export function runConvertPdfToJpegCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToJpeg, workspaceFolder, PDFTOCAIRO_JPEG_OPTIONS);
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToJpeg, workspaceFolder);
             }
         );
         error.forEach((value) => {
@@ -82,7 +81,7 @@ export function runConvertPdfToSvgCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToSvg, workspaceFolder, PDFTOCAIRO_SVG_OPTIONS);
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToSvg, workspaceFolder);
             }
         );
         error.forEach((value) => {

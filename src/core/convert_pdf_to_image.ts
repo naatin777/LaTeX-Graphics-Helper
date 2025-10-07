@@ -1,27 +1,26 @@
-import { execFileSync } from 'child_process';
-
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
-import { PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS } from '../constants';
 import { splitPdf } from '../core/split_pdf';
-import { JpegTemplatePath, PdfPath, PdfTemplatePath, PdftocairoOptions, PngTemplatePath, SvgTemplatePath } from '../type';
+import { JpegTemplatePath, PdfPath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from '../type';
+import { execFileInWorkspace } from '../utils/exec_file_in_workspace';
 
 export async function convertPdfToImage(
     appConfig: AppConfig,
     inputPath: PdfPath,
     outputTemplatePath: PngTemplatePath | JpegTemplatePath | SvgTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
-    options: PdftocairoOptions
 ) {
     const outputPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
     outputPaths.forEach((path: string) => {
-        if (options === PDFTOCAIRO_PNG_OPTIONS) {
-            execFileSync(appConfig.execPathPdftocairo, [path, path + '.png', ...options], { cwd: workspaceFolder.uri.fsPath });
-        } else if (options === PDFTOCAIRO_JPEG_OPTIONS) {
-            execFileSync(appConfig.execPathPdftocairo, [path, path + '.jpeg', ...options], { cwd: workspaceFolder.uri.fsPath });
-        } else if (options === PDFTOCAIRO_SVG_OPTIONS) {
-            execFileSync(appConfig.execPathPdftocairo, [path, path + '.svg', ...options], { cwd: workspaceFolder.uri.fsPath });
+        if (outputTemplatePath.__brand === 'PngTemplatePath') {
+            execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-png', '-transp', '-singlefile'], workspaceFolder);
+            vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4).slice(0, -4)));
+        } else if (outputTemplatePath.__brand === 'JpegTemplatePath') {
+            execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-jpeg', '-singlefile'], workspaceFolder);
+            vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpeg'), vscode.Uri.file(path.slice(0, -4).slice(0, -4)));
+        } else if (outputTemplatePath.__brand === 'SvgTemplatePath') {
+            execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-svg'], workspaceFolder);
         }
         vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
     });

@@ -50,3 +50,7 @@ export async function createFolder(file: Path) {
         await vscode.workspace.fs.createDirectory(folder);
     }
 }
+
+export async function deletePdfExt(file: PdfPath) {
+    return file.endsWith('.pdf') ? file.slice(0, -4) : file;
+}
