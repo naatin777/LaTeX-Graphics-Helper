@@ -9,7 +9,7 @@ import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 export function runConvertDrawioToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    config: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig()
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
@@ -25,7 +25,7 @@ export function runConvertDrawioToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertDrawioToPdf(config, uri.fsPath as DrawioPath, config.outputPathConvertDrawioToPdf, workspaceFolder);
+                await convertDrawioToPdf(appConfig, uri.fsPath as DrawioPath, appConfig.outputPathConvertDrawioToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {

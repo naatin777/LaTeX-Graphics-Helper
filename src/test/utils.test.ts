@@ -4,10 +4,9 @@ import * as vscode from 'vscode';
 
 import {
     toPosixPath,
-    escapeLatex,
-    escapeLatexLabel,
     transpose,
 } from '../utils';
+import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 suite('Utils Test Suite', () => {
 

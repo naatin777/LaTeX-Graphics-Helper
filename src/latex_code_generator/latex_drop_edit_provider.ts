@@ -3,7 +3,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { getAppConfig } from '../configuration';
-import { escapeLatex, escapeLatexLabel, toPosixPath, transpose } from '../utils';
+import { toPosixPath, transpose } from '../utils';
+import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     async provideDocumentDropEdits(

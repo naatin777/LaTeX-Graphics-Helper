@@ -8,7 +8,8 @@ import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../core/ask_gemini';
 import { localeMap } from '../locale_map';
 import { FileInfo, PdfPath, PdfTemplatePath } from '../type';
-import { createFolder, escapeLatex, escapeLatexLabel, generatePathFromTemplate, toPosixPath } from '../utils';
+import { createFolder, generatePathFromTemplate, toPosixPath } from '../utils';
+import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
 

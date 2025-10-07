@@ -1,12 +1,17 @@
 import * as vscode from 'vscode';
 
-import { getAppConfig } from '../configuration';
+import { AppConfig, getAppConfig } from '../configuration';
 import { PDFTOCAIRO_JPEG_OPTIONS, PDFTOCAIRO_PNG_OPTIONS, PDFTOCAIRO_SVG_OPTIONS } from '../constants';
 import { convertPdfToImage } from '../core/convert_pdf_to_image';
 import { localeMap } from '../locale_map';
+import { PdfPath } from '../type';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
-export function runConvertPdfToPngCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+export function runConvertPdfToPngCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    appConfig: AppConfig = getAppConfig()
+) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
@@ -21,7 +26,7 @@ export function runConvertPdfToPngCommand(uri: vscode.Uri, uris?: vscode.Uri[]) 
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToPng, PDFTOCAIRO_PNG_OPTIONS, getAppConfig());
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToPng, workspaceFolder, PDFTOCAIRO_PNG_OPTIONS);
             }
         );
         error.forEach((value) => {
@@ -30,7 +35,11 @@ export function runConvertPdfToPngCommand(uri: vscode.Uri, uris?: vscode.Uri[]) 
     });
 }
 
-export function runConvertPdfToJpegCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+export function runConvertPdfToJpegCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    appConfig: AppConfig = getAppConfig()
+) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
@@ -45,7 +54,7 @@ export function runConvertPdfToJpegCommand(uri: vscode.Uri, uris?: vscode.Uri[])
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToJpeg, PDFTOCAIRO_JPEG_OPTIONS, getAppConfig());
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToJpeg, workspaceFolder, PDFTOCAIRO_JPEG_OPTIONS);
             }
         );
         error.forEach((value) => {
@@ -54,7 +63,11 @@ export function runConvertPdfToJpegCommand(uri: vscode.Uri, uris?: vscode.Uri[])
     });
 }
 
-export function runConvertPdfToSvgCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+export function runConvertPdfToSvgCommand(
+    uri?: vscode.Uri,
+    uris?: vscode.Uri[],
+    appConfig: AppConfig = getAppConfig()
+) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
@@ -69,7 +82,7 @@ export function runConvertPdfToSvgCommand(uri: vscode.Uri, uris?: vscode.Uri[]) 
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertPdfToImage(uri, workspaceFolder, getAppConfig().outputPathConvertPdfToSvg, PDFTOCAIRO_SVG_OPTIONS, getAppConfig());
+                await convertPdfToImage(appConfig, uri.fsPath as PdfPath, appConfig.outputPathConvertPdfToSvg, workspaceFolder, PDFTOCAIRO_SVG_OPTIONS);
             }
         );
         error.forEach((value) => {

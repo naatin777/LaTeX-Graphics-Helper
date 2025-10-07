@@ -10,7 +10,7 @@ import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 export function runConvertPngToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    config: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig()
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
@@ -26,7 +26,7 @@ export function runConvertPngToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri.fsPath as BitmapPath, config.outputPathConvertPngToPdf, workspaceFolder);
+                await convertBitmapToPdf(uri.fsPath as BitmapPath, appConfig.outputPathConvertPngToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {
@@ -38,7 +38,7 @@ export function runConvertPngToPdfCommand(
 export function runConvertJpegToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    config: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig()
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
@@ -54,7 +54,7 @@ export function runConvertJpegToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri.fsPath as BitmapPath, config.outputPathConvertJpegToPdf, workspaceFolder);
+                await convertBitmapToPdf(uri.fsPath as BitmapPath, appConfig.outputPathConvertJpegToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {
@@ -66,7 +66,7 @@ export function runConvertJpegToPdfCommand(
 export function runConvertSvgToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    config: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig()
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
@@ -82,7 +82,7 @@ export function runConvertSvgToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertVectorToPdf(uri, config.outputPathConvertSvgToPdf, workspaceFolder);
+                await convertVectorToPdf(uri, appConfig.outputPathConvertSvgToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {
