@@ -19,7 +19,7 @@ export async function splitPdf(
     for (let i = 0; i < pdfPages.length; i++) {
         const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder, pages[i] ?? (i + 1).toString()) as PdfPath;
         outputPaths.push(outputPath);
-        await createFolder(vscode.Uri.file(outputPath));
+        await createFolder(outputPath);
 
         const newPdfDocument = await PDFDocument.create();
         const [copiedPdfPage] = await newPdfDocument.copyPages(pdfDocument, [i]);
