@@ -11,8 +11,8 @@ export async function cropPdf(
     outputTemplatePath: PdfTemplatePath | PdfPath,
     workspaceFolder: vscode.WorkspaceFolder
 ): Promise<PdfPath> {
-    const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder, '');
-    createFolder(vscode.Uri.file(outputPath));
+    const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
+    createFolder(outputPath);
     execFileInWorkspace(appConfig.execPathPdfcrop, [inputPath, outputPath], workspaceFolder);
     return outputPath as PdfPath;
 }

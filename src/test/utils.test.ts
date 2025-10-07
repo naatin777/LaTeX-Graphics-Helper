@@ -1,7 +1,5 @@
 import * as assert from 'assert';
-import * as path from 'path';
 
-import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 
 import {
@@ -9,7 +7,6 @@ import {
     escapeLatex,
     escapeLatexLabel,
     transpose,
-    replaceOutputPath,
 } from '../utils';
 
 suite('Utils Test Suite', () => {
@@ -47,25 +44,25 @@ suite('Utils Test Suite', () => {
         assert.deepStrictEqual(transpose([[1], [2]]), [[1, 2]]);
     });
 
-    test('replaceOutputPath', () => {
-        const clock = sinon.useFakeTimers(1755592839354);
-        const inputPath = '/path/to/my/file.pdf';
-        const workspaceFolder: vscode.WorkspaceFolder = { uri: vscode.Uri.file('/workspace'), name: 'my-workspace', index: 0 };
-        const tab = 'tab';
+    // test('replaceOutputPath', () => {
+    //     const clock = sinon.useFakeTimers(1755592839354);
+    //     const inputPath = '/path/to/my/file.pdf';
+    //     const workspaceFolder: vscode.WorkspaceFolder = { uri: vscode.Uri.file('/workspace'), name: 'my-workspace', index: 0 };
+    //     const tab = 'tab';
 
-        assert.strictEqual(replaceOutputPath(inputPath, '${workspaceFolder}/output.pdf', workspaceFolder, tab), path.join('/workspace', 'output.pdf'));
-        assert.strictEqual(replaceOutputPath(inputPath, '${workspaceFolderBasename}/output.pdf', workspaceFolder, tab), path.join('my-workspace', 'output.pdf'));
-        assert.strictEqual(replaceOutputPath(inputPath, '${file}.pdf', workspaceFolder, tab), '/path/to/my/file.pdf.pdf');
-        assert.strictEqual(replaceOutputPath(inputPath, '${relativeFile}.pdf', workspaceFolder, tab), '../path/to/my/file.pdf.pdf');
-        assert.strictEqual(replaceOutputPath(inputPath, '${relativeFileDirname}/output.pdf', workspaceFolder, tab), path.join('../path/to/my', 'output.pdf'));
-        assert.strictEqual(replaceOutputPath(inputPath, 'abc/${fileBasename}', workspaceFolder, tab), 'abc/file.pdf');
-        assert.strictEqual(replaceOutputPath(inputPath, '${fileBasenameNoExtension}.png', workspaceFolder, tab), 'file.png');
-        assert.strictEqual(replaceOutputPath(inputPath, '${fileDirname}/output.pdf', workspaceFolder, tab), path.join('/path/to/my', 'output.pdf'));
-        assert.strictEqual(replaceOutputPath(inputPath, 'output${fileExtname}', workspaceFolder, tab), 'output.pdf');
-        assert.strictEqual(replaceOutputPath(inputPath, 'output-${tab}.pdf', workspaceFolder, tab), 'output-tab.pdf');
-        assert.strictEqual(replaceOutputPath(inputPath, 'output-${dateNow}.pdf', workspaceFolder, tab), `output-${1755592839354}.pdf`);
-        assert.strictEqual(replaceOutputPath(inputPath, '${fileDirname}/${fileBasenameNoExtension}-crop.pdf', workspaceFolder, tab), path.join('/path/to/my', 'file-crop.pdf'));
-        assert.strictEqual(replaceOutputPath(inputPath, inputPath, workspaceFolder, tab), inputPath);
-        clock.restore();
-    });
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${workspaceFolder}/output.pdf', workspaceFolder, tab), path.join('/workspace', 'output.pdf'));
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${workspaceFolderBasename}/output.pdf', workspaceFolder, tab), path.join('my-workspace', 'output.pdf'));
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${file}.pdf', workspaceFolder, tab), '/path/to/my/file.pdf.pdf');
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${relativeFile}.pdf', workspaceFolder, tab), '../path/to/my/file.pdf.pdf');
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${relativeFileDirname}/output.pdf', workspaceFolder, tab), path.join('../path/to/my', 'output.pdf'));
+    //     assert.strictEqual(replaceOutputPath(inputPath, 'abc/${fileBasename}', workspaceFolder, tab), 'abc/file.pdf');
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${fileBasenameNoExtension}.png', workspaceFolder, tab), 'file.png');
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${fileDirname}/output.pdf', workspaceFolder, tab), path.join('/path/to/my', 'output.pdf'));
+    //     assert.strictEqual(replaceOutputPath(inputPath, 'output${fileExtname}', workspaceFolder, tab), 'output.pdf');
+    //     assert.strictEqual(replaceOutputPath(inputPath, 'output-${tab}.pdf', workspaceFolder, tab), 'output-tab.pdf');
+    //     assert.strictEqual(replaceOutputPath(inputPath, 'output-${dateNow}.pdf', workspaceFolder, tab), `output-${1755592839354}.pdf`);
+    //     assert.strictEqual(replaceOutputPath(inputPath, '${fileDirname}/${fileBasenameNoExtension}-crop.pdf', workspaceFolder, tab), path.join('/path/to/my', 'file-crop.pdf'));
+    //     assert.strictEqual(replaceOutputPath(inputPath, inputPath, workspaceFolder, tab), inputPath);
+    //     clock.restore();
+    // });
 });

@@ -1,20 +1,20 @@
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
-import { PdfTemplatePath } from '../type';
-import { replaceOutputPath } from '../utils';
+import { BitmapPath, PdfTemplatePath } from '../type';
+import { generatePathFromTemplate } from '../utils';
 
-export async function convertBitmapToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
+export async function convertBitmapToPdf(inputPath: BitmapPath, outputTemplatePath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
+    const replacedOutputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
 
     const pdfDoc = await PDFDocument.create();
 
-    const imageBytes = await vscode.workspace.fs.readFile(uri);
+    const imageBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(inputPath));
 
     let image;
-    if (uri.fsPath.toLowerCase().endsWith('.png')) {
+    if (inputPath.toLowerCase().endsWith('.png')) {
         image = await pdfDoc.embedPng(imageBytes);
-    } else if (uri.fsPath.toLowerCase().endsWith('.jpg') || uri.fsPath.toLowerCase().endsWith('.jpeg')) {
+    } else if (inputPath.toLowerCase().endsWith('.jpg') || inputPath.toLowerCase().endsWith('.jpeg')) {
         image = await pdfDoc.embedJpg(imageBytes);
     }
 

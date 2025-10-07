@@ -3,11 +3,11 @@ import * as vscode from 'vscode';
 
 import { getAppConfig } from '../configuration';
 import { cropPdf } from '../core/crop_pdf';
-import { PdfPath, PdfTemplatePath } from '../type';
-import { replaceOutputPath } from '../utils';
+import { Path, PdfPath, PdfTemplatePath } from '../type';
+import { generatePathFromTemplate } from '../utils';
 
 export async function convertVectorToPdf(uri: vscode.Uri, outputPath: PdfTemplatePath, workspaceFolder: vscode.WorkspaceFolder) {
-    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder) as PdfPath;
+    const replacedOutputPath = generatePathFromTemplate(outputPath, uri.fsPath as Path, workspaceFolder) as PdfPath;
 
     let browser;
     try {

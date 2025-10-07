@@ -4,6 +4,7 @@ import { AppConfig, getAppConfig } from '../configuration';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { convertVectorToPdf } from '../core/convert_vector_to_pdf';
 import { localeMap } from '../locale_map';
+import { BitmapPath } from '../type';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertPngToPdfCommand(
@@ -25,7 +26,7 @@ export function runConvertPngToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri, config.outputPathConvertPngToPdf, workspaceFolder);
+                await convertBitmapToPdf(uri.fsPath as BitmapPath, config.outputPathConvertPngToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {
@@ -53,7 +54,7 @@ export function runConvertJpegToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(uri, config.outputPathConvertJpegToPdf, workspaceFolder);
+                await convertBitmapToPdf(uri.fsPath as BitmapPath, config.outputPathConvertJpegToPdf, workspaceFolder);
             }
         );
         error.forEach((value) => {

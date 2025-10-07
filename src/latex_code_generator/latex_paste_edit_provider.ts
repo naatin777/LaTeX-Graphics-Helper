@@ -7,8 +7,8 @@ import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGemini } from '../core/ask_gemini';
 import { localeMap } from '../locale_map';
-import { FileInfo } from '../type';
-import { createFolder, escapeLatex, escapeLatexLabel, replaceOutputPath, toPosixPath } from '../utils';
+import { FileInfo, PdfPath, PdfTemplatePath } from '../type';
+import { createFolder, escapeLatex, escapeLatexLabel, generatePathFromTemplate, toPosixPath } from '../utils';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
 
@@ -45,7 +45,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
         const uri = document.uri;
         const fileDirname = path.dirname(uri.fsPath);
-        const outputPath = getAppConfig().outputPathClipboardImage;
+        const outputPath = getAppConfig().outputPathClipboardImage as PdfTemplatePath;
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 
         if (!workspaceFolder) {
@@ -57,12 +57,12 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         try {
             if (pickedItem) {
                 if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
-                    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-                    createFolder(vscode.Uri.file(replacedOutputPath));
+                    const replacedOutputPath = generatePathFromTemplate(outputPath, uri.fsPath as PdfPath, workspaceFolder);
+                    createFolder(replacedOutputPath);
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
                 } else if (pickedItem.detail === localeMap('pasteAsPdfDetail')) {
-                    const replacedOutputPath = replaceOutputPath(uri.fsPath, outputPath, workspaceFolder);
-                    createFolder(vscode.Uri.file(replacedOutputPath));
+                    const replacedOutputPath = generatePathFromTemplate(outputPath, uri.fsPath as PdfPath, workspaceFolder);
+                    createFolder(replacedOutputPath);
                     snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
                 } else if (pickedItem.detail === localeMap('aiRequestDetail')) {
                     snippet = await this.handleCustomGeminiRequest(info);
