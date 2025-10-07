@@ -227,6 +227,31 @@
           "default": "pdftocairo",
           "description": "Path to the pdftocairo executable."
         },
+        "latex-graphics-helper.execPath.puppeteer": {
+          "type": "string",
+          "default": "",
+          "description": "Specifies the path to the browser executable that Puppeteer will use. If left empty, Puppeteer will download and use its own browser version."
+        },
+        "latex-graphics-helper.puppeteer.browser": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "firefox"
+          ],
+          "default": "chrome",
+          "description": "Specifies which browser Puppeteer should launch."
+        },
+        "latex-graphics-helper.puppeteer.channel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-canary",
+            "chrome-dev"
+          ],
+          "default": "chrome",
+          "description": "Specifies the Chrome release channel to use. This is only applicable when 'chrome' is selected as the browser."
+        },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",

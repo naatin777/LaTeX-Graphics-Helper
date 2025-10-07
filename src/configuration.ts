@@ -1,5 +1,6 @@
 import * as os from 'os';
 
+import { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
 import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from './type';
@@ -8,6 +9,9 @@ export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
     execPathDrawio: ExecutablePath;
     execPathPdftocairo: ExecutablePath;
+    execPathPuppeteer: ExecutablePath,
+    puppeteerBrowser: SupportedBrowser,
+    puppeteerChannel: ChromeReleaseChannel,
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;
@@ -33,6 +37,9 @@ export function getAppConfig(): AppConfig {
         execPathPdfcrop: getExecPathPdfcrop(),
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
+        execPathPuppeteer: getExecPathPuppeteer(),
+        puppeteerBrowser: getPuppeteerBrowser(),
+        puppeteerChannel: getPuppeteerChannel(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -76,6 +83,21 @@ function getExecPathPdfcrop(): ExecutablePath {
 function getExecPathPdftocairo(): ExecutablePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('execPath.pdftocairo') as ExecutablePath;
+}
+
+function getExecPathPuppeteer(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('execPath.puppeteer') as ExecutablePath;
+}
+
+function getPuppeteerBrowser(): SupportedBrowser {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('puppeteer.browser') as SupportedBrowser;
+}
+
+function getPuppeteerChannel(): ChromeReleaseChannel {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('puppeteer.channel') as ChromeReleaseChannel;
 }
 
 function getOutputPathCropPdf(): PdfTemplatePath {

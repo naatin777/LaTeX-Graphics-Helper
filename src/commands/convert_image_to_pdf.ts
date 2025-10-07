@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 
 import { AppConfig, getAppConfig } from '../configuration';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
-import { convertVectorToPdf } from '../core/convert_vector_to_pdf';
+import { convertSvgToPdf } from '../core/convert_svg_to_pdf';
 import { localeMap } from '../locale_map';
-import { BitmapPath } from '../type';
+import { JpegPath, PngPath, SvgPath } from '../type';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertPngToPdfCommand(
@@ -27,9 +27,10 @@ export function runConvertPngToPdfCommand(
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
                 await convertBitmapToPdf(
-                    uri.fsPath as BitmapPath,
+                    uri.fsPath as PngPath,
                     appConfig.outputPathConvertPngToPdf,
-                    workspaceFolder
+                    workspaceFolder,
+                    'png'
                 );
             }
         );
@@ -59,9 +60,10 @@ export function runConvertJpegToPdfCommand(
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
                 await convertBitmapToPdf(
-                    uri.fsPath as BitmapPath,
+                    uri.fsPath as JpegPath,
                     appConfig.outputPathConvertJpegToPdf,
-                    workspaceFolder
+                    workspaceFolder,
+                    'jpeg'
                 );
             }
         );
@@ -90,8 +92,9 @@ export function runConvertSvgToPdfCommand(
             progress,
             uris,
             async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertVectorToPdf(
-                    uri,
+                await convertSvgToPdf(
+                    appConfig,
+                    uri.fsPath as SvgPath,
                     appConfig.outputPathConvertSvgToPdf,
                     workspaceFolder
                 );

@@ -23,7 +23,6 @@ export async function convertDrawioToPdf(
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PdfPath[]> {
     const temporaryPdfPath = `${inputPath}.pdf` as PdfPath;
-
     await execFileInWorkspace(
         appConfig.execPathDrawio,
         [inputPath, '-o', temporaryPdfPath, '-xf', 'pdf', '-t', '-a'],
@@ -42,6 +41,6 @@ export async function convertDrawioToPdf(
         workspaceFolder,
         drawioTabs,
     );
-    vscode.workspace.fs.delete(vscode.Uri.file(temporaryPdfPath), { recursive: true, useTrash: false });
+    await vscode.workspace.fs.delete(vscode.Uri.file(temporaryPdfPath), { recursive: true, useTrash: false });
     return outputPaths;
 }
