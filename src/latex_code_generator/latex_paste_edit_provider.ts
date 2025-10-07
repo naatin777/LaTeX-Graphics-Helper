@@ -59,11 +59,11 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             if (pickedItem) {
                 if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
                     const replacedOutputPath = generatePathFromTemplate(outputPath, uri.fsPath as PdfPath, workspaceFolder);
-                    createFolder(replacedOutputPath);
+                    await createFolder(replacedOutputPath);
                     snippet = await this.handleDefaultImagePaste(replacedOutputPath, info, fileDirname);
                 } else if (pickedItem.detail === localeMap('pasteAsPdfDetail')) {
                     const replacedOutputPath = generatePathFromTemplate(outputPath, uri.fsPath as PdfPath, workspaceFolder);
-                    createFolder(replacedOutputPath);
+                    await createFolder(replacedOutputPath);
                     snippet = await this.handlePdfPaste(replacedOutputPath, info, fileDirname, workspaceFolder);
                 } else if (pickedItem.detail === localeMap('aiRequestDetail')) {
                     snippet = await this.handleCustomGeminiRequest(info);

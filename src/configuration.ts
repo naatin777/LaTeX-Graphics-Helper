@@ -4,8 +4,6 @@ import * as vscode from 'vscode';
 
 import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from './type';
 
-const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-
 export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
     execPathDrawio: ExecutablePath;
@@ -57,6 +55,7 @@ export function getAppConfig(): AppConfig {
 }
 
 function getExecPathDrawio(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const drawioCommand = configuration.get<string>('execPath.drawio');
     const platform = os.platform();
 
@@ -70,81 +69,101 @@ function getExecPathDrawio(): ExecutablePath {
 }
 
 function getExecPathPdfcrop(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('execPath.pdfcrop') as ExecutablePath;
 }
 
 function getExecPathPdftocairo(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('execPath.pdftocairo') as ExecutablePath;
 }
 
 function getOutputPathCropPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.cropPdf') as PdfTemplatePath;
 }
 
 function getOutputPathSplitPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.splitPdf') as PdfTemplatePath;
 }
 
 function getOutputPathConvertDrawioToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertDrawioToPdf') as PdfTemplatePath;
 }
 
 function getOutputPathConvertPdfToPng(): PngTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertPdfToPng') as PngTemplatePath;
 }
 
 function getOutputPathConvertPdfToJpeg(): JpegTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertPdfToJpeg') as JpegTemplatePath;
 }
 
 function getOutputPathConvertPdfToSvg(): SvgTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertPdfToSvg') as SvgTemplatePath;
 }
 
 function getOutputPathConvertPngToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertPngToPdf') as PdfTemplatePath;
 }
 
 function getOutputPathConvertJpegToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertJpegToPdf') as PdfTemplatePath;
 }
 
 function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertSvgToPdf') as PdfTemplatePath;
 }
 
 function getOutputPathClipboardImage(): string {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.clipboardImage') as string;
 }
 
 function getChoiceFigurePlacement(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.figurePlacement') as string[];
 }
 
 function getChoiceFigureAlignment(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.figureAlignment') as string[];
 }
 
 function getChoiceGraphicsOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.graphicsOptions') as string[];
 }
 
 function getChoiceSubVerticalAlignment(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.subVerticalAlignment') as string[];
 }
 
 function getChoiceSubWidth(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.subWidth') as string[];
 }
 
 function getChoiceSpaceBetweenSubs(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('choice.spaceBetweenSubs') as string[];
 }
 
 function getGeminiModel(): string {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('gemini.model') as string;
 }
 
 function getGeminiRequests(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('gemini.requests') as string[];
 }
