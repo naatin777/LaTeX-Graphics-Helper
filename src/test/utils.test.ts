@@ -2,7 +2,7 @@ import * as assert from 'assert';
 
 import * as vscode from 'vscode';
 
-import { toPosixPath } from '../utils';
+import { convertToLatexPath } from '../utils';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 suite('Utils Test Suite', () => {
@@ -12,11 +12,11 @@ suite('Utils Test Suite', () => {
     });
 
     test('toPosixPath', () => {
-        assert.strictEqual(toPosixPath('C:\\Users\\test\\file.txt'), 'C:/Users/test/file.txt');
-        assert.strictEqual(toPosixPath('C:/Users/test/file.txt'), 'C:/Users/test/file.txt');
-        assert.strictEqual(toPosixPath('/home/test/file.txt'), '/home/test/file.txt');
-        assert.strictEqual(toPosixPath('home/test/file.txt'), 'home/test/file.txt');
-        assert.strictEqual(toPosixPath('../home/test/../file.txt'), '../home/file.txt');
+        assert.strictEqual(convertToLatexPath('C:\\Users\\test\\file.txt'), 'C:/Users/test/file.txt');
+        assert.strictEqual(convertToLatexPath('C:/Users/test/file.txt'), 'C:/Users/test/file.txt');
+        assert.strictEqual(convertToLatexPath('/home/test/file.txt'), '/home/test/file.txt');
+        assert.strictEqual(convertToLatexPath('home/test/file.txt'), 'home/test/file.txt');
+        assert.strictEqual(convertToLatexPath('../home/test/../file.txt'), '../home/file.txt');
     });
 
     test('escapeLatex', () => {

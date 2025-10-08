@@ -22,12 +22,12 @@ export interface AppConfig {
     outputPathConvertJpegToPdf: PdfTemplatePath;
     outputPathConvertSvgToPdf: PdfTemplatePath;
     outputPathClipboardImage: string;
-    choiceFigurePlacement: string[];
-    choiceFigureAlignment: string[];
-    choiceGraphicsOptions: string[];
-    choiceSubVerticalAlignment: string[];
-    choiceSubWidth: string[];
-    choiceSpaceBetweenSubs: string[];
+    figurePlacementOptions: string[];
+    figureAlignmentOptions: string[];
+    figureGraphicsOptions: string[];
+    subfigureVerticalAlignmentOptions: string[];
+    subfigureWidthOptions: string[];
+    subfigureSpacingOptions: string[];
     geminiModel: string;
     geminiRequests: string[];
 }
@@ -50,12 +50,12 @@ export function getAppConfig(): AppConfig {
         outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
         outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
         outputPathClipboardImage: getOutputPathClipboardImage(),
-        choiceFigurePlacement: getChoiceFigurePlacement(),
-        choiceFigureAlignment: getChoiceFigureAlignment(),
-        choiceGraphicsOptions: getChoiceGraphicsOptions(),
-        choiceSubVerticalAlignment: getChoiceSubVerticalAlignment(),
-        choiceSubWidth: getChoiceSubWidth(),
-        choiceSpaceBetweenSubs: getChoiceSpaceBetweenSubs(),
+        figurePlacementOptions: getFigurePlacementOptions(),
+        figureAlignmentOptions: getFigureAlignmentOptions(),
+        figureGraphicsOptions: getFigureGraphicsOptions(),
+        subfigureVerticalAlignmentOptions: getSubfigureVerticalAlignmentOptions(),
+        subfigureWidthOptions: getSubfigureWidthOptions(),
+        subfigureSpacingOptions: getSubfigureSpacingOptions(),
         geminiModel: getGeminiModel(),
         geminiRequests: getGeminiRequests(),
     };
@@ -150,34 +150,34 @@ function getOutputPathClipboardImage(): string {
     return configuration.get<string>('outputPath.clipboardImage') as string;
 }
 
-function getChoiceFigurePlacement(): string[] {
+function getFigurePlacementOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.figurePlacement') as string[];
+    return configuration.get<string[]>('figure.placementOptions') as string[];
 }
 
-function getChoiceFigureAlignment(): string[] {
+function getFigureAlignmentOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.figureAlignment') as string[];
+    return configuration.get<string[]>('figure.alignmentOptions') as string[];
 }
 
-function getChoiceGraphicsOptions(): string[] {
+function getFigureGraphicsOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.graphicsOptions') as string[];
+    return configuration.get<string[]>('figure.graphicsOptions') as string[];
 }
 
-function getChoiceSubVerticalAlignment(): string[] {
+function getSubfigureVerticalAlignmentOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.subVerticalAlignment') as string[];
+    return configuration.get<string[]>('subfigure.verticalAlignmentOptions') as string[];
 }
 
-function getChoiceSubWidth(): string[] {
+function getSubfigureWidthOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.subWidth') as string[];
+    return configuration.get<string[]>('subfigure.widthOptions') as string[];
 }
 
-function getChoiceSpaceBetweenSubs(): string[] {
+function getSubfigureSpacingOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('choice.spaceBetweenSubs') as string[];
+    return configuration.get<string[]>('subfigure.spacingOptions') as string[];
 }
 
 function getGeminiModel(): string {

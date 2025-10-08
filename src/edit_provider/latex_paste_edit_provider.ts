@@ -3,13 +3,14 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getAppConfig } from '../configuration';
+import { AppConfig, getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { askGeminiWithImage } from '../core/ask_gemini';
 import { localeMap } from '../locale_map';
 import { FileInfo, PdfPath, PdfTemplatePath } from '../type';
-import { createFolder, generatePathFromTemplate, toPosixPath } from '../utils';
+import { convertToLatexPath, createFolder, generatePathFromTemplate } from '../utils';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
+import { LatexSnippet } from '../utils/latex_snippet';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
 
@@ -24,7 +25,8 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         ranges: readonly vscode.Range[],
         dataTransfer: vscode.DataTransfer,
         context: vscode.DocumentPasteEditContext,
-        token: vscode.CancellationToken
+        token: vscode.CancellationToken,
+        appConfig: AppConfig = getAppConfig()
     ): Promise<vscode.DocumentPasteEdit[] | undefined> {
         token.onCancellationRequested(() => {
             vscode.window.showWarningMessage(localeMap('cancelled'));
@@ -103,23 +105,17 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     private async handleDefaultImagePaste(imagePath: string, info: FileInfo, fileDirname: string): Promise<vscode.SnippetString | undefined> {
         const imagePathWithExt = `${imagePath}.${info.type.ext}`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
-        const relativeFilePath = path.relative(fileDirname, imagePathWithExt);
-        return this.createSinglePdfSnippet('', relativeFilePath);
+        const relativeFilePath = path.relative(fileDirname, imagePathWithExt) as PdfPath;
+        return this.createSinglePdfSnippet(getAppConfig(), '', relativeFilePath);
     }
 
     private async handlePdfPaste(imagePath: string, info: FileInfo, fileDirname: string, workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.SnippetString | undefined> {
         const imagePathWithExt = `${imagePath}.${info.type.ext}`;
         const pdfPath = `${imagePath}.pdf`;
         fs.writeFileSync(imagePathWithExt, info.buffer);
-        if (info.type.mime !== 'application/pdf') {
-            // execFileSync(getExecPathInkscape(), [imagePathWithExt, '-o', pdfPath, '--export-type=pdf', '--export-area-drawing'], { cwd: workspaceFolder.uri.fsPath });
-
-            if (fs.existsSync(imagePathWithExt)) {
-                fs.unlinkSync(imagePathWithExt);
-            }
-        }
+        // TODO: Implement image to PDF conversion
         const relativeFilePath = path.relative(fileDirname, pdfPath);
-        return this.createSinglePdfSnippet('', relativeFilePath);
+        return this.createSinglePdfSnippet(getAppConfig(), '', relativeFilePath);
     }
 
     private async handleCustomGeminiRequest(info: FileInfo): Promise<vscode.SnippetString | undefined> {
@@ -141,46 +137,24 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         return new vscode.SnippetString(geminiResponse);
     }
 
-    createSinglePdfSnippet(fileName: string = '', relativeFilePath: string): vscode.SnippetString {
-        const snippet = new vscode.SnippetString();
+    createSinglePdfSnippet(appConfig: AppConfig, fileName: string, relativeFilePath: string): vscode.SnippetString {
+        const latexSnippet = new LatexSnippet(appConfig);
 
-        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
-        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
-        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
+        latexSnippet.wrapEnvironment('figure', () => {
+            latexSnippet.appendFigurePlacement().lineBreak();
+            latexSnippet.appendFigureAlignment().lineBreak();
+            latexSnippet.appendCommand('includegraphics', () => {
+                latexSnippet.appendGraphicsOptions();
+            }, () => {
+                latexSnippet.appendText(convertToLatexPath(relativeFilePath));
+            }).lineBreak();
+            latexSnippet.appendCommand('caption', () => { }, () => {
+                latexSnippet.appendPlaceholder(escapeLatex(fileName));
+            }).appendCommand('label', () => { }, () => {
+                latexSnippet.appendText('fig:').appendPlaceholder(escapeLatexLabel(fileName));
+            }).lineBreak();
+        });
 
-        snippet.appendText('\\begin{figure}');
-        if (choiceFigurePlacement.length >= 2) {
-            snippet.appendChoice(choiceFigurePlacement, 1);
-        } else {
-            snippet.appendText(choiceFigurePlacement[0] ?? '');
-        }
-        snippet.appendText('\n');
-
-        snippet.appendText('\t');
-        if (choiceFigureAlignment.length >= 2) {
-            snippet.appendChoice(choiceFigureAlignment, 2);
-        } else {
-            snippet.appendText(choiceFigureAlignment[0] ?? '');
-        }
-        snippet.appendText('\n');
-
-        snippet.appendText('\t\\includegraphics');
-        if (choiceGraphicsOptions.length >= 2) {
-            snippet.appendChoice(choiceGraphicsOptions, 3);
-        } else {
-            snippet.appendText(choiceGraphicsOptions[0] ?? '');
-        }
-        snippet.appendText(`{${toPosixPath(relativeFilePath)}}`);
-        snippet.appendText('\n');
-
-        snippet.appendText('\t\\caption{');
-        snippet.appendPlaceholder(escapeLatex(fileName), 4);
-        snippet.appendText('}');
-        snippet.appendText(`\\label{fig:${escapeLatexLabel(fileName)}}`);
-        snippet.appendText('\n');
-
-        snippet.appendText('\\end{figure}');
-
-        return snippet;
+        return latexSnippet.snippet;
     }
 }

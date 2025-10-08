@@ -5,7 +5,7 @@ import { Utils } from 'vscode-uri';
 
 import { JpegPath, JpegTemplatePath, Path, PdfPath, PdfTemplatePath, PngPath, PngTemplatePath, SvgPath, SvgTemplatePath, TemplatePath } from './type';
 
-export function toPosixPath(filePath: string): string {
+export function convertToLatexPath(filePath: string): string {
     return path.normalize(filePath).split(/[\\\/]/g).join(path.posix.sep);
 }
 

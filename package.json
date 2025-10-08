@@ -302,7 +302,7 @@
           "default": "${fileDirname}/${dateNow}",
           "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
         },
-        "latex-graphics-helper.choice.figurePlacement": {
+        "latex-graphics-helper.figure.placementOptions": {
           "type": "array",
           "default": [
             "[H]",
@@ -322,18 +322,18 @@
             "[tbp]",
             "[htbp]"
           ],
-          "description": "Available placement specifiers for LaTeX figures and tables."
+          "description": "Available placement specifier options for LaTeX figures."
         },
-        "latex-graphics-helper.choice.figureAlignment": {
+        "latex-graphics-helper.figure.alignmentOptions": {
           "type": "array",
           "default": [
             "\\centering",
             "\\raggedright",
             "\\raggedleft"
           ],
-          "description": "Available alignment options for LaTeX figures and tables."
+          "description": "Available alignment options for LaTeX figures."
         },
-        "latex-graphics-helper.choice.graphicsOptions": {
+        "latex-graphics-helper.figure.graphicsOptions": {
           "type": "array",
           "default": [
             "[width=1.0\\linewidth]",
@@ -343,18 +343,18 @@
             "[width=0.6\\linewidth]",
             "[width=0.5\\linewidth]"
           ],
-          "description": "Default graphics options for LaTeX figures and tables."
+          "description": "Available options for the `\\includegraphics` command in a figure."
         },
-        "latex-graphics-helper.choice.subVerticalAlignment": {
+        "latex-graphics-helper.subfigure.verticalAlignmentOptions": {
           "type": "array",
           "default": [
             "[t]",
             "[c]",
             "[b]"
           ],
-          "description": "Available vertical alignment options for LaTeX minipage environments."
+          "description": "Available vertical alignment options for subfigures (minipage environment)."
         },
-        "latex-graphics-helper.choice.subWidth": {
+        "latex-graphics-helper.subfigure.widthOptions": {
           "type": "array",
           "default": [
             "{0.45\\linewidth}",
@@ -362,9 +362,9 @@
             "{0.25\\linewidth}",
             "{0.15\\linewidth}"
           ],
-          "description": "Available width options for LaTeX minipage environments."
+          "description": "Available width options for subfigures (minipage environment)."
         },
-        "latex-graphics-helper.choice.spaceBetweenSubs": {
+        "latex-graphics-helper.subfigure.spacingOptions": {
           "type": "array",
           "default": [
             "\\hspace{0.01\\linewidth}",
@@ -373,7 +373,7 @@
             "\\hspace{0.04\\linewidth}",
             "\\hspace{0.05\\linewidth}"
           ],
-          "description": "Available spacing options between subfigures/subtables in LaTeX minipage environments."
+          "description": "Available spacing options between subfigures."
         },
         "latex-graphics-helper.gemini.model": {
           "type": "string",
