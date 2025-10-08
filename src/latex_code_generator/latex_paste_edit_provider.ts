@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 
 import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
-import { askGemini } from '../core/ask_gemini';
+import { askGeminiWithImage } from '../core/ask_gemini';
 import { localeMap } from '../locale_map';
 import { FileInfo, PdfPath, PdfTemplatePath } from '../type';
 import { createFolder, generatePathFromTemplate, toPosixPath } from '../utils';
@@ -125,7 +125,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     private async handleCustomGeminiRequest(info: FileInfo): Promise<vscode.SnippetString | undefined> {
         const customRequest = await vscode.window.showInputBox({ prompt: 'Enter your custom request for Gemini' });
         if (customRequest) {
-            const geminiResponse = await askGemini(this.secretStorage, customRequest, info);
+            const geminiResponse = await askGeminiWithImage(getAppConfig(), this.secretStorage, customRequest, info);
             if (geminiResponse) {
                 return new vscode.SnippetString(geminiResponse);
             }
@@ -134,7 +134,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     }
 
     private async handleGeminiRequest(label: string, info: FileInfo): Promise<vscode.SnippetString | undefined> {
-        const geminiResponse = await askGemini(this.secretStorage, label, info);
+        const geminiResponse = await askGeminiWithImage(getAppConfig(), this.secretStorage, label, info);
         if (!geminiResponse) {
             return undefined;
         }

@@ -24,10 +24,6 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.languages.registerDocumentDropEditProvider(
 			{ language: 'latex' },
 			new LatexDropEditProvider(),
-			{
-				dropMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
-				providedDropEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
-			}
 		),
 		vscode.languages.registerDocumentPasteEditProvider(
 			{ language: 'latex' },
@@ -38,7 +34,6 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		),
 	);
-
 	logger.info('LaTeX Graphics Helper activated');
 }
 

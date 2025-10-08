@@ -13,11 +13,12 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
         dataTransfer: vscode.DataTransfer,
         token: vscode.CancellationToken
     ): Promise<vscode.DocumentDropEdit[] | vscode.DocumentDropEdit | undefined> {
+        console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
         const dataTransferItem = dataTransfer.get('text/uri-list');
-
         if (!dataTransferItem) {
             return undefined;
         }
+        console.log(await dataTransferItem.asString());
 
         const uris = (await dataTransferItem.asString())
             .split('\r\n')

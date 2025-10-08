@@ -1,17 +1,16 @@
 import OpenAI from 'openai';
 import * as vscode from 'vscode';
 
-import { getAppConfig } from '../configuration';
+import { AppConfig } from '../configuration';
 import { FileInfo } from '../type';
 
 import { getGeminiApiKey } from './gemini_api_key';
 
-export async function askGemini(secretStorage: vscode.SecretStorage, message: string, info: FileInfo) {
+export async function askGeminiWithImage(appConfig: AppConfig, secretStorage: vscode.SecretStorage, message: string, info: FileInfo) {
     const apiKey = await getGeminiApiKey(secretStorage);
-
     const ai = new OpenAI({ apiKey: apiKey, baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/' });
     const response = await ai.chat.completions.create({
-        model: getAppConfig().geminiModel,
+        model: appConfig.geminiModel,
         messages: [
             {
                 role: 'user',
