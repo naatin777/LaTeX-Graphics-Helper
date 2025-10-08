@@ -3,9 +3,7 @@ import * as vscode from 'vscode';
 import { removeGeminiApiKey, storeGeminiApiKey } from '../core/gemini_api_key';
 import { localeMap } from '../locale_map';
 
-export async function setGeminiApiKey(
-    secretStorage: vscode.SecretStorage
-) {
+export async function setGeminiApiKey(secretStorage: vscode.SecretStorage) {
     const apiKey = await vscode.window.showInputBox({
         password: true,
         title: localeMap('enterGeminiApiKey'),

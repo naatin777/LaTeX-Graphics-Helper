@@ -4,7 +4,7 @@ import { mergePdf } from '../core/merge_pdf';
 import { localeMap } from '../locale_map';
 import { PdfPath } from '../type';
 
-export async function runMergePdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
+export async function runMergePdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
