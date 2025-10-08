@@ -9,10 +9,6 @@ export function toPosixPath(filePath: string): string {
     return path.normalize(filePath).split(/[\\\/]/g).join(path.posix.sep);
 }
 
-export function transpose<T>(a: T[][]): T[][] {
-    return a[0].map((_, c) => a.map(r => r[c]));
-}
-
 export function generatePathFromTemplate(templatePath: PdfTemplatePath, sourcePath: Path, workspaceFolder: vscode.WorkspaceFolder, page?: string): PdfPath;
 export function generatePathFromTemplate(templatePath: PngTemplatePath, sourcePath: Path, workspaceFolder: vscode.WorkspaceFolder, page?: string): PngPath;
 export function generatePathFromTemplate(templatePath: JpegTemplatePath, sourcePath: Path, workspaceFolder: vscode.WorkspaceFolder, page?: string): JpegPath;

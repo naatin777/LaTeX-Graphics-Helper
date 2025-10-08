@@ -34,5 +34,6 @@
 	"noFilesSelected": "No files selected.",
 	"workspaceFolderNotFound": "Workspace folder not found.",
 	"cancelled": "Cancelled.",
-	"registered": "Registered"
+	"registered": "Registered",
+	"insertLatex": "Insert LaTeX"
 }

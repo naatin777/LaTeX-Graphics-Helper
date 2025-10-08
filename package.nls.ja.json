@@ -34,5 +34,6 @@
 	"noFilesSelected": "ファイルが選択されていません。",
 	"workspaceFolderNotFound": "ワークスペースフォルダーが見つかりません。",
 	"cancelled": "キャンセルされました。",
-	"registered": "登録された"
+	"registered": "登録された",
+	"insertLatex": "LaTeXを挿入"
 }

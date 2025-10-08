@@ -2,10 +2,7 @@ import * as assert from 'assert';
 
 import * as vscode from 'vscode';
 
-import {
-    toPosixPath,
-    transpose,
-} from '../utils';
+import { toPosixPath } from '../utils';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 suite('Utils Test Suite', () => {
@@ -36,12 +33,12 @@ suite('Utils Test Suite', () => {
         assert.strictEqual(escapeLatexLabel('\\\\\\{{{{{}}}}}##?><!'), '?><!');
     });
 
-    test('transpose', () => {
-        assert.deepStrictEqual(transpose([[1, 2, 3], [4, 5, 6]]), [[1, 4], [2, 5], [3, 6]]);
-        assert.deepStrictEqual(transpose([[1, 4], [2, 5], [3, 6]]), [[1, 2, 3], [4, 5, 6]]);
-        assert.deepStrictEqual(transpose([[1, 2]]), [[1], [2]]);
-        assert.deepStrictEqual(transpose([[1], [2]]), [[1, 2]]);
-    });
+    // test('transpose', () => {
+    //     assert.deepStrictEqual(transpose([[1, 2, 3], [4, 5, 6]]), [[1, 4], [2, 5], [3, 6]]);
+    //     assert.deepStrictEqual(transpose([[1, 4], [2, 5], [3, 6]]), [[1, 2, 3], [4, 5, 6]]);
+    //     assert.deepStrictEqual(transpose([[1, 2]]), [[1], [2]]);
+    //     assert.deepStrictEqual(transpose([[1], [2]]), [[1, 2]]);
+    // });
 
     // test('replaceOutputPath', () => {
     //     const clock = sinon.useFakeTimers(1755592839354);

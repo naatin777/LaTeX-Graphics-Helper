@@ -2,8 +2,9 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import { getAppConfig } from '../configuration';
-import { toPosixPath, transpose } from '../utils';
+import { AppConfig, getAppConfig } from '../configuration';
+import { localeMap } from '../locale_map';
+import { toPosixPath } from '../utils';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
@@ -11,50 +12,47 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
         document: vscode.TextDocument,
         position: vscode.Position,
         dataTransfer: vscode.DataTransfer,
-        token: vscode.CancellationToken
+        token: vscode.CancellationToken,
+        appConfig: AppConfig = getAppConfig()
     ): Promise<vscode.DocumentDropEdit[] | vscode.DocumentDropEdit | undefined> {
-        console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
         const dataTransferItem = dataTransfer.get('text/uri-list');
         if (!dataTransferItem) {
             return undefined;
         }
-        console.log(await dataTransferItem.asString());
 
         const uris = (await dataTransferItem.asString())
-            .split('\r\n')
-            .map(value => vscode.Uri.parse(value));
+            .split(/\r?\n/)
+            .filter(value => value)
+            .map(value => vscode.Uri.parse(value, true));
 
         const documentDirname = path.dirname(document.uri.fsPath);
+        const { fileNames, relativeFilePaths } = uris.reduce<{ fileNames: string[], relativeFilePaths: string[] }>((acc, uri) => {
+            acc.fileNames.push(path.basename(uri.fsPath, path.extname(uri.fsPath)));
+            acc.relativeFilePaths.push(path.relative(documentDirname, uri.fsPath));
+            return acc;
+        }, { fileNames: [], relativeFilePaths: [] });
 
         if (uris.length === 1) {
-            const uri = uris[0];
-            const fileName = path.basename(uri.fsPath, path.extname(uri.fsPath));
-            const relativeFilePath = path.relative(documentDirname, uri.fsPath);
-
-            const singlePdfSnippet = this.createSinglePdfSnippet(fileName, relativeFilePath);
-            return new vscode.DocumentDropEdit(singlePdfSnippet, 'Insert LaTeX text');
+            const singlePdfSnippet = this.createSinglePdfSnippet(appConfig, fileNames[0], relativeFilePaths[0]);
+            return new vscode.DocumentDropEdit(singlePdfSnippet, localeMap('insertLatex'));
         } else if (uris.length > 1) {
-            const [fileNames, relativeFilePaths] = transpose(
-                uris
-                    .map(uri => [
-                        path.basename(uri.fsPath, path.extname(uri.fsPath)),
-                        path.relative(documentDirname, uri.fsPath)
-                    ])
-            );
-
-            const multiplePdfSnippet = this.createMultiplePdfSnippet(fileNames, relativeFilePaths);
-            return new vscode.DocumentDropEdit(multiplePdfSnippet, 'Insert LaTeX text');
+            const multiplePdfSnippet = this.createMultiplePdfSnippet(appConfig, fileNames, relativeFilePaths);
+            return new vscode.DocumentDropEdit(multiplePdfSnippet, localeMap('insertLatex'));
         } else {
             return undefined;
         }
     }
 
-    createSinglePdfSnippet(fileName: string, relativeFilePath: string): vscode.SnippetString {
+    createSinglePdfSnippet(
+        appConfig: AppConfig,
+        fileName: string,
+        relativeFilePath: string
+    ): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
-        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
-        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
-        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
+        const choiceFigurePlacement = appConfig.choiceFigurePlacement;
+        const choiceFigureAlignment = appConfig.choiceFigureAlignment;
+        const choiceGraphicsOptions = appConfig.choiceGraphicsOptions;
 
         snippet.appendText('\\begin{figure}');
         if (choiceFigurePlacement.length >= 2) {
@@ -91,15 +89,19 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
         return snippet;
     }
 
-    createMultiplePdfSnippet(fileNames: string[], relativeFilePaths: string[]): vscode.SnippetString {
+    createMultiplePdfSnippet(
+        appConfig: AppConfig,
+        fileNames: string[],
+        relativeFilePaths: string[]
+    ): vscode.SnippetString {
         const snippet = new vscode.SnippetString();
 
-        const choiceFigurePlacement = getAppConfig().choiceFigurePlacement;
-        const choiceFigureAlignment = getAppConfig().choiceFigureAlignment;
-        const choiceGraphicsOptions = getAppConfig().choiceGraphicsOptions;
-        const choiceSubVerticalAlignment = getAppConfig().choiceSubVerticalAlignment;
-        const choiceSubWidth = getAppConfig().choiceSubWidth;
-        const choiceSpaceBetweenSubs = getAppConfig().choiceSpaceBetweenSubs;
+        const choiceFigurePlacement = appConfig.choiceFigurePlacement;
+        const choiceFigureAlignment = appConfig.choiceFigureAlignment;
+        const choiceGraphicsOptions = appConfig.choiceGraphicsOptions;
+        const choiceSubVerticalAlignment = appConfig.choiceSubVerticalAlignment;
+        const choiceSubWidth = appConfig.choiceSubWidth;
+        const choiceSpaceBetweenSubs = appConfig.choiceSpaceBetweenSubs;
 
         snippet.appendText('\\begin{figure}');
         if (choiceFigurePlacement.length >= 2) {

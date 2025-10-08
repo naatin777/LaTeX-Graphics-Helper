@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
 import * as commands from './commands';
-import { LatexDropEditProvider } from './latex_code_generator/latex_drop_edit_provider';
-import { LatexPasteEditProvider } from './latex_code_generator/latex_paste_edit_provider';
+import { LatexDropEditProvider } from './edit_provider/latex_drop_edit_provider';
+import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provider';
 import { logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
