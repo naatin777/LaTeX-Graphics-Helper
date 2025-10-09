@@ -37,5 +37,6 @@
 	"insertLatex": "LaTeXを挿入",
 	"builtIn": "標準",
 	"custom": "カスタム",
-	"enterCustomGeminiRequest": "Geminiへのカスタムリクエストを入力してください"
+	"enterCustomGeminiRequest": "Geminiへのカスタムリクエストを入力してください",
+	"unsupportedFileType": "サポートされていないファイル形式です"
 }

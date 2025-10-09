@@ -37,5 +37,6 @@
 	"insertLatex": "Insert LaTeX",
 	"builtIn": "Built-in",
 	"custom": "Custom",
-	"enterCustomGeminiRequest": "Enter your custom request for Gemini"
+	"enterCustomGeminiRequest": "Enter your custom request for Gemini",
+	"unsupportedFileType": "Unsupported file type"
 }
