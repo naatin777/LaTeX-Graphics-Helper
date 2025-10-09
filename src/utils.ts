@@ -26,7 +26,7 @@ export function generatePathFromTemplate(templatePath: TemplatePath, sourcePath:
         .replace(/\${fileDirname}/g, path.dirname(sourcePath))
         .replace(/\${fileExtname}/g, path.extname(sourcePath))
         .replace(/\${page}/g, page)
-        .replace(/\${dateNow}/g, Date.now().toLocaleString()) as Path;
+        .replace(/\${dateNow}/g, Date.now().toString()) as Path;
 }
 
 async function directoryExists(uri: vscode.Uri): Promise<boolean> {

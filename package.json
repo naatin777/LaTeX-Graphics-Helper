@@ -383,10 +383,33 @@
         "latex-graphics-helper.gemini.requests": {
           "type": "array",
           "default": [
-            "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.",
-            "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            {
+              "label": "Convert to LaTeX equation",
+              "prompt": "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            },
+            {
+              "label": "Convert to LaTeX table",
+              "prompt": "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            }
           ],
-          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images."
+          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "The label for the request that appears in the Quick Pick menu."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "The prompt to be sent to the Gemini AI model."
+              }
+            },
+            "required": [
+              "label",
+              "prompt"
+            ]
+          }
         }
       }
     }

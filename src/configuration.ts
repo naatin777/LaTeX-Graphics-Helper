@@ -3,7 +3,7 @@ import * as os from 'os';
 import { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
-import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath } from './type';
+import { ExecutablePath, GeminiRequest, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath, TemplatePath } from './type';
 
 export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
@@ -21,7 +21,7 @@ export interface AppConfig {
     outputPathConvertPngToPdf: PdfTemplatePath;
     outputPathConvertJpegToPdf: PdfTemplatePath;
     outputPathConvertSvgToPdf: PdfTemplatePath;
-    outputPathClipboardImage: string;
+    outputPathClipboardImage: TemplatePath;
     figurePlacementOptions: string[];
     figureAlignmentOptions: string[];
     figureGraphicsOptions: string[];
@@ -29,7 +29,7 @@ export interface AppConfig {
     subfigureWidthOptions: string[];
     subfigureSpacingOptions: string[];
     geminiModel: string;
-    geminiRequests: string[];
+    geminiRequests: GeminiRequest[];
 }
 
 export function getAppConfig(): AppConfig {
@@ -145,9 +145,9 @@ function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
     return configuration.get<string>('outputPath.convertSvgToPdf') as PdfTemplatePath;
 }
 
-function getOutputPathClipboardImage(): string {
+function getOutputPathClipboardImage(): TemplatePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string>('outputPath.clipboardImage') as string;
+    return configuration.get<string>('outputPath.clipboardImage') as TemplatePath;
 }
 
 function getFigurePlacementOptions(): string[] {
@@ -185,7 +185,7 @@ function getGeminiModel(): string {
     return configuration.get<string>('gemini.model') as string;
 }
 
-function getGeminiRequests(): string[] {
+function getGeminiRequests(): GeminiRequest[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string[]>('gemini.requests') as string[];
+    return configuration.get<GeminiRequest[]>('gemini.requests') as GeminiRequest[];
 }

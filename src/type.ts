@@ -5,9 +5,14 @@ export type FileType = {
     ext: string;
 }
 
-export type FileInfo = {
+export type FileData = {
     type: FileType;
-    buffer: Buffer<ArrayBuffer>;
+    buffer: Buffer;
+}
+
+export type GeminiRequest = {
+    label: string;
+    prompt: string;
 }
 
 export type LogLevel = 'info' | 'warn' | 'error'
