@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 
 import { AppConfig, getAppConfig } from '../configuration';
 import { localeMap } from '../locale_map';
-import { convertToLatexPath } from '../utils';
 import { escapeLatex } from '../utils/escape';
 import { LatexSnippet } from '../utils/latex_snippet';
 
@@ -62,7 +61,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
                 .appendCommand('includegraphics', () => {
                     latexSnippet.appendGraphicsOptions();
                 }, () => {
-                    latexSnippet.appendText(convertToLatexPath(relativeFilePath));
+                    latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
                 })
                 .lineBreak();
             latexSnippet
@@ -108,7 +107,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
                         .appendCommand('includegraphics', () => {
                             latexSnippet.appendGraphicsOptions();
                         }, () => {
-                            latexSnippet.appendText(convertToLatexPath(relativeFilePaths[i]));
+                            latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePaths[i]));
                         })
                         .lineBreak();
                     latexSnippet

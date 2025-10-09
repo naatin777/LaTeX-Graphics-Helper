@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
 import { PdfTemplatePath, SvgPath } from '../type';
-import { generatePathFromTemplate } from '../utils';
+import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 
 import { cropPdf } from './crop_pdf';
 

@@ -2,7 +2,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { BitmapPath, BitmapType, PdfPath, PdfTemplatePath } from '../type';
-import { generatePathFromTemplate } from '../utils';
+import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 
 export async function convertBitmapToPdf(
     inputPath: BitmapPath,

@@ -8,8 +8,8 @@ import { askGeminiWithImage } from '../core/ask_gemini';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { localeMap } from '../locale_map';
 import { BitmapPath, FileData, Path, PdfPath, PdfTemplatePath } from '../type';
-import { convertToLatexPath, generatePathFromTemplate } from '../utils';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
+import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 import { LatexSnippet } from '../utils/latex_snippet';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
@@ -62,13 +62,19 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         try {
             if (pickedItem.description === `(${localeMap('builtIn')})`) {
                 if (pickedItem.label === localeMap('pasteAsPdfLabel')) {
-                    const snippet = await this.handlePdfPaste(appConfig, outputPath, data, fileDirname, workspaceFolder);
+                    const pdfPath = await this.handlePdfPaste(outputPath, data, workspaceFolder);
+                    const relativeFilePath = path.relative(fileDirname, pdfPath);
+                    const basename = path.basename(relativeFilePath, '.pdf');
+                    const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
                     if (snippet) {
                         const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsPdfLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
                         return [edit];
                     }
                 } else if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
-                    const snippet = await this.handleImagePaste(appConfig, outputPath, data, fileDirname);
+                    const outputPathWithExt = await this.handleImagePaste(outputPath, data);
+                    const relativeFilePath = path.relative(fileDirname, outputPathWithExt);
+                    const basename = path.basename(relativeFilePath, `.${data.type.ext}`);
+                    const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
                     if (snippet) {
                         const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsImageLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
                         return [edit];
@@ -110,21 +116,19 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         return undefined;
     }
 
-    private async handleImagePaste(appConfig: AppConfig, outputPath: Path, data: FileData, targetDirname: string): Promise<vscode.SnippetString | undefined> {
+    private async handleImagePaste(outputPath: Path, data: FileData): Promise<string> {
         const outputPathWithExt = `${outputPath}.${data.type.ext}`;
         await vscode.workspace.fs.writeFile(vscode.Uri.file(outputPathWithExt), data.buffer);
-        const relativeFilePath = path.relative(targetDirname, outputPathWithExt) as PdfPath;
-        return this.createSingleFileSnippet(appConfig, path.basename(relativeFilePath, `.${data.type.ext}`), relativeFilePath);
+        return outputPathWithExt;
     }
 
-    private async handlePdfPaste(appConfig: AppConfig, outputPath: Path, data: FileData, targetDirname: string, workspaceFolder: vscode.WorkspaceFolder): Promise<vscode.SnippetString | undefined> {
+    private async handlePdfPaste(outputPath: Path, data: FileData, workspaceFolder: vscode.WorkspaceFolder): Promise<string> {
         if (data.type.ext === 'png' || data.type.ext === 'jpeg') {
             const outputPathWithExt = `${outputPath}.${data.type.ext}`;
             await vscode.workspace.fs.writeFile(vscode.Uri.file(outputPathWithExt), data.buffer);
             const pdfPath = await convertBitmapToPdf(outputPathWithExt as BitmapPath, `${outputPath}.pdf` as PdfTemplatePath, workspaceFolder, data.type.ext);
-            const relativeFilePath = path.relative(targetDirname, pdfPath);
             await vscode.workspace.fs.delete(vscode.Uri.file(outputPathWithExt), { recursive: true, useTrash: false });
-            return this.createSingleFileSnippet(appConfig, path.basename(relativeFilePath, '.pdf'), relativeFilePath);
+            return pdfPath;
         } else {
             throw new Error(localeMap('unsupportedFileType'));
         }
@@ -143,10 +147,10 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
     private async handleGeminiRequest(appConfig: AppConfig, pickedItem: vscode.QuickPickItem, data: FileData): Promise<vscode.SnippetString | undefined> {
         const geminiResponse = await askGeminiWithImage(appConfig, this.secretStorage, pickedItem.detail ?? '', data);
-        if (!geminiResponse) {
-            return undefined;
+        if (geminiResponse) {
+            return new vscode.SnippetString(geminiResponse);
         }
-        return new vscode.SnippetString(geminiResponse);
+        return undefined;
     }
 
     createSingleFileSnippet(appConfig: AppConfig, fileName: string, relativeFilePath: string): vscode.SnippetString {
@@ -158,7 +162,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             latexSnippet.appendCommand('includegraphics', () => {
                 latexSnippet.appendGraphicsOptions();
             }, () => {
-                latexSnippet.appendText(convertToLatexPath(relativeFilePath));
+                latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
             }).lineBreak();
             latexSnippet.appendCommand('caption', () => { }, () => {
                 latexSnippet.appendPlaceholder(escapeLatex(fileName));
