@@ -2,7 +2,8 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { PdfPath, PdfTemplatePath } from '../type';
-import { createFolder, generatePathFromTemplate } from '../utils';
+import { createFolder } from '../utils/create_folder';
+import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 
 export async function splitPdf(
     inputPath: PdfPath,
