@@ -259,27 +259,27 @@
         },
         "latex-graphics-helper.outputPath.splitPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}.pdf",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.pdf",
           "description": "Output file name when splitting a pdf file."
         },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}.pdf",
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
           "description": "Output file name when converting a Draw.io file to PDF."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.png",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPdfToJpeg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPdfToSvg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.svg",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
