@@ -30,9 +30,13 @@
 	"pasteAsPdfLabel": "PDF形式で貼り付け",
 	"pasteAsPdfDetail": "PDFをfigure環境に配置",
 	"aiRequestLabel": "Geminiに要求",
-	"aiRequestDetail": "Geminiに要求",
+	"aiRequestDetail": "自由なクエリをGeminiに送信するための入力ボックスを開きます",
 	"noFilesSelected": "ファイルが選択されていません。",
 	"workspaceFolderNotFound": "ワークスペースフォルダーが見つかりません。",
 	"cancelled": "キャンセルされました。",
-	"registered": "登録された"
+	"insertLatex": "LaTeXを挿入",
+	"builtIn": "標準",
+	"custom": "カスタム",
+	"enterCustomGeminiRequest": "Geminiへのカスタムリクエストを入力してください",
+	"unsupportedFileType": "サポートされていないファイル形式です"
 }

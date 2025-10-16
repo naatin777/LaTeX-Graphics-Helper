@@ -227,6 +227,31 @@
           "default": "pdftocairo",
           "description": "Path to the pdftocairo executable."
         },
+        "latex-graphics-helper.execPath.puppeteer": {
+          "type": "string",
+          "default": "",
+          "description": "Specifies the path to the browser executable that Puppeteer will use. If left empty, Puppeteer will download and use its own browser version."
+        },
+        "latex-graphics-helper.puppeteer.browser": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "firefox"
+          ],
+          "default": "chrome",
+          "description": "Specifies which browser Puppeteer should launch."
+        },
+        "latex-graphics-helper.puppeteer.channel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-canary",
+            "chrome-dev"
+          ],
+          "default": "chrome",
+          "description": "Specifies the Chrome release channel to use. This is only applicable when 'chrome' is selected as the browser."
+        },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
@@ -234,27 +259,27 @@
         },
         "latex-graphics-helper.outputPath.splitPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}.pdf",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.pdf",
           "description": "Output file name when splitting a pdf file."
         },
         "latex-graphics-helper.outputPath.convertDrawioToPdf": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}/${tab}.pdf",
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
           "description": "Output file name when converting a Draw.io file to PDF."
         },
         "latex-graphics-helper.outputPath.convertPdfToPng": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.png",
+          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPdfToJpeg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo. The file extension is added automatically."
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg",
+          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPdfToSvg": {
           "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${tab}",
+          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.svg",
           "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
         },
         "latex-graphics-helper.outputPath.convertPngToPdf": {
@@ -277,7 +302,7 @@
           "default": "${fileDirname}/${dateNow}",
           "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
         },
-        "latex-graphics-helper.choice.figurePlacement": {
+        "latex-graphics-helper.figure.placementOptions": {
           "type": "array",
           "default": [
             "[H]",
@@ -297,18 +322,18 @@
             "[tbp]",
             "[htbp]"
           ],
-          "description": "Available placement specifiers for LaTeX figures and tables."
+          "description": "Available placement specifier options for LaTeX figures."
         },
-        "latex-graphics-helper.choice.figureAlignment": {
+        "latex-graphics-helper.figure.alignmentOptions": {
           "type": "array",
           "default": [
             "\\centering",
             "\\raggedright",
             "\\raggedleft"
           ],
-          "description": "Available alignment options for LaTeX figures and tables."
+          "description": "Available alignment options for LaTeX figures."
         },
-        "latex-graphics-helper.choice.graphicsOptions": {
+        "latex-graphics-helper.figure.graphicsOptions": {
           "type": "array",
           "default": [
             "[width=1.0\\linewidth]",
@@ -318,18 +343,18 @@
             "[width=0.6\\linewidth]",
             "[width=0.5\\linewidth]"
           ],
-          "description": "Default graphics options for LaTeX figures and tables."
+          "description": "Available options for the `\\includegraphics` command in a figure."
         },
-        "latex-graphics-helper.choice.subVerticalAlignment": {
+        "latex-graphics-helper.subfigure.verticalAlignmentOptions": {
           "type": "array",
           "default": [
             "[t]",
             "[c]",
             "[b]"
           ],
-          "description": "Available vertical alignment options for LaTeX minipage environments."
+          "description": "Available vertical alignment options for subfigures (minipage environment)."
         },
-        "latex-graphics-helper.choice.subWidth": {
+        "latex-graphics-helper.subfigure.widthOptions": {
           "type": "array",
           "default": [
             "{0.45\\linewidth}",
@@ -337,9 +362,9 @@
             "{0.25\\linewidth}",
             "{0.15\\linewidth}"
           ],
-          "description": "Available width options for LaTeX minipage environments."
+          "description": "Available width options for subfigures (minipage environment)."
         },
-        "latex-graphics-helper.choice.spaceBetweenSubs": {
+        "latex-graphics-helper.subfigure.spacingOptions": {
           "type": "array",
           "default": [
             "\\hspace{0.01\\linewidth}",
@@ -348,7 +373,7 @@
             "\\hspace{0.04\\linewidth}",
             "\\hspace{0.05\\linewidth}"
           ],
-          "description": "Available spacing options between subfigures/subtables in LaTeX minipage environments."
+          "description": "Available spacing options between subfigures."
         },
         "latex-graphics-helper.gemini.model": {
           "type": "string",
@@ -358,10 +383,33 @@
         "latex-graphics-helper.gemini.requests": {
           "type": "array",
           "default": [
-            "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX.",
-            "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            {
+              "label": "Convert to LaTeX equation",
+              "prompt": "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            },
+            {
+              "label": "Convert to LaTeX table",
+              "prompt": "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
+            }
           ],
-          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images."
+          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "The label for the request that appears in the Quick Pick menu."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "The prompt to be sent to the Gemini AI model."
+              }
+            },
+            "required": [
+              "label",
+              "prompt"
+            ]
+          }
         }
       }
     }
@@ -396,6 +444,7 @@
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^24.23.0",
     "sharp": "^0.34.4",
+    "vscode-uri": "^3.1.0",
     "xml2js": "^0.6.2"
   }
 }

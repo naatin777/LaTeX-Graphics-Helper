@@ -1,5 +1,3 @@
-// src/utils/execInWorkspace.ts
-
 import { execFile, ExecFileOptions } from 'child_process';
 import { promisify } from 'util';
 

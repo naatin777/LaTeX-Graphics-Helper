@@ -30,9 +30,13 @@
 	"pasteAsPdfLabel": "Paste as PDF",
 	"pasteAsPdfDetail": "Placing PDFs in the figure environment",
 	"aiRequestLabel": "Send a custom request to Gemini",
-	"aiRequestDetail": "Send a custom request to Gemini",
+	"aiRequestDetail": "Opens an input box to freely query Gemini",
 	"noFilesSelected": "No files selected.",
 	"workspaceFolderNotFound": "Workspace folder not found.",
 	"cancelled": "Cancelled.",
-	"registered": "Registered"
+	"insertLatex": "Insert LaTeX",
+	"builtIn": "Built-in",
+	"custom": "Custom",
+	"enterCustomGeminiRequest": "Enter your custom request for Gemini",
+	"unsupportedFileType": "Unsupported file type"
 }

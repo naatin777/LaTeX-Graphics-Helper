@@ -1,33 +1,35 @@
 import * as os from 'os';
 
+import { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
-import { ExecPath, ImageOutputPath, PdfOutputPath } from './type';
-
-const config = vscode.workspace.getConfiguration('latex-graphics-helper');
+import { ExecutablePath, GeminiRequest, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath, TemplatePath } from './type';
 
 export interface AppConfig {
-    execPathPdfcrop: ExecPath;
-    execPathDrawio: ExecPath;
-    execPathPdftocairo: ExecPath;
-    outputPathCropPdf: string;
-    outputPathSplitPdf: string;
-    outputPathConvertDrawioToPdf: string;
-    outputPathConvertPdfToPng: ImageOutputPath;
-    outputPathConvertPdfToJpeg: ImageOutputPath;
-    outputPathConvertPdfToSvg: ImageOutputPath;
-    outputPathConvertPngToPdf: PdfOutputPath;
-    outputPathConvertJpegToPdf: PdfOutputPath;
-    outputPathConvertSvgToPdf: PdfOutputPath;
-    outputPathClipboardImage: string;
-    choiceFigurePlacement: string[];
-    choiceFigureAlignment: string[];
-    choiceGraphicsOptions: string[];
-    choiceSubVerticalAlignment: string[];
-    choiceSubWidth: string[];
-    choiceSpaceBetweenSubs: string[];
+    execPathPdfcrop: ExecutablePath;
+    execPathDrawio: ExecutablePath;
+    execPathPdftocairo: ExecutablePath;
+    execPathPuppeteer: ExecutablePath,
+    puppeteerBrowser: SupportedBrowser,
+    puppeteerChannel: ChromeReleaseChannel,
+    outputPathCropPdf: PdfTemplatePath;
+    outputPathSplitPdf: PdfTemplatePath;
+    outputPathConvertDrawioToPdf: PdfTemplatePath;
+    outputPathConvertPdfToPng: PngTemplatePath;
+    outputPathConvertPdfToJpeg: JpegTemplatePath;
+    outputPathConvertPdfToSvg: SvgTemplatePath;
+    outputPathConvertPngToPdf: PdfTemplatePath;
+    outputPathConvertJpegToPdf: PdfTemplatePath;
+    outputPathConvertSvgToPdf: PdfTemplatePath;
+    outputPathClipboardImage: TemplatePath;
+    figurePlacementOptions: string[];
+    figureAlignmentOptions: string[];
+    figureGraphicsOptions: string[];
+    subfigureVerticalAlignmentOptions: string[];
+    subfigureWidthOptions: string[];
+    subfigureSpacingOptions: string[];
     geminiModel: string;
-    geminiRequests: string[];
+    geminiRequests: GeminiRequest[];
 }
 
 export function getAppConfig(): AppConfig {
@@ -35,6 +37,9 @@ export function getAppConfig(): AppConfig {
         execPathPdfcrop: getExecPathPdfcrop(),
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
+        execPathPuppeteer: getExecPathPuppeteer(),
+        puppeteerBrowser: getPuppeteerBrowser(),
+        puppeteerChannel: getPuppeteerChannel(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -45,147 +50,142 @@ export function getAppConfig(): AppConfig {
         outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
         outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
         outputPathClipboardImage: getOutputPathClipboardImage(),
-        choiceFigurePlacement: getChoiceFigurePlacement(),
-        choiceFigureAlignment: getChoiceFigureAlignment(),
-        choiceGraphicsOptions: getChoiceGraphicsOptions(),
-        choiceSubVerticalAlignment: getChoiceSubVerticalAlignment(),
-        choiceSubWidth: getChoiceSubWidth(),
-        choiceSpaceBetweenSubs: getChoiceSpaceBetweenSubs(),
+        figurePlacementOptions: getFigurePlacementOptions(),
+        figureAlignmentOptions: getFigureAlignmentOptions(),
+        figureGraphicsOptions: getFigureGraphicsOptions(),
+        subfigureVerticalAlignmentOptions: getSubfigureVerticalAlignmentOptions(),
+        subfigureWidthOptions: getSubfigureWidthOptions(),
+        subfigureSpacingOptions: getSubfigureSpacingOptions(),
         geminiModel: getGeminiModel(),
         geminiRequests: getGeminiRequests(),
     };
 }
 
-export function getExecPathDrawio(): ExecPath {
-    const drawioCommand = config.get<string>('execPath.drawio');
+function getExecPathDrawio(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const drawioCommand = configuration.get<string>('execPath.drawio');
     const platform = os.platform();
 
     if (platform === 'win32') {
-        return (drawioCommand || 'draw.io.exe') as ExecPath;
+        return (drawioCommand || 'draw.io.exe') as ExecutablePath;
     } else if (platform === 'darwin') {
-        return (drawioCommand || 'draw.io') as ExecPath;
+        return (drawioCommand || 'draw.io') as ExecutablePath;
     } else {
-        return (drawioCommand || 'drawio') as ExecPath;
+        return (drawioCommand || 'drawio') as ExecutablePath;
     }
 }
 
-export function getExecPathPdfcrop(): ExecPath {
-    return config.get<string>('execPath.pdfcrop') as ExecPath;
+function getExecPathPdfcrop(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('execPath.pdfcrop') as ExecutablePath;
 }
 
-export function getExecPathPdftocairo(): ExecPath {
-    return config.get<string>('execPath.pdftocairo') as ExecPath;
+function getExecPathPdftocairo(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('execPath.pdftocairo') as ExecutablePath;
 }
 
-export function getOutputPathCropPdf(): string {
-    return config.get<string>('outputPath.cropPdf') as string;
+function getExecPathPuppeteer(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('execPath.puppeteer') as ExecutablePath;
 }
 
-export function getOutputPathSplitPdf(): string {
-    return config.get<string>('outputPath.splitPdf') as string;
+function getPuppeteerBrowser(): SupportedBrowser {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('puppeteer.browser') as SupportedBrowser;
 }
 
-export function getOutputPathConvertDrawioToPdf(): string {
-    return config.get<string>('outputPath.convertDrawioToPdf') as string;
+function getPuppeteerChannel(): ChromeReleaseChannel {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('puppeteer.channel') as ChromeReleaseChannel;
 }
 
-export function getOutputPathConvertPdfToPng(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToPng') as ImageOutputPath;
+function getOutputPathCropPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.cropPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertPdfToJpeg(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToJpeg') as ImageOutputPath;
+function getOutputPathSplitPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.splitPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertPdfToSvg(): ImageOutputPath {
-    return config.get<string>('outputPath.convertPdfToSvg') as ImageOutputPath;
+function getOutputPathConvertDrawioToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertDrawioToPdf') as PdfTemplatePath;
 }
 
-export function getOutputPathConvertPngToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertPngToPdf') as PdfOutputPath;
+function getOutputPathConvertPdfToPng(): PngTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertPdfToPng') as PngTemplatePath;
 }
 
-export function getOutputPathConvertJpegToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertJpegToPdf') as PdfOutputPath;
+function getOutputPathConvertPdfToJpeg(): JpegTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertPdfToJpeg') as JpegTemplatePath;
 }
 
-export function getOutputPathConvertSvgToPdf(): PdfOutputPath {
-    return config.get<string>('outputPath.convertSvgToPdf') as PdfOutputPath;
+function getOutputPathConvertPdfToSvg(): SvgTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertPdfToSvg') as SvgTemplatePath;
 }
 
-export function getOutputPathClipboardImage(): string {
-    return config.get<string>('outputPath.clipboardImage') as string;
+function getOutputPathConvertPngToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertPngToPdf') as PdfTemplatePath;
 }
 
-export function getChoiceFigurePlacement(): string[] {
-    return config.get<string[]>('choice.figurePlacement') as string[];
+function getOutputPathConvertJpegToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertJpegToPdf') as PdfTemplatePath;
 }
 
-export function getChoiceFigureAlignment(): string[] {
-    return config.get<string[]>('choice.figureAlignment') as string[];
+function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertSvgToPdf') as PdfTemplatePath;
 }
 
-export function getChoiceGraphicsOptions(): string[] {
-    return config.get<string[]>('choice.graphicsOptions') as string[];
+function getOutputPathClipboardImage(): TemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.clipboardImage') as TemplatePath;
 }
 
-export function getChoiceSubVerticalAlignment(): string[] {
-    return config.get<string[]>('choice.subVerticalAlignment') as string[];
+function getFigurePlacementOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('figure.placementOptions') as string[];
 }
 
-export function getChoiceSubWidth(): string[] {
-    return config.get<string[]>('choice.subWidth') as string[];
+function getFigureAlignmentOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('figure.alignmentOptions') as string[];
 }
 
-export function getChoiceSpaceBetweenSubs(): string[] {
-    return config.get<string[]>('choice.spaceBetweenSubs') as string[];
+function getFigureGraphicsOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('figure.graphicsOptions') as string[];
 }
 
-export function getGeminiModel(): string {
-    return config.get<string>('gemini.model') as string;
+function getSubfigureVerticalAlignmentOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('subfigure.verticalAlignmentOptions') as string[];
 }
 
-export function getGeminiRequests(): string[] {
-    return config.get<string[]>('gemini.requests') as string[];
+function getSubfigureWidthOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('subfigure.widthOptions') as string[];
 }
 
-// import * as vscode from 'vscode';
-// import * as os from 'os';
+function getSubfigureSpacingOptions(): string[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string[]>('subfigure.spacingOptions') as string[];
+}
 
-// class Config {
-//     private get config() {
-//         return vscode.workspace.getConfiguration('myExtension');
-//     }
+function getGeminiModel(): string {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('gemini.model') as string;
+}
 
-//     /**
-//      * draw.ioの実行コマンドを取得する。
-//      * ユーザー設定を最優先し、なければOSから最適なデフォルトを推測する。
-//      */
-//     public getDrawioCommand(): string {
-//         // 1. ユーザーによる明示的な設定値を取得
-//         const userPath = this.config.get<string>('drawio.executablePath');
-
-//         // 2. ユーザー設定があれば、それを最優先で返す
-//         if (userPath) {
-//             return userPath;
-//         }
-
-//         // 3. ユーザー設定がなければ、OSを判定してデフォルト値を決める
-//         const platform = os.platform();
-//         if (platform === 'darwin') { // 'darwin' は macOS
-//             return 'draw.io';
-//         }
-//         if (platform === 'linux') {
-//             return 'drawio';
-//         }
-//         if (platform === 'win32') {
-//             // Windows用のデフォルト値 (もしあれば)
-//             return 'draw.io.exe';
-//         }
-
-//         // どのOSにも一致しない場合の最終的なフォールバック
-//         return 'drawio';
-//     }
-// }
-
-// export const config = new Config();
+function getGeminiRequests(): GeminiRequest[] {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<GeminiRequest[]>('gemini.requests') as GeminiRequest[];
+}

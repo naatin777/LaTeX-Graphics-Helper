@@ -1,45 +1,25 @@
-import * as fs from 'fs/promises';
-
-import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
+import { mergePdf } from '../core/merge_pdf';
 import { localeMap } from '../locale_map';
+import { PdfPath } from '../type';
 
-export async function mergePdf(
-    inputPaths: string[],
-    outputPath: string,
-): Promise<void> {
-    const mergedPdf = await PDFDocument.create();
-
-    for (const inputPath of inputPaths) {
-        const pdfBytes = await fs.readFile(inputPath);
-        const pdf = await PDFDocument.load(pdfBytes);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        copiedPages.forEach((page) => mergedPdf.addPage(page));
+export async function runMergePdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]) {
+    if (!uri || !uris || uris.length === 0) {
+        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        return;
     }
 
-    const mergedPdfBytes = await mergedPdf.save();
-    await fs.writeFile(outputPath, mergedPdfBytes);
-}
-
-export async function runMergePdfCommand(uri: vscode.Uri, uris?: vscode.Uri[]) {
     try {
-        if (!uris) {
-            throw new Error(localeMap('noFilesSelected'));
-        }
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: localeMap('mergePdfProcess'),
             cancellable: false
         }, async (progress) => {
-            const outputPath = await vscode.window.showSaveDialog({
-                filters: {
-                    'PDF': ['pdf']
-                },
-            });
-            const inputPaths = uris.map((uri) => uri.fsPath);
+            const outputPath = await vscode.window.showSaveDialog({ filters: { 'PDF': ['pdf'] }, });
+            const inputPaths = uris.map((uri) => uri.fsPath) as PdfPath[];
             if (outputPath) {
-                await mergePdf(inputPaths, outputPath.fsPath);
+                await mergePdf(inputPaths, outputPath.fsPath as PdfPath);
             }
         });
     } catch (error) {
