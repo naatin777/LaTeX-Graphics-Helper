@@ -6,7 +6,7 @@
   "engines": {
     "vscode": "^1.96.0"
   },
-  "icon": "assets/square_icon.dio.png",
+  "icon": "assets/icon.png",
   "license": "MIT",
   "publisher": "naatin777",
   "homepage": "https://github.com/naatin777/LaTeX-Graphics-Helper",
