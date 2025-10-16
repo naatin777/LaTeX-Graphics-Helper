@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="30%" src="./assets/icon.svg">
+  <img alt="Project Icon" src="./assets/icon.svg" width=300>
   <h1>LaTeX Graphics Helper</h1>
   <img alt="GitHub License" src="https://img.shields.io/github/license/naatin777/LaTeX-Graphics-Helper">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/naatin777/LaTeX-Graphics-Helper">
