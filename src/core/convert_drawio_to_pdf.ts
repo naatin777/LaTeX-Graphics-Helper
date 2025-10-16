@@ -1,3 +1,5 @@
+import path from 'path';
+
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
@@ -22,7 +24,8 @@ export async function convertDrawioToPdf(
     outputTemplatePath: PdfTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PdfPath[]> {
-    const temporaryPdfPath = `${inputPath}.pdf` as PdfPath;
+    const parsedPath = path.parse(inputPath);
+    const temporaryPdfPath = `${path.join(parsedPath.dir, parsedPath.name)}.pdf` as PdfPath;
     await execFileInWorkspace(
         appConfig.execPathDrawio,
         [inputPath, '-o', temporaryPdfPath, '-xf', 'pdf', '-t', '-a'],
