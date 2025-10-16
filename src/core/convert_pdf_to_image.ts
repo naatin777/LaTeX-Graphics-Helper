@@ -11,18 +11,16 @@ export async function convertPdfToPng(
     outputTemplatePath: PngTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PngPath[]> {
-    const outputPaths: PngPath[] = [];
-
     const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPdfPaths.forEach(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (path: string) => {
         await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-png', '-transp', '-singlefile'], workspaceFolder);
         await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4)));
         await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
 
-        outputPaths.push(path.slice(0, -4) as PngPath);
+        return path.slice(0, -4) as PngPath;
     });
 
-    return outputPaths;
+    return Promise.all(conversionPromises);
 }
 
 export async function convertPdfToJpeg(
@@ -31,18 +29,17 @@ export async function convertPdfToJpeg(
     outputTemplatePath: JpegTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<JpegPath[]> {
-    const outputPaths: JpegPath[] = [];
 
     const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPdfPaths.forEach(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (path: string) => {
         await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-jpeg', '-singlefile'], workspaceFolder);
         await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpg'), vscode.Uri.file(path.slice(0, -4)));
         await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
 
-        outputPaths.push(path.slice(0, -4) as JpegPath);
+        return path.slice(0, -4) as JpegPath;
     });
 
-    return outputPaths;
+    return Promise.all(conversionPromises);
 }
 
 export async function convertPdfToSvg(
@@ -51,15 +48,12 @@ export async function convertPdfToSvg(
     outputTemplatePath: SvgTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<SvgPath[]> {
-    const outputPaths: SvgPath[] = [];
-
     const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
-    outputPdfPaths.forEach(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (path: string) => {
         await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-svg'], workspaceFolder);
         await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
-
-        outputPaths.push(path.slice(0, -4) as SvgPath);
+        return path.slice(0, -4) as SvgPath;
     });
 
-    return outputPaths;
+    return Promise.all(conversionPromises);
 }
