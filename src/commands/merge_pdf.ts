@@ -24,7 +24,7 @@ export async function runMergePdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]) 
         });
     } catch (error) {
         if (error instanceof Error) {
-            vscode.window.showErrorMessage(`${error.message.toString()}`);
+            vscode.window.showErrorMessage(`${error.message}`);
         }
     }
 }

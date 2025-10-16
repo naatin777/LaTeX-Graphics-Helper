@@ -34,7 +34,7 @@ export function runConvertDrawioToPdfCommand(
             }
         );
         error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+            vscode.window.showErrorMessage(`${value.reason.message}`);
         });
     });
 }

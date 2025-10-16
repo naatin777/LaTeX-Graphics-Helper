@@ -34,7 +34,7 @@ export function runConvertPdfToPngCommand(
             }
         );
         error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+            vscode.window.showErrorMessage(`${value.reason.message}`);
         });
     });
 }
@@ -67,7 +67,7 @@ export function runConvertPdfToJpegCommand(
             }
         );
         error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+            vscode.window.showErrorMessage(`${value.reason.message}`);
         });
     });
 }
@@ -100,7 +100,7 @@ export function runConvertPdfToSvgCommand(
             }
         );
         error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.toString()}`);
+            vscode.window.showErrorMessage(`${value.reason.message}`);
         });
     });
 }

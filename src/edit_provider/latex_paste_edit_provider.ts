@@ -95,7 +95,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             }
         } catch (e) {
             if (e instanceof Error) {
-                vscode.window.showErrorMessage(e.message.toString());
+                vscode.window.showErrorMessage(e.message);
             }
         }
 
