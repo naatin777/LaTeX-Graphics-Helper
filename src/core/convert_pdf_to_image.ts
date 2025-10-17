@@ -14,7 +14,7 @@ export async function convertPdfToPng(
     const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
     const conversionPromises = outputPdfPaths.map(async (path: string) => {
         await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-png', '-transp', '-singlefile'], workspaceFolder);
-        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4)));
+        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.png'), vscode.Uri.file(path.slice(0, -4)), { overwrite: true });
         await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
 
         return path.slice(0, -4) as PngPath;
@@ -33,7 +33,7 @@ export async function convertPdfToJpeg(
     const outputPdfPaths = await splitPdf(inputPath, (outputTemplatePath + '.pdf') as PdfTemplatePath, workspaceFolder, []);
     const conversionPromises = outputPdfPaths.map(async (path: string) => {
         await execFileInWorkspace(appConfig.execPathPdftocairo, [path, path.slice(0, -4), '-jpeg', '-singlefile'], workspaceFolder);
-        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpg'), vscode.Uri.file(path.slice(0, -4)));
+        await vscode.workspace.fs.rename(vscode.Uri.file(path.slice(0, -4) + '.jpg'), vscode.Uri.file(path.slice(0, -4)), { overwrite: true });
         await vscode.workspace.fs.delete(vscode.Uri.file(path), { recursive: true, useTrash: false });
 
         return path.slice(0, -4) as JpegPath;
