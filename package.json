@@ -2,7 +2,7 @@
   "name": "latex-graphics-helper",
   "displayName": "LaTeX Graphics Helper",
   "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, PDF conversion of Draw.io files, and LaTeX code generation using Gemini AI.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "engines": {
     "vscode": "^1.96.0"
   },
