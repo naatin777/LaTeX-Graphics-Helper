@@ -442,7 +442,7 @@
   "dependencies": {
     "openai": "^6.6.0",
     "pdf-lib": "^1.17.1",
-    "puppeteer-core": "^24.25.0",
+    "puppeteer-core": "^24.26.0",
     "sharp": "^0.34.4",
     "vscode-uri": "^3.1.0",
     "xml2js": "^0.6.2"
