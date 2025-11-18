@@ -440,7 +440,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "openai": "^6.8.1",
+    "openai": "^6.9.1",
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^24.30.0",
     "sharp": "^0.34.5",
