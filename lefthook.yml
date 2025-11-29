@@ -1,7 +1,7 @@
 pre-commit:
   commands:
     lint:
-      glob: "*.{ts,tsx}"
+      glob: "**/*.{ts,tsx}"
       run: npx eslint {staged_files}
-    compile:
-      run: npm run compile
+    typecheck:
+      run: npx tsc --noEmit
