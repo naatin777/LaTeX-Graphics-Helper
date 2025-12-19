@@ -437,7 +437,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.3.0",
     "lefthook": "^2.0.12",
-    "sinon": "^21.0.0",
+    "sinon": "^21.0.1",
     "typescript": "^5.9.3"
   },
   "dependencies": {
