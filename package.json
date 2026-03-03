@@ -430,13 +430,14 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.39.1",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.3.0",
     "lefthook": "^2.1.1",
+    "mocha": "^11.3.0",
     "sinon": "^21.0.1",
     "typescript": "^5.9.3"
   },
@@ -447,5 +448,8 @@
     "sharp": "^0.34.5",
     "vscode-uri": "^3.1.0",
     "xml2js": "^0.6.2"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
   }
 }
