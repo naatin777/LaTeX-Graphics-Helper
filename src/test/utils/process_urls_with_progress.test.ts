@@ -1,15 +1,15 @@
 import * as assert from 'assert';
 
-import * as sinon from 'sinon';
+import sinon, { SinonStub } from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../../locale_map';
 import { processUrisWithProgress } from '../../utils/process_urls_with_progress';
 
 suite('process_urls_with_progress Test Suite', () => {
-    let getWorkspaceFolderStub: sinon.SinonStub;
-    let progressReportStub: sinon.SinonStub;
-    let taskStub: sinon.SinonStub;
+    let getWorkspaceFolderStub: SinonStub;
+    let progressReportStub: SinonStub;
+    let taskStub: SinonStub;
 
     const workspaceFolder: vscode.WorkspaceFolder = {
         uri: vscode.Uri.file('/test/workspace'),

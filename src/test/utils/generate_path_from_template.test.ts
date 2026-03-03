@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as path from 'path';
 
-import * as sinon from 'sinon';
+import sinon, { SinonFakeTimers } from 'sinon';
 import * as vscode from 'vscode';
 
 import { Path, TemplatePath } from '../../type';
@@ -15,7 +15,7 @@ suite('generate_path_from_template Test Suite', () => {
         index: 0
     };
 
-    let clock: sinon.SinonFakeTimers;
+    let clock: SinonFakeTimers;
 
     setup(() => {
         clock = sinon.useFakeTimers(1755592839354);

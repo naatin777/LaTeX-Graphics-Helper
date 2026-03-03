@@ -434,7 +434,7 @@
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.2",
     "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-import-x": "^4.16.1",
     "eslint-plugin-unused-imports": "^4.3.0",
     "lefthook": "^2.1.1",
     "mocha": "^11.3.0",

@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-core';
+import { launch } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
 import { AppConfig } from '../configuration';
@@ -14,7 +14,7 @@ export async function convertSvgToPdf(appConfig: AppConfig, inputPath: SvgPath, 
     let browser;
     let err;
     try {
-        browser = await puppeteer.launch({
+        browser = await launch({
             browser: appConfig.puppeteerBrowser,
             channel: appConfig.puppeteerChannel,
             executablePath: appConfig.execPathPuppeteer
