@@ -436,7 +436,7 @@
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import-x": "^4.16.2",
     "eslint-plugin-unused-imports": "^4.3.0",
-    "lefthook": "^2.1.4",
+    "lefthook": "^2.1.5",
     "mocha": "^11.3.0",
     "sinon": "^21.1.2",
     "typescript": "^5.9.3"
