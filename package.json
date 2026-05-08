@@ -1,7 +1,7 @@
 {
   "name": "latex-graphics-helper",
   "displayName": "LaTeX Graphics Helper",
-  "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, PDF conversion of Draw.io files, and LaTeX code generation using Gemini AI.",
+  "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, and PDF conversion of Draw.io files.",
   "version": "0.3.2",
   "engines": {
     "vscode": "^1.96.0"
@@ -22,8 +22,7 @@
     "tex",
     "pdf",
     "image",
-    "drawio",
-    "gemini"
+    "drawio"
   ],
   "activationEvents": [
     "onStartupFinished"
@@ -130,14 +129,6 @@
         {
           "command": "latex-graphics-helper.convertSvgToPdf",
           "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.setGeminiApiKey",
-          "when": "true"
-        },
-        {
-          "command": "latex-graphics-helper.deleteGeminiApiKey",
-          "when": "true"
         }
       ]
     },
@@ -196,16 +187,6 @@
       {
         "command": "latex-graphics-helper.convertSvgToPdf",
         "title": "%convertSvgToPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.setGeminiApiKey",
-        "title": "%setGeminiApiKey%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.deleteGeminiApiKey",
-        "title": "%deleteGeminiApiKey%",
         "category": "LaTeX Graphics Helper"
       }
     ],
@@ -374,42 +355,6 @@
             "\\hspace{0.05\\linewidth}"
           ],
           "description": "Available spacing options between subfigures."
-        },
-        "latex-graphics-helper.gemini.model": {
-          "type": "string",
-          "default": "gemini-2.0-flash",
-          "description": "Selects the Gemini AI model to be used for generating LaTeX code from images."
-        },
-        "latex-graphics-helper.gemini.requests": {
-          "type": "array",
-          "default": [
-            {
-              "label": "Convert to LaTeX equation",
-              "prompt": "Convert the uploaded file into a LaTeX equation and output it, enclosed in an align environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
-            },
-            {
-              "label": "Convert to LaTeX table",
-              "prompt": "Convert the uploaded file into a LaTeX table and output it, enclosed in a table environment. Please avoid Markdown format and do not enclose the output in ```latex```. The output is intended for LaTeX."
-            }
-          ],
-          "description": "List of predefined requests for the Gemini AI model to generate LaTeX code from images.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "label": {
-                "type": "string",
-                "description": "The label for the request that appears in the Quick Pick menu."
-              },
-              "prompt": {
-                "type": "string",
-                "description": "The prompt to be sent to the Gemini AI model."
-              }
-            },
-            "required": [
-              "label",
-              "prompt"
-            ]
-          }
         }
       }
     }
@@ -430,7 +375,7 @@
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.39.1",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^10.3.0",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -442,7 +387,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "openai": "^6.36.0",
     "pdf-lib": "^1.17.1",
     "puppeteer-core": "^24.42.0",
     "sharp": "^0.34.5",

@@ -10,7 +10,7 @@
 English | [日本語](README.ja.md)
 
 This is an extension designed to intuitively handle PDF and image files within VS Code.
-It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, PDF conversion of Draw.io files, and LaTeX code generation using Gemini AI.
+It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, and PDF conversion of Draw.io files.
 
 ## Demo
 
@@ -40,7 +40,6 @@ It offers a variety of features, including PDF merging, splitting, and trimming,
 ### LaTeX Code Generation
 *   **Insert from PDF**: Drag and drop a PDF file into a LaTeX document to automatically insert the corresponding LaTeX code.
 *   **Insert from Image**: Paste an image from the clipboard into LaTeX to automatically insert the LaTeX code and save the image file.
-*   **Gemini AI**: Uses Gemini AI to generate LaTeX code (equations, tables, etc.) from an image on the clipboard.
 
 ## Installation
 
@@ -60,4 +59,3 @@ You can install this extension in one of the following ways:
 *   **pdfcrop**: The PDF cropping feature requires pdfcrop. It is usually included with TeX Live or MiKTeX.
 *   **pdftocairo**: The feature to convert PDFs to images requires pdftocairo. It is usually included with Poppler utilities.
 *   **Google Chrome**: Google Chrome is required to convert SVG to PDF.
-*   **Gemini AI**: A Gemini API key is required to use the Gemini AI feature. Obtain one from [Google AI Studio](https://aistudio.google.com/app/apikey).

@@ -6,8 +6,6 @@ import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provide
 import { logger } from './logger';
 
 export function activate(context: vscode.ExtensionContext) {
-	const secretStorage = context.secrets;
-
 	context.subscriptions.push(
 		vscode.commands.registerCommand('latex-graphics-helper.cropPdf', commands.runCropPdfCommand),
 		vscode.commands.registerCommand('latex-graphics-helper.splitPdf', commands.runSplitPdfCommand),
@@ -19,15 +17,13 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('latex-graphics-helper.convertPngToPdf', commands.runConvertPngToPdfCommand),
 		vscode.commands.registerCommand('latex-graphics-helper.convertJpegToPdf', commands.runConvertJpegToPdfCommand),
 		vscode.commands.registerCommand('latex-graphics-helper.convertSvgToPdf', commands.runConvertSvgToPdfCommand),
-		vscode.commands.registerCommand('latex-graphics-helper.setGeminiApiKey', () => commands.setGeminiApiKey(secretStorage)),
-		vscode.commands.registerCommand('latex-graphics-helper.deleteGeminiApiKey', () => commands.deleteGeminiApiKey(secretStorage)),
 		vscode.languages.registerDocumentDropEditProvider(
 			{ language: 'latex' },
 			new LatexDropEditProvider(),
 		),
 		vscode.languages.registerDocumentPasteEditProvider(
 			{ language: 'latex' },
-			new LatexPasteEditProvider(secretStorage),
+			new LatexPasteEditProvider(),
 			{
 				pasteMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
 				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],

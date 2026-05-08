@@ -27,7 +27,6 @@ updates:
           - "@vscode/*"
       production-dependencies:
         patterns:
-          - "@google/genai"
           - "pdf-lib"
           - "xml2js"
     ignore:

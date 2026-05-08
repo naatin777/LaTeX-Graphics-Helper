@@ -3,7 +3,7 @@ import * as os from 'os';
 import { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
-import { ExecutablePath, GeminiRequest, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath, TemplatePath } from './type';
+import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath, TemplatePath } from './type';
 
 export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
@@ -28,8 +28,6 @@ export interface AppConfig {
     subfigureVerticalAlignmentOptions: string[];
     subfigureWidthOptions: string[];
     subfigureSpacingOptions: string[];
-    geminiModel: string;
-    geminiRequests: GeminiRequest[];
 }
 
 export function getAppConfig(): AppConfig {
@@ -56,8 +54,6 @@ export function getAppConfig(): AppConfig {
         subfigureVerticalAlignmentOptions: getSubfigureVerticalAlignmentOptions(),
         subfigureWidthOptions: getSubfigureWidthOptions(),
         subfigureSpacingOptions: getSubfigureSpacingOptions(),
-        geminiModel: getGeminiModel(),
-        geminiRequests: getGeminiRequests(),
     };
 }
 
@@ -178,14 +174,4 @@ function getSubfigureWidthOptions(): string[] {
 function getSubfigureSpacingOptions(): string[] {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string[]>('subfigure.spacingOptions') as string[];
-}
-
-function getGeminiModel(): string {
-    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string>('gemini.model') as string;
-}
-
-function getGeminiRequests(): GeminiRequest[] {
-    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<GeminiRequest[]>('gemini.requests') as GeminiRequest[];
 }
