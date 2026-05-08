@@ -37,7 +37,11 @@ jobs:
           else
             notes="**Full Changelog**: https://github.com/$repo/commits/$tag"
           fi
-          gh release create "$tag" *.vsix --notes "$notes"
+          if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+            gh release upload "$tag" *.vsix --repo "$repo" --clobber
+          else
+            gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
+          fi
 
       - name: Publish to Visual Studio Marketplace
         run: npx vsce publish --pat ${{ secrets.VSCE_PAT }}
