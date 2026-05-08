@@ -59,7 +59,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
                         const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsPdfLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
                         return [edit];
                     }
-                } else if (pickedItem.detail === localeMap('pasteAsImageDetail')) {
+                } else if (pickedItem.label === localeMap('pasteAsImageLabel')) {
                     const outputPathWithExt = await this.handleImagePaste(outputPath, data);
                     const relativeFilePath = path.relative(fileDirname, outputPathWithExt);
                     const basename = path.basename(relativeFilePath, `.${data.type.ext}`);

@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 			{ language: 'latex' },
 			new LatexPasteEditProvider(),
 			{
-				pasteMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/svg+xml'],
+				pasteMimeTypes: ['image/png', 'image/jpeg'],
 				providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
 			}
 		),
