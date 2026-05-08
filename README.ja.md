@@ -10,7 +10,7 @@
 [English](README.md) | 日本語
 
 VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
-PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io ファイルの PDF 変換、Gemini AI を利用した LaTeX コード生成など、多彩な機能を提供します。
+PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io ファイルの PDF 変換など、多彩な機能を提供します。
 
 ## デモ
 
@@ -40,7 +40,6 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 ### LaTeX コード生成
 *   **PDF から挿入**: PDF ファイルを LaTeX ドキュメントにドラッグ&ドロップすると、対応する LaTeX コードが自動挿入されます。
 *   **画像から挿入**: クリップボードの画像を LaTeX にペーストすると、LaTeX コードが自動挿入され、画像ファイルも保存されます。
-*   **Gemini AI**: Gemini AI を使用して、クリップボードの画像から LaTeX コード（数式、表など）を生成します。
 
 ## インストール方法
 
@@ -60,4 +59,3 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 * **pdfcrop**: PDF のクロップ機能には **pdfcrop** が必要です。これは通常、TeX Live または MiKTeX に含まれています。
 * **pdftocairo**: PDF を画像に変換する機能には **pdftocairo** が必要です。これは通常、Poppler ユーティリティに含まれています。
 * **Google Chrome**: SVGを PDF に変換するには、**Google Chrome** が必要です。
-* **Gemini AI**: Gemini AI 機能を使用するには、Gemini API キーが必要です。 [Google AI Studio](https://aistudio.google.com/app/apikey) で取得してください。
