@@ -29,6 +29,5 @@
 	"cancelled": "キャンセルされました。",
 	"insertLatex": "LaTeXを挿入",
 	"builtIn": "標準",
-	"custom": "カスタム",
 	"unsupportedFileType": "サポートされていないファイル形式です"
 }
