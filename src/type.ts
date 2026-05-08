@@ -10,11 +10,6 @@ export type FileData = {
     buffer: Buffer;
 }
 
-export type GeminiRequest = {
-    label: string;
-    prompt: string;
-}
-
 export type LogLevel = 'info' | 'warn' | 'error'
 
 export type ExecutablePath = Brand<string, 'ExecutablePath'>

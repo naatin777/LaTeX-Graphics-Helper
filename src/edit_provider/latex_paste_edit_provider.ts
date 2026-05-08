@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 
 import { AppConfig, getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
-import { askGeminiWithImage } from '../core/ask_gemini';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { localeMap } from '../locale_map';
 import { BitmapPath, FileData, Path, PdfPath, PdfTemplatePath } from '../type';
@@ -13,13 +12,6 @@ import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 import { LatexSnippet } from '../utils/latex_snippet';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
-
-    secretStorage: vscode.SecretStorage;
-
-    constructor(secretStorage: vscode.SecretStorage) {
-        this.secretStorage = secretStorage;
-    }
-
     async provideDocumentPasteEdits(
         document: vscode.TextDocument,
         ranges: readonly vscode.Range[],
@@ -40,9 +32,6 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         const pickedItem = await vscode.window.showQuickPick([
             { label: localeMap('pasteAsPdfLabel'), detail: localeMap('pasteAsPdfDetail'), description: `(${localeMap('builtIn')})` },
             { label: localeMap('pasteAsImageLabel'), detail: localeMap('pasteAsImageDetail'), description: `(${localeMap('builtIn')})` },
-            { label: localeMap('aiRequestLabel'), detail: localeMap('aiRequestDetail'), description: `(${localeMap('builtIn')})` },
-            { label: '', detail: '', description: '', kind: vscode.QuickPickItemKind.Separator },
-            ...appConfig.geminiRequests.map(request => ({ label: request.label, detail: request.prompt, description: `(${localeMap('custom')})` })),
         ]);
         if (!pickedItem) {
             return;
@@ -79,18 +68,6 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
                         const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsImageLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
                         return [edit];
                     }
-                } else if (pickedItem.detail === localeMap('aiRequestDetail')) {
-                    const snippet = await this.handleCustomGeminiRequest(appConfig, data);
-                    if (snippet) {
-                        const edit = new vscode.DocumentPasteEdit(snippet, localeMap('aiRequestLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
-                        return [edit];
-                    }
-                }
-            } else {
-                const snippet = await this.handleGeminiRequest(appConfig, pickedItem, data);
-                if (snippet) {
-                    const edit = new vscode.DocumentPasteEdit(snippet, pickedItem.label, vscode.DocumentDropOrPasteEditKind.Empty);
-                    return [edit];
                 }
             }
         } catch (e) {
@@ -132,25 +109,6 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         } else {
             throw new Error(localeMap('unsupportedFileType'));
         }
-    }
-
-    private async handleCustomGeminiRequest(appConfig: AppConfig, data: FileData): Promise<vscode.SnippetString | undefined> {
-        const customRequest = await vscode.window.showInputBox({ prompt: localeMap('enterCustomGeminiRequest') });
-        if (customRequest) {
-            const geminiResponse = await askGeminiWithImage(appConfig, this.secretStorage, customRequest, data);
-            if (geminiResponse) {
-                return new vscode.SnippetString(geminiResponse);
-            }
-        }
-        return undefined;
-    }
-
-    private async handleGeminiRequest(appConfig: AppConfig, pickedItem: vscode.QuickPickItem, data: FileData): Promise<vscode.SnippetString | undefined> {
-        const geminiResponse = await askGeminiWithImage(appConfig, this.secretStorage, pickedItem.detail ?? '', data);
-        if (geminiResponse) {
-            return new vscode.SnippetString(geminiResponse);
-        }
-        return undefined;
     }
 
     createSingleFileSnippet(appConfig: AppConfig, fileName: string, relativeFilePath: string): vscode.SnippetString {
