@@ -2,7 +2,7 @@
   "name": "latex-graphics-helper",
   "displayName": "LaTeX Graphics Helper",
   "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, and PDF conversion of Draw.io files.",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "engines": {
     "vscode": "^1.96.0"
   },
@@ -365,7 +365,11 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "preversion": "npm run compile && npm run lint",
+    "release:patch": "npm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+    "release:minor": "npm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+    "release:major": "npm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
