@@ -3,8 +3,6 @@
   <h1>LaTeX Graphics Helper</h1>
   <img alt="GitHub License" src="https://img.shields.io/github/license/naatin777/LaTeX-Graphics-Helper">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/naatin777/LaTeX-Graphics-Helper">
-  <img alt="Visual Studio Marketplace Downloads" src="https://img.shields.io/visual-studio-marketplace/d/naatin777.latex-graphics-helper">
-  <!-- <img alt="Open VSX Downloads" src="https://img.shields.io/open-vsx/dt/naatin777/LaTeX-Graphics-Helper"> -->
 </div>
 
 English | [日本語](README.ja.md)
