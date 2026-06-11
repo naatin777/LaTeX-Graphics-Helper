@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../../locale_map';
+
 import { createPdf, createPng, createTestDirectory, deleteDirectory, readPdfPageCount, waitForFile } from './helpers';
 
 const commandIds = [

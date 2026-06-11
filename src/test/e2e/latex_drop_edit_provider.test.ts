@@ -3,6 +3,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import { LatexDropEditProvider } from '../../edit_provider/latex_drop_edit_provider';
+
 import { createPdf, createTestDirectory, deleteDirectory } from './helpers';
 
 suite('LaTeX drop edit provider e2e Test Suite', () => {
