@@ -1,17 +1,24 @@
-import * as os from 'os';
+import * as os from 'node:os';
 
-import { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
+import type { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
-import { ExecutablePath, JpegTemplatePath, PdfTemplatePath, PngTemplatePath, SvgTemplatePath, TemplatePath } from './type';
+import type {
+    ExecutablePath,
+    JpegTemplatePath,
+    PdfTemplatePath,
+    PngTemplatePath,
+    SvgTemplatePath,
+    TemplatePath,
+} from './type';
 
 export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
     execPathDrawio: ExecutablePath;
     execPathPdftocairo: ExecutablePath;
-    execPathPuppeteer: ExecutablePath,
-    puppeteerBrowser: SupportedBrowser,
-    puppeteerChannel: ChromeReleaseChannel,
+    execPathPuppeteer: ExecutablePath;
+    puppeteerBrowser: SupportedBrowser;
+    puppeteerChannel: ChromeReleaseChannel;
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;

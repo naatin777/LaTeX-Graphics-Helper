@@ -1,403 +1,402 @@
 {
-  "name": "latex-graphics-helper",
-  "displayName": "LaTeX Graphics Helper",
-  "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, and PDF conversion of Draw.io files.",
-  "version": "0.4.0",
-  "engines": {
-    "vscode": "^1.105.0"
-  },
-  "icon": "assets/icon.png",
-  "license": "MIT",
-  "publisher": "naatin777",
-  "homepage": "https://github.com/naatin777/LaTeX-Graphics-Helper",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/naatin777/LaTeX-Graphics-Helper"
-  },
-  "categories": [
-    "Other"
-  ],
-  "keywords": [
-    "latex",
-    "tex",
-    "pdf",
-    "image",
-    "drawio"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "latex-graphics-helper.cropPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.splitPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.mergePdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.convertDrawioToPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .drawio || resourceExtname == .dio"
-        },
-        {
-          "submenu": "latex-graphics-helper.convertPdfToImage",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.convertPngToPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .png"
-        },
-        {
-          "command": "latex-graphics-helper.convertJpegToPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .jpeg || resourceExtname == .jpg"
-        },
-        {
-          "command": "latex-graphics-helper.convertSvgToPdf",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .svg"
-        }
-      ],
-      "latex-graphics-helper.convertPdfToImage": [
-        {
-          "command": "latex-graphics-helper.convertPdfToPng",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.convertPdfToJpeg",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        },
-        {
-          "command": "latex-graphics-helper.convertPdfToSvg",
-          "group": "latex-graphics-helper",
-          "when": "resourceExtname == .pdf"
-        }
-      ],
-      "commandPalette": [
-        {
-          "command": "latex-graphics-helper.cropPdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.splitPdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.mergePdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertDrawioToPdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertPdfToPng",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertPdfToJpeg",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertPdfToSvg",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertPngToPdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertJpegToPdf",
-          "when": "false"
-        },
-        {
-          "command": "latex-graphics-helper.convertSvgToPdf",
-          "when": "false"
-        }
-      ]
+    "name": "latex-graphics-helper",
+    "displayName": "LaTeX Graphics Helper",
+    "version": "0.4.0",
+    "description": "This is an extension designed to intuitively handle PDF and image files within VS Code. It offers a variety of features, including PDF merging, splitting, and trimming, mutual conversion of image formats, and PDF conversion of Draw.io files.",
+    "categories": [
+        "Other"
+    ],
+    "keywords": [
+        "drawio",
+        "image",
+        "latex",
+        "pdf",
+        "tex"
+    ],
+    "homepage": "https://github.com/naatin777/LaTeX-Graphics-Helper",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/naatin777/LaTeX-Graphics-Helper"
     },
-    "submenus": [
-      {
-        "id": "latex-graphics-helper.convertPdfToImage",
-        "label": "%convertPdfToImage%"
-      }
-    ],
-    "commands": [
-      {
-        "command": "latex-graphics-helper.cropPdf",
-        "title": "%cropPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.splitPdf",
-        "title": "%splitPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.mergePdf",
-        "title": "%mergePdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertDrawioToPdf",
-        "title": "%convertDrawioToPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertPdfToPng",
-        "title": "%convertPdfToPng%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertPdfToJpeg",
-        "title": "%convertPdfToJpeg%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertPdfToSvg",
-        "title": "%convertPdfToSvg%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertPngToPdf",
-        "title": "%convertPngToPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertJpegToPdf",
-        "title": "%convertJpegToPdf%",
-        "category": "LaTeX Graphics Helper"
-      },
-      {
-        "command": "latex-graphics-helper.convertSvgToPdf",
-        "title": "%convertSvgToPdf%",
-        "category": "LaTeX Graphics Helper"
-      }
-    ],
-    "configuration": {
-      "title": "LaTeX Graphics Helper",
-      "properties": {
-        "latex-graphics-helper.execPath.drawio": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (draw.io.exe on Windows, draw.io on macOS, drawio on others)."
+    "publisher": "naatin777",
+    "main": "./out/extension.js",
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint && npm run format",
+        "lint": "oxlint src",
+        "lint:fix": "oxlint --fix src",
+        "format": "oxfmt --check src",
+        "format:fix": "oxfmt src",
+        "test": "vscode-test",
+        "preversion": "npm run compile && npm run lint && npm run format",
+        "release:patch": "npm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:minor": "npm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:major": "npm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
+    },
+    "dependencies": {
+        "pdf-lib": "^1.17.1",
+        "puppeteer-core": "^24.42.0",
+        "sharp": "^0.34.5",
+        "vscode-uri": "^3.1.0",
+        "xml2js": "^0.6.2"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^22.18.3",
+        "@types/sinon": "^21.0.1",
+        "@types/vscode": "^1.105.0",
+        "@types/xml2js": "^0.4.14",
+        "@vscode/test-cli": "^0.0.12",
+        "@vscode/test-electron": "^3.0.0",
+        "lefthook": "^2.1.9",
+        "mocha": "^11.7.6",
+        "oxfmt": "^0.36.0",
+        "oxlint": "^1.56.0",
+        "sinon": "^22.0.0",
+        "typescript": "^6.0.3"
+    },
+    "overrides": {
+        "serialize-javascript": "^7.0.3"
+    },
+    "contributes": {
+        "menus": {
+            "explorer/context": [
+                {
+                    "command": "latex-graphics-helper.cropPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.splitPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.mergePdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.convertDrawioToPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .drawio || resourceExtname == .dio"
+                },
+                {
+                    "submenu": "latex-graphics-helper.convertPdfToImage",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPngToPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .png"
+                },
+                {
+                    "command": "latex-graphics-helper.convertJpegToPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .jpeg || resourceExtname == .jpg"
+                },
+                {
+                    "command": "latex-graphics-helper.convertSvgToPdf",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .svg"
+                }
+            ],
+            "latex-graphics-helper.convertPdfToImage": [
+                {
+                    "command": "latex-graphics-helper.convertPdfToPng",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPdfToJpeg",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPdfToSvg",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .pdf"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "latex-graphics-helper.cropPdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.splitPdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.mergePdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertDrawioToPdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPdfToPng",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPdfToJpeg",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPdfToSvg",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertPngToPdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertJpegToPdf",
+                    "when": "false"
+                },
+                {
+                    "command": "latex-graphics-helper.convertSvgToPdf",
+                    "when": "false"
+                }
+            ]
         },
-        "latex-graphics-helper.execPath.pdfcrop": {
-          "type": "string",
-          "default": "pdfcrop",
-          "description": "Path to the pdfcrop executable."
-        },
-        "latex-graphics-helper.execPath.pdftocairo": {
-          "type": "string",
-          "default": "pdftocairo",
-          "description": "Path to the pdftocairo executable."
-        },
-        "latex-graphics-helper.execPath.puppeteer": {
-          "type": "string",
-          "default": "",
-          "description": "Specifies the path to the browser executable that Puppeteer will use. If left empty, Puppeteer will download and use its own browser version."
-        },
-        "latex-graphics-helper.puppeteer.browser": {
-          "type": "string",
-          "enum": [
-            "chrome",
-            "firefox"
-          ],
-          "default": "chrome",
-          "description": "Specifies which browser Puppeteer should launch."
-        },
-        "latex-graphics-helper.puppeteer.channel": {
-          "type": "string",
-          "enum": [
-            "chrome",
-            "chrome-beta",
-            "chrome-canary",
-            "chrome-dev"
-          ],
-          "default": "chrome",
-          "description": "Specifies the Chrome release channel to use. This is only applicable when 'chrome' is selected as the browser."
-        },
-        "latex-graphics-helper.outputPath.cropPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
-          "description": "Output file name when cropping a pdf file."
-        },
-        "latex-graphics-helper.outputPath.splitPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.pdf",
-          "description": "Output file name when splitting a pdf file."
-        },
-        "latex-graphics-helper.outputPath.convertDrawioToPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
-          "description": "Output file name when converting a Draw.io file to PDF."
-        },
-        "latex-graphics-helper.outputPath.convertPdfToPng": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.png",
-          "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
-        },
-        "latex-graphics-helper.outputPath.convertPdfToJpeg": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg",
-          "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
-        },
-        "latex-graphics-helper.outputPath.convertPdfToSvg": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.svg",
-          "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
-        },
-        "latex-graphics-helper.outputPath.convertPngToPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a PNG file to PDF."
-        },
-        "latex-graphics-helper.outputPath.convertJpegToPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a JPEG file to PDF."
-        },
-        "latex-graphics-helper.outputPath.convertSvgToPdf": {
-          "type": "string",
-          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "Output file name when converting a SVG file to PDF."
-        },
-        "latex-graphics-helper.outputPath.clipboardImage": {
-          "type": "string",
-          "default": "${fileDirname}/${dateNow}",
-          "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
-        },
-        "latex-graphics-helper.figure.placementOptions": {
-          "type": "array",
-          "default": [
-            "[H]",
-            "[h]",
-            "[t]",
-            "[b]",
-            "[p]",
-            "[ht]",
-            "[hb]",
-            "[hp]",
-            "[tb]",
-            "[tp]",
-            "[bp]",
-            "[htb]",
-            "[htp]",
-            "[hbp]",
-            "[tbp]",
-            "[htbp]"
-          ],
-          "description": "Available placement specifier options for LaTeX figures."
-        },
-        "latex-graphics-helper.figure.alignmentOptions": {
-          "type": "array",
-          "default": [
-            "\\centering",
-            "\\raggedright",
-            "\\raggedleft"
-          ],
-          "description": "Available alignment options for LaTeX figures."
-        },
-        "latex-graphics-helper.figure.graphicsOptions": {
-          "type": "array",
-          "default": [
-            "[width=1.0\\linewidth]",
-            "[width=0.9\\linewidth]",
-            "[width=0.8\\linewidth]",
-            "[width=0.7\\linewidth]",
-            "[width=0.6\\linewidth]",
-            "[width=0.5\\linewidth]"
-          ],
-          "description": "Available options for the `\\includegraphics` command in a figure."
-        },
-        "latex-graphics-helper.subfigure.verticalAlignmentOptions": {
-          "type": "array",
-          "default": [
-            "[t]",
-            "[c]",
-            "[b]"
-          ],
-          "description": "Available vertical alignment options for subfigures (minipage environment)."
-        },
-        "latex-graphics-helper.subfigure.widthOptions": {
-          "type": "array",
-          "default": [
-            "{0.45\\linewidth}",
-            "{0.35\\linewidth}",
-            "{0.25\\linewidth}",
-            "{0.15\\linewidth}"
-          ],
-          "description": "Available width options for subfigures (minipage environment)."
-        },
-        "latex-graphics-helper.subfigure.spacingOptions": {
-          "type": "array",
-          "default": [
-            "\\hspace{0.01\\linewidth}",
-            "\\hspace{0.02\\linewidth}",
-            "\\hspace{0.03\\linewidth}",
-            "\\hspace{0.04\\linewidth}",
-            "\\hspace{0.05\\linewidth}"
-          ],
-          "description": "Available spacing options between subfigures."
+        "submenus": [
+            {
+                "id": "latex-graphics-helper.convertPdfToImage",
+                "label": "%convertPdfToImage%"
+            }
+        ],
+        "commands": [
+            {
+                "command": "latex-graphics-helper.cropPdf",
+                "title": "%cropPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.splitPdf",
+                "title": "%splitPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.mergePdf",
+                "title": "%mergePdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertDrawioToPdf",
+                "title": "%convertDrawioToPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertPdfToPng",
+                "title": "%convertPdfToPng%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertPdfToJpeg",
+                "title": "%convertPdfToJpeg%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertPdfToSvg",
+                "title": "%convertPdfToSvg%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertPngToPdf",
+                "title": "%convertPngToPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertJpegToPdf",
+                "title": "%convertJpegToPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertSvgToPdf",
+                "title": "%convertSvgToPdf%",
+                "category": "LaTeX Graphics Helper"
+            }
+        ],
+        "configuration": {
+            "title": "LaTeX Graphics Helper",
+            "properties": {
+                "latex-graphics-helper.execPath.drawio": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the drawio executable. If not specified, the default path for your operating system will be used (draw.io.exe on Windows, draw.io on macOS, drawio on others)."
+                },
+                "latex-graphics-helper.execPath.pdfcrop": {
+                    "type": "string",
+                    "default": "pdfcrop",
+                    "description": "Path to the pdfcrop executable."
+                },
+                "latex-graphics-helper.execPath.pdftocairo": {
+                    "type": "string",
+                    "default": "pdftocairo",
+                    "description": "Path to the pdftocairo executable."
+                },
+                "latex-graphics-helper.execPath.puppeteer": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the path to the browser executable that Puppeteer will use. If left empty, Puppeteer will download and use its own browser version."
+                },
+                "latex-graphics-helper.puppeteer.browser": {
+                    "type": "string",
+                    "enum": [
+                        "chrome",
+                        "firefox"
+                    ],
+                    "default": "chrome",
+                    "description": "Specifies which browser Puppeteer should launch."
+                },
+                "latex-graphics-helper.puppeteer.channel": {
+                    "type": "string",
+                    "enum": [
+                        "chrome",
+                        "chrome-beta",
+                        "chrome-canary",
+                        "chrome-dev"
+                    ],
+                    "default": "chrome",
+                    "description": "Specifies the Chrome release channel to use. This is only applicable when 'chrome' is selected as the browser."
+                },
+                "latex-graphics-helper.outputPath.cropPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
+                    "description": "Output file name when cropping a pdf file."
+                },
+                "latex-graphics-helper.outputPath.splitPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.pdf",
+                    "description": "Output file name when splitting a pdf file."
+                },
+                "latex-graphics-helper.outputPath.convertDrawioToPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
+                    "description": "Output file name when converting a Draw.io file to PDF."
+                },
+                "latex-graphics-helper.outputPath.convertPdfToPng": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.png",
+                    "description": "Output file name when converting a PDF file to PNG. Depends on pdftocairo."
+                },
+                "latex-graphics-helper.outputPath.convertPdfToJpeg": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg",
+                    "description": "Output file name when converting a PDF file to JPEG. Depends on pdftocairo."
+                },
+                "latex-graphics-helper.outputPath.convertPdfToSvg": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.svg",
+                    "description": "Output file name when converting a PDF file to SVG. Depends on pdftocairo."
+                },
+                "latex-graphics-helper.outputPath.convertPngToPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+                    "description": "Output file name when converting a PNG file to PDF."
+                },
+                "latex-graphics-helper.outputPath.convertJpegToPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+                    "description": "Output file name when converting a JPEG file to PDF."
+                },
+                "latex-graphics-helper.outputPath.convertSvgToPdf": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+                    "description": "Output file name when converting a SVG file to PDF."
+                },
+                "latex-graphics-helper.outputPath.clipboardImage": {
+                    "type": "string",
+                    "default": "${fileDirname}/${dateNow}",
+                    "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
+                },
+                "latex-graphics-helper.figure.placementOptions": {
+                    "type": "array",
+                    "default": [
+                        "[H]",
+                        "[h]",
+                        "[t]",
+                        "[b]",
+                        "[p]",
+                        "[ht]",
+                        "[hb]",
+                        "[hp]",
+                        "[tb]",
+                        "[tp]",
+                        "[bp]",
+                        "[htb]",
+                        "[htp]",
+                        "[hbp]",
+                        "[tbp]",
+                        "[htbp]"
+                    ],
+                    "description": "Available placement specifier options for LaTeX figures."
+                },
+                "latex-graphics-helper.figure.alignmentOptions": {
+                    "type": "array",
+                    "default": [
+                        "\\centering",
+                        "\\raggedright",
+                        "\\raggedleft"
+                    ],
+                    "description": "Available alignment options for LaTeX figures."
+                },
+                "latex-graphics-helper.figure.graphicsOptions": {
+                    "type": "array",
+                    "default": [
+                        "[width=1.0\\linewidth]",
+                        "[width=0.9\\linewidth]",
+                        "[width=0.8\\linewidth]",
+                        "[width=0.7\\linewidth]",
+                        "[width=0.6\\linewidth]",
+                        "[width=0.5\\linewidth]"
+                    ],
+                    "description": "Available options for the `\\includegraphics` command in a figure."
+                },
+                "latex-graphics-helper.subfigure.verticalAlignmentOptions": {
+                    "type": "array",
+                    "default": [
+                        "[t]",
+                        "[c]",
+                        "[b]"
+                    ],
+                    "description": "Available vertical alignment options for subfigures (minipage environment)."
+                },
+                "latex-graphics-helper.subfigure.widthOptions": {
+                    "type": "array",
+                    "default": [
+                        "{0.45\\linewidth}",
+                        "{0.35\\linewidth}",
+                        "{0.25\\linewidth}",
+                        "{0.15\\linewidth}"
+                    ],
+                    "description": "Available width options for subfigures (minipage environment)."
+                },
+                "latex-graphics-helper.subfigure.spacingOptions": {
+                    "type": "array",
+                    "default": [
+                        "\\hspace{0.01\\linewidth}",
+                        "\\hspace{0.02\\linewidth}",
+                        "\\hspace{0.03\\linewidth}",
+                        "\\hspace{0.04\\linewidth}",
+                        "\\hspace{0.05\\linewidth}"
+                    ],
+                    "description": "Available spacing options between subfigures."
+                }
+            }
         }
-      }
+    },
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "icon": "assets/icon.png",
+    "engines": {
+        "vscode": "^1.105.0"
     }
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test",
-    "preversion": "npm run compile && npm run lint",
-    "release:patch": "npm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-    "release:minor": "npm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-    "release:major": "npm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^22.18.3",
-    "@types/sinon": "^21.0.1",
-    "@types/vscode": "^1.105.0",
-    "@types/xml2js": "^0.4.14",
-    "@typescript-eslint/eslint-plugin": "^8.60.1",
-    "@typescript-eslint/parser": "^8.39.1",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^3.0.0",
-    "eslint": "^10.4.1",
-    "eslint-import-resolver-typescript": "^4.4.5",
-    "eslint-plugin-import-x": "^4.16.2",
-    "eslint-plugin-unused-imports": "^4.3.0",
-    "lefthook": "^2.1.9",
-    "mocha": "^11.7.6",
-    "sinon": "^22.0.0",
-    "typescript": "^6.0.3"
-  },
-  "dependencies": {
-    "pdf-lib": "^1.17.1",
-    "puppeteer-core": "^24.42.0",
-    "sharp": "^0.34.5",
-    "vscode-uri": "^3.1.0",
-    "xml2js": "^0.6.2"
-  },
-  "overrides": {
-    "serialize-javascript": "^7.0.3"
-  }
 }

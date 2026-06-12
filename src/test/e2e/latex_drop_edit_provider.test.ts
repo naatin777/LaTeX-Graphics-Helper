@@ -1,9 +1,8 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
 import * as vscode from 'vscode';
 
 import { LatexDropEditProvider } from '../../edit_provider/latex_drop_edit_provider';
-
 import { createPdf, createTestDirectory, deleteDirectory } from './helpers';
 
 suite('LaTeX drop edit provider e2e Test Suite', () => {
@@ -11,12 +10,36 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
 
         const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-        await configuration.update('figure.placementOptions', ['[H]'], vscode.ConfigurationTarget.Workspace);
-        await configuration.update('figure.alignmentOptions', ['\\centering'], vscode.ConfigurationTarget.Workspace);
-        await configuration.update('figure.graphicsOptions', ['[width=0.8\\linewidth]'], vscode.ConfigurationTarget.Workspace);
-        await configuration.update('subfigure.verticalAlignmentOptions', ['[t]'], vscode.ConfigurationTarget.Workspace);
-        await configuration.update('subfigure.widthOptions', ['{0.45\\linewidth}'], vscode.ConfigurationTarget.Workspace);
-        await configuration.update('subfigure.spacingOptions', ['\\hfill'], vscode.ConfigurationTarget.Workspace);
+        await configuration.update(
+            'figure.placementOptions',
+            ['[H]'],
+            vscode.ConfigurationTarget.Workspace,
+        );
+        await configuration.update(
+            'figure.alignmentOptions',
+            ['\\centering'],
+            vscode.ConfigurationTarget.Workspace,
+        );
+        await configuration.update(
+            'figure.graphicsOptions',
+            ['[width=0.8\\linewidth]'],
+            vscode.ConfigurationTarget.Workspace,
+        );
+        await configuration.update(
+            'subfigure.verticalAlignmentOptions',
+            ['[t]'],
+            vscode.ConfigurationTarget.Workspace,
+        );
+        await configuration.update(
+            'subfigure.widthOptions',
+            ['{0.45\\linewidth}'],
+            vscode.ConfigurationTarget.Workspace,
+        );
+        await configuration.update(
+            'subfigure.spacingOptions',
+            ['\\hfill'],
+            vscode.ConfigurationTarget.Workspace,
+        );
     });
 
     test('should create a figure snippet for a dropped PDF URI', async () => {
@@ -35,7 +58,11 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
             const snippet = getSnippetValue(edit);
 
             assert.ok(snippet.includes('\\\\begin{figure\\}'));
-            assert.ok(snippet.includes('\\\\includegraphics[width=0.8\\\\linewidth]{figures/sample.pdf\\}'));
+            assert.ok(
+                snippet.includes(
+                    '\\\\includegraphics[width=0.8\\\\linewidth]{figures/sample.pdf\\}',
+                ),
+            );
             assert.ok(snippet.includes('\\\\caption{${1:sample}\\}'));
             assert.ok(snippet.includes('\\\\label{fig:${2:sample}\\}'));
         } finally {
@@ -61,8 +88,16 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
             const snippet = getSnippetValue(edit);
 
             assert.strictEqual(countOccurrences(snippet, '\\\\begin{minipage\\}'), 2);
-            assert.ok(snippet.includes('\\\\includegraphics[width=0.8\\\\linewidth]{figures/first.pdf\\}'));
-            assert.ok(snippet.includes('\\\\includegraphics[width=0.8\\\\linewidth]{figures/second.pdf\\}'));
+            assert.ok(
+                snippet.includes(
+                    '\\\\includegraphics[width=0.8\\\\linewidth]{figures/first.pdf\\}',
+                ),
+            );
+            assert.ok(
+                snippet.includes(
+                    '\\\\includegraphics[width=0.8\\\\linewidth]{figures/second.pdf\\}',
+                ),
+            );
             assert.ok(snippet.includes('\\\\hfill'));
         } finally {
             await deleteDirectory(directory);
@@ -87,7 +122,7 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
                     document,
                     new vscode.Position(0, 0),
                     dataTransfer,
-                    tokenSource.token
+                    tokenSource.token,
                 );
 
                 assert.strictEqual(edit, undefined);
@@ -100,10 +135,16 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
     });
 });
 
-async function provideDropEdit(document: vscode.TextDocument, uris: vscode.Uri[]): Promise<vscode.DocumentDropEdit> {
+async function provideDropEdit(
+    document: vscode.TextDocument,
+    uris: vscode.Uri[],
+): Promise<vscode.DocumentDropEdit> {
     const provider = new LatexDropEditProvider();
     const dataTransfer = new vscode.DataTransfer();
-    dataTransfer.set('text/uri-list', new vscode.DataTransferItem(uris.map(uri => uri.toString()).join('\r\n')));
+    dataTransfer.set(
+        'text/uri-list',
+        new vscode.DataTransferItem(uris.map((uri) => uri.toString()).join('\r\n')),
+    );
 
     const tokenSource = new vscode.CancellationTokenSource();
     try {
@@ -111,7 +152,7 @@ async function provideDropEdit(document: vscode.TextDocument, uris: vscode.Uri[]
             document,
             new vscode.Position(0, 0),
             dataTransfer,
-            tokenSource.token
+            tokenSource.token,
         );
 
         assert.ok(edit, 'Expected a document drop edit');
@@ -123,7 +164,10 @@ async function provideDropEdit(document: vscode.TextDocument, uris: vscode.Uri[]
 }
 
 function getSnippetValue(edit: vscode.DocumentDropEdit): string {
-    assert.ok(edit.insertText instanceof vscode.SnippetString, 'Expected drop edit to insert a snippet');
+    assert.ok(
+        edit.insertText instanceof vscode.SnippetString,
+        'Expected drop edit to insert a snippet',
+    );
     return edit.insertText.value;
 }
 

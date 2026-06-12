@@ -1,7 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
-import { PdfPath, PdfTemplatePath } from '../type';
+import type { PdfPath, PdfTemplatePath } from '../type';
 import { createFolder } from '../utils/create_folder';
 import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 
@@ -18,7 +18,12 @@ export async function splitPdf(
     const outputPaths: PdfPath[] = [];
 
     for (let i = 0; i < pdfPages.length; i++) {
-        const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder, pages[i] ?? (i + 1).toString());
+        const outputPath = generatePathFromTemplate(
+            outputTemplatePath,
+            inputPath,
+            workspaceFolder,
+            pages[i] ?? (i + 1).toString(),
+        );
         outputPaths.push(outputPath);
         await createFolder(outputPath);
 

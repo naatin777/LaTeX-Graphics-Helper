@@ -1,12 +1,13 @@
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { AppConfig, getAppConfig } from '../configuration';
+import type { AppConfig } from '../configuration';
+import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { localeMap } from '../locale_map';
-import { BitmapPath, FileData, Path, PdfPath, PdfTemplatePath } from '../type';
+import type { BitmapPath, FileData, Path, PdfPath, PdfTemplatePath } from '../type';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 import { LatexSnippet } from '../utils/latex_snippet';
@@ -18,7 +19,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         dataTransfer: vscode.DataTransfer,
         context: vscode.DocumentPasteEditContext,
         token: vscode.CancellationToken,
-        appConfig: AppConfig = getAppConfig()
+        appConfig: AppConfig = getAppConfig(),
     ): Promise<vscode.DocumentPasteEdit[] | undefined> {
         token.onCancellationRequested(() => {
             vscode.window.showWarningMessage(localeMap('cancelled'));
@@ -30,8 +31,16 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         }
 
         const pickedItem = await vscode.window.showQuickPick([
-            { label: localeMap('pasteAsPdfLabel'), detail: localeMap('pasteAsPdfDetail'), description: `(${localeMap('builtIn')})` },
-            { label: localeMap('pasteAsImageLabel'), detail: localeMap('pasteAsImageDetail'), description: `(${localeMap('builtIn')})` },
+            {
+                label: localeMap('pasteAsPdfLabel'),
+                detail: localeMap('pasteAsPdfDetail'),
+                description: `(${localeMap('builtIn')})`,
+            },
+            {
+                label: localeMap('pasteAsImageLabel'),
+                detail: localeMap('pasteAsImageDetail'),
+                description: `(${localeMap('builtIn')})`,
+            },
         ]);
         if (!pickedItem) {
             return;
@@ -46,7 +55,11 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             return;
         }
 
-        const outputPath = generatePathFromTemplate(outputTemplatePath, uri.fsPath as PdfPath, workspaceFolder);
+        const outputPath = generatePathFromTemplate(
+            outputTemplatePath,
+            uri.fsPath as PdfPath,
+            workspaceFolder,
+        );
 
         try {
             if (pickedItem.description === `(${localeMap('builtIn')})`) {
@@ -54,18 +67,34 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
                     const pdfPath = await this.handlePdfPaste(outputPath, data, workspaceFolder);
                     const relativeFilePath = path.relative(fileDirname, pdfPath);
                     const basename = path.basename(relativeFilePath, '.pdf');
-                    const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
+                    const snippet = this.createSingleFileSnippet(
+                        appConfig,
+                        basename,
+                        relativeFilePath,
+                    );
                     if (snippet) {
-                        const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsPdfLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
+                        const edit = new vscode.DocumentPasteEdit(
+                            snippet,
+                            localeMap('pasteAsPdfLabel'),
+                            vscode.DocumentDropOrPasteEditKind.Empty,
+                        );
                         return [edit];
                     }
                 } else if (pickedItem.label === localeMap('pasteAsImageLabel')) {
                     const outputPathWithExt = await this.handleImagePaste(outputPath, data);
                     const relativeFilePath = path.relative(fileDirname, outputPathWithExt);
                     const basename = path.basename(relativeFilePath, `.${data.type.ext}`);
-                    const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
+                    const snippet = this.createSingleFileSnippet(
+                        appConfig,
+                        basename,
+                        relativeFilePath,
+                    );
                     if (snippet) {
-                        const edit = new vscode.DocumentPasteEdit(snippet, localeMap('pasteAsImageLabel'), vscode.DocumentDropOrPasteEditKind.Empty);
+                        const edit = new vscode.DocumentPasteEdit(
+                            snippet,
+                            localeMap('pasteAsImageLabel'),
+                            vscode.DocumentDropOrPasteEditKind.Empty,
+                        );
                         return [edit];
                     }
                 }
@@ -79,7 +108,9 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         return undefined;
     }
 
-    private async getDataTransferData(dataTransfer: vscode.DataTransfer): Promise<FileData | undefined> {
+    private async getDataTransferData(
+        dataTransfer: vscode.DataTransfer,
+    ): Promise<FileData | undefined> {
         for (const type of CLIPBOARD_IMAGE_TYPES) {
             const item = dataTransfer.get(type.mime);
             if (item) {
@@ -99,34 +130,69 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         return outputPathWithExt;
     }
 
-    private async handlePdfPaste(outputPath: Path, data: FileData, workspaceFolder: vscode.WorkspaceFolder): Promise<string> {
+    private async handlePdfPaste(
+        outputPath: Path,
+        data: FileData,
+        workspaceFolder: vscode.WorkspaceFolder,
+    ): Promise<string> {
         if (data.type.ext === 'png' || data.type.ext === 'jpeg') {
             const outputPathWithExt = `${outputPath}.${data.type.ext}`;
             await vscode.workspace.fs.writeFile(vscode.Uri.file(outputPathWithExt), data.buffer);
-            const pdfPath = await convertBitmapToPdf(outputPathWithExt as BitmapPath, `${outputPath}.pdf` as PdfTemplatePath, workspaceFolder, data.type.ext);
-            await vscode.workspace.fs.delete(vscode.Uri.file(outputPathWithExt), { recursive: true, useTrash: false });
+            const pdfPath = await convertBitmapToPdf(
+                outputPathWithExt as BitmapPath,
+                `${outputPath}.pdf` as PdfTemplatePath,
+                workspaceFolder,
+                data.type.ext,
+            );
+            await vscode.workspace.fs.delete(vscode.Uri.file(outputPathWithExt), {
+                recursive: true,
+                useTrash: false,
+            });
             return pdfPath;
         } else {
             throw new Error(localeMap('unsupportedFileType'));
         }
     }
 
-    createSingleFileSnippet(appConfig: AppConfig, fileName: string, relativeFilePath: string): vscode.SnippetString {
+    createSingleFileSnippet(
+        appConfig: AppConfig,
+        fileName: string,
+        relativeFilePath: string,
+    ): vscode.SnippetString {
         const latexSnippet = new LatexSnippet(appConfig);
 
         latexSnippet.wrapEnvironment('figure', () => {
             latexSnippet.appendFigurePlacement().lineBreak();
             latexSnippet.appendFigureAlignment().lineBreak();
-            latexSnippet.appendCommand('includegraphics', () => {
-                latexSnippet.appendGraphicsOptions();
-            }, () => {
-                latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
-            }).lineBreak();
-            latexSnippet.appendCommand('caption', () => { }, () => {
-                latexSnippet.appendPlaceholder(escapeLatex(fileName));
-            }).appendCommand('label', () => { }, () => {
-                latexSnippet.appendText('fig:').appendPlaceholder(escapeLatexLabel(fileName));
-            }).lineEnd();
+            latexSnippet
+                .appendCommand(
+                    'includegraphics',
+                    () => {
+                        latexSnippet.appendGraphicsOptions();
+                    },
+                    () => {
+                        latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
+                    },
+                )
+                .lineBreak();
+            latexSnippet
+                .appendCommand(
+                    'caption',
+                    () => {},
+                    () => {
+                        latexSnippet.appendPlaceholder(escapeLatex(fileName));
+                    },
+                )
+                .appendCommand(
+                    'label',
+                    () => {},
+                    () => {
+                        latexSnippet
+                            .appendText('fig:')
+                            .appendPlaceholder(escapeLatexLabel(fileName));
+                    },
+                )
+                .lineEnd();
         });
 
         return latexSnippet.snippet;

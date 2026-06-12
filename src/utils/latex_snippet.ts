@@ -1,8 +1,8 @@
-import path from 'path';
+import path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { AppConfig } from '../configuration';
+import type { AppConfig } from '../configuration';
 
 export class LatexSnippet {
     appConfig: AppConfig;
@@ -115,7 +115,6 @@ export class LatexSnippet {
     }
 
     convertToLatexPath(filePath: string): string {
-        return path.normalize(filePath).split(/[\\\/]/g).join(path.posix.sep);
+        return path.normalize(filePath).split(/[\\/]/g).join(path.posix.sep);
     }
-
 }

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Utils } from 'vscode-uri';
 
-import { Path } from '../type';
+import type { Path } from '../type';
 
 export async function createFolder(file: Path): Promise<void> {
     const uri = vscode.Uri.file(file);
