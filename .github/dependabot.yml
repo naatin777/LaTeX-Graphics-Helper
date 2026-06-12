@@ -14,11 +14,10 @@ updates:
     schedule:
       interval: "daily"
     groups:
-      eslint-dependencies:
+      oxc-dependencies:
         patterns:
-          - "eslint"
-          - "eslint-*"
-          - "@typescript-eslint/*"
+          - "oxlint"
+          - "oxfmt"
       types-dependencies:
         patterns:
           - "@types/*"

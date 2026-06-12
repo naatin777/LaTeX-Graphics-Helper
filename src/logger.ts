@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { LogLevel } from './type';
+import type { LogLevel } from './type';
 
 class Logger {
     private readonly channel: vscode.OutputChannel;

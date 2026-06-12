@@ -1,8 +1,9 @@
-import * as path from 'path';
+import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { AppConfig, getAppConfig } from '../configuration';
+import type { AppConfig } from '../configuration';
+import { getAppConfig } from '../configuration';
 import { localeMap } from '../locale_map';
 import { escapeLatex } from '../utils/escape';
 import { LatexSnippet } from '../utils/latex_snippet';
@@ -13,7 +14,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
         position: vscode.Position,
         dataTransfer: vscode.DataTransfer,
         token: vscode.CancellationToken,
-        appConfig: AppConfig = getAppConfig()
+        appConfig: AppConfig = getAppConfig(),
     ): Promise<vscode.DocumentDropEdit[] | vscode.DocumentDropEdit | undefined> {
         const dataTransferItem = dataTransfer.get('text/uri-list');
         if (!dataTransferItem) {
@@ -22,21 +23,35 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
         const uris = (await dataTransferItem.asString())
             .split(/\r?\n/)
-            .filter(value => value)
-            .map(value => vscode.Uri.parse(value, true));
+            .filter((value) => value)
+            .map((value) => vscode.Uri.parse(value, true));
 
         const documentDirname = path.dirname(document.uri.fsPath);
-        const { fileNames, relativeFilePaths } = uris.reduce<{ fileNames: string[], relativeFilePaths: string[] }>((acc, uri) => {
-            acc.fileNames.push(path.basename(uri.fsPath, path.extname(uri.fsPath)));
-            acc.relativeFilePaths.push(path.relative(documentDirname, uri.fsPath));
-            return acc;
-        }, { fileNames: [], relativeFilePaths: [] });
+        const { fileNames, relativeFilePaths } = uris.reduce<{
+            fileNames: string[];
+            relativeFilePaths: string[];
+        }>(
+            (acc, uri) => {
+                acc.fileNames.push(path.basename(uri.fsPath, path.extname(uri.fsPath)));
+                acc.relativeFilePaths.push(path.relative(documentDirname, uri.fsPath));
+                return acc;
+            },
+            { fileNames: [], relativeFilePaths: [] },
+        );
 
         if (uris.length === 1) {
-            const singlePdfSnippet = this.createSinglePdfSnippet(appConfig, fileNames[0], relativeFilePaths[0]);
+            const singlePdfSnippet = this.createSinglePdfSnippet(
+                appConfig,
+                fileNames[0],
+                relativeFilePaths[0],
+            );
             return new vscode.DocumentDropEdit(singlePdfSnippet, localeMap('insertLatex'));
         } else if (uris.length > 1) {
-            const multiplePdfSnippet = this.createMultiplePdfSnippet(appConfig, fileNames, relativeFilePaths);
+            const multiplePdfSnippet = this.createMultiplePdfSnippet(
+                appConfig,
+                fileNames,
+                relativeFilePaths,
+            );
             return new vscode.DocumentDropEdit(multiplePdfSnippet, localeMap('insertLatex'));
         } else {
             return undefined;
@@ -46,32 +61,30 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     createSinglePdfSnippet(
         appConfig: AppConfig,
         fileName: string,
-        relativeFilePath: string
+        relativeFilePath: string,
     ): vscode.SnippetString {
         const latexSnippet = new LatexSnippet(appConfig);
 
         latexSnippet.wrapEnvironment('figure', () => {
+            latexSnippet.appendFigurePlacement().lineBreak();
+            latexSnippet.appendCommand('centering', undefined, undefined).lineBreak();
             latexSnippet
-                .appendFigurePlacement()
-                .lineBreak();
-            latexSnippet
-                .appendCommand('centering', undefined, undefined)
-                .lineBreak();
-            latexSnippet
-                .appendCommand('includegraphics', () => {
-                    latexSnippet.appendGraphicsOptions();
-                }, () => {
-                    latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
-                })
+                .appendCommand(
+                    'includegraphics',
+                    () => {
+                        latexSnippet.appendGraphicsOptions();
+                    },
+                    () => {
+                        latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePath));
+                    },
+                )
                 .lineBreak();
             latexSnippet
                 .appendCommand('caption', undefined, () => {
                     latexSnippet.appendPlaceholder(escapeLatex(fileName));
                 })
                 .appendCommand('label', undefined, () => {
-                    latexSnippet
-                        .appendText('fig:')
-                        .appendPlaceholder(escapeLatex(fileName));
+                    latexSnippet.appendText('fig:').appendPlaceholder(escapeLatex(fileName));
                 })
                 .lineEnd();
         });
@@ -82,17 +95,13 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     createMultiplePdfSnippet(
         appConfig: AppConfig,
         fileNames: string[],
-        relativeFilePaths: string[]
+        relativeFilePaths: string[],
     ): vscode.SnippetString {
         const latexSnippet = new LatexSnippet(appConfig);
 
         latexSnippet.wrapEnvironment('figure', () => {
-            latexSnippet
-                .appendFigurePlacement()
-                .lineBreak();
-            latexSnippet
-                .appendFigureAlignment()
-                .lineBreak();
+            latexSnippet.appendFigurePlacement().lineBreak();
+            latexSnippet.appendFigureAlignment().lineBreak();
 
             for (let i = 0; i < relativeFilePaths.length; i++) {
                 latexSnippet.wrapEnvironment('minipage', () => {
@@ -100,15 +109,19 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
                         .appendSubfigureVerticalAlignment()
                         .appendSubfigureWidth()
                         .lineBreak();
+                    latexSnippet.appendFigureAlignment().lineBreak();
                     latexSnippet
-                        .appendFigureAlignment()
-                        .lineBreak();
-                    latexSnippet
-                        .appendCommand('includegraphics', () => {
-                            latexSnippet.appendGraphicsOptions();
-                        }, () => {
-                            latexSnippet.appendText(latexSnippet.convertToLatexPath(relativeFilePaths[i]));
-                        })
+                        .appendCommand(
+                            'includegraphics',
+                            () => {
+                                latexSnippet.appendGraphicsOptions();
+                            },
+                            () => {
+                                latexSnippet.appendText(
+                                    latexSnippet.convertToLatexPath(relativeFilePaths[i]),
+                                );
+                            },
+                        )
                         .lineBreak();
                     latexSnippet
                         .appendCommand('caption', undefined, () => {

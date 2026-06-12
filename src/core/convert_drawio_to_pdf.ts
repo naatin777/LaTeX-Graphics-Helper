@@ -1,12 +1,11 @@
-import path from 'path';
+import path from 'node:path';
 
 import * as vscode from 'vscode';
 import { Parser } from 'xml2js';
 
-import { AppConfig } from '../configuration';
-import { DrawioPath, PdfPath, PdfTemplatePath } from '../type';
+import type { AppConfig } from '../configuration';
+import type { DrawioPath, PdfPath, PdfTemplatePath } from '../type';
 import { execFileInWorkspace } from '../utils/exec_file_in_workspace';
-
 import { cropPdf } from './crop_pdf';
 import { splitPdf } from './split_pdf';
 
@@ -29,14 +28,9 @@ export async function convertDrawioToPdf(
     await execFileInWorkspace(
         appConfig.execPathDrawio,
         [inputPath, '-o', temporaryPdfPath, '-xf', 'pdf', '-t', '-a'],
-        workspaceFolder
+        workspaceFolder,
     );
-    await cropPdf(
-        appConfig,
-        temporaryPdfPath,
-        temporaryPdfPath,
-        workspaceFolder
-    );
+    await cropPdf(appConfig, temporaryPdfPath, temporaryPdfPath, workspaceFolder);
     const drawioTabs = await getDrawioTabs(inputPath);
     const outputPaths = await splitPdf(
         temporaryPdfPath,
@@ -44,6 +38,9 @@ export async function convertDrawioToPdf(
         workspaceFolder,
         drawioTabs,
     );
-    await vscode.workspace.fs.delete(vscode.Uri.file(temporaryPdfPath), { recursive: true, useTrash: false });
+    await vscode.workspace.fs.delete(vscode.Uri.file(temporaryPdfPath), {
+        recursive: true,
+        useTrash: false,
+    });
     return outputPaths;
 }

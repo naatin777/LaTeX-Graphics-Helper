@@ -5,9 +5,9 @@ import { localeMap } from '../locale_map';
 export async function processUrisWithProgress(
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     uris: vscode.Uri[],
-    task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => Promise<void>
-): Promise<{ uri: vscode.Uri, reason: Error }[]> {
-    const errors: { uri: vscode.Uri, reason: Error }[] = [];
+    task: (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => Promise<void>,
+): Promise<{ uri: vscode.Uri; reason: Error }[]> {
+    const errors: { uri: vscode.Uri; reason: Error }[] = [];
     const increment = 100 / uris.length;
     let completedCount = 0;
 
@@ -26,7 +26,10 @@ export async function processUrisWithProgress(
         } finally {
             completedCount++;
             const fileName = uri.path.split('/').pop();
-            progress.report({ increment, message: `${completedCount}/${uris.length}: ${fileName}` });
+            progress.report({
+                increment,
+                message: `${completedCount}/${uris.length}: ${fileName}`,
+            });
         }
     });
 

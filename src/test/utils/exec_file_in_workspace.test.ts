@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
 import * as vscode from 'vscode';
 
@@ -8,7 +8,7 @@ suite('exec_file_in_workspace Test Suite', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
         uri: vscode.Uri.file('/'),
         name: 'test-workspace',
-        index: 0
+        index: 0,
     };
 
     test('should execute command and return stdout', async () => {
@@ -26,13 +26,10 @@ suite('exec_file_in_workspace Test Suite', () => {
         const args = ['-e', 'console.error("command not found")'];
         const expectedStderr = 'command not found';
 
-        await assert.rejects(
-            execFileInWorkspace(command, args, workspaceFolder),
-            (err: Error) => {
-                assert.ok(err.message.includes(expectedStderr));
-                return true;
-            }
-        );
+        await assert.rejects(execFileInWorkspace(command, args, workspaceFolder), (err: Error) => {
+            assert.ok(err.message.includes(expectedStderr));
+            return true;
+        });
     });
 
     test('should throw an error if execFile returns an error', async () => {
@@ -44,7 +41,7 @@ suite('exec_file_in_workspace Test Suite', () => {
             (err: Error & { code: string }) => {
                 assert.strictEqual(err.code, 'ENOENT');
                 return true;
-            }
+            },
         );
     });
 });

@@ -1,12 +1,9 @@
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
-import { PdfPath } from '../type';
+import type { PdfPath } from '../type';
 
-export async function mergePdf(
-    inputPaths: PdfPath[],
-    outputPath: PdfPath,
-): Promise<void> {
+export async function mergePdf(inputPaths: PdfPath[], outputPath: PdfPath): Promise<void> {
     const mergedPdf = await PDFDocument.create();
 
     for (const inputPath of inputPaths) {

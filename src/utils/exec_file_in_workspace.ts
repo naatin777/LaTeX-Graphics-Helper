@@ -1,12 +1,13 @@
-import { execFile, ExecFileOptions } from 'child_process';
-import { promisify } from 'util';
+import type { ExecFileOptions } from 'node:child_process';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 
 export async function execFileInWorkspace(
     command: string,
     args: string[],
-    workspaceFolder: vscode.WorkspaceFolder
+    workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<string> {
     const options: ExecFileOptions = {
         cwd: workspaceFolder.uri.fsPath,

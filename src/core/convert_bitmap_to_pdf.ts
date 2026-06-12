@@ -1,19 +1,24 @@
 import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
-import { BitmapPath, BitmapType, PdfPath, PdfTemplatePath } from '../type';
+import type { BitmapPath, BitmapType, PdfPath, PdfTemplatePath } from '../type';
 import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 
 export async function convertBitmapToPdf(
     inputPath: BitmapPath,
     outputTemplatePath: PdfTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
-    type: BitmapType
+    type: BitmapType,
 ): Promise<PdfPath> {
-    const replacedOutputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
+    const replacedOutputPath = generatePathFromTemplate(
+        outputTemplatePath,
+        inputPath,
+        workspaceFolder,
+    );
     const pdfDoc = await PDFDocument.create();
     const imageBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(inputPath));
-    const image = type === 'jpeg' ? await pdfDoc.embedJpg(imageBytes) : await pdfDoc.embedPng(imageBytes);
+    const image =
+        type === 'jpeg' ? await pdfDoc.embedJpg(imageBytes) : await pdfDoc.embedPng(imageBytes);
     const page = pdfDoc.addPage([image.width, image.height]);
     page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
     const pdfBytes = await pdfDoc.save();

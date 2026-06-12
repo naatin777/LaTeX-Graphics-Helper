@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
 import { PDFDocument, rgb } from 'pdf-lib';
 import * as vscode from 'vscode';
@@ -14,7 +14,7 @@ export async function createTestDirectory(name: string): Promise<vscode.Uri> {
     const safeName = name.replace(/[^a-z0-9_-]+/gi, '-').toLowerCase();
     const directory = vscode.Uri.joinPath(
         workspaceFolder.uri,
-        `${safeName}-${Date.now()}-${Math.random().toString(16).slice(2)}`
+        `${safeName}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     );
 
     await vscode.workspace.fs.createDirectory(directory);
@@ -48,7 +48,7 @@ export async function createPdf(fileUri: vscode.Uri, pageCount: number): Promise
 export async function createPng(fileUri: vscode.Uri): Promise<void> {
     const pngBytes = Buffer.from(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l0ud5AAAAABJRU5ErkJggg==',
-        'base64'
+        'base64',
     );
 
     await vscode.workspace.fs.writeFile(fileUri, pngBytes);
@@ -68,7 +68,7 @@ export async function waitForFile(fileUri: vscode.Uri, timeoutMs = 5000): Promis
             await vscode.workspace.fs.stat(fileUri);
             return;
         } catch {
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise((resolve) => setTimeout(resolve, 50));
         }
     }
 

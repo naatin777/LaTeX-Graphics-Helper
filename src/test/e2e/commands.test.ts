@@ -1,11 +1,17 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
-import sinon from 'sinon';
+import { restore, stub } from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../../locale_map';
-
-import { createPdf, createPng, createTestDirectory, deleteDirectory, readPdfPageCount, waitForFile } from './helpers';
+import {
+    createPdf,
+    createPng,
+    createTestDirectory,
+    deleteDirectory,
+    readPdfPageCount,
+    waitForFile,
+} from './helpers';
 
 const commandIds = [
     'latex-graphics-helper.cropPdf',
@@ -23,32 +29,39 @@ const commandIds = [
 suite('VS Code command e2e Test Suite', () => {
     suiteSetup(async () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
-        await vscode.workspace.getConfiguration('latex-graphics-helper').update(
-            'outputPath.splitPdf',
-            '${fileDirname}/${fileBasenameNoExtension}-${page}.pdf',
-            vscode.ConfigurationTarget.Workspace
-        );
-        await vscode.workspace.getConfiguration('latex-graphics-helper').update(
-            'outputPath.convertPngToPdf',
-            '${fileDirname}/${fileBasenameNoExtension}.pdf',
-            vscode.ConfigurationTarget.Workspace
-        );
+        await vscode.workspace
+            .getConfiguration('latex-graphics-helper')
+            .update(
+                'outputPath.splitPdf',
+                '${fileDirname}/${fileBasenameNoExtension}-${page}.pdf',
+                vscode.ConfigurationTarget.Workspace,
+            );
+        await vscode.workspace
+            .getConfiguration('latex-graphics-helper')
+            .update(
+                'outputPath.convertPngToPdf',
+                '${fileDirname}/${fileBasenameNoExtension}.pdf',
+                vscode.ConfigurationTarget.Workspace,
+            );
     });
 
     teardown(() => {
-        sinon.restore();
+        restore();
     });
 
     test('should register all contributed commands', async () => {
         const registeredCommands = await vscode.commands.getCommands(true);
 
         for (const commandId of commandIds) {
-            assert.ok(registeredCommands.includes(commandId), `Expected command to be registered: ${commandId}`);
+            assert.ok(
+                registeredCommands.includes(commandId),
+                `Expected command to be registered: ${commandId}`,
+            );
         }
     });
 
     test('should show an error when commands are invoked without selected files', async () => {
-        const showErrorMessageStub = sinon.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+        const showErrorMessageStub = stub(vscode.window, 'showErrorMessage').resolves(undefined);
 
         for (const commandId of commandIds) {
             await vscode.commands.executeCommand(commandId);
@@ -70,7 +83,9 @@ suite('VS Code command e2e Test Suite', () => {
 
             await createPdf(inputUri, 2);
 
-            await vscode.commands.executeCommand('latex-graphics-helper.splitPdf', inputUri, [inputUri]);
+            await vscode.commands.executeCommand('latex-graphics-helper.splitPdf', inputUri, [
+                inputUri,
+            ]);
             await Promise.all([waitForFile(firstOutputUri), waitForFile(secondOutputUri)]);
 
             assert.strictEqual(await readPdfPageCount(firstOutputUri), 1);
@@ -87,20 +102,21 @@ suite('VS Code command e2e Test Suite', () => {
             const firstInputUri = vscode.Uri.joinPath(directory, 'one-page.pdf');
             const secondInputUri = vscode.Uri.joinPath(directory, 'two-pages.pdf');
             const outputUri = vscode.Uri.joinPath(directory, 'merged.pdf');
-            const showSaveDialogStub = sinon.stub(vscode.window, 'showSaveDialog').resolves(outputUri);
+            const showSaveDialogStub = stub(vscode.window, 'showSaveDialog').resolves(outputUri);
 
             await createPdf(firstInputUri, 1);
             await createPdf(secondInputUri, 2);
 
-            await vscode.commands.executeCommand(
-                'latex-graphics-helper.mergePdf',
+            await vscode.commands.executeCommand('latex-graphics-helper.mergePdf', firstInputUri, [
                 firstInputUri,
-                [firstInputUri, secondInputUri]
-            );
+                secondInputUri,
+            ]);
 
             await waitForFile(outputUri);
             assert.strictEqual(showSaveDialogStub.calledOnce, true);
-            assert.deepStrictEqual(showSaveDialogStub.firstCall.args[0], { filters: { PDF: ['pdf'] } });
+            assert.deepStrictEqual(showSaveDialogStub.firstCall.args[0], {
+                filters: { PDF: ['pdf'] },
+            });
             assert.strictEqual(await readPdfPageCount(outputUri), 3);
         } finally {
             await deleteDirectory(directory);
@@ -116,7 +132,11 @@ suite('VS Code command e2e Test Suite', () => {
 
             await createPng(inputUri);
 
-            await vscode.commands.executeCommand('latex-graphics-helper.convertPngToPdf', inputUri, [inputUri]);
+            await vscode.commands.executeCommand(
+                'latex-graphics-helper.convertPngToPdf',
+                inputUri,
+                [inputUri],
+            );
             await waitForFile(outputUri);
 
             assert.strictEqual(await readPdfPageCount(outputUri), 1);

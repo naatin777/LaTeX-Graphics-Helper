@@ -1,107 +1,117 @@
 import * as vscode from 'vscode';
 
-import { AppConfig, getAppConfig } from '../configuration';
+import type { AppConfig } from '../configuration';
+import { getAppConfig } from '../configuration';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { convertSvgToPdf } from '../core/convert_svg_to_pdf';
 import { localeMap } from '../locale_map';
-import { JpegPath, PngPath, SvgPath } from '../type';
+import type { JpegPath, PngPath, SvgPath } from '../type';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertPngToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    appConfig: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
 
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: localeMap('convertPngToPdfProcess'),
-        cancellable: false
-    }, async (progress) => {
-        const error = await processUrisWithProgress(
-            progress,
-            uris,
-            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(
-                    uri.fsPath as PngPath,
-                    appConfig.outputPathConvertPngToPdf,
-                    workspaceFolder,
-                    'png'
-                );
-            }
-        );
-        error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.message}`);
-        });
-    });
+    vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: localeMap('convertPngToPdfProcess'),
+            cancellable: false,
+        },
+        async (progress) => {
+            const error = await processUrisWithProgress(
+                progress,
+                uris,
+                async (fileUri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                    await convertBitmapToPdf(
+                        fileUri.fsPath as PngPath,
+                        appConfig.outputPathConvertPngToPdf,
+                        workspaceFolder,
+                        'png',
+                    );
+                },
+            );
+            error.forEach((value) => {
+                vscode.window.showErrorMessage(`${value.reason.message}`);
+            });
+        },
+    );
 }
 
 export function runConvertJpegToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    appConfig: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
 
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: localeMap('convertJpegToPdfProcess'),
-        cancellable: false
-    }, async (progress) => {
-        const error = await processUrisWithProgress(
-            progress,
-            uris,
-            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertBitmapToPdf(
-                    uri.fsPath as JpegPath,
-                    appConfig.outputPathConvertJpegToPdf,
-                    workspaceFolder,
-                    'jpeg'
-                );
-            }
-        );
-        error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.message}`);
-        });
-    });
+    vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: localeMap('convertJpegToPdfProcess'),
+            cancellable: false,
+        },
+        async (progress) => {
+            const error = await processUrisWithProgress(
+                progress,
+                uris,
+                async (fileUri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                    await convertBitmapToPdf(
+                        fileUri.fsPath as JpegPath,
+                        appConfig.outputPathConvertJpegToPdf,
+                        workspaceFolder,
+                        'jpeg',
+                    );
+                },
+            );
+            error.forEach((value) => {
+                vscode.window.showErrorMessage(`${value.reason.message}`);
+            });
+        },
+    );
 }
 
 export function runConvertSvgToPdfCommand(
     uri?: vscode.Uri,
     uris?: vscode.Uri[],
-    appConfig: AppConfig = getAppConfig()
+    appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
         vscode.window.showErrorMessage(localeMap('noFilesSelected'));
         return;
     }
 
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: localeMap('convertSvgToPdfProcess'),
-        cancellable: false
-    }, async (progress) => {
-        const error = await processUrisWithProgress(
-            progress,
-            uris,
-            async (uri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
-                await convertSvgToPdf(
-                    appConfig,
-                    uri.fsPath as SvgPath,
-                    appConfig.outputPathConvertSvgToPdf,
-                    workspaceFolder
-                );
-            }
-        );
-        error.forEach((value) => {
-            vscode.window.showErrorMessage(`${value.reason.message}`);
-        });
-    });
+    vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: localeMap('convertSvgToPdfProcess'),
+            cancellable: false,
+        },
+        async (progress) => {
+            const error = await processUrisWithProgress(
+                progress,
+                uris,
+                async (fileUri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder) => {
+                    await convertSvgToPdf(
+                        appConfig,
+                        fileUri.fsPath as SvgPath,
+                        appConfig.outputPathConvertSvgToPdf,
+                        workspaceFolder,
+                    );
+                },
+            );
+            error.forEach((value) => {
+                vscode.window.showErrorMessage(`${value.reason.message}`);
+            });
+        },
+    );
 }

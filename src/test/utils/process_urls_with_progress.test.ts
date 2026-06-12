@@ -1,6 +1,7 @@
-import * as assert from 'assert';
+import * as assert from 'node:assert';
 
-import sinon, { SinonStub } from 'sinon';
+import type { SinonStub } from 'sinon';
+import { restore, stub } from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../../locale_map';
@@ -14,26 +15,28 @@ suite('process_urls_with_progress Test Suite', () => {
     const workspaceFolder: vscode.WorkspaceFolder = {
         uri: vscode.Uri.file('/test/workspace'),
         name: 'test-workspace',
-        index: 0
+        index: 0,
     };
 
     setup(() => {
-        getWorkspaceFolderStub = sinon.stub(vscode.workspace, 'getWorkspaceFolder');
-        progressReportStub = sinon.stub();
-        taskStub = sinon.stub();
+        getWorkspaceFolderStub = stub(vscode.workspace, 'getWorkspaceFolder');
+        progressReportStub = stub();
+        taskStub = stub();
     });
 
     teardown(() => {
-        sinon.restore();
+        restore();
     });
 
     test('should process all uris successfully', async () => {
-
         const mockProgress = {
-            report: progressReportStub
+            report: progressReportStub,
         };
 
-        const uris = [vscode.Uri.file('/test/workspace/file1.txt'), vscode.Uri.file('/test/workspace/file2.txt')];
+        const uris = [
+            vscode.Uri.file('/test/workspace/file1.txt'),
+            vscode.Uri.file('/test/workspace/file2.txt'),
+        ];
         getWorkspaceFolderStub.returns(workspaceFolder);
         taskStub.resolves();
 
@@ -42,17 +45,25 @@ suite('process_urls_with_progress Test Suite', () => {
         assert.strictEqual(errors.length, 0);
         assert.strictEqual(taskStub.callCount, 2);
         assert.strictEqual(progressReportStub.callCount, 2);
-        assert.deepStrictEqual(progressReportStub.firstCall.args[0], { increment: 50, message: '1/2: file1.txt' });
-        assert.deepStrictEqual(progressReportStub.secondCall.args[0], { increment: 50, message: '2/2: file2.txt' });
+        assert.deepStrictEqual(progressReportStub.firstCall.args[0], {
+            increment: 50,
+            message: '1/2: file1.txt',
+        });
+        assert.deepStrictEqual(progressReportStub.secondCall.args[0], {
+            increment: 50,
+            message: '2/2: file2.txt',
+        });
     });
 
     test('should return errors for failed tasks', async () => {
-
         const mockProgress = {
-            report: progressReportStub
+            report: progressReportStub,
         };
 
-        const uris = [vscode.Uri.file('/test/workspace/file1.txt'), vscode.Uri.file('/test/workspace/file2.txt')];
+        const uris = [
+            vscode.Uri.file('/test/workspace/file1.txt'),
+            vscode.Uri.file('/test/workspace/file2.txt'),
+        ];
         const error = new Error('Task failed');
         getWorkspaceFolderStub.returns(workspaceFolder);
         taskStub.onFirstCall().resolves();
@@ -67,9 +78,8 @@ suite('process_urls_with_progress Test Suite', () => {
     });
 
     test('should return error if workspace folder is not found', async () => {
-
         const mockProgress = {
-            report: progressReportStub
+            report: progressReportStub,
         };
 
         const uris = [vscode.Uri.file('/test/workspace/file1.txt')];
@@ -84,9 +94,8 @@ suite('process_urls_with_progress Test Suite', () => {
     });
 
     test('should handle empty uri list', async () => {
-
         const mockProgress = {
-            report: progressReportStub
+            report: progressReportStub,
         };
 
         const uris: vscode.Uri[] = [];
