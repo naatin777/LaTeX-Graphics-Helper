@@ -2,9 +2,9 @@ pre-commit:
   commands:
     lint:
       glob: "**/*.{ts,tsx}"
-      run: npx oxlint {staged_files}
+      run: pnpm exec oxlint {staged_files}
     format:
       glob: "**/*.{ts,tsx}"
-      run: npx oxfmt --check {staged_files}
+      run: pnpm exec oxfmt --check {staged_files}
     typecheck:
-      run: npx tsc --noEmit
+      run: pnpm run typecheck

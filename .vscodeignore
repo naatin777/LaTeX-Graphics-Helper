@@ -2,9 +2,15 @@
 .vscode-test/**
 src/**
 .gitignore
+.npmrc
 .yarnrc
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/*.map
 **/*.ts
 **/.vscode-test.*
+.github/**
+lefthook.yml
+.oxlintrc.json
+.oxfmtrc.json
+pnpm-lock.yaml
