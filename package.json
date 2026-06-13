@@ -20,21 +20,29 @@
         "url": "https://github.com/naatin777/LaTeX-Graphics-Helper"
     },
     "publisher": "naatin777",
+    "packageManager": "pnpm@10.28.2",
+    "engines": {
+        "vscode": "^1.105.0",
+        "node": ">=22",
+        "pnpm": ">=10.28.2"
+    },
     "main": "./out/extension.js",
     "scripts": {
-        "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
-        "pretest": "npm run compile && npm run lint && npm run format",
+        "typecheck": "tsc --noEmit",
         "lint": "oxlint src",
         "lint:fix": "oxlint --fix src",
         "format": "oxfmt --check src",
         "format:fix": "oxfmt src",
-        "test": "vscode-test",
-        "preversion": "npm run compile && npm run lint && npm run format",
-        "release:patch": "npm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-        "release:minor": "npm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-        "release:major": "npm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
+        "check": "pnpm run lint && pnpm run format && pnpm run typecheck",
+        "check:fix": "pnpm run lint:fix && pnpm run format:fix",
+        "clean": "rm -rf out",
+        "test": "pnpm run compile && vscode-test",
+        "package": "pnpm run compile && vsce package",
+        "release:patch": "pnpm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:minor": "pnpm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:major": "pnpm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
     },
     "dependencies": {
         "pdf-lib": "^1.17.1",
@@ -51,15 +59,23 @@
         "@types/xml2js": "^0.4.14",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^3.0.0",
+        "@vscode/vsce": "^3.9.2",
         "lefthook": "^2.1.9",
         "mocha": "^11.7.6",
+        "ovsx": "^1.0.1",
         "oxfmt": "^0.36.0",
         "oxlint": "^1.56.0",
         "sinon": "^22.0.0",
         "typescript": "^6.0.3"
     },
-    "overrides": {
-        "serialize-javascript": "^7.0.3"
+    "pnpm": {
+        "overrides": {
+            "serialize-javascript": "^7.0.3"
+        },
+        "onlyBuiltDependencies": [
+            "lefthook",
+            "sharp"
+        ]
     },
     "contributes": {
         "menus": {
@@ -395,8 +411,5 @@
     "activationEvents": [
         "onStartupFinished"
     ],
-    "icon": "assets/icon.png",
-    "engines": {
-        "vscode": "^1.105.0"
-    }
+    "icon": "assets/icon.png"
 }
