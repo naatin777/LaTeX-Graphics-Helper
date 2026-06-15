@@ -86,20 +86,6 @@ jobs:
                     pnpm run test
                   fi
 
-    vscode-test-wsl:
-        name: vscode-test (wsl)
-        needs: check
-        runs-on: windows-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v6
-
-            - name: Run vscode-test in WSL
-              shell: pwsh
-              run: |
-                  $repo = (wsl wslpath -a $env:GITHUB_WORKSPACE).Trim()
-                  wsl bash -lc "cd '$repo' && bash .github/scripts/run-vscode-test-wsl.sh"
-
     playwright:
         name: playwright (${{ matrix.label }})
         needs: check

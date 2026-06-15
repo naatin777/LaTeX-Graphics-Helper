@@ -21,6 +21,19 @@ fi
 	echo "LGH_RSVG_CONVERT=$rsvg_convert"
 } >>"$GITHUB_ENV"
 
+mkdir -p .vscode-test
+node -e "
+const fs = require('node:fs');
+fs.writeFileSync(
+  '.vscode-test/ci-tool-paths.json',
+  JSON.stringify({
+    pdfcrop: process.argv[1],
+    pdftocairo: process.argv[2],
+    rsvgConvert: process.argv[3],
+  }),
+);
+" "$pdfcrop" "$pdftocairo" "$rsvg_convert"
+
 echo "pdfcrop=$pdfcrop"
 echo "pdftocairo=$pdftocairo"
 echo "rsvg-convert=$rsvg_convert"

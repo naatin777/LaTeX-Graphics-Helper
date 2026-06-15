@@ -181,16 +181,37 @@ export async function restoreDefaultExecPaths(): Promise<void> {
 }
 
 async function configureCiExecPathsFromEnv(): Promise<void> {
+    const ciToolPaths = loadCiToolPathsFile();
     const entries: Array<['pdfcrop' | 'pdftocairo' | 'rsvgConvert', string | undefined]> = [
-        ['pdfcrop', process.env.LGH_PDFCROP],
-        ['pdftocairo', process.env.LGH_PDFTOCAIRO],
-        ['rsvgConvert', process.env.LGH_RSVG_CONVERT],
+        ['pdfcrop', ciToolPaths.pdfcrop ?? process.env.LGH_PDFCROP],
+        ['pdftocairo', ciToolPaths.pdftocairo ?? process.env.LGH_PDFTOCAIRO],
+        ['rsvgConvert', ciToolPaths.rsvgConvert ?? process.env.LGH_RSVG_CONVERT],
     ];
 
     for (const [key, value] of entries) {
         if (value && value.length > 0) {
             await setExecPath(key, value);
         }
+    }
+}
+
+function loadCiToolPathsFile(): Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>> {
+    try {
+        const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
+        if (!extension) {
+            return {};
+        }
+
+        const filePath = path.join(extension.extensionPath, '.vscode-test/ci-tool-paths.json');
+        if (!fs.existsSync(filePath)) {
+            return {};
+        }
+
+        return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<
+            Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
+        >;
+    } catch {
+        return {};
     }
 }
 
