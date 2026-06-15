@@ -57,3 +57,8 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 * **pdfcrop**: PDF のクロップ機能には **pdfcrop** が必要です。これは通常、TeX Live または MiKTeX に含まれています。
 * **pdftocairo**: PDF を画像に変換する機能には **pdftocairo** が必要です。これは通常、Poppler ユーティリティに含まれています。
 * **rsvg-convert**: SVGを PDF に変換するには **rsvg-convert**（[librsvg](https://wiki.gnome.org/Projects/LibRsvg)）が必要です。macOS: `brew install librsvg`。Debian/Ubuntu: `apt install librsvg2-bin`。
+
+## 設定
+
+* **`latex-graphics-helper.pasteClipboardImageAs`**: クリップボード画像の LaTeX への貼り付け方法。`ask`（既定）で PDF / 画像を選択、`pdf` または `image` でピッカーを省略。
+* **Output パネル**: **表示 → 出力 → LaTeX Graphics Helper** で、コマンド実行・バッチ処理・エラーのログを確認できます。

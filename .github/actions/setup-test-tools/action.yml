@@ -1,0 +1,27 @@
+name: Setup test tools
+description: Install external CLI tools required by LaTeX Graphics Helper tests
+
+runs:
+    using: composite
+    steps:
+        - name: Install tools (Linux)
+          if: runner.os == 'Linux'
+          shell: bash
+          run: bash "${{ github.action_path }}/../../scripts/install-test-tools-linux.sh"
+
+        - name: Install tools (macOS)
+          if: runner.os == 'macOS'
+          shell: bash
+          run: bash "${{ github.action_path }}/../../scripts/install-test-tools-macos.sh"
+
+        - name: Install tools (Windows)
+          if: runner.os == 'Windows'
+          shell: pwsh
+          run: |
+              & "${{ github.action_path }}/../../scripts/install-test-tools-windows.ps1"
+
+        - name: Install pdfcrop (TeX Live)
+          if: runner.os != 'Linux'
+          uses: zauguin/install-texlive@v4
+          with:
+              packages: pdfcrop

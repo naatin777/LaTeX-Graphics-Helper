@@ -57,3 +57,8 @@ You can install this extension in one of the following ways:
 *   **pdfcrop**: The PDF cropping feature requires pdfcrop. It is usually included with TeX Live or MiKTeX.
 *   **pdftocairo**: The feature to convert PDFs to images requires pdftocairo. It is usually included with Poppler utilities.
 *   **rsvg-convert**: SVG to PDF conversion requires rsvg-convert (from [librsvg](https://wiki.gnome.org/Projects/LibRsvg)). On macOS: `brew install librsvg`. On Debian/Ubuntu: `apt install librsvg2-bin`.
+
+## Configuration
+
+*   **`latex-graphics-helper.pasteClipboardImageAs`**: How clipboard images are pasted into LaTeX. `ask` (default) shows a picker for PDF vs image; `pdf` or `image` skips the picker.
+*   **Output channel**: Open **View → Output → LaTeX Graphics Helper** to see command execution, batch progress, and errors logged by the extension.

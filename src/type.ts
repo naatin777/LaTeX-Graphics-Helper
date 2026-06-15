@@ -12,6 +12,8 @@ export type FileData = {
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
+export type PasteClipboardImageAs = 'ask' | 'pdf' | 'image';
+
 export type ExecutablePath = Brand<string, 'ExecutablePath'>;
 
 export type DrawioPath = Brand<string, 'DrawioPath'>;

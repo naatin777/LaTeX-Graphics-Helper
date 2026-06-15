@@ -5,6 +5,7 @@ import { getAppConfig } from '../configuration';
 import { splitPdf } from '../core/split_pdf';
 import { localeMap } from '../locale_map';
 import type { PdfPath } from '../type';
+import { reportNoFilesSelected } from '../utils/no_files_selected';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runSplitPdfCommand(
@@ -13,7 +14,7 @@ export function runSplitPdfCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('split PDF');
         return;
     }
 

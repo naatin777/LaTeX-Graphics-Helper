@@ -1,34 +1,172 @@
 name: Test VSCode Extension
 
 on:
-  pull_request:
+    pull_request:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: test-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    check:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.2
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: pnpm
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Check
-        run: pnpm run check
+            - name: Check
+              run: pnpm run check
 
-      - name: Install Xvfb
-        run: sudo apt-get install xvfb
+    vscode-test:
+        name: vscode-test (${{ matrix.label }})
+        needs: check
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      label: linux
+                      run-prefix: xvfb-run
+                    - os: macos-latest
+                      label: macos
+                      run-prefix: ''
+                    - os: windows-latest
+                      label: windows
+                      run-prefix: ''
 
-      - name: Run test
-        run: xvfb-run pnpm run test
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - name: Install test tools
+              uses: ./.github/actions/setup-test-tools
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run vscode-test
+              shell: bash
+              run: |
+                  if [ -n "${{ matrix.run-prefix }}" ]; then
+                    ${{ matrix.run-prefix }} pnpm run test
+                  else
+                    pnpm run test
+                  fi
+
+    vscode-test-wsl:
+        name: vscode-test (wsl)
+        needs: check
+        runs-on: windows-latest
+        defaults:
+            run:
+                shell: wsl-bash {0}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - name: Install test tools
+              run: bash .github/scripts/install-test-tools-linux.sh
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Run vscode-test
+              run: xvfb-run pnpm run test
+
+    playwright:
+        name: playwright (${{ matrix.label }})
+        needs: check
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      label: linux
+                      run-prefix: xvfb-run
+                    - os: macos-latest
+                      label: macos
+                      run-prefix: ''
+                    - os: windows-latest
+                      label: windows
+                      run-prefix: ''
+
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Install Playwright CLI
+              run: pnpm exec playwright install
+
+            - name: Run Playwright smoke tests
+              shell: bash
+              run: |
+                  if [ -n "${{ matrix.run-prefix }}" ]; then
+                    ${{ matrix.run-prefix }} pnpm run test:playwright
+                  else
+                    pnpm run test:playwright
+                  fi
+
+            - name: Upload Playwright report
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report-${{ matrix.label }}
+                  path: |
+                      playwright-report/
+                      test-results/
+                  if-no-files-found: ignore

@@ -3,11 +3,22 @@ import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
 import { LatexDropEditProvider } from '../../edit_provider/latex_drop_edit_provider';
-import { createPdf, createTestDirectory, deleteDirectory } from './helpers';
+import {
+    applySnippetAt,
+    configurePredictableOutputPaths,
+    createPdf,
+    createTestDirectory,
+    deleteDirectory,
+    openLatexDocument,
+    readDocumentText,
+    uriListDataTransfer,
+    workspaceFixturePath,
+} from './helpers';
 
 suite('LaTeX drop edit provider e2e Test Suite', () => {
     suiteSetup(async () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
+        await configurePredictableOutputPaths();
 
         const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
         await configuration.update(
@@ -40,6 +51,181 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
             ['\\hfill'],
             vscode.ConfigurationTarget.Workspace,
         );
+    });
+
+    test('should insert three dropped PDF snippets into the LaTeX document', async () => {
+        const directory = await createTestDirectory('drop-apply-three-pdfs');
+
+        try {
+            const documentUri = vscode.Uri.joinPath(directory, 'main.tex');
+            const pdfUris = ['a.pdf', 'b.pdf', 'c.pdf'].map((name) =>
+                vscode.Uri.joinPath(directory, 'figs', name),
+            );
+
+            await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(directory, 'figs'));
+            await vscode.workspace.fs.writeFile(
+                documentUri,
+                Buffer.from('\\documentclass{article}\n', 'utf8'),
+            );
+            for (const pdfUri of pdfUris) {
+                await createPdf(pdfUri, 1);
+            }
+
+            const document = await openLatexDocument(documentUri);
+            const edit = await provideDropEdit(document, pdfUris);
+            assert.ok(edit.insertText instanceof vscode.SnippetString);
+            await applySnippetAt(document, new vscode.Position(1, 0), edit.insertText);
+
+            const text = await readDocumentText(documentUri);
+            assert.ok(text.includes('figs/a.pdf'));
+            assert.ok(text.includes('figs/b.pdf'));
+            assert.ok(text.includes('figs/c.pdf'));
+            assert.strictEqual(countOccurrences(text, '\\begin{minipage}'), 3);
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should use relative paths when the LaTeX file is in a subdirectory', async () => {
+        const directory = await createTestDirectory('drop-nested-tex');
+
+        try {
+            const documentUri = vscode.Uri.joinPath(directory, 'chapters', 'intro.tex');
+            const pdfUri = vscode.Uri.joinPath(directory, 'assets', 'diagram.pdf');
+
+            await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(directory, 'chapters'));
+            await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(directory, 'assets'));
+            await vscode.workspace.fs.writeFile(documentUri, Buffer.from('', 'utf8'));
+            await createPdf(pdfUri, 1);
+
+            const document = await openLatexDocument(documentUri);
+            const edit = await provideDropEdit(document, [pdfUri]);
+            const snippet = getSnippetValue(edit);
+
+            assert.ok(snippet.includes('../assets/diagram.pdf'));
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should accept URI lists with CRLF separators and blank lines', async () => {
+        const directory = await createTestDirectory('drop-crlf-uri-list');
+
+        try {
+            const documentUri = vscode.Uri.joinPath(directory, 'main.tex');
+            const firstPdfUri = vscode.Uri.joinPath(directory, 'one.pdf');
+            const secondPdfUri = vscode.Uri.joinPath(directory, 'two.pdf');
+
+            await vscode.workspace.fs.writeFile(documentUri, Buffer.from('', 'utf8'));
+            await createPdf(firstPdfUri, 1);
+            await createPdf(secondPdfUri, 1);
+
+            const document = await openLatexDocument(documentUri);
+            const provider = new LatexDropEditProvider();
+            const dataTransfer = new vscode.DataTransfer();
+            dataTransfer.set(
+                'text/uri-list',
+                new vscode.DataTransferItem(
+                    `${firstPdfUri.toString()}\r\n\r\n${secondPdfUri.toString()}\r\n`,
+                ),
+            );
+
+            const tokenSource = new vscode.CancellationTokenSource();
+            try {
+                const edit = await provider.provideDocumentDropEdits(
+                    document,
+                    new vscode.Position(0, 0),
+                    dataTransfer,
+                    tokenSource.token,
+                );
+
+                assert.ok(edit && !Array.isArray(edit));
+                const snippet = getSnippetValue(edit);
+                assert.ok(snippet.includes('one.pdf'));
+                assert.ok(snippet.includes('two.pdf'));
+            } finally {
+                tokenSource.dispose();
+            }
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should drop onto the seeded fixture workspace main.tex', async () => {
+        const directory = await createTestDirectory('drop-fixture-main');
+
+        try {
+            const documentUri = vscode.Uri.file(workspaceFixturePath('main.tex'));
+            const pdfUri = vscode.Uri.joinPath(directory, 'fixture-drop.pdf');
+
+            await createPdf(pdfUri, 1);
+
+            const document = await openLatexDocument(documentUri);
+            const edit = await provideDropEdit(document, [pdfUri]);
+            const snippet = getSnippetValue(edit);
+
+            assert.ok(snippet.includes('fixture-drop.pdf'));
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should label the drop edit for LaTeX insertion', async () => {
+        const directory = await createTestDirectory('drop-edit-label');
+
+        try {
+            const documentUri = vscode.Uri.joinPath(directory, 'main.tex');
+            const pdfUri = vscode.Uri.joinPath(directory, 'x.pdf');
+
+            await vscode.workspace.fs.writeFile(documentUri, Buffer.from('', 'utf8'));
+            await createPdf(pdfUri, 1);
+
+            const document = await openLatexDocument(documentUri);
+            const provider = new LatexDropEditProvider();
+            const tokenSource = new vscode.CancellationTokenSource();
+            try {
+                const edit = await provider.provideDocumentDropEdits(
+                    document,
+                    new vscode.Position(0, 0),
+                    uriListDataTransfer([pdfUri]),
+                    tokenSource.token,
+                );
+
+                assert.ok(edit && !Array.isArray(edit));
+                assert.ok(typeof edit.title === 'string' && edit.title.length > 0);
+            } finally {
+                tokenSource.dispose();
+            }
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should insert a dropped PDF snippet into the LaTeX document', async () => {
+        const directory = await createTestDirectory('drop-apply-single-pdf');
+
+        try {
+            const documentUri = vscode.Uri.joinPath(directory, 'main.tex');
+            const pdfUri = vscode.Uri.joinPath(directory, 'figures', 'applied.pdf');
+
+            await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(directory, 'figures'));
+            await vscode.workspace.fs.writeFile(
+                documentUri,
+                Buffer.from('\\documentclass{article}\n', 'utf8'),
+            );
+            await createPdf(pdfUri, 1);
+
+            const document = await openLatexDocument(documentUri);
+            const edit = await provideDropEdit(document, [pdfUri]);
+            assert.ok(edit.insertText instanceof vscode.SnippetString);
+            await applySnippetAt(document, new vscode.Position(1, 0), edit.insertText);
+
+            const updated = await vscode.workspace.openTextDocument(documentUri);
+            assert.ok(updated.getText().includes('figures/applied.pdf'));
+            assert.ok(updated.getText().includes('\\begin{figure}'));
+        } finally {
+            await deleteDirectory(directory);
+        }
     });
 
     test('should create a figure snippet for a dropped PDF URI', async () => {

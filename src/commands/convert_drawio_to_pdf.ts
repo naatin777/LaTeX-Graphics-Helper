@@ -5,6 +5,7 @@ import { getAppConfig } from '../configuration';
 import { convertDrawioToPdf } from '../core/convert_drawio_to_pdf';
 import { localeMap } from '../locale_map';
 import type { DrawioPath } from '../type';
+import { reportNoFilesSelected } from '../utils/no_files_selected';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertDrawioToPdfCommand(
@@ -13,7 +14,7 @@ export function runConvertDrawioToPdfCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert Draw.io to PDF');
         return;
     }
 

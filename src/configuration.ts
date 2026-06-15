@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import type {
     ExecutablePath,
     JpegTemplatePath,
+    PasteClipboardImageAs,
     PdfTemplatePath,
     PngTemplatePath,
     SvgTemplatePath,
@@ -26,6 +27,7 @@ export interface AppConfig {
     outputPathConvertJpegToPdf: PdfTemplatePath;
     outputPathConvertSvgToPdf: PdfTemplatePath;
     outputPathClipboardImage: TemplatePath;
+    pasteClipboardImageAs: PasteClipboardImageAs;
     figurePlacementOptions: string[];
     figureAlignmentOptions: string[];
     figureGraphicsOptions: string[];
@@ -50,6 +52,7 @@ export function getAppConfig(): AppConfig {
         outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
         outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
         outputPathClipboardImage: getOutputPathClipboardImage(),
+        pasteClipboardImageAs: getPasteClipboardImageAs(),
         figurePlacementOptions: getFigurePlacementOptions(),
         figureAlignmentOptions: getFigureAlignmentOptions(),
         figureGraphicsOptions: getFigureGraphicsOptions(),
@@ -140,6 +143,11 @@ function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
 function getOutputPathClipboardImage(): TemplatePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.clipboardImage') as TemplatePath;
+}
+
+function getPasteClipboardImageAs(): PasteClipboardImageAs {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<PasteClipboardImageAs>('pasteClipboardImageAs') ?? 'ask';
 }
 
 function getFigurePlacementOptions(): string[] {

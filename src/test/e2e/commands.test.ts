@@ -5,12 +5,17 @@ import * as vscode from 'vscode';
 
 import { localeMap } from '../../locale_map';
 import {
+    configurePredictableOutputPaths,
     createPdf,
     createPng,
     createTestDirectory,
     deleteDirectory,
+    loggerContains,
     readPdfPageCount,
+    restoreDefaultExecPaths,
+    runExplorerContextCommand,
     waitForFile,
+    waitForFiles,
 } from './helpers';
 
 const commandIds = [
@@ -29,20 +34,8 @@ const commandIds = [
 suite('VS Code command e2e Test Suite', () => {
     suiteSetup(async () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
-        await vscode.workspace
-            .getConfiguration('latex-graphics-helper')
-            .update(
-                'outputPath.splitPdf',
-                '${fileDirname}/${fileBasenameNoExtension}-${page}.pdf',
-                vscode.ConfigurationTarget.Workspace,
-            );
-        await vscode.workspace
-            .getConfiguration('latex-graphics-helper')
-            .update(
-                'outputPath.convertPngToPdf',
-                '${fileDirname}/${fileBasenameNoExtension}.pdf',
-                vscode.ConfigurationTarget.Workspace,
-            );
+        await configurePredictableOutputPaths();
+        await restoreDefaultExecPaths();
     });
 
     teardown(() => {
@@ -71,6 +64,46 @@ suite('VS Code command e2e Test Suite', () => {
         for (const call of showErrorMessageStub.getCalls()) {
             assert.strictEqual(call.args[0], localeMap('noFilesSelected'));
         }
+        assert.ok(loggerContains('no files selected'));
+    });
+
+    test('should crop a PDF selected from the explorer', async () => {
+        const directory = await createTestDirectory('crop-pdf-command');
+
+        try {
+            const inputUri = vscode.Uri.joinPath(directory, 'crop.pdf');
+            const outputUri = vscode.Uri.joinPath(directory, 'crop-crop.pdf');
+
+            await createPdf(inputUri, 1);
+            await runExplorerContextCommand('latex-graphics-helper.cropPdf', inputUri);
+            await waitForFile(outputUri);
+
+            assert.strictEqual(await readPdfPageCount(outputUri), 1);
+        } finally {
+            await deleteDirectory(directory);
+        }
+    });
+
+    test('should convert two PNGs when both are selected in the explorer', async () => {
+        const directory = await createTestDirectory('convert-two-pngs');
+
+        try {
+            const firstUri = vscode.Uri.joinPath(directory, 'left.png');
+            const secondUri = vscode.Uri.joinPath(directory, 'right.png');
+
+            await createPng(firstUri);
+            await createPng(secondUri);
+            await runExplorerContextCommand('latex-graphics-helper.convertPngToPdf', firstUri, [
+                firstUri,
+                secondUri,
+            ]);
+            await waitForFiles([
+                vscode.Uri.joinPath(directory, 'left.pdf'),
+                vscode.Uri.joinPath(directory, 'right.pdf'),
+            ]);
+        } finally {
+            await deleteDirectory(directory);
+        }
     });
 
     test('should split a PDF selected from the explorer', async () => {
@@ -83,9 +116,7 @@ suite('VS Code command e2e Test Suite', () => {
 
             await createPdf(inputUri, 2);
 
-            await vscode.commands.executeCommand('latex-graphics-helper.splitPdf', inputUri, [
-                inputUri,
-            ]);
+            await runExplorerContextCommand('latex-graphics-helper.splitPdf', inputUri);
             await Promise.all([waitForFile(firstOutputUri), waitForFile(secondOutputUri)]);
 
             assert.strictEqual(await readPdfPageCount(firstOutputUri), 1);
@@ -107,7 +138,7 @@ suite('VS Code command e2e Test Suite', () => {
             await createPdf(firstInputUri, 1);
             await createPdf(secondInputUri, 2);
 
-            await vscode.commands.executeCommand('latex-graphics-helper.mergePdf', firstInputUri, [
+            await runExplorerContextCommand('latex-graphics-helper.mergePdf', firstInputUri, [
                 firstInputUri,
                 secondInputUri,
             ]);
@@ -132,11 +163,7 @@ suite('VS Code command e2e Test Suite', () => {
 
             await createPng(inputUri);
 
-            await vscode.commands.executeCommand(
-                'latex-graphics-helper.convertPngToPdf',
-                inputUri,
-                [inputUri],
-            );
+            await runExplorerContextCommand('latex-graphics-helper.convertPngToPdf', inputUri);
             await waitForFile(outputUri);
 
             assert.strictEqual(await readPdfPageCount(outputUri), 1);

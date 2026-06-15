@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { localeMap } from '../locale_map';
+import { logger } from '../logger';
 
 export async function processUrisWithProgress(
     progress: vscode.Progress<{ message?: string; increment?: number }>,
@@ -10,6 +11,8 @@ export async function processUrisWithProgress(
     const errors: { uri: vscode.Uri; reason: Error }[] = [];
     const increment = 100 / uris.length;
     let completedCount = 0;
+
+    logger.info(`processing ${uris.length} file(s)`);
 
     const promises = uris.map(async (uri) => {
         try {
@@ -21,6 +24,7 @@ export async function processUrisWithProgress(
             }
         } catch (error) {
             if (error instanceof Error) {
+                logger.error(`failed ${uri.fsPath}: ${error.message}`);
                 errors.push({ uri, reason: error });
             }
         } finally {
