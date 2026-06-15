@@ -1,6 +1,5 @@
 import * as os from 'node:os';
 
-import type { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
 import type {
@@ -16,9 +15,7 @@ export interface AppConfig {
     execPathPdfcrop: ExecutablePath;
     execPathDrawio: ExecutablePath;
     execPathPdftocairo: ExecutablePath;
-    execPathPuppeteer: ExecutablePath;
-    puppeteerBrowser: SupportedBrowser;
-    puppeteerChannel: ChromeReleaseChannel;
+    execPathRsvgConvert: ExecutablePath;
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;
@@ -42,9 +39,7 @@ export function getAppConfig(): AppConfig {
         execPathPdfcrop: getExecPathPdfcrop(),
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
-        execPathPuppeteer: getExecPathPuppeteer(),
-        puppeteerBrowser: getPuppeteerBrowser(),
-        puppeteerChannel: getPuppeteerChannel(),
+        execPathRsvgConvert: getExecPathRsvgConvert(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -88,19 +83,13 @@ function getExecPathPdftocairo(): ExecutablePath {
     return configuration.get<string>('execPath.pdftocairo') as ExecutablePath;
 }
 
-function getExecPathPuppeteer(): ExecutablePath {
+function getExecPathRsvgConvert(): ExecutablePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string>('execPath.puppeteer') as ExecutablePath;
-}
-
-function getPuppeteerBrowser(): SupportedBrowser {
-    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string>('puppeteer.browser') as SupportedBrowser;
-}
-
-function getPuppeteerChannel(): ChromeReleaseChannel {
-    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    return configuration.get<string>('puppeteer.channel') as ChromeReleaseChannel;
+    const rsvgCommand = configuration.get<string>('execPath.rsvgConvert');
+    if (rsvgCommand && rsvgCommand.length > 0) {
+        return rsvgCommand as ExecutablePath;
+    }
+    return (os.platform() === 'win32' ? 'rsvg-convert.exe' : 'rsvg-convert') as ExecutablePath;
 }
 
 function getOutputPathCropPdf(): PdfTemplatePath {
