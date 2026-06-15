@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 
-function resolveTool(name: string): string {
+function resolveTool(name) {
     try {
         if (process.platform === 'win32') {
             const output = execSync(`where ${name}`, { encoding: 'utf8' }).trim();

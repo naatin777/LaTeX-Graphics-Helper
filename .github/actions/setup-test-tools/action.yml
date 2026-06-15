@@ -24,4 +24,4 @@ runs:
           if: runner.os != 'Linux'
           uses: zauguin/install-texlive@v4
           with:
-              packages: pdfcrop ghostscript
+              packages: pdfcrop

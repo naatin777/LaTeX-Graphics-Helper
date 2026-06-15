@@ -25,5 +25,8 @@ $env:PATH = "$popplerBin;$rsvgDir;$env:PATH"
 Add-Content $env:GITHUB_PATH $popplerBin
 Add-Content $env:GITHUB_PATH $rsvgDir
 
+choco install ghostscript -y --no-progress
+
 Get-Command pdftocairo.exe
 Get-Command rsvg-convert.exe
+Get-Command gswin64c.exe
