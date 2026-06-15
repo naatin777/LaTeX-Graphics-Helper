@@ -72,7 +72,7 @@ jobs:
 
             - name: Export tool paths for tests
               shell: bash
-              run: bash .github/scripts/export-tool-paths.sh
+              run: node .github/scripts/export-tool-paths.mjs
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile

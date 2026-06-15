@@ -175,20 +175,24 @@ suite('generate_path_from_template Test Suite', () => {
             normalizePath(path.join('my-workspace', 'output.pdf')),
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${file}.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${file}.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
             '/path/to/my/file.pdf.pdf',
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${relativeFile}.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${relativeFile}.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
             '../path/to/my/file.pdf.pdf',
         );
