@@ -56,4 +56,4 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 * **Draw.io**: Draw.io ファイル (.drawio, .dio) を PDF に変換するには、Draw.io デスクトップアプリケーションが必要です。 [Draw.io](https://github.com/jgraph/drawio-desktop/releases) からダウンロードしてください。
 * **pdfcrop**: PDF のクロップ機能には **pdfcrop** が必要です。これは通常、TeX Live または MiKTeX に含まれています。
 * **pdftocairo**: PDF を画像に変換する機能には **pdftocairo** が必要です。これは通常、Poppler ユーティリティに含まれています。
-* **Google Chrome**: SVGを PDF に変換するには、**Google Chrome** が必要です。
+* **rsvg-convert**: SVGを PDF に変換するには **rsvg-convert**（[librsvg](https://wiki.gnome.org/Projects/LibRsvg)）が必要です。macOS: `brew install librsvg`。Debian/Ubuntu: `apt install librsvg2-bin`。
