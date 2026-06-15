@@ -1,0 +1,85 @@
+name: Playwright (WSL / Remote-WSL)
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: playwright-wsl-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    playwright:
+        runs-on: windows-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - id: wsl
+              shell: pwsh
+              run: |
+                  $ErrorActionPreference = 'Stop'
+                  $distro = 'Ubuntu'
+                  wsl --install $distro --no-launch
+                  wsl --update
+                  wsl --set-default-version 2
+
+                  $ready = $false
+                  for ($i = 0; $i -lt 36; $i++) {
+                    try {
+                      wsl -d $distro -- bash -lc 'echo wsl-ready' | Out-Null
+                      $ready = $true
+                      break
+                    } catch {
+                      Start-Sleep -Seconds 10
+                    }
+                  }
+
+                  if (-not $ready) {
+                    throw "WSL distro '$distro' did not become ready in time"
+                  }
+
+                  "distro=$distro" >> $env:GITHUB_OUTPUT
+
+            - id: prepare
+              name: Prepare WSL workspace
+              shell: pwsh
+              run: |
+                  $ErrorActionPreference = 'Stop'
+                  $repo = (wsl wslpath -a "$env:GITHUB_WORKSPACE").Trim()
+                  $workspace = (wsl -d "${{ steps.wsl.outputs.distro }}" -- bash -lc "bash '$repo/.github/scripts/wsl-prepare.sh' playwright").Trim()
+                  "workspace=$workspace" >> $env:GITHUB_OUTPUT
+                  "extensionPath=$repo" >> $env:GITHUB_OUTPUT
+
+            - run: pnpm exec playwright install
+              shell: bash
+
+            - name: Run Playwright via Remote-WSL
+              shell: pwsh
+              env:
+                  LGH_WSL_DISTRO: ${{ steps.wsl.outputs.distro }}
+                  LGH_WSL_WORKSPACE: ${{ steps.prepare.outputs.workspace }}
+                  LGH_WSL_EXTENSION_PATH: ${{ steps.prepare.outputs.extensionPath }}
+              run: pnpm run test:playwright:wsl
+
+            - if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report-wsl
+                  path: |
+                      playwright-report/
+                      test-results/
+                  if-no-files-found: ignore

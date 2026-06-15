@@ -1,56 +1,54 @@
 name: Release VSCode Extension
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+    push:
+        tags:
+            - 'v*.*.*'
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+    release:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/checkout@v6
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.28.2
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: pnpm
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - run: pnpm install --frozen-lockfile
+              shell: bash
 
-      - name: Package extension
-        run: pnpm run package
+            - run: pnpm run package
+              shell: bash
 
-      - name: GitHub Release (VSIX + Full Changelog compare link)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          repo="${{ github.repository }}"
-          tag="${{ github.ref_name }}"
-          prev=$(gh api "repos/$repo/releases/latest" --jq .tag_name 2>/dev/null || true)
-          if [[ -n "$prev" ]]; then
-            notes="**Full Changelog**: https://github.com/$repo/compare/$prev...$tag"
-          else
-            notes="**Full Changelog**: https://github.com/$repo/commits/$tag"
-          fi
-          if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
-            gh release upload "$tag" *.vsix --repo "$repo" --clobber
-          else
-            gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
-          fi
+            - name: GitHub Release (VSIX + Full Changelog compare link)
+              shell: bash
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  repo="${{ github.repository }}"
+                  tag="${{ github.ref_name }}"
+                  prev=$(gh api "repos/$repo/releases/latest" --jq .tag_name 2>/dev/null || true)
+                  if [[ -n "$prev" ]]; then
+                    notes="**Full Changelog**: https://github.com/$repo/compare/$prev...$tag"
+                  else
+                    notes="**Full Changelog**: https://github.com/$repo/commits/$tag"
+                  fi
+                  if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
+                    gh release upload "$tag" *.vsix --repo "$repo" --clobber
+                  else
+                    gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
+                  fi
 
-      - name: Publish to Visual Studio Marketplace
-        run: pnpm exec vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
+            - run: pnpm exec vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
+              shell: bash
 
-      - name: Publish to Open VSX Registry
-        run: pnpm exec ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
+            - run: pnpm exec ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
+              shell: bash

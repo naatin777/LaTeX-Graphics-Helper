@@ -1,0 +1,44 @@
+name: Playwright (macOS)
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: playwright-macos-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    playwright:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - run: pnpm exec playwright install
+              shell: bash
+
+            - run: pnpm run test:playwright
+              shell: bash
+
+            - if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: playwright-report-macos
+                  path: |
+                      playwright-report/
+                      test-results/
+                  if-no-files-found: ignore

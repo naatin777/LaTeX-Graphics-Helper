@@ -1,0 +1,38 @@
+name: Test (Linux)
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: test-linux-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    vscode-test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - run: bash .github/scripts/install-test-tools-linux.sh
+              shell: bash
+
+            - run: node .github/scripts/export-tool-paths.mjs
+              shell: bash
+
+            - run: xvfb-run pnpm run test
+              shell: bash

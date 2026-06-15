@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-brew install poppler librsvg ghostscript
+# pdftocairo / rsvg-convert are not part of TeX Live.
+brew install poppler librsvg
 
 command -v pdftocairo
 command -v rsvg-convert
-command -v gs

@@ -32,31 +32,43 @@ const copyDirectory = (source: string, destination: string): void => {
 export const test = base.extend<VsCodeFixtures>({
     // oxlint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
     electronApp: async ({}, use) => {
+        const wslDistro = process.env.LGH_WSL_DISTRO;
+        const wslWorkspace = process.env.LGH_WSL_WORKSPACE;
+        const wslExtensionPath = process.env.LGH_WSL_EXTENSION_PATH;
+
         const workspaceFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'lgh-pw-workspace-'));
-        if (fs.existsSync(fixturesSource)) {
+        if (!wslWorkspace && fs.existsSync(fixturesSource)) {
             copyDirectory(fixturesSource, workspaceFolder);
         }
 
         const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgh-pw-userdata-'));
         const extensionsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgh-pw-extensions-'));
         const vscodePath = await downloadAndUnzipVSCode('stable');
+        const extensionDevelopmentPath = wslExtensionPath ?? extensionRoot;
+        const launchArgs = [
+            '--no-sandbox',
+            '--disable-gpu-sandbox',
+            '--disable-updates',
+            '--new-window',
+            '--skip-welcome',
+            '--skip-release-notes',
+            '--disable-workspace-trust',
+            '--disable-telemetry',
+            `--extensions-dir=${extensionsDir}`,
+            `--user-data-dir=${userDataDir}`,
+            `--extensionDevelopmentPath=${extensionDevelopmentPath}`,
+        ];
+
+        if (wslDistro && wslWorkspace) {
+            launchArgs.push('--folder-uri', `vscode-remote://wsl+${wslDistro}${wslWorkspace}/`);
+        } else {
+            launchArgs.push(workspaceFolder);
+        }
+
         const electronApp = await _electron.launch({
             executablePath: vscodePath,
             env: { ...process.env, NODE_ENV: 'development' },
-            args: [
-                '--no-sandbox',
-                '--disable-gpu-sandbox',
-                '--disable-updates',
-                '--new-window',
-                '--skip-welcome',
-                '--skip-release-notes',
-                '--disable-workspace-trust',
-                '--disable-telemetry',
-                `--extensions-dir=${extensionsDir}`,
-                `--user-data-dir=${userDataDir}`,
-                `--extensionDevelopmentPath=${extensionRoot}`,
-                workspaceFolder,
-            ],
+            args: launchArgs,
         });
 
         await use(electronApp);
