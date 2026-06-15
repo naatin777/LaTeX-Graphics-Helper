@@ -8,14 +8,21 @@ Invoke-WebRequest `
 	"https://github.com/oschwartz10612/poppler-windows/releases/download/v$popplerVersion/Release-$popplerVersion.zip" `
 	-OutFile $popplerZip
 Expand-Archive $popplerZip -DestinationPath $popplerRoot -Force
-$popplerBin = (Get-ChildItem $popplerRoot -Directory | Select-Object -First 1).FullName + '\Library\bin'
-Add-Content $env:GITHUB_PATH $popplerBin
+
+$pdftocairo = Get-ChildItem -Path $popplerRoot -Recurse -Filter pdftocairo.exe | Select-Object -First 1
+if (-not $pdftocairo) {
+	throw "pdftocairo.exe not found under $popplerRoot"
+}
+$popplerBin = $pdftocairo.DirectoryName
 
 $rsvgDir = "$env:RUNNER_TEMP\rsvg"
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 Invoke-WebRequest `
 	'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' `
 	-OutFile "$rsvgDir\rsvg-convert.exe"
+
+$env:PATH = "$popplerBin;$rsvgDir;$env:PATH"
+Add-Content $env:GITHUB_PATH $popplerBin
 Add-Content $env:GITHUB_PATH $rsvgDir
 
 Get-Command pdftocairo.exe

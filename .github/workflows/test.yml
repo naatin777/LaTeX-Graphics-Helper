@@ -70,6 +70,10 @@ jobs:
             - name: Install test tools
               uses: ./.github/actions/setup-test-tools
 
+            - name: Export tool paths for tests
+              shell: bash
+              run: bash .github/scripts/export-tool-paths.sh
+
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
@@ -86,32 +90,15 @@ jobs:
         name: vscode-test (wsl)
         needs: check
         runs-on: windows-latest
-        defaults:
-            run:
-                shell: wsl-bash {0}
         steps:
             - name: Checkout
               uses: actions/checkout@v6
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10.28.2
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: '22'
-                  cache: pnpm
-
-            - name: Install test tools
-              run: bash .github/scripts/install-test-tools-linux.sh
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-
-            - name: Run vscode-test
-              run: xvfb-run pnpm run test
+            - name: Run vscode-test in WSL
+              shell: pwsh
+              run: |
+                  $repo = (wsl wslpath -a $env:GITHUB_WORKSPACE).Trim()
+                  wsl bash -lc "cd '$repo' && bash .github/scripts/run-vscode-test-wsl.sh"
 
     playwright:
         name: playwright (${{ matrix.label }})

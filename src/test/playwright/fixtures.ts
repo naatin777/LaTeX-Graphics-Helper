@@ -30,7 +30,8 @@ const copyDirectory = (source: string, destination: string): void => {
 };
 
 export const test = base.extend<VsCodeFixtures>({
-    electronApp: async (_fixtures, use) => {
+    // oxlint-disable-next-line no-empty-pattern -- Playwright requires object destructuring
+    electronApp: async ({}, use) => {
         const workspaceFolder = fs.mkdtempSync(path.join(os.tmpdir(), 'lgh-pw-workspace-'));
         if (fs.existsSync(fixturesSource)) {
             copyDirectory(fixturesSource, workspaceFolder);

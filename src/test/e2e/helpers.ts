@@ -176,6 +176,22 @@ export async function restoreDefaultExecPaths(): Promise<void> {
     if (drawioExecutable) {
         await configureDrawioExecutable(drawioExecutable);
     }
+
+    await configureCiExecPathsFromEnv();
+}
+
+async function configureCiExecPathsFromEnv(): Promise<void> {
+    const entries: Array<['pdfcrop' | 'pdftocairo' | 'rsvgConvert', string | undefined]> = [
+        ['pdfcrop', process.env.LGH_PDFCROP],
+        ['pdftocairo', process.env.LGH_PDFTOCAIRO],
+        ['rsvgConvert', process.env.LGH_RSVG_CONVERT],
+    ];
+
+    for (const [key, value] of entries) {
+        if (value && value.length > 0) {
+            await setExecPath(key, value);
+        }
+    }
 }
 
 export function resolveDrawioExecutable(): string | undefined {
