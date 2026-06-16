@@ -1,26 +1,41 @@
 $ErrorActionPreference = 'Stop'
 
-# rsvg-convert is not part of TeX Live; pdfcrop/gs come from scheme-full.
+# pdfcrop from install-texlive; pdftocairo / rsvg / gs are not in TeX Live on Windows CI.
+$popplerVersion = '24.08.0-0'
+$popplerZip = "$env:RUNNER_TEMP\poppler.zip"
+$popplerRoot = "$env:RUNNER_TEMP\poppler"
+
+Invoke-WebRequest `
+	"https://github.com/oschwartz10612/poppler-windows/releases/download/v$popplerVersion/Release-$popplerVersion.zip" `
+	-OutFile $popplerZip
+Expand-Archive $popplerZip -DestinationPath $popplerRoot -Force
+
+$pdftocairo = Get-ChildItem -Path $popplerRoot -Recurse -Filter pdftocairo.exe | Select-Object -First 1
+if (-not $pdftocairo) {
+	throw "pdftocairo.exe not found under $popplerRoot"
+}
+$popplerBin = $pdftocairo.DirectoryName
+
 $rsvgDir = "$env:RUNNER_TEMP\rsvg"
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 Invoke-WebRequest `
 	'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' `
 	-OutFile "$rsvgDir\rsvg-convert.exe"
-Add-Content $env:GITHUB_PATH $rsvgDir
-$env:PATH = "$rsvgDir;$env:PATH"
 
-foreach ($tool in @('pdfcrop', 'gswin64c', 'pdftocairo')) {
-	$found = Get-Command $tool -ErrorAction SilentlyContinue
-	if (-not $found) {
-		Write-Host "$tool not on PATH yet (TeX Live may still be wiring PATH)"
-	}
+choco install ghostscript -y --no-progress
+
+$gs = Get-ChildItem -Path 'C:\Program Files\gs' -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue |
+	Select-Object -First 1
+if (-not $gs) {
+	throw 'gswin64c.exe not found after Ghostscript install'
 }
 
-if (-not (Get-Command pdftocairo -ErrorAction SilentlyContinue)) {
-	choco install poppler -y --no-progress
+foreach ($dir in @($popplerBin, $rsvgDir, $gs.DirectoryName)) {
+	Add-Content $env:GITHUB_PATH $dir
 }
+$env:PATH = "$popplerBin;$rsvgDir;$($gs.DirectoryName);$env:PATH"
 
+if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
 if (-not (Test-Path "$rsvgDir\rsvg-convert.exe")) { throw "missing $rsvgDir\rsvg-convert.exe" }
+if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
 if (-not (Get-Command pdfcrop -ErrorAction SilentlyContinue)) { throw 'pdfcrop not found after TeX Live install' }
-if (-not (Get-Command gswin64c -ErrorAction SilentlyContinue)) { throw 'gswin64c not found after TeX Live install' }
-if (-not (Get-Command pdftocairo -ErrorAction SilentlyContinue)) { throw 'pdftocairo not found after poppler fallback' }

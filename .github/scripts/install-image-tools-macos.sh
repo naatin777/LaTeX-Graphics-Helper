@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# rsvg-convert is not part of TeX Live; pdfcrop/gs come from scheme-full.
-brew install librsvg
+# pdfcrop from install-texlive; these are not in TeX Live.
+brew install poppler librsvg ghostscript
 
+command -v pdftocairo
 command -v rsvg-convert
+command -v gs

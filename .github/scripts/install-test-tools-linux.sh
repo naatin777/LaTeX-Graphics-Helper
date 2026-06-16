@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# e2e tools: pdfcrop (TeX), gs (pdfcrop backend), pdftocairo/rsvg (not in TeX Live).
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-	texlive-full \
+	texlive-latex-extra \
+	texlive-extra-utils \
+	ghostscript \
+	poppler-utils \
 	librsvg2-bin \
 	xvfb
 
-if ! command -v pdftocairo >/dev/null 2>&1; then
-	sudo DEBIAN_FRONTEND=noninteractive apt-get install -y poppler-utils
-fi
-
 command -v pdfcrop
+command -v gs
 command -v pdftocairo
 command -v rsvg-convert
-command -v gs
