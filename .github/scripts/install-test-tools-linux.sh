@@ -5,6 +5,7 @@ set -euo pipefail
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	texlive-latex-extra \
+	texlive-extra-utils \
 	poppler-utils \
 	librsvg2-bin \
 	xvfb

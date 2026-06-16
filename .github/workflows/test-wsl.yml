@@ -59,7 +59,7 @@ jobs:
               shell: pwsh
               run: |
                   $ErrorActionPreference = 'Stop'
-                  $repo = (wsl wslpath -a "$env:GITHUB_WORKSPACE").Trim()
+                  $repo = (wsl.exe wslpath -u $env:GITHUB_WORKSPACE).Trim()
                   $workspace = (wsl -d "${{ steps.wsl.outputs.distro }}" -- bash -lc "bash '$repo/.github/scripts/wsl-prepare.sh' vscode-test").Trim()
                   "workspace=$workspace" >> $env:GITHUB_OUTPUT
                   "extensionPath=$repo" >> $env:GITHUB_OUTPUT

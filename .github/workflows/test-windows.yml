@@ -30,7 +30,7 @@ jobs:
 
             - uses: zauguin/install-texlive@v4
               with:
-                  scheme: medium
+                  package_file: .github/texlive-packages.txt
 
             - shell: pwsh
               run: .github/scripts/install-image-tools-windows.ps1

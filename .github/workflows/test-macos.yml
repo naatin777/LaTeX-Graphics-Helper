@@ -30,7 +30,7 @@ jobs:
 
             - uses: zauguin/install-texlive@v4
               with:
-                  scheme: medium
+                  package_file: .github/texlive-packages.txt
 
             - run: bash .github/scripts/install-image-tools-macos.sh
               shell: bash
