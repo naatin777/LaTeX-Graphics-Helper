@@ -193,9 +193,19 @@ async function configureCiExecPathsFromEnv(): Promise<void> {
             await setExecPath(key, value);
         }
     }
+
+    const pathExtra = ciToolPaths.pathExtra ?? [];
+    if (pathExtra.length > 0) {
+        const prefix = pathExtra.filter((entry) => entry.length > 0).join(path.delimiter);
+        process.env.PATH = `${prefix}${path.delimiter}${process.env.PATH ?? ''}`;
+    }
 }
 
-function loadCiToolPathsFile(): Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>> {
+function loadCiToolPathsFile(): Partial<
+    Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
+> & {
+    pathExtra?: string[];
+} {
     try {
         const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
         if (!extension) {
@@ -209,7 +219,9 @@ function loadCiToolPathsFile(): Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgC
 
         return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<
             Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
-        >;
+        > & {
+            pathExtra?: string[];
+        };
     } catch {
         return {};
     }

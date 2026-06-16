@@ -45,7 +45,10 @@ if (process.env.GITHUB_PATH) {
 }
 
 fs.mkdirSync('.vscode-test', { recursive: true });
-fs.writeFileSync('.vscode-test/ci-tool-paths.json', JSON.stringify(tools));
+fs.writeFileSync(
+    '.vscode-test/ci-tool-paths.json',
+    JSON.stringify({ ...tools, pathExtra: [path.dirname(gs)] }),
+);
 
 console.log(`pdfcrop=${tools.pdfcrop}`);
 console.log(`pdftocairo=${tools.pdftocairo}`);
