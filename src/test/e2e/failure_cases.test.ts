@@ -88,9 +88,8 @@ suite('Explorer context menu failure e2e Test Suite', () => {
 
             await createCorruptPdf(inputUri);
             await runExplorerContextCommand('latex-graphics-helper.cropPdf', inputUri);
-            await settleCommandQueue(500);
 
-            assert.ok(errorMessagesFromStub(showErrorMessageStub).length > 0);
+            await waitForErrorMessages(showErrorMessageStub, 1);
             await assert.rejects(async () => waitForFile(outputUri, 500));
         } finally {
             await deleteDirectory(directory);
@@ -328,7 +327,9 @@ suite('LaTeX paste failure e2e Test Suite', () => {
                 .getConfiguration('latex-graphics-helper')
                 .update(
                     'outputPath.clipboardImage',
-                    '/definitely/not/writable/${fileBasenameNoExtension}-clip',
+                    process.platform === 'win32'
+                        ? 'C:\\Windows\\System32\\not-writable-${fileBasenameNoExtension}-clip'
+                        : '/definitely/not/writable/${fileBasenameNoExtension}-clip',
                     vscode.ConfigurationTarget.Workspace,
                 );
 

@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import * as vscode from 'vscode';
 
 import type { AppConfig } from '../configuration';
@@ -14,6 +16,13 @@ import type {
 } from '../type';
 import { execFileInWorkspace } from '../utils/exec_file_in_workspace';
 
+/** splitPdf emits `{image-template}.pdf`; pdftocairo needs a plain stem prefix. */
+function pdftocairoOutputPrefix(intermediatePdfPath: string): string {
+    const withoutPdf = intermediatePdfPath.slice(0, -4);
+    const imageExtension = path.extname(withoutPdf);
+    return imageExtension.length > 0 ? withoutPdf.slice(0, -imageExtension.length) : withoutPdf;
+}
+
 export async function convertPdfToPng(
     appConfig: AppConfig,
     inputPath: PdfPath,
@@ -26,23 +35,19 @@ export async function convertPdfToPng(
         workspaceFolder,
         [],
     );
-    const conversionPromises = outputPdfPaths.map(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (intermediatePdfPath: string) => {
+        const outputPrefix = pdftocairoOutputPrefix(intermediatePdfPath);
         await execFileInWorkspace(
             appConfig.execPathPdftocairo,
-            [path, path.slice(0, -4), '-png', '-transp', '-singlefile'],
+            [intermediatePdfPath, outputPrefix, '-png', '-transp', '-singlefile'],
             workspaceFolder,
         );
-        await vscode.workspace.fs.rename(
-            vscode.Uri.file(path.slice(0, -4) + '.png'),
-            vscode.Uri.file(path.slice(0, -4)),
-            { overwrite: true },
-        );
-        await vscode.workspace.fs.delete(vscode.Uri.file(path), {
+        await vscode.workspace.fs.delete(vscode.Uri.file(intermediatePdfPath), {
             recursive: true,
             useTrash: false,
         });
 
-        return path.slice(0, -4) as PngPath;
+        return `${outputPrefix}.png` as PngPath;
     });
 
     return Promise.all(conversionPromises);
@@ -60,23 +65,25 @@ export async function convertPdfToJpeg(
         workspaceFolder,
         [],
     );
-    const conversionPromises = outputPdfPaths.map(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (intermediatePdfPath: string) => {
+        const outputPrefix = pdftocairoOutputPrefix(intermediatePdfPath);
         await execFileInWorkspace(
             appConfig.execPathPdftocairo,
-            [path, path.slice(0, -4), '-jpeg', '-singlefile'],
+            [intermediatePdfPath, outputPrefix, '-jpeg', '-singlefile'],
             workspaceFolder,
         );
+        const jpegPath = `${outputPrefix}.jpeg`;
         await vscode.workspace.fs.rename(
-            vscode.Uri.file(path.slice(0, -4) + '.jpg'),
-            vscode.Uri.file(path.slice(0, -4)),
+            vscode.Uri.file(`${outputPrefix}.jpg`),
+            vscode.Uri.file(jpegPath),
             { overwrite: true },
         );
-        await vscode.workspace.fs.delete(vscode.Uri.file(path), {
+        await vscode.workspace.fs.delete(vscode.Uri.file(intermediatePdfPath), {
             recursive: true,
             useTrash: false,
         });
 
-        return path.slice(0, -4) as JpegPath;
+        return jpegPath as JpegPath;
     });
 
     return Promise.all(conversionPromises);
@@ -94,17 +101,18 @@ export async function convertPdfToSvg(
         workspaceFolder,
         [],
     );
-    const conversionPromises = outputPdfPaths.map(async (path: string) => {
+    const conversionPromises = outputPdfPaths.map(async (intermediatePdfPath: string) => {
+        const outputPrefix = pdftocairoOutputPrefix(intermediatePdfPath);
         await execFileInWorkspace(
             appConfig.execPathPdftocairo,
-            [path, path.slice(0, -4), '-svg'],
+            [intermediatePdfPath, outputPrefix, '-svg'],
             workspaceFolder,
         );
-        await vscode.workspace.fs.delete(vscode.Uri.file(path), {
+        await vscode.workspace.fs.delete(vscode.Uri.file(intermediatePdfPath), {
             recursive: true,
             useTrash: false,
         });
-        return path.slice(0, -4) as SvgPath;
+        return `${outputPrefix}.svg` as SvgPath;
     });
 
     return Promise.all(conversionPromises);
