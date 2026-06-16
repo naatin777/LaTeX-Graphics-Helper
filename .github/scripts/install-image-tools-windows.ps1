@@ -15,18 +15,26 @@ if (-not $pdftocairo) {
 	throw "pdftocairo.exe not found under $popplerRoot"
 }
 $popplerBin = $pdftocairo.DirectoryName
-Add-Content $env:GITHUB_PATH $popplerBin
-$env:PATH = "$popplerBin;$env:PATH"
 
 $rsvgDir = "$env:RUNNER_TEMP\rsvg"
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 Invoke-WebRequest `
 	'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' `
 	-OutFile "$rsvgDir\rsvg-convert.exe"
-Add-Content $env:GITHUB_PATH $rsvgDir
 
 choco install ghostscript -y --no-progress
 
-Get-Command pdftocairo.exe
-Get-Command rsvg-convert.exe
-Get-Command gswin64c.exe
+$gs = Get-ChildItem -Path 'C:\Program Files\gs' -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue |
+	Select-Object -First 1
+if (-not $gs) {
+	throw 'gswin64c.exe not found after Ghostscript install'
+}
+
+foreach ($dir in @($popplerBin, $rsvgDir, $gs.DirectoryName)) {
+	Add-Content $env:GITHUB_PATH $dir
+}
+$env:PATH = "$popplerBin;$rsvgDir;$($gs.DirectoryName);$env:PATH"
+
+if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
+if (-not (Test-Path "$rsvgDir\rsvg-convert.exe")) { throw "missing $rsvgDir\rsvg-convert.exe" }
+if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
