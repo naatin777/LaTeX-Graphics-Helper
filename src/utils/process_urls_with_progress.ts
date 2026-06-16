@@ -14,7 +14,8 @@ export async function processUrisWithProgress(
 
     logger.info(`processing ${uris.length} file(s)`);
 
-    const promises = uris.map(async (uri) => {
+    // ponytail: serial batch — parallel pdfcrop/gs overwhelmed macOS CI extension host
+    for (const uri of uris) {
         try {
             const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
             if (workspaceFolder) {
@@ -35,8 +36,7 @@ export async function processUrisWithProgress(
                 message: `${completedCount}/${uris.length}: ${fileName}`,
             });
         }
-    });
+    }
 
-    await Promise.all(promises);
     return errors;
 }

@@ -33,5 +33,6 @@ export default defineConfig({
 	workspaceFolder,
 	mocha: {
 		timeout: 60000,
+		parallel: false,
 	},
 });
