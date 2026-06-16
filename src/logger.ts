@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 
 import type { LogLevel } from './type';
 
-class Logger {
+export class Logger {
     private readonly channel: vscode.OutputChannel;
+    private readonly lines: string[] = [];
 
     constructor() {
         this.channel = vscode.window.createOutputChannel('LaTeX Graphics Helper');
@@ -23,7 +24,13 @@ class Logger {
 
     private log(type: LogLevel, message: string): void {
         const time = new Date().toLocaleTimeString();
-        this.channel.appendLine(`[${time}] ${type}: ${message}`);
+        const line = `[${time}] ${type}: ${message}`;
+        this.lines.push(line);
+        this.channel.appendLine(line);
+    }
+
+    public getLines(): readonly string[] {
+        return this.lines;
     }
 
     public show(): void {
@@ -31,6 +38,7 @@ class Logger {
     }
 
     public clear(): void {
+        this.lines.length = 0;
         this.channel.clear();
     }
 }

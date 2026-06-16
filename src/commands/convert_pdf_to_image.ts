@@ -5,6 +5,7 @@ import { getAppConfig } from '../configuration';
 import { convertPdfToJpeg, convertPdfToPng, convertPdfToSvg } from '../core/convert_pdf_to_image';
 import { localeMap } from '../locale_map';
 import type { PdfPath } from '../type';
+import { reportNoFilesSelected } from '../utils/no_files_selected';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertPdfToPngCommand(
@@ -13,7 +14,7 @@ export function runConvertPdfToPngCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert PDF to PNG');
         return;
     }
 
@@ -49,7 +50,7 @@ export function runConvertPdfToJpegCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert PDF to JPEG');
         return;
     }
 
@@ -85,7 +86,7 @@ export function runConvertPdfToSvgCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert PDF to SVG');
         return;
     }
 

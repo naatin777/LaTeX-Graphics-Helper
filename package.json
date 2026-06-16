@@ -39,6 +39,8 @@
         "check:fix": "pnpm run lint:fix && pnpm run format:fix",
         "clean": "rm -rf out",
         "test": "pnpm run compile && vscode-test",
+        "test:playwright": "pnpm run compile && playwright test",
+        "test:all": "pnpm run test && pnpm run test:playwright",
         "package": "pnpm run compile && vsce package",
         "release:patch": "pnpm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
         "release:minor": "pnpm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
@@ -51,6 +53,7 @@
         "xml2js": "^0.6.2"
     },
     "devDependencies": {
+        "@playwright/test": "^1.52.0",
         "@types/mocha": "^10.0.10",
         "@types/node": "^22.18.3",
         "@types/sinon": "^21.0.1",
@@ -261,6 +264,11 @@
                     "default": "rsvg-convert",
                     "description": "Path to the rsvg-convert executable."
                 },
+                "latex-graphics-helper.execPath.gs": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the Ghostscript executable used by pdfcrop (gs on macOS/Linux, gswin64c on Windows). If not specified, the default command name for your operating system will be used."
+                },
                 "latex-graphics-helper.outputPath.cropPdf": {
                     "type": "string",
                     "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
@@ -310,6 +318,16 @@
                     "type": "string",
                     "default": "${fileDirname}/${dateNow}",
                     "description": "Output file name when saving clipboard images to a file. The file extension is added automatically."
+                },
+                "latex-graphics-helper.pasteClipboardImageAs": {
+                    "type": "string",
+                    "enum": [
+                        "ask",
+                        "pdf",
+                        "image"
+                    ],
+                    "default": "ask",
+                    "description": "How to paste clipboard images into LaTeX. ask shows a picker; pdf and image skip the picker."
                 },
                 "latex-graphics-helper.figure.placementOptions": {
                     "type": "array",

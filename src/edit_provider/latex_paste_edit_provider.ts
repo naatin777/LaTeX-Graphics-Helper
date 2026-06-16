@@ -7,10 +7,13 @@ import { getAppConfig } from '../configuration';
 import { CLIPBOARD_IMAGE_TYPES } from '../constants';
 import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { localeMap } from '../locale_map';
+import { logger } from '../logger';
 import type { BitmapPath, FileData, Path, PdfPath, PdfTemplatePath } from '../type';
 import { escapeLatex, escapeLatexLabel } from '../utils/escape';
 import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 import { LatexSnippet } from '../utils/latex_snippet';
+
+type PasteClipboardFormat = 'pdf' | 'image';
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
     async provideDocumentPasteEdits(
@@ -22,6 +25,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         appConfig: AppConfig = getAppConfig(),
     ): Promise<vscode.DocumentPasteEdit[] | undefined> {
         token.onCancellationRequested(() => {
+            logger.warn('clipboard paste cancelled');
             vscode.window.showWarningMessage(localeMap('cancelled'));
         });
 
@@ -30,77 +34,61 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             return;
         }
 
-        const pickedItem = await vscode.window.showQuickPick([
-            {
-                label: localeMap('pasteAsPdfLabel'),
-                detail: localeMap('pasteAsPdfDetail'),
-                description: `(${localeMap('builtIn')})`,
-            },
-            {
-                label: localeMap('pasteAsImageLabel'),
-                detail: localeMap('pasteAsImageDetail'),
-                description: `(${localeMap('builtIn')})`,
-            },
-        ]);
-        if (!pickedItem) {
-            return;
-        }
-
         const uri = document.uri;
         const fileDirname = path.dirname(uri.fsPath);
-        const outputTemplatePath = appConfig.outputPathClipboardImage;
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
 
         if (!workspaceFolder) {
+            logger.warn('clipboard paste skipped: document is outside workspace');
             return;
         }
 
+        const format = await resolvePasteClipboardFormat(appConfig);
+        if (!format) {
+            logger.info('clipboard paste cancelled: no format selected');
+            return;
+        }
+
+        const outputTemplatePath = appConfig.outputPathClipboardImage;
         const outputPath = generatePathFromTemplate(
             outputTemplatePath,
             uri.fsPath as PdfPath,
             workspaceFolder,
         );
 
+        logger.info(`clipboard paste as ${format}: ${outputPath}`);
+
         try {
-            if (pickedItem.description === `(${localeMap('builtIn')})`) {
-                if (pickedItem.label === localeMap('pasteAsPdfLabel')) {
-                    const pdfPath = await this.handlePdfPaste(outputPath, data, workspaceFolder);
-                    const relativeFilePath = path.relative(fileDirname, pdfPath);
-                    const basename = path.basename(relativeFilePath, '.pdf');
-                    const snippet = this.createSingleFileSnippet(
-                        appConfig,
-                        basename,
-                        relativeFilePath,
+            if (format === 'pdf') {
+                const pdfPath = await this.handlePdfPaste(outputPath, data, workspaceFolder);
+                const relativeFilePath = path.relative(fileDirname, pdfPath);
+                const basename = path.basename(relativeFilePath, '.pdf');
+                const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
+                if (snippet) {
+                    const edit = new vscode.DocumentPasteEdit(
+                        snippet,
+                        localeMap('pasteAsPdfLabel'),
+                        vscode.DocumentDropOrPasteEditKind.Empty,
                     );
-                    if (snippet) {
-                        const edit = new vscode.DocumentPasteEdit(
-                            snippet,
-                            localeMap('pasteAsPdfLabel'),
-                            vscode.DocumentDropOrPasteEditKind.Empty,
-                        );
-                        return [edit];
-                    }
-                } else if (pickedItem.label === localeMap('pasteAsImageLabel')) {
-                    const outputPathWithExt = await this.handleImagePaste(outputPath, data);
-                    const relativeFilePath = path.relative(fileDirname, outputPathWithExt);
-                    const basename = path.basename(relativeFilePath, `.${data.type.ext}`);
-                    const snippet = this.createSingleFileSnippet(
-                        appConfig,
-                        basename,
-                        relativeFilePath,
+                    return [edit];
+                }
+            } else {
+                const outputPathWithExt = await this.handleImagePaste(outputPath, data);
+                const relativeFilePath = path.relative(fileDirname, outputPathWithExt);
+                const basename = path.basename(relativeFilePath, `.${data.type.ext}`);
+                const snippet = this.createSingleFileSnippet(appConfig, basename, relativeFilePath);
+                if (snippet) {
+                    const edit = new vscode.DocumentPasteEdit(
+                        snippet,
+                        localeMap('pasteAsImageLabel'),
+                        vscode.DocumentDropOrPasteEditKind.Empty,
                     );
-                    if (snippet) {
-                        const edit = new vscode.DocumentPasteEdit(
-                            snippet,
-                            localeMap('pasteAsImageLabel'),
-                            vscode.DocumentDropOrPasteEditKind.Empty,
-                        );
-                        return [edit];
-                    }
+                    return [edit];
                 }
             }
         } catch (e) {
             if (e instanceof Error) {
+                logger.error(`clipboard paste failed: ${e.message}`);
                 vscode.window.showErrorMessage(e.message);
             }
         }
@@ -197,4 +185,40 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
         return latexSnippet.snippet;
     }
+}
+
+async function resolvePasteClipboardFormat(
+    appConfig: AppConfig,
+): Promise<PasteClipboardFormat | undefined> {
+    const mode = appConfig.pasteClipboardImageAs;
+    if (mode === 'pdf') {
+        return 'pdf';
+    }
+    if (mode === 'image') {
+        return 'image';
+    }
+
+    logger.info('showing clipboard paste format picker');
+    const pickedItem = await vscode.window.showQuickPick([
+        {
+            label: localeMap('pasteAsPdfLabel'),
+            detail: localeMap('pasteAsPdfDetail'),
+            description: `(${localeMap('builtIn')})`,
+        },
+        {
+            label: localeMap('pasteAsImageLabel'),
+            detail: localeMap('pasteAsImageDetail'),
+            description: `(${localeMap('builtIn')})`,
+        },
+    ]);
+    if (!pickedItem) {
+        return undefined;
+    }
+    if (pickedItem.label === localeMap('pasteAsPdfLabel')) {
+        return 'pdf';
+    }
+    if (pickedItem.label === localeMap('pasteAsImageLabel')) {
+        return 'image';
+    }
+    return undefined;
 }

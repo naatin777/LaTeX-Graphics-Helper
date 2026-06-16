@@ -1,0 +1,42 @@
+name: Test (macOS)
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+concurrency:
+    group: test-macos-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    vscode-test:
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.28.2
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - uses: zauguin/install-texlive@v4
+              with:
+                  package_file: .github/texlive-packages.txt
+
+            - run: bash .github/scripts/install-image-tools-macos.sh
+              shell: bash
+
+            - run: node .github/scripts/export-tool-paths.mjs
+              shell: bash
+
+            - run: pnpm run test
+              shell: bash

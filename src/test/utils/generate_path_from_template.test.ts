@@ -8,6 +8,10 @@ import * as vscode from 'vscode';
 import type { Path, TemplatePath } from '../../type';
 import { generatePathFromTemplate } from '../../utils/generate_path_from_template';
 
+function normalizePath(value: string): string {
+    return value.replace(/\\/g, '/');
+}
+
 suite('generate_path_from_template Test Suite', () => {
     const sourcePath = '/path/to/my/file.pdf' as Path;
     const workspaceFolder: vscode.WorkspaceFolder = {
@@ -30,8 +34,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = '${workspaceFolder}/output.pdf' as TemplatePath;
         const expected = path.join(workspaceFolder.uri.fsPath, 'output.pdf');
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -39,8 +43,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = '${workspaceFolderBasename}/output.pdf' as TemplatePath;
         const expected = path.join(workspaceFolder.name, 'output.pdf');
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -48,8 +52,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = '${file}.bak' as TemplatePath;
         const expected = `${sourcePath}.bak`;
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -57,8 +61,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = 'bak/${relativeFile}' as TemplatePath;
         const expected = path.join('bak', path.relative(workspaceFolder.uri.fsPath, sourcePath));
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -69,8 +73,8 @@ suite('generate_path_from_template Test Suite', () => {
             'output.pdf',
         );
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -78,8 +82,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = 'pre_${fileBasename}' as TemplatePath;
         const expected = `pre_${path.basename(sourcePath)}`;
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -87,8 +91,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = '${fileBasenameNoExtension}.txt' as TemplatePath;
         const expected = `${path.basename(sourcePath, path.extname(sourcePath))}.txt`;
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -96,8 +100,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = '${fileDirname}/newfile.txt' as TemplatePath;
         const expected = path.join(path.dirname(sourcePath), 'newfile.txt');
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -105,8 +109,8 @@ suite('generate_path_from_template Test Suite', () => {
         const template = 'file${fileExtname}' as TemplatePath;
         const expected = `file${path.extname(sourcePath)}`;
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder)),
+            normalizePath(expected),
         );
     });
 
@@ -115,7 +119,7 @@ suite('generate_path_from_template Test Suite', () => {
         const page = '3';
         const expected = `page-${page}.pdf`;
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder, page),
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder, page)),
             expected,
         );
     });
@@ -136,8 +140,8 @@ suite('generate_path_from_template Test Suite', () => {
             `${path.basename(sourcePath, path.extname(sourcePath))}-${page}.png`,
         );
         assert.strictEqual(
-            generatePathFromTemplate(template, sourcePath, workspaceFolder, page),
-            expected,
+            normalizePath(generatePathFromTemplate(template, sourcePath, workspaceFolder, page)),
+            normalizePath(expected),
         );
     });
 
@@ -151,46 +155,56 @@ suite('generate_path_from_template Test Suite', () => {
         const page = 'tab';
 
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${workspaceFolder}/output.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${workspaceFolder}/output.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                ),
             ),
-            path.join('/workspace', 'output.pdf'),
+            normalizePath(path.join('/workspace', 'output.pdf')),
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${workspaceFolderBasename}/output.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${workspaceFolderBasename}/output.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                ),
             ),
-            path.join('my-workspace', 'output.pdf'),
+            normalizePath(path.join('my-workspace', 'output.pdf')),
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${file}.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${file}.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
             '/path/to/my/file.pdf.pdf',
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${relativeFile}.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${relativeFile}.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
             '../path/to/my/file.pdf.pdf',
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${relativeFileDirname}/output.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${relativeFileDirname}/output.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                ),
             ),
-            path.join('../path/to/my', 'output.pdf'),
+            normalizePath(path.join('../path/to/my', 'output.pdf')),
         );
         assert.strictEqual(
             generatePathFromTemplate(
@@ -211,13 +225,15 @@ suite('generate_path_from_template Test Suite', () => {
             'file.png',
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${fileDirname}/output.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${fileDirname}/output.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
-            path.join('/path/to/my', 'output.pdf'),
+            normalizePath(path.join('/path/to/my', 'output.pdf')),
         );
         assert.strictEqual(
             generatePathFromTemplate(
@@ -247,13 +263,15 @@ suite('generate_path_from_template Test Suite', () => {
             `output-${1755592839354}.pdf`,
         );
         assert.strictEqual(
-            generatePathFromTemplate(
-                '${fileDirname}/${fileBasenameNoExtension}-crop.pdf' as TemplatePath,
-                inputPath as Path,
-                anotherWorkspaceFolder,
-                page,
+            normalizePath(
+                generatePathFromTemplate(
+                    '${fileDirname}/${fileBasenameNoExtension}-crop.pdf' as TemplatePath,
+                    inputPath as Path,
+                    anotherWorkspaceFolder,
+                    page,
+                ),
             ),
-            path.join('/path/to/my', 'file-crop.pdf'),
+            normalizePath(path.join('/path/to/my', 'file-crop.pdf')),
         );
         assert.strictEqual(
             generatePathFromTemplate(

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { localeMap } from '../locale_map';
+import { logger } from '../logger';
 
 export async function processUrisWithProgress(
     progress: vscode.Progress<{ message?: string; increment?: number }>,
@@ -11,7 +12,10 @@ export async function processUrisWithProgress(
     const increment = 100 / uris.length;
     let completedCount = 0;
 
-    const promises = uris.map(async (uri) => {
+    logger.info(`processing ${uris.length} file(s)`);
+
+    // ponytail: serial batch — parallel pdfcrop/gs overwhelmed macOS CI extension host
+    for (const uri of uris) {
         try {
             const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
             if (workspaceFolder) {
@@ -21,6 +25,7 @@ export async function processUrisWithProgress(
             }
         } catch (error) {
             if (error instanceof Error) {
+                logger.error(`failed ${uri.fsPath}: ${error.message}`);
                 errors.push({ uri, reason: error });
             }
         } finally {
@@ -31,8 +36,7 @@ export async function processUrisWithProgress(
                 message: `${completedCount}/${uris.length}: ${fileName}`,
             });
         }
-    });
+    }
 
-    await Promise.all(promises);
     return errors;
 }

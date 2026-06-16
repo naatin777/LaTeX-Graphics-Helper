@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import type {
     ExecutablePath,
     JpegTemplatePath,
+    PasteClipboardImageAs,
     PdfTemplatePath,
     PngTemplatePath,
     SvgTemplatePath,
@@ -16,6 +17,7 @@ export interface AppConfig {
     execPathDrawio: ExecutablePath;
     execPathPdftocairo: ExecutablePath;
     execPathRsvgConvert: ExecutablePath;
+    execPathGs: ExecutablePath;
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;
@@ -26,6 +28,7 @@ export interface AppConfig {
     outputPathConvertJpegToPdf: PdfTemplatePath;
     outputPathConvertSvgToPdf: PdfTemplatePath;
     outputPathClipboardImage: TemplatePath;
+    pasteClipboardImageAs: PasteClipboardImageAs;
     figurePlacementOptions: string[];
     figureAlignmentOptions: string[];
     figureGraphicsOptions: string[];
@@ -40,6 +43,7 @@ export function getAppConfig(): AppConfig {
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
         execPathRsvgConvert: getExecPathRsvgConvert(),
+        execPathGs: getExecPathGs(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -50,6 +54,7 @@ export function getAppConfig(): AppConfig {
         outputPathConvertJpegToPdf: getOutputPathConvertJpegToPdf(),
         outputPathConvertSvgToPdf: getOutputPathConvertSvgToPdf(),
         outputPathClipboardImage: getOutputPathClipboardImage(),
+        pasteClipboardImageAs: getPasteClipboardImageAs(),
         figurePlacementOptions: getFigurePlacementOptions(),
         figureAlignmentOptions: getFigureAlignmentOptions(),
         figureGraphicsOptions: getFigureGraphicsOptions(),
@@ -90,6 +95,15 @@ function getExecPathRsvgConvert(): ExecutablePath {
         return rsvgCommand as ExecutablePath;
     }
     return (os.platform() === 'win32' ? 'rsvg-convert.exe' : 'rsvg-convert') as ExecutablePath;
+}
+
+function getExecPathGs(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const gsCommand = configuration.get<string>('execPath.gs');
+    if (gsCommand && gsCommand.length > 0) {
+        return gsCommand as ExecutablePath;
+    }
+    return (os.platform() === 'win32' ? 'gswin64c' : 'gs') as ExecutablePath;
 }
 
 function getOutputPathCropPdf(): PdfTemplatePath {
@@ -140,6 +154,11 @@ function getOutputPathConvertSvgToPdf(): PdfTemplatePath {
 function getOutputPathClipboardImage(): TemplatePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.clipboardImage') as TemplatePath;
+}
+
+function getPasteClipboardImageAs(): PasteClipboardImageAs {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<PasteClipboardImageAs>('pasteClipboardImageAs') ?? 'ask';
 }
 
 function getFigurePlacementOptions(): string[] {

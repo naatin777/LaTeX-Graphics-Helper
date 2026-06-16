@@ -6,6 +6,7 @@ import { convertBitmapToPdf } from '../core/convert_bitmap_to_pdf';
 import { convertSvgToPdf } from '../core/convert_svg_to_pdf';
 import { localeMap } from '../locale_map';
 import type { JpegPath, PngPath, SvgPath } from '../type';
+import { reportNoFilesSelected } from '../utils/no_files_selected';
 import { processUrisWithProgress } from '../utils/process_urls_with_progress';
 
 export function runConvertPngToPdfCommand(
@@ -14,7 +15,7 @@ export function runConvertPngToPdfCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert PNG to PDF');
         return;
     }
 
@@ -50,7 +51,7 @@ export function runConvertJpegToPdfCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert JPEG to PDF');
         return;
     }
 
@@ -86,7 +87,7 @@ export function runConvertSvgToPdfCommand(
     appConfig: AppConfig = getAppConfig(),
 ) {
     if (!uri || !uris || uris.length === 0) {
-        vscode.window.showErrorMessage(localeMap('noFilesSelected'));
+        reportNoFilesSelected('convert SVG to PDF');
         return;
     }
 
