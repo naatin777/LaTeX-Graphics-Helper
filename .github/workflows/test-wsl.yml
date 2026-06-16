@@ -58,7 +58,7 @@ jobs:
               name: Prepare WSL workspace and tools
               shell: bash
               run: |
-                  repo=$(wsl wslpath -u "$GITHUB_WORKSPACE")
+                  repo=$(bash .github/scripts/wsl-repo-path.sh)
                   workspace=$(wsl -d "${{ steps.wsl.outputs.distro }}" -- bash -lc "bash '$repo/.github/scripts/wsl-prepare.sh' vscode-test")
                   echo "workspace=$workspace" >> "$GITHUB_OUTPUT"
                   echo "extensionPath=$repo" >> "$GITHUB_OUTPUT"
