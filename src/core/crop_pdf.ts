@@ -14,6 +14,11 @@ export async function cropPdf(
 ): Promise<PdfPath> {
     const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
     await createFolder(outputPath);
-    await execFileInWorkspace(appConfig.execPathPdfcrop, [inputPath, outputPath], workspaceFolder);
+    const gsPath = process.env.LGH_GS;
+    const args =
+        gsPath && gsPath.length > 0
+            ? (['--gscmd', gsPath, inputPath, outputPath] as const)
+            : ([inputPath, outputPath] as const);
+    await execFileInWorkspace(appConfig.execPathPdfcrop, [...args], workspaceFolder);
     return outputPath as PdfPath;
 }

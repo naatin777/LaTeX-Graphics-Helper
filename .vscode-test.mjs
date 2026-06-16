@@ -28,9 +28,18 @@ if (fs.existsSync(fixturesSource)) {
 	copyDirectory(fixturesSource, workspaceFolder);
 }
 
+const ciEnvKeys = ['LGH_PDFCROP', 'LGH_PDFTOCAIRO', 'LGH_RSVG_CONVERT', 'LGH_GS', 'LGH_PATH_EXTRA'];
+const env = Object.fromEntries(
+	ciEnvKeys.flatMap((key) => (process.env[key] ? [[key, process.env[key]]] : [])),
+);
+if (process.env.LGH_PATH_EXTRA) {
+	env.PATH = `${process.env.LGH_PATH_EXTRA}${path.delimiter}${process.env.PATH ?? ''}`;
+}
+
 export default defineConfig({
 	files: 'out/test/**/*.test.js',
 	workspaceFolder,
+	env,
 	mocha: {
 		timeout: 60000,
 		parallel: false,

@@ -182,6 +182,7 @@ export async function restoreDefaultExecPaths(): Promise<void> {
 
 function collectCiPathExtras(
     ciToolPaths: Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>> & {
+        gs?: string;
         pathExtra?: string[];
     },
 ): string[] {
@@ -203,6 +204,7 @@ function collectCiPathExtras(
         ciToolPaths.pdfcrop ?? process.env.LGH_PDFCROP,
         ciToolPaths.pdftocairo ?? process.env.LGH_PDFTOCAIRO,
         ciToolPaths.rsvgConvert ?? process.env.LGH_RSVG_CONVERT,
+        ciToolPaths.gs ?? process.env.LGH_GS,
     ]) {
         if (!toolPath || toolPath.length === 0) {
             continue;
@@ -236,11 +238,17 @@ async function configureCiExecPathsFromEnv(): Promise<void> {
         const prefix = pathExtra.join(path.delimiter);
         process.env.PATH = `${prefix}${path.delimiter}${process.env.PATH ?? ''}`;
     }
+
+    const gsPath = ciToolPaths.gs ?? process.env.LGH_GS;
+    if (gsPath && gsPath.length > 0) {
+        process.env.LGH_GS = gsPath;
+    }
 }
 
 function loadCiToolPathsFile(): Partial<
     Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
 > & {
+    gs?: string;
     pathExtra?: string[];
 } {
     try {
@@ -257,6 +265,7 @@ function loadCiToolPathsFile(): Partial<
         return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<
             Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
         > & {
+            gs?: string;
             pathExtra?: string[];
         };
     } catch {

@@ -49,6 +49,7 @@ if (process.env.GITHUB_ENV) {
             `LGH_PDFCROP=${tools.pdfcrop}`,
             `LGH_PDFTOCAIRO=${tools.pdftocairo}`,
             `LGH_RSVG_CONVERT=${tools.rsvgConvert}`,
+            `LGH_GS=${gs}`,
             `LGH_PATH_EXTRA=${pathExtra.join(path.delimiter)}`,
         ].join('\n') + '\n',
     );
@@ -63,7 +64,7 @@ for (const directory of pathExtra) {
 fs.mkdirSync('.vscode-test', { recursive: true });
 fs.writeFileSync(
     '.vscode-test/ci-tool-paths.json',
-    JSON.stringify({ ...tools, pathExtra }),
+    JSON.stringify({ ...tools, gs, pathExtra }),
 );
 
 console.log(`pdfcrop=${tools.pdfcrop}`);

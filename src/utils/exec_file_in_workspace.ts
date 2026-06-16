@@ -8,23 +8,39 @@ import type * as vscode from 'vscode';
 
 import { logger } from '../logger';
 
-export async function execFileInWorkspace(
-    command: string,
-    args: string[],
-    workspaceFolder: vscode.WorkspaceFolder,
-): Promise<string> {
+function workspaceExecEnv(command: string): NodeJS.ProcessEnv {
     const commandDirectory = path.dirname(command);
     const pathPrefix =
         commandDirectory.length > 0 && commandDirectory !== '.' && fs.existsSync(commandDirectory)
             ? `${commandDirectory}${path.delimiter}`
             : '';
 
+    const pathExtra = (process.env.LGH_PATH_EXTRA ?? '')
+        .split(path.delimiter)
+        .filter((entry) => entry.length > 0);
+
+    const pathSegments = [...pathExtra];
+    if (pathPrefix.length > 0) {
+        pathSegments.push(pathPrefix.slice(0, -1));
+    }
+    if (process.env.PATH && process.env.PATH.length > 0) {
+        pathSegments.push(process.env.PATH);
+    }
+
+    return {
+        ...process.env,
+        PATH: pathSegments.join(path.delimiter),
+    };
+}
+
+export async function execFileInWorkspace(
+    command: string,
+    args: string[],
+    workspaceFolder: vscode.WorkspaceFolder,
+): Promise<string> {
     const options: ExecFileOptions = {
         cwd: workspaceFolder.uri.fsPath,
-        env: {
-            ...process.env,
-            PATH: `${pathPrefix}${process.env.PATH ?? ''}`,
-        },
+        env: workspaceExecEnv(command),
     };
 
     logger.info(`exec: ${command} ${args.join(' ')}`);
