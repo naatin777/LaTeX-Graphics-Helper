@@ -25,6 +25,7 @@ import {
     runExplorerContextCommand,
     setExecPath,
     settleCommandQueue,
+    waitForErrorMessages,
     waitForFile,
 } from './helpers';
 
@@ -136,10 +137,10 @@ suite('Explorer context menu failure e2e Test Suite', () => {
                 goodUri,
                 badUri,
             ]);
-            await settleCommandQueue(800);
 
             await waitForFile(goodOutputUri);
-            assert.strictEqual(errorMessagesFromStub(showErrorMessageStub).length, 1);
+            const messages = await waitForErrorMessages(showErrorMessageStub, 1);
+            assert.strictEqual(messages.length, 1);
         } finally {
             await deleteDirectory(directory);
         }

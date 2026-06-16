@@ -305,6 +305,26 @@ export function errorMessagesFromStub(stub: {
     return stub.getCalls().map((call) => String(call.args[0]));
 }
 
+export async function waitForErrorMessages(
+    stub: { getCalls: () => Array<{ args: unknown[] }> },
+    count: number,
+    timeoutMs = 30000,
+): Promise<string[]> {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+        const messages = errorMessagesFromStub(stub);
+        if (messages.length >= count) {
+            return messages;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    assert.fail(
+        `Timed out waiting for ${count} error message(s), got ${errorMessagesFromStub(stub).length}`,
+    );
+}
+
 export async function createOutsideWorkspaceDirectory(name: string): Promise<{
     directoryUri: vscode.Uri;
     cleanup: () => Promise<void>;
