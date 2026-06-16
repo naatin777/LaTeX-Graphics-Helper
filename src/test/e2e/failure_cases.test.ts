@@ -69,7 +69,6 @@ suite('Explorer context menu failure e2e Test Suite', () => {
                 `Expected ENOENT/spawn in: ${messages.join(' | ')}`,
             );
             assert.ok(loggerContains('failed'));
-            assert.ok(loggerContains('exec failed'));
             await assert.rejects(async () => waitForFile(outputUri, 500));
         } finally {
             await deleteDirectory(directory);
@@ -323,13 +322,14 @@ suite('LaTeX paste failure e2e Test Suite', () => {
                 undefined,
             );
 
+            const blockerUri = vscode.Uri.joinPath(directory, 'blocker');
+            await vscode.workspace.fs.writeFile(blockerUri, Buffer.alloc(0));
+
             await vscode.workspace
                 .getConfiguration('latex-graphics-helper')
                 .update(
                     'outputPath.clipboardImage',
-                    process.platform === 'win32'
-                        ? 'C:\\Windows\\System32\\not-writable-${fileBasenameNoExtension}-clip'
-                        : '/definitely/not/writable/${fileBasenameNoExtension}-clip',
+                    '${fileDirname}/blocker/sub/${fileBasenameNoExtension}-clip',
                     vscode.ConfigurationTarget.Workspace,
                 );
 

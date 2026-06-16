@@ -21,15 +21,13 @@ suite('exec_file_in_workspace Test Suite', () => {
         assert.strictEqual(stdout.trim(), expectedStdout);
     });
 
-    test('should throw an error if stderr is not empty', async () => {
+    test('should complete when stderr is non-empty but exit code is zero', async () => {
         const command = 'node';
-        const args = ['-e', 'console.error("command not found")'];
-        const expectedStderr = 'command not found';
+        const args = ['-e', 'console.error("warning only")'];
 
-        await assert.rejects(execFileInWorkspace(command, args, workspaceFolder), (err: Error) => {
-            assert.ok(err.message.includes(expectedStderr));
-            return true;
-        });
+        const stdout = await execFileInWorkspace(command, args, workspaceFolder);
+
+        assert.strictEqual(stdout, '');
     });
 
     test('should throw an error if execFile returns an error', async () => {

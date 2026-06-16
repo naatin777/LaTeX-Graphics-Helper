@@ -48,10 +48,9 @@ export async function execFileInWorkspace(
     const execFileAsync = promisify(execFile);
     const result = await execFileAsync(command, args, options);
 
-    if (result.stderr) {
-        const message = result.stderr.toString();
-        logger.error(`exec failed: ${command} — ${message}`);
-        throw new Error(message);
+    const stderr = result.stderr?.toString().trim();
+    if (stderr) {
+        logger.warn(`exec stderr: ${command} — ${stderr}`);
     }
 
     return result.stdout.toString();
