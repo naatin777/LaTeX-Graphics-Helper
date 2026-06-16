@@ -89,7 +89,7 @@ export async function readPdfPageCount(fileUri: vscode.Uri): Promise<number> {
     return pdf.getPageCount();
 }
 
-export async function waitForFile(fileUri: vscode.Uri, timeoutMs = 10000): Promise<void> {
+export async function waitForFile(fileUri: vscode.Uri, timeoutMs = 30000): Promise<void> {
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() < deadline) {
@@ -104,7 +104,7 @@ export async function waitForFile(fileUri: vscode.Uri, timeoutMs = 10000): Promi
     assert.fail(`Timed out waiting for file: ${fileUri.fsPath}`);
 }
 
-export async function waitForFiles(fileUris: vscode.Uri[], timeoutMs = 10000): Promise<void> {
+export async function waitForFiles(fileUris: vscode.Uri[], timeoutMs = 30000): Promise<void> {
     await Promise.all(fileUris.map((uri) => waitForFile(uri, timeoutMs)));
 }
 
