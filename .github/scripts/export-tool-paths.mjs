@@ -15,6 +15,17 @@ function resolveTool(name) {
     }
 }
 
+function toolBinDirs(...tools) {
+    return [
+        ...new Set(
+            tools
+                .filter(Boolean)
+                .map((toolPath) => path.dirname(toolPath))
+                .filter((directory) => directory.length > 0 && directory !== '.'),
+        ),
+    ];
+}
+
 const gsName = process.platform === 'win32' ? 'gswin64c' : 'gs';
 const gs = resolveTool(gsName);
 
@@ -29,6 +40,8 @@ if (!tools.pdfcrop || !tools.pdftocairo || !tools.rsvgConvert || !gs) {
     process.exit(1);
 }
 
+const pathExtra = toolBinDirs(tools.pdfcrop, tools.pdftocairo, tools.rsvgConvert, gs);
+
 if (process.env.GITHUB_ENV) {
     fs.appendFileSync(
         process.env.GITHUB_ENV,
@@ -36,21 +49,25 @@ if (process.env.GITHUB_ENV) {
             `LGH_PDFCROP=${tools.pdfcrop}`,
             `LGH_PDFTOCAIRO=${tools.pdftocairo}`,
             `LGH_RSVG_CONVERT=${tools.rsvgConvert}`,
+            `LGH_PATH_EXTRA=${pathExtra.join(path.delimiter)}`,
         ].join('\n') + '\n',
     );
 }
 
-if (process.env.GITHUB_PATH) {
-    fs.appendFileSync(process.env.GITHUB_PATH, `${path.dirname(gs)}\n`);
+for (const directory of pathExtra) {
+    if (process.env.GITHUB_PATH) {
+        fs.appendFileSync(process.env.GITHUB_PATH, `${directory}\n`);
+    }
 }
 
 fs.mkdirSync('.vscode-test', { recursive: true });
 fs.writeFileSync(
     '.vscode-test/ci-tool-paths.json',
-    JSON.stringify({ ...tools, pathExtra: [path.dirname(gs)] }),
+    JSON.stringify({ ...tools, pathExtra }),
 );
 
 console.log(`pdfcrop=${tools.pdfcrop}`);
 console.log(`pdftocairo=${tools.pdftocairo}`);
 console.log(`rsvg-convert=${tools.rsvgConvert}`);
 console.log(`${gsName}=${gs}`);
+console.log(`pathExtra=${pathExtra.join(path.delimiter)}`);

@@ -180,6 +180,43 @@ export async function restoreDefaultExecPaths(): Promise<void> {
     await configureCiExecPathsFromEnv();
 }
 
+function collectCiPathExtras(
+    ciToolPaths: Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>> & {
+        pathExtra?: string[];
+    },
+): string[] {
+    const directories = new Set<string>();
+
+    for (const directory of ciToolPaths.pathExtra ?? []) {
+        if (directory.length > 0) {
+            directories.add(directory);
+        }
+    }
+
+    for (const segment of (process.env.LGH_PATH_EXTRA ?? '').split(path.delimiter)) {
+        if (segment.length > 0) {
+            directories.add(segment);
+        }
+    }
+
+    for (const toolPath of [
+        ciToolPaths.pdfcrop ?? process.env.LGH_PDFCROP,
+        ciToolPaths.pdftocairo ?? process.env.LGH_PDFTOCAIRO,
+        ciToolPaths.rsvgConvert ?? process.env.LGH_RSVG_CONVERT,
+    ]) {
+        if (!toolPath || toolPath.length === 0) {
+            continue;
+        }
+
+        const directory = path.dirname(toolPath);
+        if (directory.length > 0 && directory !== '.') {
+            directories.add(directory);
+        }
+    }
+
+    return [...directories];
+}
+
 async function configureCiExecPathsFromEnv(): Promise<void> {
     const ciToolPaths = loadCiToolPathsFile();
     const entries: Array<['pdfcrop' | 'pdftocairo' | 'rsvgConvert', string | undefined]> = [
@@ -194,9 +231,9 @@ async function configureCiExecPathsFromEnv(): Promise<void> {
         }
     }
 
-    const pathExtra = ciToolPaths.pathExtra ?? [];
+    const pathExtra = collectCiPathExtras(ciToolPaths);
     if (pathExtra.length > 0) {
-        const prefix = pathExtra.filter((entry) => entry.length > 0).join(path.delimiter);
+        const prefix = pathExtra.join(path.delimiter);
         process.env.PATH = `${prefix}${path.delimiter}${process.env.PATH ?? ''}`;
     }
 }
