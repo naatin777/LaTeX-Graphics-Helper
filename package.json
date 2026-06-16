@@ -264,6 +264,11 @@
                     "default": "rsvg-convert",
                     "description": "Path to the rsvg-convert executable."
                 },
+                "latex-graphics-helper.execPath.gs": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the Ghostscript executable used by pdfcrop (gs on macOS/Linux, gswin64c on Windows). If not specified, the default command name for your operating system will be used."
+                },
                 "latex-graphics-helper.outputPath.cropPdf": {
                     "type": "string",
                     "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",

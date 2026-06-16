@@ -162,7 +162,7 @@ export function loggerContains(substring: string): boolean {
 
 export async function restoreDefaultExecPaths(): Promise<void> {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const keys = ['pdfcrop', 'pdftocairo', 'rsvgConvert', 'drawio'] as const;
+    const keys = ['pdfcrop', 'pdftocairo', 'rsvgConvert', 'gs', 'drawio'] as const;
 
     for (const key of keys) {
         await configuration.update(
@@ -177,54 +177,16 @@ export async function restoreDefaultExecPaths(): Promise<void> {
         await configureDrawioExecutable(drawioExecutable);
     }
 
-    await configureCiExecPathsFromEnv();
+    await configureCiExecPaths();
 }
 
-function collectCiPathExtras(
-    ciToolPaths: Partial<Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>> & {
-        gs?: string;
-        pathExtra?: string[];
-    },
-): string[] {
-    const directories = new Set<string>();
-
-    for (const directory of ciToolPaths.pathExtra ?? []) {
-        if (directory.length > 0) {
-            directories.add(directory);
-        }
-    }
-
-    for (const segment of (process.env.LGH_PATH_EXTRA ?? '').split(path.delimiter)) {
-        if (segment.length > 0) {
-            directories.add(segment);
-        }
-    }
-
-    for (const toolPath of [
-        ciToolPaths.pdfcrop ?? process.env.LGH_PDFCROP,
-        ciToolPaths.pdftocairo ?? process.env.LGH_PDFTOCAIRO,
-        ciToolPaths.rsvgConvert ?? process.env.LGH_RSVG_CONVERT,
-        ciToolPaths.gs ?? process.env.LGH_GS,
-    ]) {
-        if (!toolPath || toolPath.length === 0) {
-            continue;
-        }
-
-        const directory = path.dirname(toolPath);
-        if (directory.length > 0 && directory !== '.') {
-            directories.add(directory);
-        }
-    }
-
-    return [...directories];
-}
-
-async function configureCiExecPathsFromEnv(): Promise<void> {
+async function configureCiExecPaths(): Promise<void> {
     const ciToolPaths = loadCiToolPathsFile();
-    const entries: Array<['pdfcrop' | 'pdftocairo' | 'rsvgConvert', string | undefined]> = [
-        ['pdfcrop', ciToolPaths.pdfcrop ?? process.env.LGH_PDFCROP],
-        ['pdftocairo', ciToolPaths.pdftocairo ?? process.env.LGH_PDFTOCAIRO],
-        ['rsvgConvert', ciToolPaths.rsvgConvert ?? process.env.LGH_RSVG_CONVERT],
+    const entries: Array<['pdfcrop' | 'pdftocairo' | 'rsvgConvert' | 'gs', string | undefined]> = [
+        ['pdfcrop', ciToolPaths.pdfcrop],
+        ['pdftocairo', ciToolPaths.pdftocairo],
+        ['rsvgConvert', ciToolPaths.rsvgConvert],
+        ['gs', ciToolPaths.gs],
     ];
 
     for (const [key, value] of entries) {
@@ -232,25 +194,11 @@ async function configureCiExecPathsFromEnv(): Promise<void> {
             await setExecPath(key, value);
         }
     }
-
-    const pathExtra = collectCiPathExtras(ciToolPaths);
-    if (pathExtra.length > 0) {
-        const prefix = pathExtra.join(path.delimiter);
-        process.env.PATH = `${prefix}${path.delimiter}${process.env.PATH ?? ''}`;
-    }
-
-    const gsPath = ciToolPaths.gs ?? process.env.LGH_GS;
-    if (gsPath && gsPath.length > 0) {
-        process.env.LGH_GS = gsPath;
-    }
 }
 
 function loadCiToolPathsFile(): Partial<
-    Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
-> & {
-    gs?: string;
-    pathExtra?: string[];
-} {
+    Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert' | 'gs', string>
+> {
     try {
         const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
         if (!extension) {
@@ -263,11 +211,8 @@ function loadCiToolPathsFile(): Partial<
         }
 
         return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Partial<
-            Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert', string>
-        > & {
-            gs?: string;
-            pathExtra?: string[];
-        };
+            Record<'pdfcrop' | 'pdftocairo' | 'rsvgConvert' | 'gs', string>
+        >;
     } catch {
         return {};
     }
@@ -295,7 +240,7 @@ export async function configureDrawioExecutable(executablePath: string): Promise
 }
 
 export async function setExecPath(
-    key: 'pdfcrop' | 'pdftocairo' | 'rsvgConvert' | 'drawio',
+    key: 'pdfcrop' | 'pdftocairo' | 'rsvgConvert' | 'gs' | 'drawio',
     value: string,
 ): Promise<void> {
     await vscode.workspace

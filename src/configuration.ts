@@ -17,6 +17,7 @@ export interface AppConfig {
     execPathDrawio: ExecutablePath;
     execPathPdftocairo: ExecutablePath;
     execPathRsvgConvert: ExecutablePath;
+    execPathGs: ExecutablePath;
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;
@@ -42,6 +43,7 @@ export function getAppConfig(): AppConfig {
         execPathDrawio: getExecPathDrawio(),
         execPathPdftocairo: getExecPathPdftocairo(),
         execPathRsvgConvert: getExecPathRsvgConvert(),
+        execPathGs: getExecPathGs(),
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
@@ -93,6 +95,15 @@ function getExecPathRsvgConvert(): ExecutablePath {
         return rsvgCommand as ExecutablePath;
     }
     return (os.platform() === 'win32' ? 'rsvg-convert.exe' : 'rsvg-convert') as ExecutablePath;
+}
+
+function getExecPathGs(): ExecutablePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const gsCommand = configuration.get<string>('execPath.gs');
+    if (gsCommand && gsCommand.length > 0) {
+        return gsCommand as ExecutablePath;
+    }
+    return (os.platform() === 'win32' ? 'gswin64c' : 'gs') as ExecutablePath;
 }
 
 function getOutputPathCropPdf(): PdfTemplatePath {
