@@ -56,13 +56,12 @@ jobs:
 
             - id: prepare
               name: Prepare WSL workspace
-              shell: pwsh
+              shell: bash
               run: |
-                  $ErrorActionPreference = 'Stop'
-                  $repo = (wsl.exe wslpath -u $env:GITHUB_WORKSPACE).Trim()
-                  $workspace = (wsl -d "${{ steps.wsl.outputs.distro }}" -- bash -lc "bash '$repo/.github/scripts/wsl-prepare.sh' playwright").Trim()
-                  "workspace=$workspace" >> $env:GITHUB_OUTPUT
-                  "extensionPath=$repo" >> $env:GITHUB_OUTPUT
+                  repo=$(wsl wslpath -u "$GITHUB_WORKSPACE")
+                  workspace=$(wsl -d "${{ steps.wsl.outputs.distro }}" -- bash -lc "bash '$repo/.github/scripts/wsl-prepare.sh' playwright")
+                  echo "workspace=$workspace" >> "$GITHUB_OUTPUT"
+                  echo "extensionPath=$repo" >> "$GITHUB_OUTPUT"
 
             - run: pnpm exec playwright install
               shell: bash

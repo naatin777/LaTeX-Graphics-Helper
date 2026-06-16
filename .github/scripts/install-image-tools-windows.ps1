@@ -3,6 +3,15 @@ $ErrorActionPreference = 'Stop'
 # pdftocairo / rsvg-convert are not part of TeX Live.
 choco install poppler -y --no-progress
 
+$popplerRoot = Join-Path $env:ProgramData 'chocolatey\lib\poppler\tools'
+$pdftocairo = Get-ChildItem -Path $popplerRoot -Recurse -Filter pdftocairo.exe | Select-Object -First 1
+if (-not $pdftocairo) {
+	throw "pdftocairo.exe not found under $popplerRoot"
+}
+$popplerBin = $pdftocairo.DirectoryName
+Add-Content $env:GITHUB_PATH $popplerBin
+$env:PATH = "$popplerBin;$env:PATH"
+
 $rsvgDir = "$env:RUNNER_TEMP\rsvg"
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 Invoke-WebRequest `
