@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    // Vite 側はブラウザ向けなので ESNext でよい。
+    "module": "ESNext",
+    // Vite / bundler 前提の import 解決。
+    "moduleResolution": "Bundler",
+    // 出力する JavaScript の言語レベル。
+    "target": "ES2022",
+    // Webview はブラウザ環境なので DOM を含める。
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // JSX は Solid 用に変換する。
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    // 型安全性を強くする。
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    // Vite / ESM と相性のよい設定。
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    // import パスの大文字小文字違いを検出する。
+    "forceConsistentCasingInFileNames": true,
+    // 依存ライブラリ側の型チェックは省略する。
+    "skipLibCheck": true,
+    // vite/client の import.meta.env 型などを使えるようにする。
+    "types": ["vite/client"]
+  },
+  "include": ["app/**/*", "vite.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

@@ -1,1 +1,192 @@
-.github/scripts/** text eol=lf
+# すべての text file は Git 上では LF に正規化する。
+# Windows / macOS / Linux 間で改行差分が出るのを防ぐ。
+* text=auto eol=lf
+
+# Shell scripts は LF 固定。
+*.sh text eol=lf
+
+# Windows scripts は CRLF 固定。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Source files.
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.tex text eol=lf
+*.bib text eol=lf
+*.latex text eol=lf
+
+# VS Code / project config.
+.vscode-test.mjs text eol=lf
+.oxfmtrc.jsonc text eol=lf
+oxlint.config.ts text eol=lf
+lefthook.yml text eol=lf
+package.json text eol=lf
+pnpm-lock.yaml text eol=lf
+
+# Binary assets.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+
+# Documents / generated binary-like files.
+*.pdf binary
+*.vsix binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+
+# Fonts.
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Draw.io files are XML, so keep them text-diffable.
+*.drawio text eol=lf
+*.dio text eol=lf
+
+# Snapshots can be large but are still text.
+*.snap text eol=lf
+
+# Vite / bundled webview output is generated.
+# Normally this should be ignored by .gitignore.
+# If committed for packaging, keep LF for text assets and binary for sourcemaps/assets as appropriate.
+media/webview/**/*.js text eol=lf linguist-generated=true
+media/webview/**/*.css text eol=lf linguist-generated=true
+media/webview/**/*.mjs text eol=lf linguist-generated=true
+media/webview/**/*.map text eol=lf linguist-generated=true
+
+# Compiled extension output is generated.
+out/** linguist-generated=true
+dist/** linguist-generated=true
+coverage/** linguist-generated=true
+media/webview/** linguist-generated=true
+# すべてのテキストファイルは Git 上では LF に正規化する。
+# Windows / macOS / Linux 間で改行差分が出るのを防ぐ。
+* text=auto eol=lf
+
+# Shell script は LF 固定。
+# macOS / Linux / CI で実行する可能性があるため。
+*.sh text eol=lf
+
+# Windows 用 script は CRLF 固定。
+# Windows の cmd.exe / PowerShell での扱いを優先する。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# TypeScript / JavaScript source。
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+
+# 設定ファイル。
+*.json text eol=lf
+*.jsonc text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+
+# Webview / frontend assets。
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.svg text eol=lf
+
+# Markdown / documentation。
+*.md text eol=lf
+*.txt text eol=lf
+
+# LaTeX 関連。
+# fixture や README サンプルの差分を見やすくする。
+*.tex text eol=lf
+*.bib text eol=lf
+*.latex text eol=lf
+*.sty text eol=lf
+*.cls text eol=lf
+
+# XML 系。
+# Draw.io も XML なので text diff できるようにする。
+*.xml text eol=lf
+*.drawio text eol=lf
+*.dio text eol=lf
+
+# VS Code / project 固有 config。
+.vscode-test.mjs text eol=lf
+.oxfmtrc.jsonc text eol=lf
+oxlint.config.ts text eol=lf
+lefthook.yml text eol=lf
+package.json text eol=lf
+pnpm-lock.yaml text eol=lf
+
+# 画像は binary として扱う。
+# 改行変換や text diff の対象にしない。
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+
+# PDF / VSIX / archive は binary。
+# PDF fixture や生成済み VSIX を壊さないため。
+*.pdf binary
+*.vsix binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.7z binary
+
+# Font は binary。
+# Webview や icon preview で使う可能性があるため。
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Snapshot は text として扱う。
+# 差分確認しやすくする。
+*.snap text eol=lf
+
+# Vite が出力する Webview bundle。
+# 基本は .gitignore で除外する想定だが、万一 commit する場合は GitHub 上で generated 扱いにする。
+media/webview/**/*.js text eol=lf linguist-generated=true
+media/webview/**/*.css text eol=lf linguist-generated=true
+media/webview/**/*.mjs text eol=lf linguist-generated=true
+media/webview/**/*.map text eol=lf linguist-generated=true
+
+# TypeScript compile output。
+# 基本は .gitignore で除外する想定。
+out/** linguist-generated=true
+
+# その他の生成物。
+# 基本は .gitignore で除外する想定。
+dist/** linguist-generated=true
+coverage/** linguist-generated=true
+media/webview/** linguist-generated=true
