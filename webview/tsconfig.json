@@ -31,6 +31,6 @@
     // vite/client の import.meta.env 型などを使えるようにする。
     "types": ["vite/client"]
   },
-  "include": ["app/**/*", "vite.config.ts"],
+  "include": ["apps/**/*", "vite.config.ts"],
   "exclude": ["dist", "node_modules"]
 }
