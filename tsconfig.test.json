@@ -10,11 +10,5 @@
   },
   // 本番コードとテストコードの両方を型チェック対象にする。
   "include": ["src/**/*", "test/**/*"],
-  "exclude": [
-    "out",
-    "node_modules",
-    ".vscode-test",
-    "webview",
-    "media"
-  ]
+  "exclude": ["out", "node_modules", ".vscode-test", "webview", "media"]
 }

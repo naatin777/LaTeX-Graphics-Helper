@@ -8,8 +8,6 @@
 
 なし。
 
-作業を始める前に、ここから `Status: In Progress` のタスクを1つだけリンクする。
-
 ## Rules
 
 - 作業中のタスクは1つに限定する
@@ -28,6 +26,13 @@
 - [0005: WebviewのPDF表示テストを先行追加する](0005-add-failing-webview-pdf-rendering-tests.md)
 - [0006: WebviewにPDFの最初のページを表示する](0006-render-first-pdf-page-in-webviews.md)
 - [0007: WebviewのPDF表示内容検証を強化する](0007-strengthen-webview-pdf-rendering-tests.md)
+- [0008: cropPdf.autoを安全な作業領域で実装する](0008-implement-safe-auto-crop.md)
+- [0009: ファイル操作をworkspace内へ制限する](0009-restrict-file-operations-to-workspace.md)
+- [0011: cropPdf.autoを単純で安全な構成へ変更する](0011-simplify-auto-crop.md)
+- [0012: workspace境界の失敗テストを追加する](0012-add-workspace-boundary-tests.md)
+- [0013: WorkspaceEdit出力反映の失敗テストを追加する](0013-add-workspace-edit-output-tests.md)
+- [0014: 安全な変換取消の失敗テストを追加する](0014-add-safe-conversion-undo-tests.md)
+- [0015: 安全な直前変換取消を実装する](0015-implement-safe-conversion-undo.md)
 
 ## Todo Tasks
 

@@ -20,4 +20,10 @@ suite("Extension Test Suite", () => {
 
     assert.strictEqual(extension.isActive, true);
   });
+
+  test("auto crop command is registered", async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes("latex-graphics-helper.cropPdf.auto"));
+  });
 });
