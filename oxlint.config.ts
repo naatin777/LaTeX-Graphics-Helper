@@ -125,6 +125,10 @@ export default defineConfig({
     // logger 導入後に error へ上げてもよい。
     "no-console": "warn",
 
+    // ファイル操作の順序保証、ロールバック、キャンセル確認では逐次awaitを仕様として使う。
+    // 並列化が適切な箇所はPromise.allまたはp-limitを明示的に選ぶ。
+    "no-await-in-loop": "off",
+
     // 再代入しない変数は const。
     "prefer-const": "error",
 
