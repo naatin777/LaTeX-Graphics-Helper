@@ -30,11 +30,35 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
       configuration.get<string>("execPath.ghostscript") ||
       (process.platform === "win32" ? "gswin64c.exe" : "gs");
 
-    await cropPdfFiles({
-      jobs,
-      margin: selectedMargin,
-      ghostscriptPath,
-    });
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: `Cropping ${jobs.length} PDF file(s)`,
+        cancellable: true,
+      },
+      async (progress, token) => {
+        const abortController = new AbortController();
+        const cancellationSubscription = token.onCancellationRequested(() => {
+          abortController.abort();
+        });
+
+        try {
+          if (token.isCancellationRequested) {
+            abortController.abort();
+          }
+
+          progress.report({ message: "Preparing PDF conversion..." });
+          await cropPdfFiles({
+            jobs,
+            margin: selectedMargin,
+            ghostscriptPath,
+            signal: abortController.signal,
+          });
+        } finally {
+          cancellationSubscription.dispose();
+        }
+      },
+    );
 
     const successMessage = `Cropped ${jobs.length} PDF file(s).`;
     let undoId: string;
@@ -58,9 +82,18 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
+    if (isAbortError(error)) {
+      await vscode.window.showInformationMessage("PDF cropping was cancelled.");
+      return;
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(`Failed to crop PDF: ${message}`);
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {

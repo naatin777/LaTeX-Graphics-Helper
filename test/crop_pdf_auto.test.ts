@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect */
 
 // Test target:
-// - cropPdfFilesのPDF変換結果と、処理開始前のworkspace境界検証
+// - cropPdfFilesのPDF変換結果、workspace境界検証、キャンセル時の停止動作
 //
 // Mocked:
 // - Ghostscriptのbbox出力
@@ -9,6 +9,7 @@
 // Not tested:
 // - Ghostscript本体の描画精度
 // - VS Codeのcommand UI
+// - withProgressの表示
 
 import assert from "node:assert/strict";
 import { constants } from "node:fs";
@@ -241,6 +242,112 @@ suite("cropPdfFiles", () => {
     );
 
     assert.strictEqual(ghostscriptCalled, false);
+  });
+
+  test("does not start Ghostscript when already cancelled", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const sourcePath = path.join(workspacePath, "source.pdf");
+    const outputPath = path.join(workspacePath, "source-crop.pdf");
+    const abortController = new AbortController();
+    await writeSinglePagePdf(sourcePath);
+    abortController.abort();
+
+    let ghostscriptCalled = false;
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs: [{ sourcePath, workspacePath, outputPath }],
+        margin: 0,
+        ghostscriptPath: "gs",
+        signal: abortController.signal,
+        runGhostscript: async () => {
+          ghostscriptCalled = true;
+          return { stdout: "", stderr: "%%HiResBoundingBox: 10 10 90 90\n" };
+        },
+      }),
+      { name: "AbortError" },
+    );
+
+    assert.strictEqual(ghostscriptCalled, false);
+    await assert.rejects(access(outputPath));
+  });
+
+  test("passes cancellation to a running Ghostscript operation", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const sourcePath = path.join(workspacePath, "source.pdf");
+    const outputPath = path.join(workspacePath, "source-crop.pdf");
+    const abortController = new AbortController();
+    await writeSinglePagePdf(sourcePath);
+
+    let receivedSignal: AbortSignal | undefined;
+    const runGhostscript: RunGhostscript = async (_executable, _args, signal) => {
+      receivedSignal = signal;
+      abortController.abort();
+      signal?.throwIfAborted();
+
+      throw new Error("Ghostscript cancellation was not propagated.");
+    };
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs: [{ sourcePath, workspacePath, outputPath }],
+        margin: 0,
+        ghostscriptPath: "gs",
+        signal: abortController.signal,
+        runGhostscript,
+      }),
+      { name: "AbortError" },
+    );
+
+    assert.strictEqual(receivedSignal, abortController.signal);
+    await assert.rejects(access(outputPath));
+  });
+
+  test("does not start queued conversions after cancellation", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const abortController = new AbortController();
+    const jobs = await Promise.all(
+      ["first", "second", "third", "fourth"].map(async (name) => {
+        const sourcePath = path.join(workspacePath, `${name}.pdf`);
+        await writeSinglePagePdf(sourcePath);
+
+        return {
+          sourcePath,
+          workspacePath,
+          outputPath: path.join(workspacePath, "output", `${name}.pdf`),
+        };
+      }),
+    );
+
+    let startedConversions = 0;
+    const runGhostscript: RunGhostscript = async (_executable, _args, signal) => {
+      startedConversions++;
+
+      if (startedConversions === 2) {
+        abortController.abort();
+      }
+
+      signal?.throwIfAborted();
+      return { stdout: "", stderr: "%%HiResBoundingBox: 10 10 90 90\n" };
+    };
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs,
+        margin: 0,
+        ghostscriptPath: "gs",
+        signal: abortController.signal,
+        runGhostscript,
+      }),
+      { name: "AbortError" },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    assert.strictEqual(startedConversions, 2);
+
+    for (const job of jobs) {
+      await assert.rejects(access(job.outputPath));
+    }
   });
 });
 

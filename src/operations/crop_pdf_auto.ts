@@ -26,7 +26,11 @@ export interface GhostscriptResult {
   stderr: string;
 }
 
-export type RunGhostscript = (executable: string, args: string[]) => Promise<GhostscriptResult>;
+export type RunGhostscript = (
+  executable: string,
+  args: string[],
+  signal?: AbortSignal,
+) => Promise<GhostscriptResult>;
 
 export interface CropPdfOptions {
   jobs: CropPdfJob[];
@@ -34,6 +38,7 @@ export interface CropPdfOptions {
   ghostscriptPath: string;
   runId?: string;
   runGhostscript?: RunGhostscript;
+  signal?: AbortSignal;
 }
 
 interface Box {
@@ -50,30 +55,36 @@ interface ConvertedPdf {
 }
 
 export async function cropPdfFiles(options: CropPdfOptions): Promise<void> {
+  options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
   await assertOutputsDoNotExist(options.jobs);
+  options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const converted = await Promise.all(
     options.jobs.map((job, index) =>
-      limit(() =>
-        convertPdf({
+      limit(() => {
+        options.signal?.throwIfAborted();
+
+        return convertPdf({
           job,
           index,
           margin: options.margin,
           ghostscriptPath: options.ghostscriptPath,
           runId,
           runGhostscript,
-        }),
-      ),
+          signal: options.signal,
+        });
+      }),
     ),
   );
 
-  await commitOutputs(converted);
+  options.signal?.throwIfAborted();
+  await commitOutputs(converted, options.signal);
 }
 
 async function convertPdf(params: {
@@ -83,8 +94,10 @@ async function convertPdf(params: {
   ghostscriptPath: string;
   runId: string;
   runGhostscript: RunGhostscript;
+  signal: AbortSignal | undefined;
 }): Promise<ConvertedPdf> {
-  const { job, index, margin, ghostscriptPath, runId, runGhostscript } = params;
+  const { job, index, margin, ghostscriptPath, runId, runGhostscript, signal } = params;
+  signal?.throwIfAborted();
   const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
   const workDirectory = path.join(
     job.workspacePath,
@@ -98,13 +111,23 @@ async function convertPdf(params: {
 
   await assertExistingPathInWorkspace(job.sourcePath, job.workspacePath);
   await assertWritablePathInWorkspace(workDirectory, job.workspacePath);
+  signal?.throwIfAborted();
   await mkdir(workDirectory, { recursive: true });
   await assertWritablePathInWorkspace(copiedSourcePath, job.workspacePath);
+  signal?.throwIfAborted();
   await copyFile(job.sourcePath, copiedSourcePath);
 
   await assertExistingPathInWorkspace(copiedSourcePath, job.workspacePath);
-  const boundingBoxes = await readBoundingBoxes(ghostscriptPath, copiedSourcePath, runGhostscript);
+  signal?.throwIfAborted();
+  const boundingBoxes = await readBoundingBoxes(
+    ghostscriptPath,
+    copiedSourcePath,
+    runGhostscript,
+    signal,
+  );
+  signal?.throwIfAborted();
   const document = await PDFDocument.load(await readFile(copiedSourcePath));
+  signal?.throwIfAborted();
   const pages = document.getPages();
 
   if (boundingBoxes.length !== pages.length || pages.length === 0) {
@@ -112,6 +135,7 @@ async function convertPdf(params: {
   }
 
   for (const [pageIndex, page] of pages.entries()) {
+    signal?.throwIfAborted();
     const boundingBox = boundingBoxes[pageIndex];
 
     if (!boundingBox) {
@@ -122,7 +146,9 @@ async function convertPdf(params: {
   }
 
   await assertWritablePathInWorkspace(stagedOutputPath, job.workspacePath);
+  signal?.throwIfAborted();
   await writeFile(stagedOutputPath, await document.save());
+  signal?.throwIfAborted();
 
   return {
     stagedOutputPath,
@@ -135,14 +161,13 @@ async function readBoundingBoxes(
   ghostscriptPath: string,
   sourcePath: string,
   runGhostscript: RunGhostscript,
+  signal?: AbortSignal,
 ): Promise<Box[]> {
-  const result = await runGhostscript(ghostscriptPath, [
-    "-dSAFER",
-    "-dBATCH",
-    "-dNOPAUSE",
-    "-sDEVICE=bbox",
-    sourcePath,
-  ]);
+  const result = await runGhostscript(
+    ghostscriptPath,
+    ["-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox", sourcePath],
+    signal,
+  );
 
   return parseBoundingBoxes(result.stderr);
 }
@@ -175,17 +200,20 @@ async function validateJobPaths(jobs: CropPdfJob[]): Promise<void> {
   );
 }
 
-async function commitOutputs(converted: ConvertedPdf[]): Promise<void> {
+async function commitOutputs(converted: ConvertedPdf[], signal?: AbortSignal): Promise<void> {
   const committedItems: ConvertedPdf[] = [];
 
   try {
     for (const item of converted) {
+      signal?.throwIfAborted();
       await assertExistingPathInWorkspace(item.stagedOutputPath, item.workspacePath);
       await assertWritablePathInWorkspace(item.outputPath, item.workspacePath);
       await mkdir(path.dirname(item.outputPath), { recursive: true });
+      signal?.throwIfAborted();
       await assertWritablePathInWorkspace(item.outputPath, item.workspacePath);
       await copyFile(item.stagedOutputPath, item.outputPath, constants.COPYFILE_EXCL);
       committedItems.push(item);
+      signal?.throwIfAborted();
     }
   } catch (error) {
     await Promise.allSettled(
@@ -272,10 +300,15 @@ function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-async function executeGhostscript(executable: string, args: string[]): Promise<GhostscriptResult> {
+async function executeGhostscript(
+  executable: string,
+  args: string[],
+  signal?: AbortSignal,
+): Promise<GhostscriptResult> {
   const result = await execFileAsync(executable, args, {
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
+    signal,
   });
 
   return {

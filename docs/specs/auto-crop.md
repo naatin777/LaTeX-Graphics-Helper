@@ -59,6 +59,23 @@ BoundingBoxの上下左右へ選択されたmarginを追加し、各ページの
 
 複数PDFは `p-limit` で同時実行数を制限して処理する。
 
+## 進捗表示とキャンセル
+
+margin選択後の変換処理は、通知領域の `vscode.window.withProgress` 内で実行する。
+
+progressはキャンセル可能とする。
+
+キャンセルされた場合は以下の動作とする。
+
+- 実行中のGhostscriptを終了する
+- `p-limit` で待機中のPDF変換を開始しない
+- `pdf-lib` の処理前後でキャンセルを確認する
+- 指定出力先へ変換結果を反映しない
+- `.latex-graphics-helper/` 内の途中ファイルは残す
+- エラーではなくキャンセル通知を表示する
+
+詳細は `docs/specs/conversion-progress-and-cancellation.md` を参照する。
+
 ## 出力
 
 出力先は `latex-graphics-helper.outputPath.cropPdf` を元PDFのパス情報で展開する。
@@ -105,6 +122,8 @@ BoundingBoxの上下左右へ選択されたmarginを追加し、各ページの
 - BoundingBoxを全ページ分取得できない
 - PDFを `pdf-lib` で読み込みまたは保存できない
 - 完成ファイルを出力先へ反映できない
+
+キャンセルは通常のエラーとして扱わない。
 
 ## 今後の拡張
 

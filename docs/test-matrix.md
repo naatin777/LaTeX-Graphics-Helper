@@ -24,3 +24,4 @@
 | PDF operation    | auto cropがworkspace境界を処理前に検証する     | `test/crop_pdf_auto.test.ts`        | Covered      | Ghostscript実行前に入力・出力を検証        |
 | File operation   | 通常UndoでWorkspaceEditの出力を削除する        |                                     | Out of Scope | VS CodeのExplorer Undo stackへ登録されない |
 | File operation   | 未変更の直前変換出力だけを安全に削除する       | `test/undo_last_conversion.test.ts` | Covered      | 変更・欠損・workspace外symlinkも検証       |
+| PDF operation    | auto cropを安全にキャンセルする                | `test/crop_pdf_auto.test.ts`        | Covered      | 開始前・実行中・待機中と出力未作成を検証   |

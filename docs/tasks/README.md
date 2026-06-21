@@ -33,6 +33,8 @@
 - [0013: WorkspaceEdit出力反映の失敗テストを追加する](0013-add-workspace-edit-output-tests.md)
 - [0014: 安全な変換取消の失敗テストを追加する](0014-add-safe-conversion-undo-tests.md)
 - [0015: 安全な直前変換取消を実装する](0015-implement-safe-conversion-undo.md)
+- [0016: 変換キャンセルの失敗テストを追加する](0016-add-conversion-cancellation-tests.md)
+- [0017: 変換の進捗表示とキャンセルを実装する](0017-implement-conversion-progress-and-cancellation.md)
 
 ## Todo Tasks
 
