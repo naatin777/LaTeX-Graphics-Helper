@@ -11,6 +11,12 @@ export type WebviewToExtensionMessage =
 
 export type ExtensionToWebviewMessage =
   | {
+      type: "init";
+      payload: {
+        pdfSrc: string;
+      };
+    }
+  | {
       type: "setInitialState";
       payload: {
         margin: string;

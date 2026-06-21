@@ -41,6 +41,17 @@ textarea {
   color: var(--vscode-descriptionForeground);
 }
 
+.pdf-preview {
+  margin-bottom: 16px;
+  overflow: auto;
+}
+
+.pdf-preview canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 .panel {
   display: grid;
   gap: 16px;

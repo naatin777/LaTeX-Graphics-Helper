@@ -1,10 +1,26 @@
-import { createSignal } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
+import { renderFirstPdfPage } from "../../../shared/pdf/render_first_page";
+
+import type { ExtensionToWebviewMessage, WebviewToExtensionMessage } from "./messages";
 import { vscode } from "./vscode";
-import type { WebviewToExtensionMessage } from "./messages";
 
 export function App() {
   const [margin, setMargin] = createSignal("0");
+  let pdfCanvas: HTMLCanvasElement | undefined;
+
+  onMount(() => {
+    const handleMessage = (event: MessageEvent<ExtensionToWebviewMessage>) => {
+      if (event.data.type !== "init" || !pdfCanvas) {
+        return;
+      }
+
+      void renderFirstPdfPage(event.data.payload.pdfSrc, pdfCanvas);
+    };
+
+    window.addEventListener("message", handleMessage);
+    onCleanup(() => window.removeEventListener("message", handleMessage));
+  });
 
   const applyCrop = () => {
     const message: WebviewToExtensionMessage = {
@@ -31,6 +47,10 @@ export function App() {
         <h1>Custom Crop</h1>
         <p>PDF のトリミング範囲を調整します。</p>
       </header>
+
+      <section class="pdf-preview">
+        <canvas ref={(element) => (pdfCanvas = element)} data-pdf-page="1" />
+      </section>
 
       <section class="panel">
         <label class="field">
