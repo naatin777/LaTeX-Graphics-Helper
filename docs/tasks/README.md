@@ -35,6 +35,8 @@
 - [0015: 安全な直前変換取消を実装する](0015-implement-safe-conversion-undo.md)
 - [0016: 変換キャンセルの失敗テストを追加する](0016-add-conversion-cancellation-tests.md)
 - [0017: 変換の進捗表示とキャンセルを実装する](0017-implement-conversion-progress-and-cancellation.md)
+- [0018: splitPdf.allPagesの失敗テストを追加する](0018-add-split-pdf-all-pages-tests.md)
+- [0019: splitPdf.allPagesを安全に実装する](0019-implement-split-pdf-all-pages.md)
 
 ## Todo Tasks
 

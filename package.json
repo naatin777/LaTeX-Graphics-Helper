@@ -620,6 +620,11 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}-crop.pdf",
           "description": "%config.outputPath.cropPdf%"
         },
+        "latex-graphics-helper.outputPath.splitPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
+          "description": "%config.outputPath.splitPdf%"
+        },
         "latex-graphics-helper.cropPdf.marginOptions": {
           "type": "array",
           "items": {

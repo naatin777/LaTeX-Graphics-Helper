@@ -14,7 +14,7 @@
 | ---------------- | ---------------------------------------------- | ----------------------------------- | ------------ | ------------------------------------------ |
 | LaTeX insertion  | PDFを挿入したときにfigureコードを生成する      | `src/...test.ts`                    | Covered      | 正常系のみ                                 |
 | LaTeX insertion  | clipboard画像を保存してLaTeXコードを生成する   | `src/...test.ts`                    | Partial      | 実ファイル保存はmock                       |
-| PDF operation    | PDFをsplitできる                               |                                     | Not Covered  | 外部ツール依存あり                         |
+| PDF operation    | PDFをsplitできる                               | `test/split_pdf_all_pages.test.ts`  | Covered      | 複数PDF・既存出力・重複・キャンセルを検証  |
 | PDF operation    | pdfcropがない場合にエラーを出す                |                                     | Not Covered  | 優先度高                                   |
 | Image conversion | PNGをPDFに変換する                             |                                     | Partial      | 実変換はmock                               |
 | Config           | pasteClipboardImageAs = ask のときpickerを出す |                                     | Not Covered  |                                            |

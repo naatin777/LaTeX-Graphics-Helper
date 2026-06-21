@@ -4,6 +4,7 @@
   "config.execPath.pdftocairo": "Path to the pdftocairo executable. If not specified, pdftocairo will be used.",
   "config.execPath.rsvgConvert": "Path to the rsvg-convert executable. If not specified, rsvg-convert will be used.",
   "config.outputPath.cropPdf": "Output file name after cropping the PDF",
+  "config.outputPath.splitPdf": "Output file name for each page after splitting the PDF",
   "config.cropPdf.marginOptions": "Margin options in PDF points shown when automatically cropping PDFs",
   "config.outputPath.convertDrawioToPdf": "Output file name after converting the Draw.io file to PDF",
   "config.outputPath.convertDrawioToPng": "Output file name after converting the Draw.io file to PNG",

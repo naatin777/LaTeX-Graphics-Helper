@@ -26,4 +26,10 @@ suite("Extension Test Suite", () => {
 
     assert.ok(commands.includes("latex-graphics-helper.cropPdf.auto"));
   });
+
+  test("split all pages command is registered", async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes("latex-graphics-helper.splitPdf.allPages"));
+  });
 });

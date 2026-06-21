@@ -5,6 +5,7 @@
   "config.execPath.rsvgConvert": "rsvg-convertの実行ファイルのパス。未指定の場合はrsvg-convert",
 
   "config.outputPath.cropPdf": "PDFをクロップした後の出力ファイル名",
+  "config.outputPath.splitPdf": "PDF分割後の各ページの出力ファイル名",
   "config.cropPdf.marginOptions": "PDFの自動クロップ時に表示する余白の選択肢（単位: PDFポイント）",
 
   "config.outputPath.convertDrawioToPdf": "Draw.ioファイルをPDFに変換した後の出力ファイル名",
