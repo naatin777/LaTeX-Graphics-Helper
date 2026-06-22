@@ -1,8 +1,14 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import * as vscode from "vscode";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 suite("Extension Test Suite", () => {
   test("extension is registered", () => {
@@ -31,5 +37,38 @@ suite("Extension Test Suite", () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes("latex-graphics-helper.splitPdf.allPages"));
+  });
+
+  test("convert PNG to PDF command is registered", async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes("latex-graphics-helper.convertPngToPdf"));
+  });
+
+  test("convert PNG to PDF command executes and converts file", async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const testDirectory = await mkdtemp(
+      path.join(workspaceFolder.uri.fsPath, "lgh-extension-test-"),
+    );
+
+    try {
+      const sourcePath = path.join(testDirectory, "source.png");
+      const outputPath = path.join(testDirectory, "source.pdf");
+
+      await copyFile(path.join(__dirname, "..", "..", "test", "fixtures", "test.png"), sourcePath);
+
+      await vscode.commands.executeCommand(
+        "latex-graphics-helper.convertPngToPdf",
+        vscode.Uri.file(sourcePath),
+      );
+
+      const { PDFDocument } = await import("pdf-lib");
+      const pdf = await PDFDocument.load(await readFile(outputPath));
+      assert.strictEqual(pdf.getPageCount(), 1);
+    } finally {
+      await rm(testDirectory, { recursive: true, force: true });
+    }
   });
 });

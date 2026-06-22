@@ -1,5 +1,4 @@
-import { constants } from "node:fs";
-import { access, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import pLimit from "p-limit";
@@ -9,6 +8,11 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import {
+  commitConversionOutputs,
+  type OutputConflictDecision,
+  type PreparedConversionOutput,
+} from "./commit_conversion_outputs.js";
 
 const SPLIT_CONCURRENCY = 2;
 
@@ -22,15 +26,12 @@ export interface SplitPdfOptions {
   jobs: SplitPdfJob[];
   runId?: string;
   signal?: AbortSignal;
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
 }
 
 export interface SplitPdfOutput {
   outputPath: string;
   workspacePath: string;
-}
-
-interface StagedPage extends SplitPdfOutput {
-  stagedOutputPath: string;
 }
 
 export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitPdfOutput[]> {
@@ -52,14 +53,12 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   const stagedPages = stagedByJob.flat();
 
   options.signal?.throwIfAborted();
-  await validateOutputs(stagedPages);
-  options.signal?.throwIfAborted();
-  await commitOutputs(stagedPages, options.signal);
-
-  return stagedPages.map(({ outputPath, workspacePath }) => ({
-    outputPath,
-    workspacePath,
-  }));
+  return commitConversionOutputs(stagedPages, {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+  });
 }
 
 async function splitPdf(params: {
@@ -67,7 +66,7 @@ async function splitPdf(params: {
   index: number;
   runId: string;
   signal: AbortSignal | undefined;
-}): Promise<StagedPage[]> {
+}): Promise<PreparedConversionOutput[]> {
   const { job, index, runId, signal } = params;
   signal?.throwIfAborted();
 
@@ -100,7 +99,7 @@ async function splitPdf(params: {
     throw new Error(`PDF has no pages: ${job.sourcePath}`);
   }
 
-  const stagedPages: StagedPage[] = [];
+  const stagedPages: PreparedConversionOutput[] = [];
 
   for (let page = 1; page <= pageCount; page++) {
     signal?.throwIfAborted();
@@ -140,58 +139,6 @@ async function validateInputPaths(jobs: SplitPdfJob[]): Promise<void> {
   );
 }
 
-async function validateOutputs(stagedPages: StagedPage[]): Promise<void> {
-  const normalizedOutputs = new Set<string>();
-
-  for (const page of stagedPages) {
-    const normalizedOutput = path.resolve(page.outputPath);
-
-    if (normalizedOutputs.has(normalizedOutput)) {
-      throw new Error(`Multiple pages resolve to the same output: ${page.outputPath}`);
-    }
-    normalizedOutputs.add(normalizedOutput);
-
-    await assertExistingPathInWorkspace(page.stagedOutputPath, page.workspacePath);
-    await assertWritablePathInWorkspace(page.outputPath, page.workspacePath);
-
-    try {
-      await access(page.outputPath);
-      throw new Error(`Output file already exists: ${page.outputPath}`);
-    } catch (error) {
-      if (isFileNotFoundError(error)) {
-        continue;
-      }
-      throw error;
-    }
-  }
-}
-
-async function commitOutputs(stagedPages: StagedPage[], signal?: AbortSignal): Promise<void> {
-  const committedPages: StagedPage[] = [];
-
-  try {
-    for (const page of stagedPages) {
-      signal?.throwIfAborted();
-      await assertExistingPathInWorkspace(page.stagedOutputPath, page.workspacePath);
-      await assertWritablePathInWorkspace(page.outputPath, page.workspacePath);
-      await mkdir(path.dirname(page.outputPath), { recursive: true });
-      signal?.throwIfAborted();
-      await assertWritablePathInWorkspace(page.outputPath, page.workspacePath);
-      await copyFile(page.stagedOutputPath, page.outputPath, constants.COPYFILE_EXCL);
-      committedPages.push(page);
-      signal?.throwIfAborted();
-    }
-  } catch (error) {
-    await Promise.allSettled(
-      committedPages.map(async (page) => {
-        await assertExistingPathInWorkspace(page.outputPath, page.workspacePath);
-        await rm(page.outputPath, { force: true });
-      }),
-    );
-    throw error;
-  }
-}
-
 function validateJobs(jobs: SplitPdfJob[]): void {
   if (jobs.length === 0) {
     throw new Error("No PDF files were selected.");
@@ -206,8 +153,4 @@ function validateJobs(jobs: SplitPdfJob[]): void {
 
 function safeName(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]/g, "_") || "pdf";
-}
-
-function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }

@@ -95,6 +95,11 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.toggleSafeMode",
+        "title": "%command.toggleSafeMode%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.cropPdf.manual",
         "title": "%command.cropPdf.manual%",
         "category": "LaTeX Graphics Helper"
@@ -859,7 +864,8 @@
   },
   "activationEvents": [
     "onLanguage:latex",
-    "onLanguage:tex"
+    "onLanguage:tex",
+    "onStartupFinished"
   ],
   "icon": "assets/icon.png",
   "engines": {

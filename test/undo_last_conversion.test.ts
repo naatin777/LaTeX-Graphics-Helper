@@ -13,7 +13,7 @@
 // - crop処理
 
 import assert from "node:assert/strict";
-import { access, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -107,6 +107,39 @@ suite("undoConversionOutputs", () => {
     await assert.rejects(undoConversionOutputs(record), /outside the workspace/);
     await assert.doesNotReject(access(firstOutputPath));
     await assert.doesNotReject(access(outsidePath));
+  });
+
+  test("restores the previous file after an overwritten output is undone", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
+    const outputPath = path.join(workspacePath, "output.pdf");
+    const previousFilePath = path.join(workspacePath, ".latex-graphics-helper", "output.previous");
+    await writeFixture(outputPath, "generated");
+    await writeFixture(previousFilePath, "original");
+
+    const record = await createConversionUndoRecord([
+      { outputPath, workspacePath, previousFilePath },
+    ]);
+
+    await undoConversionOutputs(record);
+
+    assert.strictEqual(await readFile(outputPath, "utf8"), "original");
+    await assert.doesNotReject(access(previousFilePath));
+  });
+
+  test("does not restore an overwritten output when it changed after conversion", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
+    const outputPath = path.join(workspacePath, "output.pdf");
+    const previousFilePath = path.join(workspacePath, ".latex-graphics-helper", "output.previous");
+    await writeFixture(outputPath, "generated");
+    await writeFixture(previousFilePath, "original");
+
+    const record = await createConversionUndoRecord([
+      { outputPath, workspacePath, previousFilePath },
+    ]);
+    await writeFile(outputPath, "edited");
+
+    await assert.rejects(undoConversionOutputs(record), /changed after conversion/);
+    assert.strictEqual(await readFile(outputPath, "utf8"), "edited");
   });
 });
 

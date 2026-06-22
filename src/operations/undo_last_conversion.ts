@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFile, rm } from "node:fs/promises";
+import { copyFile, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
@@ -7,6 +7,7 @@ import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 export interface ConversionOutput {
   outputPath: string;
   workspacePath: string;
+  previousFilePath?: string;
 }
 
 export interface ConversionUndoRecord {
@@ -16,6 +17,7 @@ export interface ConversionUndoRecord {
 
 interface ConversionUndoOutput extends ConversionOutput {
   sha256: string;
+  previousSha256?: string;
 }
 
 export async function createConversionUndoRecord(
@@ -36,10 +38,14 @@ export async function createConversionUndoRecord(
       uniquePaths.add(normalizedPath);
 
       await assertExistingPathInWorkspace(output.outputPath, output.workspacePath);
+      const previousSha256 = output.previousFilePath
+        ? await recordPreviousFile(output.previousFilePath, output.workspacePath)
+        : undefined;
 
       return {
         ...output,
         sha256: await calculateSha256(output.outputPath),
+        ...(previousSha256 !== undefined && { previousSha256 }),
       };
     }),
   );
@@ -56,7 +62,13 @@ export async function undoConversionOutputs(record: ConversionUndoRecord): Promi
   for (const output of record.outputs) {
     // 検証後の差し替え時間を短くするため、削除直前にも同じ条件を確認する。
     await validateUnchangedOutput(output);
-    await rm(output.outputPath);
+
+    if (output.previousFilePath) {
+      await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
+      await copyFile(output.previousFilePath, output.outputPath);
+    } else {
+      await rm(output.outputPath);
+    }
   }
 }
 
@@ -66,6 +78,22 @@ async function validateUnchangedOutput(output: ConversionUndoOutput): Promise<vo
   if ((await calculateSha256(output.outputPath)) !== output.sha256) {
     throw new Error(`Output changed after conversion: ${output.outputPath}`);
   }
+
+  if (output.previousFilePath) {
+    await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
+
+    if ((await calculateSha256(output.previousFilePath)) !== output.previousSha256) {
+      throw new Error(`Output backup changed after conversion: ${output.previousFilePath}`);
+    }
+  }
+}
+
+async function recordPreviousFile(
+  previousFilePath: string,
+  workspacePath: string,
+): Promise<string> {
+  await assertExistingPathInWorkspace(previousFilePath, workspacePath);
+  return calculateSha256(previousFilePath);
 }
 
 async function calculateSha256(filePath: string): Promise<string> {

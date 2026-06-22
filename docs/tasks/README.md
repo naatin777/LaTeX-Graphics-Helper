@@ -39,7 +39,13 @@
 - [0019: splitPdf.allPagesを安全に実装する](0019-implement-split-pdf-all-pages.md)
 - [0020: Ghostscriptがない場合のエラーハンドリングをテストする](0020-add-ghostscript-missing-error-test.md)
 - [0021: Outputチャンネルへのログ出力機能を実装する](0021-implement-output-channel-logging.md)
+- [0022: PNGをPDFに変換する機能のテストを追加する](0022-add-png-to-pdf-conversion-tests.md)
+- [0023: PNGをPDFに変換する機能を実装する](0023-implement-png-to-pdf-conversion.md)
+- [0024: コマンドを呼び出してファイル変換できてるかをチェックするテストを追加する](0024-add-command-execution-test.md)
+- [0025: 生成されたmediaフォルダをGit管理から外す](0025-ignore-generated-media.md)
+- [0026: Safe Modeの失敗テストを追加する](0026-add-safe-mode-tests.md)
+- [0027: Safe Modeをcropとsplitへ実装する](0027-implement-safe-mode.md)
 
 ## Todo Tasks
 
-なし。
+- [0028: PNG変換を安全な作業領域とSafe Modeへ統合する](0028-integrate-png-conversion-with-safe-mode.md)

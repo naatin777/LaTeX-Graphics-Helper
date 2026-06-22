@@ -52,6 +52,7 @@
   "submenu.cropPdf": "Crop PDF",
   "command.cropPdf.auto": "Auto crop",
   "command.undoLastConversion": "Undo last conversion",
+  "command.toggleSafeMode": "Toggle Safe Mode",
   "command.cropPdf.manual": "Manual crop",
   "submenu.splitPdf": "Split PDF",
   "command.splitPdf.allPages": "Split all pages",

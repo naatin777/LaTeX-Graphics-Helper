@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_pages.js";
+import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
@@ -42,6 +43,7 @@ export async function splitPdfAllPagesCommand(
           return await splitPdfAllPages({
             jobs,
             signal: abortController.signal,
+            resolveOutputConflicts,
           });
         } finally {
           cancellationSubscription.dispose();

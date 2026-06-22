@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
+import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
@@ -31,7 +32,7 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
       (process.platform === "win32" ? "gswin64c.exe" : "gs");
     const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
 
-    await vscode.window.withProgress(
+    const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         title: `Cropping ${jobs.length} PDF file(s)`,
@@ -49,12 +50,13 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
           }
 
           progress.report({ message: "Preparing PDF conversion..." });
-          await cropPdfFiles({
+          return await cropPdfFiles({
             jobs,
             margin: selectedMargin,
             ghostscriptPath,
             signal: abortController.signal,
             outputChannel,
+            resolveOutputConflicts,
           });
         } finally {
           cancellationSubscription.dispose();
@@ -67,12 +69,7 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(
-        jobs.map((job) => ({
-          outputPath: job.outputPath,
-          workspacePath: job.workspacePath,
-        })),
-      );
+      undoId = await rememberLastConversion(outputs);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(`${successMessage} Undo is unavailable: ${message}`);

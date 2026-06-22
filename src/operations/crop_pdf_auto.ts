@@ -1,6 +1,5 @@
 import { execFile } from "node:child_process";
-import { constants } from "node:fs";
-import { access, copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -11,6 +10,12 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import {
+  commitConversionOutputs,
+  type CommittedConversionOutput,
+  type OutputConflictDecision,
+  type PreparedConversionOutput,
+} from "./commit_conversion_outputs.js";
 
 const execFileAsync = promisify(execFile);
 const CONVERSION_CONCURRENCY = 2;
@@ -42,6 +47,7 @@ export interface CropPdfOptions {
   outputChannel?: {
     appendLine: (message: string) => void;
   };
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
 }
 
 interface Box {
@@ -51,18 +57,16 @@ interface Box {
   top: number;
 }
 
-interface ConvertedPdf {
-  stagedOutputPath: string;
-  outputPath: string;
-  workspacePath: string;
-}
-
-export async function cropPdfFiles(options: CropPdfOptions): Promise<void> {
+export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
-  await assertOutputsDoNotExist(options.jobs);
+
+  if (!options.resolveOutputConflicts) {
+    await assertOutputsDoNotExist(options.jobs);
+  }
+
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -88,7 +92,12 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<void> {
   );
 
   options.signal?.throwIfAborted();
-  await commitOutputs(converted, options.signal);
+  return commitConversionOutputs(converted, {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+  });
 }
 
 async function convertPdf(params: {
@@ -102,7 +111,7 @@ async function convertPdf(params: {
   outputChannel?: {
     appendLine: (message: string) => void;
   };
-}): Promise<ConvertedPdf> {
+}): Promise<PreparedConversionOutput> {
   const { job, index, margin, ghostscriptPath, runId, runGhostscript, signal, outputChannel } =
     params;
   signal?.throwIfAborted();
@@ -221,29 +230,21 @@ async function validateJobPaths(jobs: CropPdfJob[]): Promise<void> {
   );
 }
 
-async function commitOutputs(converted: ConvertedPdf[], signal?: AbortSignal): Promise<void> {
-  const committedItems: ConvertedPdf[] = [];
+function validateJobs(jobs: CropPdfJob[]): void {
+  if (jobs.length === 0) {
+    throw new Error("No PDF files were selected.");
+  }
 
-  try {
-    for (const item of converted) {
-      signal?.throwIfAborted();
-      await assertExistingPathInWorkspace(item.stagedOutputPath, item.workspacePath);
-      await assertWritablePathInWorkspace(item.outputPath, item.workspacePath);
-      await mkdir(path.dirname(item.outputPath), { recursive: true });
-      signal?.throwIfAborted();
-      await assertWritablePathInWorkspace(item.outputPath, item.workspacePath);
-      await copyFile(item.stagedOutputPath, item.outputPath, constants.COPYFILE_EXCL);
-      committedItems.push(item);
-      signal?.throwIfAborted();
+  for (const job of jobs) {
+    if (path.extname(job.sourcePath).toLowerCase() !== ".pdf") {
+      throw new Error(`Only PDF files can be cropped: ${job.sourcePath}`);
     }
-  } catch (error) {
-    await Promise.allSettled(
-      committedItems.map(async (item) => {
-        await assertExistingPathInWorkspace(item.outputPath, item.workspacePath);
-        await rm(item.outputPath, { force: true });
-      }),
-    );
-    throw error;
+  }
+}
+
+function validateMargin(margin: number): void {
+  if (!Number.isFinite(margin) || margin < 0) {
+    throw new Error(`Crop margin must be a non-negative number: ${margin}`);
   }
 }
 
@@ -267,24 +268,6 @@ async function assertOutputsDoNotExist(jobs: CropPdfJob[]): Promise<void> {
       }
       throw error;
     }
-  }
-}
-
-function validateJobs(jobs: CropPdfJob[]): void {
-  if (jobs.length === 0) {
-    throw new Error("No PDF files were selected.");
-  }
-
-  for (const job of jobs) {
-    if (path.extname(job.sourcePath).toLowerCase() !== ".pdf") {
-      throw new Error(`Only PDF files can be cropped: ${job.sourcePath}`);
-    }
-  }
-}
-
-function validateMargin(margin: number): void {
-  if (!Number.isFinite(margin) || margin < 0) {
-    throw new Error(`Crop margin must be a non-negative number: ${margin}`);
   }
 }
 
