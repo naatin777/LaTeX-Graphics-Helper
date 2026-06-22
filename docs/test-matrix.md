@@ -15,10 +15,10 @@
 | LaTeX insertion  | PDFを挿入したときにfigureコードを生成する      | `src/...test.ts`                    | Covered      | 正常系のみ                                 |
 | LaTeX insertion  | clipboard画像を保存してLaTeXコードを生成する   | `src/...test.ts`                    | Partial      | 実ファイル保存はmock                       |
 | PDF operation    | PDFをsplitできる                               | `test/split_pdf_all_pages.test.ts`  | Covered      | 複数PDF・既存出力・重複・キャンセルを検証  |
-| PDF operation    | pdfcropがない場合にエラーを出す                |                                     | Not Covered  | 優先度高                                   |
+| PDF operation    | pdfcropがない場合にエラーを出す                | `test/crop_pdf_auto.test.ts`        | Covered      | ENOENTと実行失敗を検証                     |
 | Image conversion | PNGをPDFに変換する                             |                                     | Partial      | 実変換はmock                               |
 | Config           | pasteClipboardImageAs = ask のときpickerを出す |                                     | Not Covered  |                                            |
-| Error handling   | 外部コマンド失敗時にOutputへログを出す         |                                     | Not Covered  |                                            |
+| Error handling   | 外部コマンド失敗時にOutputへログを出す         | `test/crop_pdf_auto.test.ts`        | Covered      | Ghostscript失敗時のログ出力を検証          |
 | Path handling    | workspace外の読み書きを拒否する                | `test/workspace_path.test.ts`       | Covered      | prefix一致だけのworkspace外パスも拒否      |
 | Path handling    | symlink経由のworkspace外操作を拒否する         | `test/workspace_path.test.ts`       | Covered      | workspace自体のsymlinkは許可               |
 | PDF operation    | auto cropがworkspace境界を処理前に検証する     | `test/crop_pdf_auto.test.ts`        | Covered      | Ghostscript実行前に入力・出力を検証        |

@@ -39,6 +39,9 @@ export interface CropPdfOptions {
   runId?: string;
   runGhostscript?: RunGhostscript;
   signal?: AbortSignal;
+  outputChannel?: {
+    appendLine: (message: string) => void;
+  };
 }
 
 interface Box {
@@ -78,6 +81,7 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<void> {
           runId,
           runGhostscript,
           signal: options.signal,
+          ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
         });
       }),
     ),
@@ -95,8 +99,12 @@ async function convertPdf(params: {
   runId: string;
   runGhostscript: RunGhostscript;
   signal: AbortSignal | undefined;
+  outputChannel?: {
+    appendLine: (message: string) => void;
+  };
 }): Promise<ConvertedPdf> {
-  const { job, index, margin, ghostscriptPath, runId, runGhostscript, signal } = params;
+  const { job, index, margin, ghostscriptPath, runId, runGhostscript, signal, outputChannel } =
+    params;
   signal?.throwIfAborted();
   const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
   const workDirectory = path.join(
@@ -124,6 +132,7 @@ async function convertPdf(params: {
     copiedSourcePath,
     runGhostscript,
     signal,
+    outputChannel,
   );
   signal?.throwIfAborted();
   const document = await PDFDocument.load(await readFile(copiedSourcePath));
@@ -162,14 +171,26 @@ async function readBoundingBoxes(
   sourcePath: string,
   runGhostscript: RunGhostscript,
   signal?: AbortSignal,
+  outputChannel?: {
+    appendLine: (message: string) => void;
+  },
 ): Promise<Box[]> {
-  const result = await runGhostscript(
-    ghostscriptPath,
-    ["-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox", sourcePath],
-    signal,
-  );
+  try {
+    const result = await runGhostscript(
+      ghostscriptPath,
+      ["-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox", sourcePath],
+      signal,
+    );
 
-  return parseBoundingBoxes(result.stderr);
+    return parseBoundingBoxes(result.stderr);
+  } catch (error) {
+    if (outputChannel) {
+      const message = error instanceof Error ? error.message : String(error);
+      outputChannel.appendLine(`Ghostscript error: ${message}`);
+      outputChannel.appendLine(`Command: ${ghostscriptPath}`);
+    }
+    throw error;
+  }
 }
 
 function setPageBounds(page: PDFPage, boundingBox: Box, margin: number): void {

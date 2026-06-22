@@ -37,6 +37,8 @@
 - [0017: 変換の進捗表示とキャンセルを実装する](0017-implement-conversion-progress-and-cancellation.md)
 - [0018: splitPdf.allPagesの失敗テストを追加する](0018-add-split-pdf-all-pages-tests.md)
 - [0019: splitPdf.allPagesを安全に実装する](0019-implement-split-pdf-all-pages.md)
+- [0020: Ghostscriptがない場合のエラーハンドリングをテストする](0020-add-ghostscript-missing-error-test.md)
+- [0021: Outputチャンネルへのログ出力機能を実装する](0021-implement-output-channel-logging.md)
 
 ## Todo Tasks
 

@@ -349,6 +349,89 @@ suite("cropPdfFiles", () => {
       await assert.rejects(access(job.outputPath));
     }
   });
+
+  test("throws an error when Ghostscript executable is not found", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const sourcePath = path.join(workspacePath, "source.pdf");
+    const outputPath = path.join(workspacePath, "source-crop.pdf");
+    await writeSinglePagePdf(sourcePath);
+
+    const runGhostscript: RunGhostscript = async () => {
+      const error = new Error("spawn gs ENOENT") as NodeJS.ErrnoException;
+      error.code = "ENOENT";
+      throw error;
+    };
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs: [{ sourcePath, workspacePath, outputPath }],
+        margin: 0,
+        ghostscriptPath: "gs",
+        runGhostscript,
+      }),
+      /ENOENT/,
+    );
+
+    await assert.rejects(access(outputPath));
+  });
+
+  test("throws an error when Ghostscript execution fails", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const sourcePath = path.join(workspacePath, "source.pdf");
+    const outputPath = path.join(workspacePath, "source-crop.pdf");
+    await writeSinglePagePdf(sourcePath);
+
+    const runGhostscript: RunGhostscript = async () => {
+      throw new Error("Ghostscript failed with exit code 1");
+    };
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs: [{ sourcePath, workspacePath, outputPath }],
+        margin: 0,
+        ghostscriptPath: "gs",
+        runGhostscript,
+      }),
+      /Ghostscript failed/,
+    );
+
+    await assert.rejects(access(outputPath));
+  });
+
+  test("logs Ghostscript execution failure to output channel", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
+    const sourcePath = path.join(workspacePath, "source.pdf");
+    const outputPath = path.join(workspacePath, "source-crop.pdf");
+    await writeSinglePagePdf(sourcePath);
+
+    const logMessages: string[] = [];
+    const mockOutputChannel = {
+      appendLine: (message: string) => {
+        logMessages.push(message);
+      },
+    };
+
+    const runGhostscript: RunGhostscript = async () => {
+      throw new Error("Ghostscript failed with exit code 1");
+    };
+
+    await assert.rejects(
+      cropPdfFiles({
+        jobs: [{ sourcePath, workspacePath, outputPath }],
+        margin: 0,
+        ghostscriptPath: "gs",
+        runGhostscript,
+        outputChannel: mockOutputChannel,
+      }),
+      /Ghostscript failed/,
+    );
+
+    assert.ok(logMessages.length > 0, "Expected at least one log message");
+    assert.ok(
+      logMessages.some((msg) => msg.includes("Ghostscript")),
+      "Expected log to mention Ghostscript",
+    );
+  });
 });
 
 suite("parseBoundingBoxes", () => {

@@ -29,6 +29,7 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     const ghostscriptPath =
       configuration.get<string>("execPath.ghostscript") ||
       (process.platform === "win32" ? "gswin64c.exe" : "gs");
+    const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
 
     await vscode.window.withProgress(
       {
@@ -53,9 +54,11 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
             margin: selectedMargin,
             ghostscriptPath,
             signal: abortController.signal,
+            outputChannel,
           });
         } finally {
           cancellationSubscription.dispose();
+          outputChannel.dispose();
         }
       },
     );
