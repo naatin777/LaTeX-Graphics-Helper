@@ -45,10 +45,10 @@
 - [0025: 生成されたmediaフォルダをGit管理から外す](0025-ignore-generated-media.md)
 - [0026: Safe Modeの失敗テストを追加する](0026-add-safe-mode-tests.md)
 - [0027: Safe Modeをcropとsplitへ実装する](0027-implement-safe-mode.md)
+- [0028: PNG変換のSafe Mode失敗テストを追加する](0028-add-png-safe-mode-tests.md)
+- [0029: PNG変換を安全な作業領域とSafe Modeへ統合する](0029-integrate-png-conversion-with-safe-mode.md)
 
 ## Todo Tasks
 
-- [0028: PNG変換のSafe Mode失敗テストを追加する](0028-add-png-safe-mode-tests.md)
-- [0029: PNG変換を安全な作業領域とSafe Modeへ統合する](0029-integrate-png-conversion-with-safe-mode.md)
 - [0030: Safe Modeダイアログ結果のテストを追加する](0030-add-safe-mode-dialog-result-tests.md)
 - [0031: Safe ModeのVS Code UIを手動確認する](0031-verify-safe-mode-ui-manually.md)

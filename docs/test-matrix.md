@@ -26,6 +26,6 @@
 | File operation   | 未変更の直前変換出力だけを安全に削除する       | `test/undo_last_conversion.test.ts`      | Covered      | 変更・欠損・workspace外symlinkも検証        |
 | PDF operation    | auto cropを安全にキャンセルする                | `test/crop_pdf_auto.test.ts`             | Covered      | 開始前・実行中・待機中と出力未作成を検証    |
 | File operation   | Safe Modeで既存出力を安全に処理する            | `test/commit_conversion_outputs.test.ts` | Covered      | 連番・一括判断・停止・バックアップを検証    |
-| Image conversion | PNG変換でSafe Modeを適用する                   |                                          | Not Covered  | 0028でテスト追加、0029で実装予定            |
+| Image conversion | PNG変換でSafe Modeを適用する                   | `test/png_safe_mode.test.ts`             | Covered      | 一括反映・競合判断・Undo・キャンセルを検証  |
 | Command behavior | Safe Modeダイアログの選択結果を判断へ変換する  |                                          | Not Covered  | 0030でVS Code APIの戻り値をmockして検証予定 |
 | UI               | Safe Modeのstatus barとmodal dialogを表示する  |                                          | Manual       | 0031でExtension Development Host上を確認    |

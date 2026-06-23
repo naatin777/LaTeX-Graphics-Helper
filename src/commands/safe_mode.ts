@@ -9,6 +9,13 @@ const KEEP_BOTH = "Keep Both";
 const DO_NOT_OVERWRITE = "Do Not Overwrite";
 const OVERWRITE = "Overwrite";
 
+const KEEP_BOTH_ITEM: vscode.MessageItem = { title: KEEP_BOTH };
+const DO_NOT_OVERWRITE_ITEM: vscode.MessageItem = {
+  title: DO_NOT_OVERWRITE,
+  isCloseAffordance: true,
+};
+const OVERWRITE_ITEM: vscode.MessageItem = { title: OVERWRITE };
+
 let safeModeState: SafeModeState | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
 
@@ -41,16 +48,16 @@ export async function resolveOutputConflicts(conflicts: string[]): Promise<Outpu
   const selected = await vscode.window.showWarningMessage(
     `${conflicts.length} output file(s) already exist.`,
     { modal: true },
-    KEEP_BOTH,
-    DO_NOT_OVERWRITE,
-    OVERWRITE,
+    KEEP_BOTH_ITEM,
+    DO_NOT_OVERWRITE_ITEM,
+    OVERWRITE_ITEM,
   );
 
-  if (selected === KEEP_BOTH) {
+  if (selected?.title === KEEP_BOTH) {
     return "keep-both";
   }
 
-  if (selected === OVERWRITE) {
+  if (selected?.title === OVERWRITE) {
     return "overwrite";
   }
 

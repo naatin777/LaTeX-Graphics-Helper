@@ -1,14 +1,13 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
-import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as vscode from "vscode";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 suite("Extension Test Suite", () => {
   test("extension is registered", () => {
@@ -49,26 +48,50 @@ suite("Extension Test Suite", () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder);
 
-    const testDirectory = await mkdtemp(
+    const temporaryDirectory = await mkdtemp(
       path.join(workspaceFolder.uri.fsPath, "lgh-extension-test-"),
     );
 
     try {
-      const sourcePath = path.join(testDirectory, "source.png");
-      const outputPath = path.join(testDirectory, "source.pdf");
+      const sourcePath = path.join(temporaryDirectory, "source.png");
+      const outputPath = path.join(temporaryDirectory, "source.pdf");
+      await copyFile(
+        path.join(testDirectory, "..", "..", "test", "fixtures", "test.png"),
+        sourcePath,
+      );
 
-      await copyFile(path.join(__dirname, "..", "..", "test", "fixtures", "test.png"), sourcePath);
-
-      await vscode.commands.executeCommand(
+      const commandExecution = vscode.commands.executeCommand(
         "latex-graphics-helper.convertPngToPdf",
         vscode.Uri.file(sourcePath),
       );
+      await waitForFile(outputPath);
+      await vscode.commands.executeCommand("notifications.clearAll");
+      await commandExecution;
 
       const { PDFDocument } = await import("pdf-lib");
       const pdf = await PDFDocument.load(await readFile(outputPath));
       assert.strictEqual(pdf.getPageCount(), 1);
     } finally {
-      await rm(testDirectory, { recursive: true, force: true });
+      await rm(temporaryDirectory, { recursive: true, force: true });
     }
   });
 });
+
+async function waitForFile(filePath: string): Promise<void> {
+  const timeoutAt = Date.now() + 10_000;
+
+  while (Date.now() < timeoutAt) {
+    try {
+      await access(filePath);
+      return;
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
+        throw error;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  throw new Error(`Timed out waiting for file: ${filePath}`);
+}

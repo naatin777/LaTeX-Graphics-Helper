@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -47,3 +47,17 @@ Todo
 
 - `pnpm run check:all`
 - `pnpm run test`
+
+## 実施結果
+
+- `convertPngToPdfFiles`で複数PNGを1つのバッチとして処理するようにした
+- PNG変換を`.latex-graphics-helper/`内で完了するようにした
+- 全PNGの変換成功後に`commitConversionOutputs`を1回だけ呼び出すようにした
+- command層から`resolveOutputConflicts`を渡し、Safe Modeの状態とダイアログを接続した
+- 上書き時にバックアップを作成するようにした
+- 変換結果を`rememberLastConversion`へ渡し、直前の変換取消へ対応した
+- `withProgress`と`AbortSignal`によるキャンセルへ対応した
+- workspaceごとに入力元を検証し、workspace外のファイル操作を拒否するようにした
+- commandを実際に実行してPDF生成を確認する統合テストを復元した
+- `pnpm run check:all`成功
+- `.vscode-test.mjs`を使用する`pnpm run test`成功（55 tests）

@@ -4,8 +4,7 @@
 // - PNGをPDFに変換する機能
 //
 // Mocked:
-// - Sharpの画像変換
-// - VS Code API
+// - なし。実PNGファイルと実ファイル出力を使用する
 //
 // Not tested:
 // - VS Codeのcommand UI
