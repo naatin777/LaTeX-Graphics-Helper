@@ -9,6 +9,17 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	librsvg2-bin \
 	xvfb
 
-command -v gs
-command -v pdftocairo
-command -v rsvg-convert
+gs_path="$(command -v gs)"
+pdftocairo_path="$(command -v pdftocairo)"
+rsvg_convert_path="$(command -v rsvg-convert)"
+
+mkdir -p .vscode
+cat > .vscode/settings.json <<EOF
+{
+    "latex-graphics-helper.execPath.ghostscript": "${gs_path}",
+    "latex-graphics-helper.execPath.pdftocairo": "${pdftocairo_path}",
+    "latex-graphics-helper.execPath.rsvgConvert": "${rsvg_convert_path}"
+}
+EOF
+
+cat .vscode/settings.json
