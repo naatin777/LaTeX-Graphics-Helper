@@ -1,0 +1,235 @@
+# 出力形式基準の変換コマンド仕様
+
+## 目的
+
+変換コマンドを入力形式と出力形式の組み合わせではなく、出力形式基準で公開する。
+
+例:
+
+- `PNGをPDFに変換`、`JPEGをPDFに変換`、`SVGをPDFに変換`を`PDFに変換`へ統合する
+- `PDFをPNGに変換`、`JPEGをPNGに変換`、`SVGをPNGに変換`を`PNGに変換`へ統合する
+
+これにより、異なる入力形式を同時に選択して、同じ出力形式へまとめて変換できるようにする。
+
+## 非目的
+
+- 対応形式を増やすこと
+- 既存変換実装を一度に全面刷新すること
+- 画像を1つのPDFへ結合すること
+- PDFページを1つの画像へ結合すること
+- Webviewを使う変換UIへ変更すること
+
+## 公開コマンド
+
+公開する変換コマンドは以下に統合する。
+
+| Command ID                            | 表示名     | 出力形式 |
+| ------------------------------------- | ---------- | -------- |
+| `latex-graphics-helper.convertToPdf`  | PDFに変換  | PDF      |
+| `latex-graphics-helper.convertToPng`  | PNGに変換  | PNG      |
+| `latex-graphics-helper.convertToJpeg` | JPEGに変換 | JPEG     |
+| `latex-graphics-helper.convertToWebp` | WebPに変換 | WebP     |
+| `latex-graphics-helper.convertToAvif` | AVIFに変換 | AVIF     |
+| `latex-graphics-helper.convertToSvg`  | SVGに変換  | SVG      |
+
+Command PaletteとExplorer context menuでは、上記の出力形式基準コマンドを表示する。
+
+## 対応形式
+
+現行の`package.json`で公開されている対応関係を維持する。
+
+| 出力形式 | 対応入力形式                        |
+| -------- | ----------------------------------- |
+| PDF      | Draw.io、PNG、JPEG、WebP、AVIF、SVG |
+| PNG      | Draw.io、PDF、JPEG、WebP、AVIF、SVG |
+| JPEG     | Draw.io、PDF、PNG、WebP、AVIF、SVG  |
+| WebP     | Draw.io、PDF、PNG、JPEG、AVIF、SVG  |
+| AVIF     | Draw.io、PDF、PNG、JPEG、WebP、SVG  |
+| SVG      | Draw.io、PDF                        |
+
+現在対応していない組み合わせは、この再設計では追加しない。
+
+## 混在選択
+
+同じ出力形式へ変換可能な入力形式は、同時に選択できる。
+
+例:
+
+- `PDFに変換`: PNG、JPEG、WebP、AVIF、SVG、Draw.ioを同時に選択できる
+- `PNGに変換`: PDF、JPEG、WebP、AVIF、SVG、Draw.ioを同時に選択できる
+
+選択された入力の中に、対象出力形式へ変換できないファイルが1件でも含まれる場合は、変換全体を開始しない。
+
+理由:
+
+- 一部だけ変換されると結果が分かりにくい
+- Safe Mode、Undo、進捗表示の単位を単純に保てる
+- 誤選択に気づきやすい
+
+## 同じ形式への変換
+
+入力形式と出力形式が同じファイルは、非対応入力として扱う。
+
+例:
+
+- PNGファイルを`PNGに変換`する
+- PDFファイルを`PDFに変換`する
+
+この場合は、変換全体を開始しない。
+
+## 処理単位
+
+1回のコマンド実行で選択されたファイル群を、1つの変換バッチとして扱う。
+
+- 入力ごとに出力ファイルを作る
+- すべての変換が成功するまで、指定出力先へ反映しない
+- 1件でも失敗した場合、指定出力先へは何も反映しない
+- `.latex-graphics-helper/`内の作業ファイルは削除しない
+- Safe Modeの競合確認はバッチ全体で1回だけ行う
+- Undoはバッチ全体を直前変換1回分として扱う
+- キャンセルされた場合、指定出力先へは何も反映しない
+
+複数画像を`PDFに変換`した場合も、画像ごとに別のPDFを作る。
+
+画像を1つのPDFへ結合する機能は、必要になった場合に別コマンドとして検討する。
+
+## PDFから画像・SVGへの変換
+
+PDFを画像またはSVGへ変換する場合は、ページごとに別ファイルを作る。
+
+- 1ページPDFでもページ番号変数を使える
+- 複数ページPDFは、ページ数分の出力を作る
+- 出力パスが同じ変換内で重複する場合は、出力反映前に全体停止する
+
+既存の出力パス例:
+
+```text
+${fileDirname}/${fileBasenameNoExtension}-${page}.png
+${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg
+${fileDirname}/${fileBasenameNoExtension}-${page}.svg
+```
+
+## 出力パス設定の移行方針
+
+段階移行中は、既存の変換ペア別設定を維持する。
+
+例:
+
+- `latex-graphics-helper.outputPath.convertPngToPdf`
+- `latex-graphics-helper.outputPath.convertJpegToPdf`
+- `latex-graphics-helper.outputPath.convertPdfToPng`
+
+出力形式基準コマンドは、内部で入力形式を判定し、対応する既存設定を使用する。
+
+理由:
+
+- 既存ユーザーの設定を壊さない
+- Draw.ioのページ出力と画像の単一出力では、自然な初期値が異なる
+- 1つの`outputPath.convertToPdf`だけへ急に統合すると、既存の出力規則を変えやすい
+
+将来、出力形式基準の設定を追加する場合は、新設定を優先し、既存ペア別設定をfallbackとして読む。
+
+既存設定のキーに誤りがある場合も、この仕様タスクでは修正しない。修正が必要なら別タスクで扱う。
+
+## 既存コマンドIDの移行方針
+
+既存の入力形式・出力形式ペア別コマンドは、公開UIから外す。
+
+例:
+
+- `latex-graphics-helper.convertPngToPdf`
+- `latex-graphics-helper.convertSvgToPdf`
+- `latex-graphics-helper.convertPdfToPng`
+
+ただし、移行直後は互換用の非公開aliasとして残してよい。
+
+- `contributes.commands`とcontext menuからは外す
+- extension内部では旧command IDを登録し、新commandへ委譲してよい
+- aliasを残す期間は、実装タスクで明記する
+
+## Context menu
+
+Explorer context menuでは、対象ファイルが対応入力形式のいずれかであれば、出力形式基準コマンドを表示する。
+
+同じファイルに対して、入力形式ごとの変換項目を複数表示しない。
+
+例:
+
+- PNGを右クリックした場合:
+  - `PDFに変換`
+  - `JPEGに変換`
+  - `WebPに変換`
+  - `AVIFに変換`
+- PNGに対して`PNGに変換`は表示しない
+
+複数選択時にcontext menu条件だけで完全に判定できない場合は、command実行時に選択全体を検証し、非対応入力があれば全体停止する。
+
+## Progress / Cancellation / Safe Mode / Undo
+
+Webviewを使用しない出力形式基準コマンドは、`docs/specs/conversion-progress-and-cancellation.md`に従う。
+
+- `vscode.window.withProgress`を使う
+- `cancellable: true`にする
+- command層で`AbortController`を作る
+- core層は`AbortSignal`を受け取る
+- 待機中の処理は`p-limit`で開始しない
+
+出力反映は`docs/specs/safe-mode.md`に従う。
+
+- Safe Mode ONで競合があればバッチ全体で1回確認する
+- Safe Mode OFFでも上書き前にバックアップする
+- Undoは直前の変換バッチ全体を対象にする
+
+## サイズ仕様
+
+テストでは、ファイルが存在することだけでなくサイズも確認する。
+
+### 画像からPDF
+
+画像からPDFへ変換する場合、PDFは1ページとする。
+
+- PDFページ幅は画像のpixel幅と同じ数値のpointにする
+- PDFページ高さは画像のpixel高さと同じ数値のpointにする
+- 画像はページ全体に配置する
+- PDFページサイズの比較許容誤差は`0.01pt`とする
+
+例:
+
+- 120px × 80pxのPNGをPDFへ変換する
+- 生成PDFは1ページ
+- ページサイズは120pt × 80pt
+
+### PDFから画像
+
+PDFから画像へ変換する場合、DPIから出力pixel数を決める。
+
+計算式:
+
+```text
+pixelWidth = round(pageWidthPt / 72 * dpi)
+pixelHeight = round(pageHeightPt / 72 * dpi)
+```
+
+テストでは、元PDFのページサイズ、DPI、出力画像metadataの幅・高さを比較する。
+
+初期DPIは既存実装・設定を確認して、テスト追加前に対象タスクへ明記する。
+
+### 画像から画像
+
+画像から画像へ変換する場合、基本的に入力画像のpixel幅・高さを維持する。
+
+フォーマット特性でmetadata差が出る場合は、対象形式のテストタスクで許容範囲を明記する。
+
+### SVG
+
+SVGはpixelサイズ・viewBox・PDFページサイズの対応が実装方式に依存しやすいため、SVG変換のサイズ期待値は、SVG対応タスクで別途固定する。
+
+## 実装順
+
+出力形式基準への移行は段階的に行う。
+
+1. `PDFに変換`のテストを追加する
+2. `PDFに変換`を実装する
+3. 残りの`PNGに変換`、`JPEGに変換`、`WebPに変換`、`AVIFに変換`、`SVGに変換`を同じ方針で展開する
+
+全形式を一度に実装しない。

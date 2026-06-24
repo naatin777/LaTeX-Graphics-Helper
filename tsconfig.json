@@ -1,30 +1,66 @@
 {
-	"compilerOptions": {
-		"module": "Node16",
-		"moduleResolution": "Node16",
-		"target": "ES2022",
-		"lib": [
-			"ES2022"
-		],
-		"outDir": "out",
-		"rootDir": "src",
-		"sourceMap": true,
-		"strict": true,
-		"resolveJsonModule": true,
-		"esModuleInterop": true,
-		"skipLibCheck": true,
-		"types": [
-			"mocha",
-			"node"
-		]
-	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"out",
-		"node_modules",
-		".vscode-test",
-		"src/test/playwright"
-	]
+  "compilerOptions": {
+    // Node.js の ESM / CommonJS 判定を package.json の "type" に合わせる。
+    // VS Code 拡張で ESM を使うなら NodeNext が自然。
+    "module": "NodeNext",
+    // NodeNext とセットで使う。
+    // import 解決も Node.js の ESM ルールに寄せる。
+    "moduleResolution": "NodeNext",
+    // 出力する JavaScript の言語レベル。
+    // VS Code 拡張の実行環境が十分新しいなら ES2022 で問題ない。
+    "target": "ES2022",
+    // 利用可能な標準ライブラリ。
+    // VS Code extension host は Node.js 環境なので DOM は入れない。
+    "lib": ["ES2022"],
+    // コンパイル後の出力先。
+    "outDir": "out",
+    // ソースコードのルート。
+    "rootDir": "src",
+    // デバッグ用の sourcemap を生成する。
+    "sourceMap": true,
+    // strict 系オプションをまとめて有効化する。
+    // noImplicitAny, strictNullChecks などが含まれる。
+    "strict": true,
+    // 継承元のメソッドを上書きするときに override を必須にする。
+    "noImplicitOverride": true,
+    // 使っていないローカル変数をエラーにする。
+    "noUnusedLocals": true,
+    // 使っていない関数引数をエラーにする。
+    // VS Code API の未使用引数は _token のように _ 始まりにすると許容される。
+    "noUnusedParameters": true,
+    // すべてのコードパスで明示的な return を要求する。
+    // command handler や parser の return 漏れ検出に有効。
+    "noImplicitReturns": true,
+    // switch 文の case の fallthrough を禁止する。
+    "noFallthroughCasesInSwitch": true,
+    // array[index] や object[key] の結果に undefined を含める。
+    // uris[0], fileNames[i] などの安全性が上がる。
+    "noUncheckedIndexedAccess": true,
+    // optional property の「未指定」と「undefined指定」を区別する。
+    // 設定値やオプション型の扱いが厳密になる。
+    "exactOptionalPropertyTypes": true,
+    // JSON ファイルを import できるようにする。
+    "resolveJsonModule": true,
+    // CommonJS モジュールとの相互運用をしやすくする。
+    "esModuleInterop": true,
+    // import パスの大文字・小文字違いを検出する。
+    // Windows では動くが Linux/macOS CI で壊れる問題を防ぐ。
+    "forceConsistentCasingInFileNames": true,
+    // 各ファイルを単独変換できる前提でチェックする。
+    // ビルドツールや ESM と相性がよい。
+    "isolatedModules": true,
+    // TypeScript が import/export を勝手に変換・削除しないようにする。
+    // NodeNext / ESM では挙動が読みやすくなる。
+    "verbatimModuleSyntax": true,
+    // 型定義ファイル *.d.ts のチェックを省略する。
+    // 依存ライブラリ由来の型エラーでビルドが止まるのを避ける。
+    "skipLibCheck": true,
+    // 本番コード側で使うグローバル型。
+    // mocha は test 用 tsconfig に分けるのが理想。
+    "types": ["node"]
+  },
+  // 本番ソースだけを対象にする。
+  "include": ["src/**/*", "test"],
+  // ビルド成果物・依存・VS Code extension test の作業ディレクトリを除外する。
+  "exclude": ["out", "node_modules", ".vscode-test", "test"]
 }

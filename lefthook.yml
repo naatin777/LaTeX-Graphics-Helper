@@ -1,10 +1,45 @@
+# lefthook.yml
+
+# commit 直前に staged files だけを対象にする。
+# 重い full check は pre-push に寄せる。
 pre-commit:
+  # format → lint の順にしたいので parallel は false。
+  # format で直した後の内容に対して lint を見る。
+  parallel: false
+
   commands:
-    lint:
-      glob: "**/*.{ts,tsx}"
-      run: pnpm exec oxlint {staged_files}
     format:
-      glob: "**/*.{ts,tsx}"
-      run: pnpm exec oxfmt --check {staged_files}
+      # TS / TSX / JS / JSX / JSON / JSONC / Markdown / HTML / CSS を対象にする。
+      # package.json や tsconfig.json も staged なら整形される。
+      glob: "*.{ts,tsx,js,jsx,json,jsonc,md,html,css}"
+
+      # staged files だけを oxfmt で自動整形する。
+      # --write を付けるので、失敗検出ではなく修正が目的。
+      run: pnpm exec oxfmt --write {staged_files}
+
+      # format 後に変更された staged files を git add し直す。
+      # これがないと、format 済みの差分が commit に入らない。
+      stage_fixed: true
+
+    lint:
+      # oxlint は主に TS / TSX / JS / JSX を見る。
+      glob: "*.{ts,tsx,js,jsx}"
+
+      # format 後の staged files に対して lint する。
+      # ここでは --fix しない。修正系は format に寄せる。
+      run: pnpm exec oxlint {staged_files}
+
+# push 前は staged files ではなくプロジェクト全体を見る。
+# typecheck はファイル単位で安全に絞りにくいので pre-push に寄せる。
+pre-push:
+  parallel: false
+
+  commands:
     typecheck:
-      run: pnpm run typecheck
+      # extension runtime / extension test / webview / webview test をまとめて確認する。
+      run: pnpm run check:test
+
+    build:
+      # package 前に壊れていないか見る。
+      # pre-push で毎回重すぎるなら、この build は外して CI に任せてもよい。
+      run: pnpm run build

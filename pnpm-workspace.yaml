@@ -1,0 +1,6 @@
+allowBuilds:
+  '@vscode/vsce-sign': true
+  keytar: true
+  lefthook: true
+  sharp: true
+  tldjs: false

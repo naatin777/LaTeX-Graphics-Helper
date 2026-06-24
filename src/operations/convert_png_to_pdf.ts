@@ -1,0 +1,179 @@
+import { access, mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+import pLimit from "p-limit";
+import { PDFDocument } from "pdf-lib";
+import sharp from "sharp";
+
+import {
+  assertExistingPathInWorkspace,
+  assertWritablePathInWorkspace,
+} from "../security/workspace_path.js";
+import {
+  commitConversionOutputs,
+  type CommittedConversionOutput,
+  type OutputConflictDecision,
+  type PreparedConversionOutput,
+} from "./commit_conversion_outputs.js";
+
+const CONVERSION_CONCURRENCY = 2;
+
+export interface ConvertPngToPdfOptions {
+  sourcePath: string;
+  outputPath: string;
+  workspacePath: string;
+  signal?: AbortSignal;
+}
+
+export interface ConvertPngToPdfJob {
+  sourcePath: string;
+  outputPath: string;
+  workspacePath: string;
+}
+
+export interface ConvertPngToPdfFilesOptions {
+  jobs: ConvertPngToPdfJob[];
+  runId?: string;
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  signal?: AbortSignal;
+}
+
+export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
+  const { sourcePath, outputPath, workspacePath, signal } = options;
+
+  signal?.throwIfAborted();
+  await assertExistingPathInWorkspace(sourcePath, workspacePath);
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await assertOutputDoesNotExist(outputPath);
+  signal?.throwIfAborted();
+
+  await writePngAsPdf(sourcePath, outputPath, workspacePath, signal);
+}
+
+export async function convertPngToPdfFiles(
+  options: ConvertPngToPdfFilesOptions,
+): Promise<CommittedConversionOutput[]> {
+  options.signal?.throwIfAborted();
+  validateJobs(options.jobs);
+  await validateJobPaths(options.jobs);
+  options.signal?.throwIfAborted();
+
+  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const limit = pLimit(CONVERSION_CONCURRENCY);
+  const stagedOutputs = await Promise.all(
+    options.jobs.map((job, index) =>
+      limit(() => stagePngConversion(job, index, runId, options.signal)),
+    ),
+  );
+
+  options.signal?.throwIfAborted();
+  return commitConversionOutputs(stagedOutputs, {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+  });
+}
+
+async function stagePngConversion(
+  job: ConvertPngToPdfJob,
+  index: number,
+  runId: string,
+  signal?: AbortSignal,
+): Promise<PreparedConversionOutput> {
+  signal?.throwIfAborted();
+  const stagedOutputPath = path.join(
+    job.workspacePath,
+    ".latex-graphics-helper",
+    "convert-png-to-pdf",
+    runId,
+    `${index + 1}`,
+    "result.pdf",
+  );
+
+  await writePngAsPdf(job.sourcePath, stagedOutputPath, job.workspacePath, signal);
+  signal?.throwIfAborted();
+
+  return {
+    stagedOutputPath,
+    outputPath: job.outputPath,
+    workspacePath: job.workspacePath,
+  };
+}
+
+async function writePngAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
+  const image = sharp(sourcePath);
+  const metadata = await image.metadata();
+  signal?.throwIfAborted();
+  const { width, height } = metadata;
+
+  if (!width || !height) {
+    throw new Error(`Could not determine image dimensions: ${sourcePath}`);
+  }
+
+  const imageBuffer = await image.png().toBuffer();
+  signal?.throwIfAborted();
+  const pdfDocument = await PDFDocument.create();
+  const page = pdfDocument.addPage([width, height]);
+  const embeddedImage = await pdfDocument.embedPng(imageBuffer);
+  page.drawImage(embeddedImage, {
+    x: 0,
+    y: 0,
+    width,
+    height,
+  });
+
+  const pdfBytes = await pdfDocument.save();
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  signal?.throwIfAborted();
+  await writeFile(outputPath, pdfBytes);
+}
+
+async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
+  await Promise.all(
+    jobs.flatMap((job) => [
+      assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
+      assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
+      assertWritablePathInWorkspace(
+        path.join(job.workspacePath, ".latex-graphics-helper", "convert-png-to-pdf"),
+        job.workspacePath,
+      ),
+    ]),
+  );
+}
+
+function validateJobs(jobs: ConvertPngToPdfJob[]): void {
+  if (jobs.length === 0) {
+    throw new Error("No PNG files were selected.");
+  }
+
+  for (const job of jobs) {
+    if (path.extname(job.sourcePath).toLowerCase() !== ".png") {
+      throw new Error(`Only PNG files can be converted: ${job.sourcePath}`);
+    }
+  }
+}
+
+async function assertOutputDoesNotExist(outputPath: string): Promise<void> {
+  try {
+    await access(outputPath);
+    throw new Error(`Output file already exists: ${outputPath}`);
+  } catch (error) {
+    if (isFileNotFoundError(error)) {
+      return;
+    }
+    throw error;
+  }
+}
+
+function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
+}

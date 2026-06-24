@@ -1,66 +1,32 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import * as commands from './commands';
-import { LatexDropEditProvider } from './edit_provider/latex_drop_edit_provider';
-import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provider';
-import { logger } from './logger';
+import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
+import {
+  convertToPdfCommand,
+  convertPngToPdfCommand,
+  CONVERT_TO_PDF_COMMAND,
+  CONVERT_PNG_TO_PDF_COMMAND,
+} from "./commands/convert_png_to_pdf.js";
+import { initializeSafeMode } from "./commands/safe_mode.js";
+import { splitPdfAllPagesCommand } from "./commands/split_pdf_all_pages.js";
+import {
+  undoLastConversion,
+  UNDO_LAST_CONVERSION_COMMAND,
+} from "./commands/undo_last_conversion.js";
 
 export function activate(context: vscode.ExtensionContext) {
-    context.subscriptions.push(
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.cropPdf',
-            commands.runCropPdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.splitPdf',
-            commands.runSplitPdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.mergePdf',
-            commands.runMergePdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertDrawioToPdf',
-            commands.runConvertDrawioToPdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertPdfToPng',
-            commands.runConvertPdfToPngCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertPdfToJpeg',
-            commands.runConvertPdfToJpegCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertPdfToSvg',
-            commands.runConvertPdfToSvgCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertPngToPdf',
-            commands.runConvertPngToPdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertJpegToPdf',
-            commands.runConvertJpegToPdfCommand,
-        ),
-        vscode.commands.registerCommand(
-            'latex-graphics-helper.convertSvgToPdf',
-            commands.runConvertSvgToPdfCommand,
-        ),
-        vscode.languages.registerDocumentDropEditProvider(
-            { language: 'latex' },
-            new LatexDropEditProvider(),
-        ),
-        vscode.languages.registerDocumentPasteEditProvider(
-            { language: 'latex' },
-            new LatexPasteEditProvider(),
-            {
-                pasteMimeTypes: ['image/png', 'image/jpeg'],
-                providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
-            },
-        ),
-    );
-    logger.info('LaTeX Graphics Helper activated');
+  initializeSafeMode(context);
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("latex-graphics-helper.cropPdf.auto", cropPdfAuto),
+    vscode.commands.registerCommand(
+      "latex-graphics-helper.splitPdf.allPages",
+      splitPdfAllPagesCommand,
+    ),
+    vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, undoLastConversion),
+    vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
+    vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
+  );
 }
 
 export function deactivate() {}

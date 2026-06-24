@@ -1,20 +1,20 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-import localeJa from '../package.nls.ja.json';
-import localeEn from '../package.nls.json';
+import localeJa from "../package.nls.ja.json" with { type: "json" };
+import localeEn from "../package.nls.json" with { type: "json" };
 
 export type LocaleKeyType = keyof typeof localeEn;
 
 interface LocaleEntry {
-    [key: string]: string;
+  [key: string]: string;
 }
 
 const localeTableKey = vscode.env.language;
 const localeTable = Object.assign(
-    localeEn,
-    (<{ [key: string]: LocaleEntry }>{
-        ja: localeJa,
-    })[localeTableKey] || {},
+  localeEn,
+  (<{ [key: string]: LocaleEntry }>{
+    ja: localeJa,
+  })[localeTableKey] || {},
 );
 
 const localeString = (key: string): string => localeTable[key] || key;
