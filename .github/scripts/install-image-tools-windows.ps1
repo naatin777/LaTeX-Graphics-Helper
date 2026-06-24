@@ -5,6 +5,7 @@ $popplerVersion = '24.08.0-0'
 $popplerZip = Join-Path $env:RUNNER_TEMP 'poppler.zip'
 $popplerRoot = Join-Path $env:RUNNER_TEMP 'poppler'
 
+Write-Host 'Downloading Poppler...'
 Invoke-WebRequest "https://github.com/oschwartz10612/poppler-windows/releases/download/v$popplerVersion/Release-$popplerVersion.zip" -OutFile $popplerZip
 Expand-Archive $popplerZip -DestinationPath $popplerRoot -Force
 
@@ -16,20 +17,28 @@ if (-not $pdftocairo) {
 $rsvgDir = Join-Path $env:RUNNER_TEMP 'rsvg'
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 $rsvgConvert = Join-Path $rsvgDir 'rsvg-convert.exe'
+
+Write-Host 'Downloading rsvg-convert...'
 Invoke-WebRequest 'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' -OutFile $rsvgConvert
 
 $ghostscriptTag = 'gs10071'
 $ghostscriptInstaller = Join-Path $env:RUNNER_TEMP 'ghostscript-installer.exe'
+$ghostscriptRoot = Join-Path $env:RUNNER_TEMP 'ghostscript'
 $ghostscriptUrl = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/$ghostscriptTag/gs10071w64.exe"
+
+Write-Host 'Downloading Ghostscript...'
 Invoke-WebRequest $ghostscriptUrl -OutFile $ghostscriptInstaller
-$ghostscriptInstall = Start-Process -FilePath $ghostscriptInstaller -ArgumentList '/S' -Wait -PassThru
-if ($ghostscriptInstall.ExitCode -ne 0) {
-	throw "Ghostscript installer failed with exit code $($ghostscriptInstall.ExitCode)"
+New-Item -ItemType Directory -Force -Path $ghostscriptRoot | Out-Null
+
+Write-Host 'Extracting Ghostscript...'
+& 7z x $ghostscriptInstaller "-o$ghostscriptRoot" -y | Out-Host
+if ($LASTEXITCODE -ne 0) {
+	throw "7z failed to extract Ghostscript installer with exit code $LASTEXITCODE"
 }
 
-$gs = Get-ChildItem -Path 'C:\Program Files\gs' -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+$gs = Get-ChildItem -Path $ghostscriptRoot -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $gs) {
-	throw 'gswin64c.exe not found after Ghostscript installer run'
+	throw 'gswin64c.exe not found after Ghostscript extraction'
 }
 
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
