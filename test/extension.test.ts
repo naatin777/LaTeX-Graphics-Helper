@@ -5,9 +5,8 @@ import { access, copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import sinon from "sinon";
 import * as vscode from "vscode";
-
-import { runCommandAndClearNotifications } from "./helpers/vscode_command.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -50,11 +49,14 @@ suite("Extension Test Suite", () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder);
 
+    const sandbox = sinon.createSandbox();
     const temporaryDirectory = await mkdtemp(
       path.join(workspaceFolder.uri.fsPath, "lgh-extension-test-"),
     );
 
     try {
+      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+
       const sourcePath = path.join(temporaryDirectory, "source.png");
       const outputPath = path.join(temporaryDirectory, "source.pdf");
       await copyFile(
@@ -62,16 +64,17 @@ suite("Extension Test Suite", () => {
         sourcePath,
       );
 
-      const commandExecution = vscode.commands.executeCommand(
+      await vscode.commands.executeCommand(
         "latex-graphics-helper.convertPngToPdf",
         vscode.Uri.file(sourcePath),
       );
-      await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
+      await waitForFile(outputPath);
 
       const { PDFDocument } = await import("pdf-lib");
       const pdf = await PDFDocument.load(await readFile(outputPath));
       assert.strictEqual(pdf.getPageCount(), 1);
     } finally {
+      sandbox.restore();
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
   });

@@ -56,6 +56,7 @@
 - [0036: VS Code command testの通知待ち対策helperを追加する](0036-add-command-test-notification-helper.md)
 - [0037: RuleSyncのStop hookでlint/format自動修正を実行する](0037-add-rulesync-stop-fix-hook.md)
 - [0038: Codex Stop hookのJSON出力エラーを修正する](0038-fix-codex-stop-hook-json-output.md)
+- [0039: macOS CIでconvert PNG to PDF command testがtimeoutする問題を修正する](0039-fix-macos-convert-png-command-timeout.md)
 
 ## Todo Tasks
 
