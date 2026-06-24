@@ -6,4 +6,5 @@ node_modules
 playwright-report/
 test-results/
 media/
+.latex-graphics-helper/
 *.vsix

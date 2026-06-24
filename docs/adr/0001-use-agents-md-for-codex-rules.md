@@ -34,6 +34,8 @@ Stop hookは、各AIツールのhook設定へ `pnpm run lint:fix` や `pnpm run 
 
 つまり、RuleSyncのhook定義は「どのタイミングで何を呼ぶか」だけを持ち、実際に実行するshell commandの詳細は `.sh` に閉じ込める。
 
+CodexのStop hookでは、hook commandのstdoutをJSON出力として扱う。したがって、`check:fix`の通常ログはstdoutへ出さず、`.latex-graphics-helper/logs/`へ保存する。stdoutにはCodexが解釈できるJSONだけを出す。
+
 初期生成対象は以下とする。
 
 - Codex CLI
@@ -55,6 +57,7 @@ Stop hookは、各AIツールのhook設定へ `pnpm run lint:fix` や `pnpm run 
 - RuleSyncはtargetごとに異なるhook設定ファイルを生成するため、直接commandを書くと生成物ごとのquote、escape、shell解釈の差分を確認する必要が出る
 - `.sh`に寄せると、各AIツールの生成物は同じscript pathを呼ぶだけになり、実行内容の確認場所を1つにできる
 - `lint:fix`と`format:fix`を個別にhookへ書くのではなく`check:fix`を呼ぶことで、hookの責務を「自動修正入口の起動」に限定できる
+- CodexのStop hookではstdoutに任意ログを出すとJSON出力として解釈されるため、`pnpm`やlinterの通常ログをstdoutへ流さない必要がある
 
 ## 代替案
 
@@ -115,6 +118,7 @@ Stop hookは、各AIツールのhook設定へ `pnpm run lint:fix` や `pnpm run 
 - 生成された各AIツール向けファイルはGit管理する
 - Stop hookにより、AI作業終了時に `pnpm run check:fix` が実行される
 - hookで実行する自動修正の内容は、hook設定ではなく`package.json`の`check:fix`で管理する
+- Stop hookの実行ログは`.latex-graphics-helper/logs/stop-hook-check-fix.log`へ保存する
 
 ## 運用ルール
 
