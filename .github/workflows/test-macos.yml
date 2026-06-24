@@ -31,8 +31,5 @@ jobs:
             - run: bash .github/scripts/install-image-tools-macos.sh
               shell: bash
 
-            - run: node .github/scripts/export-tool-paths.mjs
-              shell: bash
-
             - run: pnpm run test
               shell: bash
