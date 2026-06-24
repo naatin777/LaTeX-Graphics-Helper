@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-# pdfcrop from install-texlive; pdftocairo / rsvg / gs are not in TeX Live on Windows CI.
+# pdftocairo / rsvg / gs are installed separately on Windows CI.
 $popplerVersion = '24.08.0-0'
 $popplerZip = "$env:RUNNER_TEMP\poppler.zip"
 $popplerRoot = "$env:RUNNER_TEMP\poppler"
@@ -38,4 +38,3 @@ $env:PATH = "$popplerBin;$rsvgDir;$($gs.DirectoryName);$env:PATH"
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
 if (-not (Test-Path "$rsvgDir\rsvg-convert.exe")) { throw "missing $rsvgDir\rsvg-convert.exe" }
 if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
-if (-not (Get-Command pdfcrop -ErrorAction SilentlyContinue)) { throw 'pdfcrop not found after TeX Live install' }
