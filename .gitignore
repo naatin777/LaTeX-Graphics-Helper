@@ -1,6 +1,7 @@
 out
 dist
 node_modules
+.pnpm-store/
 .vscode-test/
 playwright-report/
 test-results/

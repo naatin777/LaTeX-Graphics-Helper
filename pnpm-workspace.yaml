@@ -3,3 +3,4 @@ allowBuilds:
   keytar: true
   lefthook: true
   sharp: true
+  tldjs: false

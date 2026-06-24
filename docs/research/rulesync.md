@@ -4,6 +4,8 @@
 
 2026-06-23
 
+0033実施時の再確認日: 2026-06-24
+
 ## 対象
 
 - RuleSync
@@ -33,6 +35,10 @@
 - `rulesync.local.jsonc`でローカル設定を上書きでき、Git管理対象外として扱う想定がある
 - 複数targetが同じファイルへ出力する場合は、設定順の後ろにあるtargetが優先される
 - RuleSync `8.31.0`のpackage情報ではNode.js `>=22.0.0`、pnpm `>=10`が指定されている
+- 2026-06-24にnpm registryで確認した`latest`は`8.31.0`
+- `rulesync generate --check`で生成物が同期済みか確認できる
+- `codexcli` targetだけで`AGENTS.md`が生成されるため、`agentsmd` targetを同時指定する必要はない
+- rules機能のみを対象にすると、`AGENTS.md`、`CLAUDE.md`、`.cursor/rules/*.mdc`、`.github/copilot-instructions.md`を生成できる
 
 ## このプロジェクトへの適用案
 

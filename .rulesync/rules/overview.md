@@ -1,3 +1,10 @@
+---
+root: true
+targets: ["*"]
+description: "LaTeX Graphics Helper のAI coding agent向け作業ルール"
+globs: ["**/*"]
+---
+
 # AGENTS.md
 
 このファイルは、Codex / AI coding agent に守ってほしいプロジェクト固有の作業ルールです。
