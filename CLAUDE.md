@@ -63,6 +63,8 @@
 - 内部実装ではなく、外から見た振る舞いをテストする。
 - UIの細部やまだ揺れている仕様のテストは後回しでよい。
 - カバレッジを追う前に、主要な挙動を安定させる。
+- VS Code command testで通知を出す可能性がある場合、`executeCommand`を直接`await`せず、通知を閉じてからcommand実行Promiseを待つ。
+- 通知待ち対策には`test/helpers/vscode_command.ts`のhelperを使う。
 
 優先してテストするもの。
 

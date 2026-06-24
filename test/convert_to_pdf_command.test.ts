@@ -29,6 +29,11 @@ import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import * as vscode from "vscode";
 
+import {
+  clearNotificationsAfterDelay,
+  runCommandAndClearNotifications,
+} from "./helpers/vscode_command.js";
+
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
@@ -52,9 +57,7 @@ suite("convertToPdf command", () => {
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(sourcePath),
       );
-      await waitForFile(outputPath);
-      await vscode.commands.executeCommand("notifications.clearAll");
-      await commandExecution;
+      await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
     } finally {
@@ -76,10 +79,10 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(firstSourcePath),
         [vscode.Uri.file(firstSourcePath), vscode.Uri.file(secondSourcePath)],
       );
-      await waitForFile(path.join(temporaryDirectory, "first.pdf"));
-      await waitForFile(path.join(temporaryDirectory, "second.pdf"));
-      await vscode.commands.executeCommand("notifications.clearAll");
-      await commandExecution;
+      await runCommandAndClearNotifications(commandExecution, async () => {
+        await waitForFile(path.join(temporaryDirectory, "first.pdf"));
+        await waitForFile(path.join(temporaryDirectory, "second.pdf"));
+      });
 
       await assertPdfPageSizeMatchesImage(
         path.join(temporaryDirectory, "first.pdf"),
@@ -108,8 +111,7 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(pngPath),
         [vscode.Uri.file(pngPath), vscode.Uri.file(unsupportedPath)],
       );
-      await dismissNotifications();
-      await commandExecution;
+      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
     } finally {
@@ -130,8 +132,7 @@ suite("convertToPdf command", () => {
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(pdfPath),
       );
-      await dismissNotifications();
-      await commandExecution;
+      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
     } finally {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
@@ -174,11 +175,6 @@ async function assertFileDoesNotExist(filePath: string): Promise<void> {
   await assert.rejects(readFile(filePath), (error) => {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
   });
-}
-
-async function dismissNotifications(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  await vscode.commands.executeCommand("notifications.clearAll");
 }
 
 async function waitForFile(filePath: string): Promise<void> {

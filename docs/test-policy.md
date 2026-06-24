@@ -61,3 +61,32 @@ mock は使ってよい。
 - 何を守っているか説明できないテスト
 - mock の呼び出し回数だけを確認するテスト
 - 仕様変更と一緒に期待値を書き換えるテスト
+
+## VS Code command testの通知待ち対策
+
+VS Code commandが`showInformationMessage`、`showWarningMessage`、`showErrorMessage`を使う場合、テストで`vscode.commands.executeCommand(...)`を直接`await`すると、通知の選択待ちで停止することがある。
+
+通知を出す可能性があるcommand testでは、以下の順序にする。
+
+1. command実行Promiseを変数に保持する
+2. ファイル生成など期待する副作用を待つ、または短時間待つ
+3. `notifications.clearAll`で通知を閉じる
+4. command実行Promiseを`await`する
+
+原則として、`test/helpers/vscode_command.ts`のhelperを使う。
+
+例:
+
+```ts
+const commandExecution = vscode.commands.executeCommand(commandId, uri);
+
+await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
+```
+
+エラー通知だけを確認する場合:
+
+```ts
+const commandExecution = vscode.commands.executeCommand(commandId, uri);
+
+await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+```

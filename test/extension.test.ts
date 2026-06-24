@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import * as vscode from "vscode";
 
+import { runCommandAndClearNotifications } from "./helpers/vscode_command.js";
+
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 suite("Extension Test Suite", () => {
@@ -64,9 +66,7 @@ suite("Extension Test Suite", () => {
         "latex-graphics-helper.convertPngToPdf",
         vscode.Uri.file(sourcePath),
       );
-      await waitForFile(outputPath);
-      await vscode.commands.executeCommand("notifications.clearAll");
-      await commandExecution;
+      await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
 
       const { PDFDocument } = await import("pdf-lib");
       const pdf = await PDFDocument.load(await readFile(outputPath));
