@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pdfcrop from install-texlive; these are not in TeX Live.
+# e2e tools used by conversion tests on macOS.
 brew install poppler librsvg ghostscript
 
-command -v pdftocairo
-command -v rsvg-convert
-command -v gs
+gs_path="$(command -v gs)"
+pdftocairo_path="$(command -v pdftocairo)"
+rsvg_convert_path="$(command -v rsvg-convert)"
+
+mkdir -p .vscode
+cat > .vscode/settings.json <<EOF
+{
+    "latex-graphics-helper.execPath.ghostscript": "${gs_path}",
+    "latex-graphics-helper.execPath.pdftocairo": "${pdftocairo_path}",
+    "latex-graphics-helper.execPath.rsvgConvert": "${rsvg_convert_path}"
+}
+EOF
+
+cat .vscode/settings.json
