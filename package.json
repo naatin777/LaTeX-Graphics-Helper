@@ -328,7 +328,7 @@
         {
           "submenu": "latex-graphics-helper.convertJpeg",
           "group": "latex-graphics-helper",
-          "when": "resourceExtname == .jpeg && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
+          "when": "resourceExtname =~ /^\\.(jpg|jpeg)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
         },
         {
           "submenu": "latex-graphics-helper.convertWebp",
@@ -472,22 +472,22 @@
         {
           "command": "latex-graphics-helper.convertJpegToPdf",
           "group": "latex-graphics-helper.convertJpeg",
-          "when": "resourceExtname == .jpeg && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
+          "when": "resourceExtname =~ /^\\.(jpg|jpeg)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
         },
         {
           "command": "latex-graphics-helper.convertJpegToPng",
           "group": "latex-graphics-helper.convertJpeg",
-          "when": "resourceExtname == .jpeg && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
+          "when": "resourceExtname =~ /^\\.(jpg|jpeg)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
         },
         {
           "command": "latex-graphics-helper.convertJpegToWebp",
           "group": "latex-graphics-helper.convertJpeg",
-          "when": "resourceExtname == .jpeg && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
+          "when": "resourceExtname =~ /^\\.(jpg|jpeg)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
         },
         {
           "command": "latex-graphics-helper.convertJpegToAvif",
           "group": "latex-graphics-helper.convertJpeg",
-          "when": "resourceExtname == .jpeg && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
+          "when": "resourceExtname =~ /^\\.(jpg|jpeg)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertJpeg.enabled"
         }
       ],
       "latex-graphics-helper.convertWebp": [
