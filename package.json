@@ -183,6 +183,11 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.convertToPdf",
+        "title": "%command.convertToPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.convertPngToPdf",
         "title": "%command.convertPngToPdf%",
         "category": "LaTeX Graphics Helper"
@@ -437,6 +442,11 @@
         }
       ],
       "latex-graphics-helper.convertPng": [
+        {
+          "command": "latex-graphics-helper.convertToPdf",
+          "group": "latex-graphics-helper.convertPng",
+          "when": "resourceExtname == .png && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertPng.enabled"
+        },
         {
           "command": "latex-graphics-helper.convertPngToPdf",
           "group": "latex-graphics-helper.convertPng",

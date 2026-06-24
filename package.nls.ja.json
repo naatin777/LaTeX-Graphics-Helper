@@ -89,6 +89,7 @@
   "command.convertPdfToAvif": "PDFをAVIFに変換",
 
   "submenu.convertPng": "PNGを変換",
+  "command.convertToPdf": "PDFに変換",
   "command.convertPngToPdf": "PNGをPDFに変換",
   "command.convertPngToJpeg": "PNGをJPEGに変換",
   "command.convertPngToWebp": "PNGをWebPに変換",

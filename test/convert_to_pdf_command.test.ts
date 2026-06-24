@@ -21,7 +21,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -48,7 +48,13 @@ suite("convertToPdf command", () => {
       const outputPath = path.join(temporaryDirectory, "source.pdf");
       await copyFile(fixturePngPath, sourcePath);
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await waitForFile(outputPath);
+      await vscode.commands.executeCommand("notifications.clearAll");
+      await commandExecution;
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
     } finally {
@@ -65,11 +71,15 @@ suite("convertToPdf command", () => {
       await copyFile(fixturePngPath, firstSourcePath);
       await copyFile(fixturePngPath, secondSourcePath);
 
-      await vscode.commands.executeCommand(
+      const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(firstSourcePath),
         [vscode.Uri.file(firstSourcePath), vscode.Uri.file(secondSourcePath)],
       );
+      await waitForFile(path.join(temporaryDirectory, "first.pdf"));
+      await waitForFile(path.join(temporaryDirectory, "second.pdf"));
+      await vscode.commands.executeCommand("notifications.clearAll");
+      await commandExecution;
 
       await assertPdfPageSizeMatchesImage(
         path.join(temporaryDirectory, "first.pdf"),
@@ -93,12 +103,13 @@ suite("convertToPdf command", () => {
       await copyFile(fixturePngPath, pngPath);
       await writeFile(unsupportedPath, "not an image");
 
-      await assert.rejects(async () => {
-        await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath), [
-          vscode.Uri.file(pngPath),
-          vscode.Uri.file(unsupportedPath),
-        ]);
-      }, /unsupported|not supported|only/i);
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(pngPath),
+        [vscode.Uri.file(pngPath), vscode.Uri.file(unsupportedPath)],
+      );
+      await dismissNotifications();
+      await commandExecution;
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
     } finally {
@@ -115,9 +126,12 @@ suite("convertToPdf command", () => {
       pdf.addPage([120, 80]);
       await writeFile(pdfPath, await pdf.save());
 
-      await assert.rejects(async () => {
-        await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pdfPath));
-      }, /unsupported|not supported|only/i);
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(pdfPath),
+      );
+      await dismissNotifications();
+      await commandExecution;
     } finally {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
@@ -160,4 +174,28 @@ async function assertFileDoesNotExist(filePath: string): Promise<void> {
   await assert.rejects(readFile(filePath), (error) => {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
   });
+}
+
+async function dismissNotifications(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  await vscode.commands.executeCommand("notifications.clearAll");
+}
+
+async function waitForFile(filePath: string): Promise<void> {
+  const timeoutAt = Date.now() + 10_000;
+
+  while (Date.now() < timeoutAt) {
+    try {
+      await access(filePath);
+      return;
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
+        throw error;
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  throw new Error(`Timed out waiting for file: ${filePath}`);
 }

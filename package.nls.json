@@ -74,6 +74,7 @@
   "command.convertPdfToWebp": "Convert PDF to WebP",
   "command.convertPdfToAvif": "Convert PDF to AVIF",
   "submenu.convertPng": "Convert PNG",
+  "command.convertToPdf": "Convert to PDF",
   "command.convertPngToPdf": "Convert PNG to PDF",
   "command.convertPngToJpeg": "Convert PNG to JPEG",
   "command.convertPngToWebp": "Convert PNG to WebP",

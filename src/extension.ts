@@ -2,7 +2,9 @@ import * as vscode from "vscode";
 
 import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
 import {
+  convertToPdfCommand,
   convertPngToPdfCommand,
+  CONVERT_TO_PDF_COMMAND,
   CONVERT_PNG_TO_PDF_COMMAND,
 } from "./commands/convert_png_to_pdf.js";
 import { initializeSafeMode } from "./commands/safe_mode.js";
@@ -22,6 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
       splitPdfAllPagesCommand,
     ),
     vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, undoLastConversion),
+    vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
     vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
   );
 }
