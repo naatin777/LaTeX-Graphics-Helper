@@ -29,3 +29,4 @@
 | Image conversion | PNG変換でSafe Modeを適用する                   | `test/png_safe_mode.test.ts`             | Covered      | 一括反映・競合判断・Undo・キャンセルを検証        |
 | Command behavior | Safe Modeダイアログの選択結果を判断へ変換する  | `test/safe_mode_dialog.test.ts`          | Covered      | VS Code APIの戻り値をmockして検証                 |
 | UI               | Safe Modeのstatus barとmodal dialogを表示する  | `test/safe_mode_status_bar.test.ts`      | Partial      | status bar挙動はCovered。画面上の描画外観は対象外 |
+| Command behavior | PDFに変換する出力形式基準コマンド              | `test/convert_to_pdf_command.test.ts`    | Not Covered  | 0034で失敗テストを追加。0035で実装予定            |
