@@ -18,7 +18,7 @@ jobs:
 
             - uses: pnpm/action-setup@v4
               with:
-                  version: 10.28.2
+                  version: 11.8.0
 
             - uses: actions/setup-node@v6
               with:
@@ -28,14 +28,7 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - uses: zauguin/install-texlive@v4
-              with:
-                  package_file: .github/texlive-packages.txt
-
             - run: bash .github/scripts/install-image-tools-macos.sh
-              shell: bash
-
-            - run: node .github/scripts/export-tool-paths.mjs
               shell: bash
 
             - run: pnpm run test

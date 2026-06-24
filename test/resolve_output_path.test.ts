@@ -7,7 +7,7 @@ import { resolveOutputPath } from "../src/config/resolve_output_path.js";
 
 suite("resolveOutputPath", () => {
   test("expands source variables from the original PDF path", () => {
-    const workspacePath = path.join(path.sep, "workspace");
+    const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "sample.pdf");
 
     const result = resolveOutputPath(
@@ -24,7 +24,7 @@ suite("resolveOutputPath", () => {
   });
 
   test("resolves relative output paths from the workspace", () => {
-    const workspacePath = path.join(path.sep, "workspace");
+    const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "sample.pdf");
 
     const result = resolveOutputPath("generated/${relativeFileDirname}/${fileBasename}", {
@@ -37,7 +37,7 @@ suite("resolveOutputPath", () => {
   });
 
   test("does not expand template syntax contained in a file name", () => {
-    const workspacePath = path.join(path.sep, "workspace");
+    const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "${fileExtname}.pdf");
 
     const result = resolveOutputPath("${fileBasenameNoExtension}-crop${fileExtname}", {
@@ -50,7 +50,7 @@ suite("resolveOutputPath", () => {
   });
 
   test("rejects unsupported template variables", () => {
-    const workspacePath = path.join(path.sep, "workspace");
+    const workspacePath = path.resolve(path.sep, "workspace");
 
     assert.throws(
       () =>

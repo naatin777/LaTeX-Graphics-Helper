@@ -1,41 +1,57 @@
 $ErrorActionPreference = 'Stop'
 
-# pdfcrop from install-texlive; pdftocairo / rsvg / gs are not in TeX Live on Windows CI.
+# e2e tools used by conversion tests on Windows.
 $popplerVersion = '24.08.0-0'
-$popplerZip = "$env:RUNNER_TEMP\poppler.zip"
-$popplerRoot = "$env:RUNNER_TEMP\poppler"
+$popplerZip = Join-Path $env:RUNNER_TEMP 'poppler.zip'
+$popplerRoot = Join-Path $env:RUNNER_TEMP 'poppler'
 
-Invoke-WebRequest `
-	"https://github.com/oschwartz10612/poppler-windows/releases/download/v$popplerVersion/Release-$popplerVersion.zip" `
-	-OutFile $popplerZip
+Write-Host 'Downloading Poppler...'
+Invoke-WebRequest "https://github.com/oschwartz10612/poppler-windows/releases/download/v$popplerVersion/Release-$popplerVersion.zip" -OutFile $popplerZip
 Expand-Archive $popplerZip -DestinationPath $popplerRoot -Force
 
 $pdftocairo = Get-ChildItem -Path $popplerRoot -Recurse -Filter pdftocairo.exe | Select-Object -First 1
 if (-not $pdftocairo) {
 	throw "pdftocairo.exe not found under $popplerRoot"
 }
-$popplerBin = $pdftocairo.DirectoryName
 
-$rsvgDir = "$env:RUNNER_TEMP\rsvg"
+$rsvgDir = Join-Path $env:RUNNER_TEMP 'rsvg'
 New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
-Invoke-WebRequest `
-	'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' `
-	-OutFile "$rsvgDir\rsvg-convert.exe"
+$rsvgConvert = Join-Path $rsvgDir 'rsvg-convert.exe'
 
-choco install ghostscript -y --no-progress
+Write-Host 'Downloading rsvg-convert...'
+Invoke-WebRequest 'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' -OutFile $rsvgConvert
 
-$gs = Get-ChildItem -Path 'C:\Program Files\gs' -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue |
-	Select-Object -First 1
+$ghostscriptTag = 'gs10071'
+$ghostscriptInstaller = Join-Path $env:RUNNER_TEMP 'ghostscript-installer.exe'
+$ghostscriptRoot = Join-Path $env:RUNNER_TEMP 'ghostscript'
+$ghostscriptUrl = "https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/$ghostscriptTag/gs10071w64.exe"
+
+Write-Host 'Downloading Ghostscript...'
+Invoke-WebRequest $ghostscriptUrl -OutFile $ghostscriptInstaller
+New-Item -ItemType Directory -Force -Path $ghostscriptRoot | Out-Null
+
+Write-Host 'Extracting Ghostscript...'
+& 7z x $ghostscriptInstaller "-o$ghostscriptRoot" -y | Out-Host
+if ($LASTEXITCODE -ne 0) {
+	throw "7z failed to extract Ghostscript installer with exit code $LASTEXITCODE"
+}
+
+$gs = Get-ChildItem -Path $ghostscriptRoot -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $gs) {
-	throw 'gswin64c.exe not found after Ghostscript install'
+	throw 'gswin64c.exe not found after Ghostscript extraction'
 }
-
-foreach ($dir in @($popplerBin, $rsvgDir, $gs.DirectoryName)) {
-	Add-Content $env:GITHUB_PATH $dir
-}
-$env:PATH = "$popplerBin;$rsvgDir;$($gs.DirectoryName);$env:PATH"
 
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
-if (-not (Test-Path "$rsvgDir\rsvg-convert.exe")) { throw "missing $rsvgDir\rsvg-convert.exe" }
+if (-not (Test-Path $rsvgConvert)) { throw "missing $rsvgConvert" }
 if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
-if (-not (Get-Command pdfcrop -ErrorAction SilentlyContinue)) { throw 'pdfcrop not found after TeX Live install' }
+
+$settingsDir = Join-Path 'test/fixtures/workspace' '.vscode'
+New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
+$settingsPath = Join-Path $settingsDir 'settings.json'
+$settings = [ordered]@{
+	'latex-graphics-helper.execPath.ghostscript' = $gs.FullName
+	'latex-graphics-helper.execPath.pdftocairo' = $pdftocairo.FullName
+	'latex-graphics-helper.execPath.rsvgConvert' = $rsvgConvert
+}
+$settings | ConvertTo-Json | Set-Content $settingsPath -Encoding utf8
+Get-Content $settingsPath
