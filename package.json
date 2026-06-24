@@ -697,12 +697,12 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg",
           "description": "%config.outputPath.convertPdfToJpeg%"
         },
-        "latex.graphics-helper.outputPath.convertPdfToWebp": {
+        "latex-graphics-helper.outputPath.convertPdfToWebp": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.webp",
           "description": "%config.outputPath.convertPdfToWebp%"
         },
-        "latex.graphics-helper.outputPath.convertPdfToAvif": {
+        "latex-graphics-helper.outputPath.convertPdfToAvif": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.avif",
           "description": "%config.outputPath.convertPdfToAvif%"
