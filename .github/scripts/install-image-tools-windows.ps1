@@ -18,11 +18,11 @@ New-Item -ItemType Directory -Force -Path $rsvgDir | Out-Null
 $rsvgConvert = Join-Path $rsvgDir 'rsvg-convert.exe'
 Invoke-WebRequest 'https://github.com/miyako/console-rsvg-convert/releases/download/1.0.windows-msvc-static/rsvg-convert.exe' -OutFile $rsvgConvert
 
-choco install ghostscript -y --no-progress
+choco install ghostscript.app -y --no-progress
 
 $gs = Get-ChildItem -Path 'C:\Program Files\gs' -Recurse -Filter gswin64c.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $gs) {
-	throw 'gswin64c.exe not found after Ghostscript install'
+	throw 'gswin64c.exe not found after Ghostscript.app install'
 }
 
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
