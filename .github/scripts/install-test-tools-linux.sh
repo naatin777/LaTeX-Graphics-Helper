@@ -13,8 +13,9 @@ gs_path="$(command -v gs)"
 pdftocairo_path="$(command -v pdftocairo)"
 rsvg_convert_path="$(command -v rsvg-convert)"
 
-mkdir -p .vscode
-cat > .vscode/settings.json <<EOF
+settings_dir="test/fixtures/workspace/.vscode"
+mkdir -p "$settings_dir"
+cat > "$settings_dir/settings.json" <<EOF
 {
     "latex-graphics-helper.execPath.ghostscript": "${gs_path}",
     "latex-graphics-helper.execPath.pdftocairo": "${pdftocairo_path}",
@@ -22,4 +23,4 @@ cat > .vscode/settings.json <<EOF
 }
 EOF
 
-cat .vscode/settings.json
+cat "$settings_dir/settings.json"
