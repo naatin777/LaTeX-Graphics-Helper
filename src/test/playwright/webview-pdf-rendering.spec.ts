@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, isAbsolute, join, normalize, relative } from "node:path";
 
 import { expect, test } from "@playwright/test";
 import { PDFDocument, rgb } from "pdf-lib";
@@ -171,8 +171,9 @@ async function createTestPdf(): Promise<Uint8Array> {
 function resolveWebviewFile(pathname: string): string | undefined {
   const relativePath = pathname.replace(/^\/+/, "");
   const resolvedPath = normalize(join(webviewRoot, relativePath));
+  const resolvedRelativePath = relative(webviewRoot, resolvedPath);
 
-  if (!resolvedPath.startsWith(`${webviewRoot}/`)) {
+  if (resolvedRelativePath.startsWith("..") || isAbsolute(resolvedRelativePath)) {
     return undefined;
   }
 
