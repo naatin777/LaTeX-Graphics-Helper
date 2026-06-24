@@ -26,6 +26,14 @@ AI向けのプロジェクト固有作業ルールは、RuleSyncの `.rulesync/`
 
 `AGENTS.md` はRuleSyncから生成する。
 
+AIツールのStop時にlint/formatの自動修正を走らせるhookも、RuleSyncで管理する。
+
+Stop hookは、各AIツールのhook設定へ `pnpm run lint:fix` や `pnpm run format:fix` を直接書かず、`.rulesync/hooks/stop-fix.sh` を呼び出す。
+
+`.rulesync/hooks/stop-fix.sh` は `pnpm run check:fix` を実行する。
+
+つまり、RuleSyncのhook定義は「どのタイミングで何を呼ぶか」だけを持ち、実際に実行するshell commandの詳細は `.sh` に閉じ込める。
+
 初期生成対象は以下とする。
 
 - Codex CLI
@@ -41,6 +49,12 @@ AI向けのプロジェクト固有作業ルールは、RuleSyncの `.rulesync/`
 - AIが依頼範囲を超えて変更するリスクを下げられる
 - 複数AIツールへ同じルールを配布できる
 - ルールの正本を1か所に集約できる
+- Stop hookの実行入口をshell scriptに寄せることで、各AIツールのhook設定にshell commandの細部を重複させずに済む
+- `check:fix`を呼ぶことで、lint/formatの実体は`package.json`の既存scriptに集約できる
+- 今後lint/formatの対象や順序を変える場合も、hook設定を複数箇所変更せずに済む
+- RuleSyncはtargetごとに異なるhook設定ファイルを生成するため、直接commandを書くと生成物ごとのquote、escape、shell解釈の差分を確認する必要が出る
+- `.sh`に寄せると、各AIツールの生成物は同じscript pathを呼ぶだけになり、実行内容の確認場所を1つにできる
+- `lint:fix`と`format:fix`を個別にhookへ書くのではなく`check:fix`を呼ぶことで、hookの責務を「自動修正入口の起動」に限定できる
 
 ## 代替案
 
@@ -78,6 +92,19 @@ AI向けのプロジェクト固有作業ルールは、RuleSyncの `.rulesync/`
 - Codexが作業前に確認すべき場所が増える
 - ルールの重複や不整合が起きやすい
 
+### hook設定にpnpm commandを直接書く
+
+メリット:
+
+- hook設定だけを見れば実行内容が分かる
+- shell scriptファイルを追加しなくてよい
+
+デメリット:
+
+- 複数AIツールのhook設定に同じcommandが重複する
+- quote、shell解釈、targetごとの出力形式の差を各生成物で意識する必要がある
+- lint/formatの実行内容を変えるときに、hook設定側まで変更が波及しやすい
+
 ## 結果・影響
 
 - Codexは作業前に `AGENTS.md` のルールを確認する
@@ -86,6 +113,8 @@ AI向けのプロジェクト固有作業ルールは、RuleSyncの `.rulesync/`
 - ルールを維持する手間は増えるが、変更範囲を把握しやすくなる
 - RuleSync自体はdevDependencyとして固定versionで管理する
 - 生成された各AIツール向けファイルはGit管理する
+- Stop hookにより、AI作業終了時に `pnpm run check:fix` が実行される
+- hookで実行する自動修正の内容は、hook設定ではなく`package.json`の`check:fix`で管理する
 
 ## 運用ルール
 
