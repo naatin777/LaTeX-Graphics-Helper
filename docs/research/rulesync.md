@@ -6,6 +6,8 @@
 
 0033実施時の再確認日: 2026-06-24
 
+0037実施時のhooks確認日: 2026-06-24
+
 ## 対象
 
 - RuleSync
@@ -39,12 +41,16 @@
 - `rulesync generate --check`で生成物が同期済みか確認できる
 - `codexcli` targetだけで`AGENTS.md`が生成されるため、`agentsmd` targetを同時指定する必要はない
 - rules機能のみを対象にすると、`AGENTS.md`、`CLAUDE.md`、`.cursor/rules/*.mdc`、`.github/copilot-instructions.md`を生成できる
+- hooks機能では`.rulesync/hooks.json`に共通hookを定義できる
+- RuleSync `8.31.0`では、共通hook eventの`stop`を各target向けに変換できる
+- `codexcli`、`claudecode`、`cursor`、`copilot`を対象にhooksを生成すると、`.codex/hooks.json`、`.codex/config.toml`、`.claude/settings.json`、`.cursor/hooks.json`、`.github/hooks/copilot-hooks.json`が生成される
+- `claudecode`向けのStop hook commandは`$CLAUDE_PROJECT_DIR/`付きのパスへ変換される
 
 ## このプロジェクトへの適用案
 
 - `.rulesync/`をAI作業ルールの意味の正本にする
 - 現在の`AGENTS.md`を移行元にする
-- 最初はrules機能だけを対象とする
+- 最初はrules機能だけを対象とし、必要になった時点でhooks機能を追加する
 - 初期targetはCodex CLI、Claude Code、Cursor、GitHub Copilotとする
 - `AGENTS.md`もRuleSyncから再生成可能にする
 - MCP、skills、subagents、commandsの同期は初期導入へ含めない

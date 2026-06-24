@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "stop": [
+      {
+        "type": "command",
+        "command": ".rulesync/hooks/stop-fix.sh"
+      }
+    ]
+  }
+}

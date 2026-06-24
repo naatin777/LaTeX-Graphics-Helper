@@ -54,6 +54,7 @@
 - [0034: PDFに変換コマンドの失敗テストを追加する](0034-add-convert-to-pdf-output-format-tests.md)
 - [0035: PDFに変換コマンドを実装する](0035-implement-convert-to-pdf-output-format-command.md)
 - [0036: VS Code command testの通知待ち対策helperを追加する](0036-add-command-test-notification-helper.md)
+- [0037: RuleSyncのStop hookでlint/format自動修正を実行する](0037-add-rulesync-stop-fix-hook.md)
 
 ## Todo Tasks
 
