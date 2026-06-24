@@ -1,43 +1,64 @@
-# タスク: Safe ModeのVS Code UIを手動確認する
+# タスク: Safe ModeのVS Code UI挙動を自動テストする
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
-自動テストでは確認しないSafe Modeのダイアログとstatus barを、実際のVS Code画面で確認して記録する。
+Safe Modeのstatus barとダイアログに関するUI挙動を、実際の目視確認ではなく自動テストで固定する。
 
-## 確認項目
+目視確認は開発フローを重くするため、画面の見た目そのものではなく、VS Code APIへ渡す値と状態変化を検証する。
 
-- 拡張機能の起動後にstatus barへ`Safe Mode: ON`が表示される
-- status barを選択するとON/OFFが切り替わる
-- VS Codeを再起動しても選択した状態が復元される
-- Safe Mode ONで既存出力がある場合にmodal dialogが1回表示される
-- `Keep Both`、`Do Not Overwrite`、`Overwrite`をそれぞれ選択できる
-- ダイアログを閉じると出力を上書きしない
-- Safe Mode OFFでは既存出力があってもダイアログを表示しない
-- cropとsplitの両方で確認する
-- 0029完了後はPNG変換でも確認する
+`0030`ではSafe Modeダイアログの選択結果を検証済みなので、このタスクではstatus barまわりを中心に検証する。
+
+## Test target
+
+- 初期化時にstatus bar itemを作成する
+- status barのtextが初期状態で`$(shield) Safe Mode: ON`になる
+- status bar itemのcommandが`latex-graphics-helper.toggleSafeMode`になる
+- status bar itemのtooltipが設定される
+- status bar itemの`show()`が呼ばれる
+- toggle commandを実行するとON/OFFが切り替わり、status bar textが更新される
+- `ExtensionContext.globalState`に保存済みのOFF状態から初期化すると`Safe Mode: OFF`になる
+- `ExtensionContext.subscriptions`へstatus bar itemとcommand disposableが登録される
+
+## Mocked
+
+- `vscode.window.createStatusBarItem`
+- `vscode.commands.registerCommand`
+- `ExtensionContext.globalState`相当の状態保存
+
+## Not tested
+
+- 実際のVS Code画面上のstatus bar描画
+- status bar itemの表示位置
+- ダイアログの画面上の外観
+- VS Code再起動そのもの
+- crop、split、PNG変換の実ファイル処理
 
 ## 完了条件
 
-- 各確認項目の結果をこのタスクへ記録する
-- 不具合があれば修正を混ぜず、問題ごとに別タスクを作成する
-- crop、split、PNGの未確認項目が明示されている
+- status bar初期表示を検証するテストがある
+- toggle command実行時の状態変更とstatus bar更新を検証するテストがある
+- globalStateから状態復元されることを検証するテストがある
+- `subscriptions`登録を検証するテストがある
+- test file冒頭にTest target、Mocked、Not testedが記載されている
+- 実装変更を混ぜず、必要なら別Implementation Phaseタスクを作成する
 
 ## 変更可能なファイル
 
 - `docs/tasks/0031-verify-safe-mode-ui-manually.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
+- Safe Mode UI挙動専用の新規test file
 
 ## 対象外
 
 - 実装変更
-- テストコード追加
 - UIデザイン変更
 - 発見した不具合の修正
+- 実際のVS Code画面での目視確認
 
 ## 関連
 
@@ -47,6 +68,5 @@ Todo
 
 ## 確認方法
 
-- Extension Development Hostを起動する
-- workspace内のテスト用PDF・PNGを使用する
-- 既存出力を用意し、選択肢ごとの出力と元ファイルを確認する
+- `pnpm run check:test`
+- `pnpm run test`
