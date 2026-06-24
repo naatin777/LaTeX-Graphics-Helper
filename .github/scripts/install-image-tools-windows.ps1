@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-# pdftocairo / rsvg / gs are installed separately on Windows CI.
+# e2e tools used by conversion tests on Windows.
 $popplerVersion = '24.08.0-0'
 $popplerZip = "$env:RUNNER_TEMP\poppler.zip"
 $popplerRoot = "$env:RUNNER_TEMP\poppler"
@@ -38,3 +38,12 @@ $env:PATH = "$popplerBin;$rsvgDir;$($gs.DirectoryName);$env:PATH"
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
 if (-not (Test-Path "$rsvgDir\rsvg-convert.exe")) { throw "missing $rsvgDir\rsvg-convert.exe" }
 if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
+
+New-Item -ItemType Directory -Force -Path .vscode | Out-Null
+$settings = [ordered]@{
+	'latex-graphics-helper.execPath.ghostscript' = $gs.FullName
+	'latex-graphics-helper.execPath.pdftocairo' = $pdftocairo.FullName
+	'latex-graphics-helper.execPath.rsvgConvert' = "$rsvgDir\rsvg-convert.exe"
+}
+$settings | ConvertTo-Json | Set-Content .vscode/settings.json -Encoding utf8
+Get-Content .vscode/settings.json
