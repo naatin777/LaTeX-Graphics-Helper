@@ -19,13 +19,12 @@ const gsName = process.platform === 'win32' ? 'gswin64c' : 'gs';
 const gs = resolveTool(gsName);
 
 const tools = {
-    pdfcrop: resolveTool('pdfcrop'),
     pdftocairo: resolveTool('pdftocairo'),
     rsvgConvert: resolveTool('rsvg-convert'),
     gs,
 };
 
-if (!tools.pdfcrop || !tools.pdftocairo || !tools.rsvgConvert || !gs) {
+if (!tools.pdftocairo || !tools.rsvgConvert || !gs) {
     console.error('Missing tools:', { ...tools });
     process.exit(1);
 }
@@ -40,7 +39,6 @@ for (const toolPath of Object.values(tools)) {
 fs.mkdirSync('.vscode-test', { recursive: true });
 fs.writeFileSync('.vscode-test/ci-tool-paths.json', JSON.stringify(tools));
 
-console.log(`pdfcrop=${tools.pdfcrop}`);
 console.log(`pdftocairo=${tools.pdftocairo}`);
 console.log(`rsvg-convert=${tools.rsvgConvert}`);
 console.log(`${gsName}=${gs}`);
