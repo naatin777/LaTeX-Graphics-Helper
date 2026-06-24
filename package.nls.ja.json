@@ -73,6 +73,7 @@
   "command.mergePdf.selectedPages": "選択した順にPDFを結合",
   "command.mergePdf.manual": "手動でPDFを結合",
 
+  "submenu.convert": "変換",
   "submenu.convertDrawio": "Draw.ioファイルを変換",
   "command.convertDrawioToPdf": "Draw.ioファイルをPDFに変換",
   "command.convertDrawioToPng": "Draw.ioファイルをPNGに変換",
@@ -89,7 +90,7 @@
   "command.convertPdfToAvif": "PDFをAVIFに変換",
 
   "submenu.convertPng": "PNGを変換",
-  "command.convertToPdf": "PDFに変換",
+  "command.convertToPdf": "PDF",
   "command.convertPngToPdf": "PNGをPDFに変換",
   "command.convertPngToJpeg": "PNGをJPEGに変換",
   "command.convertPngToWebp": "PNGをWebPに変換",
