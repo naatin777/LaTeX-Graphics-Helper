@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -64,13 +64,13 @@ Todo
 
 サイズの期待値は実装から逆算せず、テスト追加前に仕様書へ記録する。
 
-## 未決事項
+## 決定した未決事項
 
-- 複数画像を`PDFに変換`した場合、画像ごとに別のPDFを作るか、選択した画像を1つのPDFへ結合するか
-- 同じ拡張子のファイルを同じ出力形式へ変換しようとした場合の扱い
-- 出力形式基準への移行を全形式同時に行うか、`PDFに変換`から段階的に行うか
+- 複数画像を`PDFに変換`した場合、画像ごとに別のPDFを作る
+- 同じ拡張子のファイルを同じ出力形式へ変換しようとした場合は、非対応入力として全体停止する
+- 出力形式基準への移行は、まず`PDFに変換`から段階的に行う
 
-これらは実装前にユーザーへ確認し、仕様書へ記録する。
+詳細は`docs/specs/output-format-conversion.md`へ記録した。
 
 ## 完了条件
 
@@ -104,8 +104,12 @@ Todo
 
 - `docs/specs/safe-mode.md`
 - `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/output-format-conversion.md`
+- `docs/adr/0009-use-output-format-conversion-commands.md`
 - `docs/tasks/0028-add-png-safe-mode-tests.md`
 - `docs/tasks/0029-integrate-png-conversion-with-safe-mode.md`
+- `docs/tasks/0034-add-convert-to-pdf-output-format-tests.md`
+- `docs/tasks/0035-implement-convert-to-pdf-output-format-command.md`
 
 ## 確認方法
 

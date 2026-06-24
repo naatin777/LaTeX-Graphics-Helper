@@ -49,8 +49,10 @@
 - [0029: PNG変換を安全な作業領域とSafe Modeへ統合する](0029-integrate-png-conversion-with-safe-mode.md)
 - [0030: Safe Modeダイアログ結果のテストを追加する](0030-add-safe-mode-dialog-result-tests.md)
 - [0031: Safe ModeのVS Code UI挙動を自動テストする](0031-verify-safe-mode-ui-manually.md)
+- [0032: 変換コマンドを出力形式基準へ再設計する](0032-redesign-conversion-commands-by-output-format.md)
 
 ## Todo Tasks
 
-- [0032: 変換コマンドを出力形式基準へ再設計する](0032-redesign-conversion-commands-by-output-format.md)
 - [0033: RuleSyncでAI作業ルールを一元管理する](0033-adopt-rulesync-for-ai-rules.md)
+- [0034: PDFに変換コマンドの失敗テストを追加する](0034-add-convert-to-pdf-output-format-tests.md)
+- [0035: PDFに変換コマンドを実装する](0035-implement-convert-to-pdf-output-format-command.md)
