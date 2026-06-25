@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
@@ -12,9 +10,12 @@ export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const UNDO_ACTION = "Undo";
+const PNG_EXTENSIONS = [".png"] as const;
+const PDF_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif"] as const;
 
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
+    supportedExtensions: PNG_EXTENSIONS,
     titleInputName: "PNG",
     successInputName: "PNG",
     errorPrefix: "Failed to convert PNG to PDF",
@@ -24,6 +25,7 @@ export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri
 
 export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
+    supportedExtensions: PDF_IMAGE_EXTENSIONS,
     titleInputName: "selected",
     successInputName: "file",
     errorPrefix: "Failed to convert to PDF",
@@ -35,6 +37,7 @@ async function convertSelectedPngFilesToPdf(
   uri: vscode.Uri | undefined,
   uris: vscode.Uri[] | undefined,
   messages: {
+    supportedExtensions: readonly string[];
     titleInputName: string;
     successInputName: string;
     errorPrefix: string;
@@ -76,6 +79,7 @@ async function convertSelectedPngFilesToPdf(
             jobs,
             signal: abortController.signal,
             resolveOutputConflicts,
+            supportedExtensions: messages.supportedExtensions,
           });
         } finally {
           cancellationSubscription.dispose();
@@ -119,17 +123,13 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
 
 function createJob(sourceUri: vscode.Uri, outputTemplate: string): ConvertPngToPdfJob {
   if (sourceUri.scheme !== "file") {
-    throw new Error(`Only local PNG files are supported: ${sourceUri.toString()}`);
-  }
-
-  if (path.extname(sourceUri.fsPath).toLowerCase() !== ".png") {
-    throw new Error(`Only PNG files can be converted: ${sourceUri.fsPath}`);
+    throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
   }
 
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
 
   if (!workspace) {
-    throw new Error(`The PNG must be inside an open workspace: ${sourceUri.fsPath}`);
+    throw new Error(`The image must be inside an open workspace: ${sourceUri.fsPath}`);
   }
 
   return {

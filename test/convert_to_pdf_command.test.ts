@@ -3,6 +3,7 @@
 // Test target:
 // - latex-graphics-helper.convertToPdf commandが登録されること
 // - PNGをPDFに変換できること
+// - JPEG、WebP、AVIFをPDFに変換できること
 // - 複数PNGを1回のコマンドでPDFへ変換できること
 // - 非対応入力が含まれる場合、変換全体を開始しないこと
 // - 入力形式と出力形式が同じ場合、変換全体を開始しないこと
@@ -13,7 +14,7 @@
 // - なし。VS Code command、実PNG fixture、実ファイル出力を使用する。
 //
 // Not tested:
-// - JPEG、WebP、AVIF、SVG、Draw.ioからPDFへの変換詳細
+// - SVG、Draw.ioからPDFへの変換詳細
 // - 画像を1つのPDFへ結合する機能
 // - context menuの画面上の表示
 // - Safe Modeダイアログの画面表示
@@ -37,6 +38,14 @@ import {
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+const generatedImageWidth = 17;
+const generatedImageHeight = 13;
+
+const imageVariants = [
+  { basename: "source-jpeg", extension: "jpeg", format: "jpeg" },
+  { basename: "source-webp", extension: "webp", format: "webp" },
+  { basename: "source-avif", extension: "avif", format: "avif" },
+] as const;
 
 suite("convertToPdf command", () => {
   test("command is registered", async () => {
@@ -60,6 +69,38 @@ suite("convertToPdf command", () => {
       await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
+    } finally {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test("converts JPEG, WebP, and AVIF files to one-page PDFs with image pixel sizes as page points", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePaths = await Promise.all(
+        imageVariants.map(async (variant) => {
+          const sourcePath = path.join(
+            temporaryDirectory,
+            `${variant.basename}.${variant.extension}`,
+          );
+          await writeTestImage(sourcePath, variant.format);
+          return sourcePath;
+        }),
+      );
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePaths[0]!),
+        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+      );
+      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+
+      await Promise.all(
+        sourcePaths.map((sourcePath) =>
+          assertPdfPageSizeMatchesImage(replaceExtension(sourcePath, ".pdf"), sourcePath),
+        ),
+      );
     } finally {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
@@ -162,6 +203,29 @@ async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string)
   const { width, height } = page.getSize();
   assertApproximatelyEqual(width, imageMetadata.width, 0.01);
   assertApproximatelyEqual(height, imageMetadata.height, 0.01);
+}
+
+async function writeTestImage(
+  filePath: string,
+  format: (typeof imageVariants)[number]["format"],
+): Promise<void> {
+  await sharp({
+    create: {
+      width: generatedImageWidth,
+      height: generatedImageHeight,
+      channels: 4,
+      background: { r: 40, g: 80, b: 120, alpha: 1 },
+    },
+  })
+    .toFormat(format)
+    .toFile(filePath);
+}
+
+function replaceExtension(filePath: string, extension: string): string {
+  return path.join(
+    path.dirname(filePath),
+    `${path.basename(filePath, path.extname(filePath))}${extension}`,
+  );
 }
 
 function assertApproximatelyEqual(actual: number, expected: number, tolerance: number): void {
