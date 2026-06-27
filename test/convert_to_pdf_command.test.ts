@@ -22,7 +22,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,10 +30,7 @@ import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 import * as vscode from "vscode";
 
-import {
-  runCommandAndClearNotifications,
-  runCommandAndClearNotificationsUntilDone,
-} from "./helpers/vscode_command.js";
+import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
@@ -66,7 +63,7 @@ suite("convertToPdf command", () => {
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(sourcePath),
       );
-      await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
     } finally {
@@ -94,11 +91,7 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(sourcePaths[0]!),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
-      await runCommandAndClearNotifications(commandExecution, async () => {
-        await Promise.all(
-          sourcePaths.map((sourcePath) => waitForFile(replaceExtension(sourcePath, ".pdf"))),
-        );
-      });
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
         sourcePaths.map((sourcePath) =>
@@ -128,10 +121,7 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(firstSourcePath),
         [vscode.Uri.file(firstSourcePath), vscode.Uri.file(secondSourcePath)],
       );
-      await runCommandAndClearNotifications(commandExecution, async () => {
-        await waitForFile(path.join(temporaryDirectory, "first.pdf"));
-        await waitForFile(path.join(temporaryDirectory, "second.pdf"));
-      });
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertPdfPageSizeMatchesImage(
         path.join(temporaryDirectory, "first.pdf"),
@@ -264,23 +254,4 @@ async function assertFileDoesNotExist(filePath: string): Promise<void> {
   await assert.rejects(readFile(filePath), (error) => {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
   });
-}
-
-async function waitForFile(filePath: string): Promise<void> {
-  const timeoutAt = Date.now() + 10_000;
-
-  while (Date.now() < timeoutAt) {
-    try {
-      await access(filePath);
-      return;
-    } catch (error) {
-      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
-        throw error;
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-
-  throw new Error(`Timed out waiting for file: ${filePath}`);
 }

@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
-import { access, copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -68,7 +68,6 @@ suite("Extension Test Suite", () => {
         "latex-graphics-helper.convertPngToPdf",
         vscode.Uri.file(sourcePath),
       );
-      await waitForFile(outputPath);
 
       const { PDFDocument } = await import("pdf-lib");
       const pdf = await PDFDocument.load(await readFile(outputPath));
@@ -79,22 +78,3 @@ suite("Extension Test Suite", () => {
     }
   });
 });
-
-async function waitForFile(filePath: string): Promise<void> {
-  const timeoutAt = Date.now() + 10_000;
-
-  while (Date.now() < timeoutAt) {
-    try {
-      await access(filePath);
-      return;
-    } catch (error) {
-      if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
-        throw error;
-      }
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-
-  throw new Error(`Timed out waiting for file: ${filePath}`);
-}
