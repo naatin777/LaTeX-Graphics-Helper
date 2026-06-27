@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import pLimit from "p-limit";
@@ -17,6 +17,7 @@ import {
 } from "./commit_conversion_outputs.js";
 
 const CONVERSION_CONCURRENCY = 2;
+const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
 
 export interface ConvertPngToPdfOptions {
   sourcePath: string;
@@ -36,6 +37,7 @@ export interface ConvertPngToPdfFilesOptions {
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
+  supportedExtensions?: readonly string[];
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -54,7 +56,7 @@ export async function convertPngToPdfFiles(
   options: ConvertPngToPdfFilesOptions,
 ): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
-  validateJobs(options.jobs);
+  validateJobs(options.jobs, options.supportedExtensions ?? DEFAULT_SUPPORTED_IMAGE_EXTENSIONS);
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
@@ -108,8 +110,9 @@ async function writePngAsPdf(
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
-  const image = sharp(sourcePath);
-  const metadata = await image.metadata();
+  const sourceBuffer = await readFile(sourcePath);
+  signal?.throwIfAborted();
+  const metadata = await sharp(sourceBuffer).metadata();
   signal?.throwIfAborted();
   const { width, height } = metadata;
 
@@ -117,7 +120,7 @@ async function writePngAsPdf(
     throw new Error(`Could not determine image dimensions: ${sourcePath}`);
   }
 
-  const imageBuffer = await image.png().toBuffer();
+  const imageBuffer = await sharp(sourceBuffer).png().toBuffer();
   signal?.throwIfAborted();
   const pdfDocument = await PDFDocument.create();
   const page = pdfDocument.addPage([width, height]);
@@ -150,14 +153,18 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
   );
 }
 
-function validateJobs(jobs: ConvertPngToPdfJob[]): void {
+function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly string[]): void {
   if (jobs.length === 0) {
-    throw new Error("No PNG files were selected.");
+    throw new Error("No image files were selected.");
   }
 
+  const supportedExtensionSet = new Set(
+    supportedExtensions.map((extension) => extension.toLowerCase()),
+  );
+
   for (const job of jobs) {
-    if (path.extname(job.sourcePath).toLowerCase() !== ".png") {
-      throw new Error(`Only PNG files can be converted: ${job.sourcePath}`);
+    if (!supportedExtensionSet.has(path.extname(job.sourcePath).toLowerCase())) {
+      throw new Error(`Unsupported image format: ${job.sourcePath}`);
     }
   }
 }

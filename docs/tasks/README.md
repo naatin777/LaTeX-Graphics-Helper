@@ -57,6 +57,11 @@
 - [0037: RuleSyncのStop hookでlint/format自動修正を実行する](0037-add-rulesync-stop-fix-hook.md)
 - [0038: Codex Stop hookのJSON出力エラーを修正する](0038-fix-codex-stop-hook-json-output.md)
 - [0039: macOS CIでconvert PNG to PDF command testがtimeoutする問題を修正する](0039-fix-macos-convert-png-command-timeout.md)
+- [0040: 変換サブメニューのPDF表示へ移行する失敗テストを追加する](0040-add-legacy-to-pdf-command-visibility-tests.md)
+- [0041: 変換サブメニューのPDF表示へ移行する](0041-implement-convert-menu-pdf-visibility.md)
+- [0042: 実行可能な変換context menuを共有サブメニューへ集約する](0042-consolidate-existing-convert-context-menu.md)
+- [0043: JPEG/WebP/AVIFをPDFに変換する失敗テストを追加する](0043-add-convert-to-pdf-image-format-tests.md)
+- [0044: JPEG/WebP/AVIFをPDFに変換する](0044-implement-convert-to-pdf-image-formats.md)
 
 ## Todo Tasks
 
