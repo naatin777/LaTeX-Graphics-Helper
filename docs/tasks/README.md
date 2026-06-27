@@ -67,4 +67,4 @@
 
 ## Todo Tasks
 
-なし。
+- [0047: Mermaidファイル変換の仕様を決める](0047-design-mermaid-file-conversion.md)

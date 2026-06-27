@@ -69,9 +69,8 @@ VS Code commandが`showInformationMessage`、`showWarningMessage`、`showErrorMe
 通知を出す可能性があるcommand testでは、以下の順序にする。
 
 1. command実行Promiseを変数に保持する
-2. ファイル生成など期待する副作用を待つ、または短時間待つ
-3. `notifications.clearAll`で通知を閉じる
-4. command実行Promiseを`await`する
+2. helperで通知を閉じながらcommand実行Promiseの完了を待つ
+3. command完了後に、ファイル生成など期待する副作用をassertする
 
 原則として、`test/helpers/vscode_command.ts`のhelperを使う。
 
@@ -80,7 +79,9 @@ VS Code commandが`showInformationMessage`、`showWarningMessage`、`showErrorMe
 ```ts
 const commandExecution = vscode.commands.executeCommand(commandId, uri);
 
-await runCommandAndClearNotifications(commandExecution, () => waitForFile(outputPath));
+await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+await assertFileExists(outputPath);
 ```
 
 エラー通知だけを確認する場合:
@@ -88,5 +89,34 @@ await runCommandAndClearNotifications(commandExecution, () => waitForFile(output
 ```ts
 const commandExecution = vscode.commands.executeCommand(commandId, uri);
 
-await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+await runCommandAndClearNotificationsUntilDone(commandExecution);
 ```
+
+## 再発防止メモ
+
+### 変換テストのtimeoutを安易に伸ばさない
+
+変換テストがWindows CIだけでtimeoutした場合、テストの個別timeoutを伸ばして通すのではなく、変換処理が止まっている原因を先に確認する。
+
+2026-06-27時点では、AVIFからPDFへの変換テストで、`sharp(sourcePath)`のfile path入力を同じpipeline instanceで`metadata()`と`png().toBuffer()`に使い回したことが原因候補になった。修正では、先に`readFile(sourcePath)`でBuffer化し、metadata取得と変換で別々に`sharp(sourceBuffer)`を作るようにした。
+
+今後、sharpを使う変換テストでOS依存のtimeoutが出た場合は、まず以下を確認する。
+
+- file path入力ではなくBuffer入力にできないか
+- 1つのsharp instanceを複数目的に使い回していないか
+- AVIF/WebPなどdecode経路が重い形式だけで失敗していないか
+- 長い`this.timeout(...)`で失敗を隠していないか
+
+### VS Codeテストでwindowが閉じない場合
+
+`vscode-test`実行後にVS Code windowが閉じない場合、テストが完了していないか、command実行Promise・通知・progress・外部processのいずれかが未解決のまま残っている可能性が高い。
+
+再発時は、以下を優先して確認する。
+
+- `vscode.commands.executeCommand(...)`を直接`await`して通知待ちになっていないか
+- 通知を出すcommand testで`test/helpers/vscode_command.ts`のhelperを使っているか
+- `withProgress`やキャンセル可能処理のPromiseがresolve/rejectしているか
+- 外部processやfile watcherをテスト後に閉じているか
+- 固定秒数の待機で偶然通すテストになっていないか
+
+VS Code windowが閉じない問題は、テスト完了判定そのものを壊すため、単にtimeoutを伸ばす対応はしない。
