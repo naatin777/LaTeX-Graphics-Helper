@@ -102,7 +102,11 @@ suite("convertToPdf command", () => {
 
       await Promise.all(
         sourcePaths.map((sourcePath) =>
-          assertPdfPageSizeMatchesImage(replaceExtension(sourcePath, ".pdf"), sourcePath),
+          assertPdfPageSize(
+            replaceExtension(sourcePath, ".pdf"),
+            generatedImageWidth,
+            generatedImageHeight,
+          ),
         ),
       );
     } finally {
@@ -200,13 +204,21 @@ async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string)
   assert.ok(imageMetadata.width);
   assert.ok(imageMetadata.height);
 
+  await assertPdfPageSize(pdfPath, imageMetadata.width, imageMetadata.height);
+}
+
+async function assertPdfPageSize(
+  pdfPath: string,
+  expectedWidth: number,
+  expectedHeight: number,
+): Promise<void> {
   const pdf = await PDFDocument.load(await readFile(pdfPath));
   assert.strictEqual(pdf.getPageCount(), 1);
 
   const page = pdf.getPage(0);
   const { width, height } = page.getSize();
-  assertApproximatelyEqual(width, imageMetadata.width, 0.01);
-  assertApproximatelyEqual(height, imageMetadata.height, 0.01);
+  assertApproximatelyEqual(width, expectedWidth, 0.01);
+  assertApproximatelyEqual(height, expectedHeight, 0.01);
 }
 
 async function writeTestImage(
