@@ -11,7 +11,7 @@
 // - PDFページサイズが入力画像のpixel幅・高さと同じ数値のpointになること
 //
 // Mocked:
-// - なし。VS Code command、実PNG fixture、実ファイル出力を使用する。
+// - VS Codeの通知API。通知UIの選択はここでは対象外にし、command completionを直接検証する。
 //
 // Not tested:
 // - SVG、Draw.ioからPDFへの変換詳細
@@ -28,9 +28,8 @@ import { fileURLToPath } from "node:url";
 
 import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
+import sinon from "sinon";
 import * as vscode from "vscode";
-
-import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
@@ -45,6 +44,18 @@ const imageVariants = [
 ] as const;
 
 suite("convertToPdf command", () => {
+  let sandbox: sinon.SinonSandbox;
+
+  setup(() => {
+    sandbox = sinon.createSandbox();
+    sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+    sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
   test("command is registered", async () => {
     const commands = await vscode.commands.getCommands(true);
 
@@ -59,11 +70,7 @@ suite("convertToPdf command", () => {
       const outputPath = path.join(temporaryDirectory, "source.pdf");
       await copyFile(fixturePngPath, sourcePath);
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
     } finally {
@@ -86,12 +93,11 @@ suite("convertToPdf command", () => {
         }),
       );
 
-      const commandExecution = vscode.commands.executeCommand(
+      await vscode.commands.executeCommand(
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(sourcePaths[0]!),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
         sourcePaths.map((sourcePath) =>
@@ -116,12 +122,11 @@ suite("convertToPdf command", () => {
       await copyFile(fixturePngPath, firstSourcePath);
       await copyFile(fixturePngPath, secondSourcePath);
 
-      const commandExecution = vscode.commands.executeCommand(
+      await vscode.commands.executeCommand(
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(firstSourcePath),
         [vscode.Uri.file(firstSourcePath), vscode.Uri.file(secondSourcePath)],
       );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertPdfPageSizeMatchesImage(
         path.join(temporaryDirectory, "first.pdf"),
@@ -145,12 +150,10 @@ suite("convertToPdf command", () => {
       await copyFile(fixturePngPath, pngPath);
       await writeFile(unsupportedPath, "not an image");
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath), [
         vscode.Uri.file(pngPath),
-        [vscode.Uri.file(pngPath), vscode.Uri.file(unsupportedPath)],
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
+        vscode.Uri.file(unsupportedPath),
+      ]);
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
     } finally {
@@ -167,11 +170,7 @@ suite("convertToPdf command", () => {
       pdf.addPage([120, 80]);
       await writeFile(pdfPath, await pdf.save());
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(pdfPath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pdfPath));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
