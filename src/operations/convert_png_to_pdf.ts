@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import pLimit from "p-limit";
@@ -110,8 +110,9 @@ async function writePngAsPdf(
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
-  const image = sharp(sourcePath);
-  const metadata = await image.metadata();
+  const sourceBuffer = await readFile(sourcePath);
+  signal?.throwIfAborted();
+  const metadata = await sharp(sourceBuffer).metadata();
   signal?.throwIfAborted();
   const { width, height } = metadata;
 
@@ -119,7 +120,7 @@ async function writePngAsPdf(
     throw new Error(`Could not determine image dimensions: ${sourcePath}`);
   }
 
-  const imageBuffer = await image.png().toBuffer();
+  const imageBuffer = await sharp(sourceBuffer).png().toBuffer();
   signal?.throwIfAborted();
   const pdfDocument = await PDFDocument.create();
   const page = pdfDocument.addPage([width, height]);
