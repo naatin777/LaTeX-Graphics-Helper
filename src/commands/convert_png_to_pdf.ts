@@ -1,7 +1,12 @@
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
-import { convertPngToPdfFiles, type ConvertPngToPdfJob } from "../operations/convert_png_to_pdf.js";
+import {
+  convertPngToPdfFiles,
+  type ConvertPngToPdfJob,
+  type SvgToPdfEngine,
+  type SvgToPdfOptions,
+} from "../operations/convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -11,7 +16,7 @@ export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const UNDO_ACTION = "Undo";
 const PNG_EXTENSIONS = [".png"] as const;
-const PDF_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif"] as const;
+const PDF_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif", ".svg"] as const;
 
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
@@ -56,6 +61,7 @@ async function convertSelectedPngFilesToPdf(
       "outputPath.convertPngToPdf",
       DEFAULT_OUTPUT_PATH,
     );
+    const svgToPdf = readSvgToPdfOptions(configuration);
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
     const outputs = await vscode.window.withProgress(
       {
@@ -74,12 +80,13 @@ async function convertSelectedPngFilesToPdf(
             abortController.abort();
           }
 
-          progress.report({ message: "Preparing PNG conversion..." });
+          progress.report({ message: "Preparing PDF conversion..." });
           return await convertPngToPdfFiles({
             jobs,
             signal: abortController.signal,
             resolveOutputConflicts,
             supportedExtensions: messages.supportedExtensions,
+            svgToPdf,
           });
         } finally {
           cancellationSubscription.dispose();
@@ -112,6 +119,22 @@ async function convertSelectedPngFilesToPdf(
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(`${messages.errorPrefix}: ${message}`);
   }
+}
+
+function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
+  const executablePath = configuration
+    .get<string>("convertToPdf.svg.puppeteer.executablePath", "")
+    .trim();
+
+  return {
+    engine: configuration.get<SvgToPdfEngine>("convertToPdf.svg.engine", "puppeteer"),
+    rsvgConvertPath: configuration.get<string>("execPath.rsvgConvert", "rsvg-convert"),
+    puppeteerBrowserChannel: configuration.get(
+      "convertToPdf.svg.puppeteer.browserChannel",
+      "chrome",
+    ),
+    ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),
+  };
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {

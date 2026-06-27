@@ -3,6 +3,9 @@
   "config.execPath.ghostscript": "ghostscriptの実行ファイルのパス。未指定の場合はOSごとの既定コマンドを使用します。(macOS/Linuxの場合はgs, Windowsの場合はgswin64c.exe)",
   "config.execPath.pdftocairo": "pdftocairoの実行ファイルのパス。未指定の場合はpdftocairo",
   "config.execPath.rsvgConvert": "rsvg-convertの実行ファイルのパス。未指定の場合はrsvg-convert",
+  "config.convertToPdf.svg.engine": "SVGをPDFに変換するときに使用する変換方式",
+  "config.convertToPdf.svg.puppeteer.browserChannel": "SVGをPDFに変換するときにpuppeteer-coreが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
+  "config.convertToPdf.svg.puppeteer.executablePath": "SVGをPDFに変換するときにpuppeteer-coreが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
 
   "config.outputPath.cropPdf": "PDFをクロップした後の出力ファイル名",
   "config.outputPath.splitPdf": "PDF分割後の各ページの出力ファイル名",

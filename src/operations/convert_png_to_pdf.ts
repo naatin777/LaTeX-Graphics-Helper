@@ -1,8 +1,11 @@
+import { execFile } from "node:child_process";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import pLimit from "p-limit";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, type PDFPage } from "pdf-lib";
+import { launch, type Browser, type ChromeReleaseChannel } from "puppeteer-core";
 import sharp from "sharp";
 
 import {
@@ -18,6 +21,17 @@ import {
 
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
+const SVG_EXTENSION = ".svg";
+const execFileAsync = promisify(execFile);
+
+export type SvgToPdfEngine = "puppeteer" | "rsvg-convert";
+
+export interface SvgToPdfOptions {
+  engine: SvgToPdfEngine;
+  rsvgConvertPath: string;
+  puppeteerBrowserChannel: ChromeReleaseChannel;
+  puppeteerExecutablePath?: string;
+}
 
 export interface ConvertPngToPdfOptions {
   sourcePath: string;
@@ -38,6 +52,7 @@ export interface ConvertPngToPdfFilesOptions {
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
   supportedExtensions?: readonly string[];
+  svgToPdf?: SvgToPdfOptions;
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -49,7 +64,7 @@ export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<
   await assertOutputDoesNotExist(outputPath);
   signal?.throwIfAborted();
 
-  await writePngAsPdf(sourcePath, outputPath, workspacePath, signal);
+  await writeImageAsPdf(sourcePath, outputPath, workspacePath, signal);
 }
 
 export async function convertPngToPdfFiles(
@@ -64,7 +79,7 @@ export async function convertPngToPdfFiles(
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
-      limit(() => stagePngConversion(job, index, runId, options.signal)),
+      limit(() => stagePngConversion(job, index, runId, options.signal, options.svgToPdf)),
     ),
   );
 
@@ -82,6 +97,7 @@ async function stagePngConversion(
   index: number,
   runId: string,
   signal?: AbortSignal,
+  svgToPdf?: SvgToPdfOptions,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -93,7 +109,7 @@ async function stagePngConversion(
     "result.pdf",
   );
 
-  await writePngAsPdf(job.sourcePath, stagedOutputPath, job.workspacePath, signal);
+  await writeImageAsPdf(job.sourcePath, stagedOutputPath, job.workspacePath, signal, svgToPdf);
   signal?.throwIfAborted();
 
   return {
@@ -103,7 +119,22 @@ async function stagePngConversion(
   };
 }
 
-async function writePngAsPdf(
+async function writeImageAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+  svgToPdf?: SvgToPdfOptions,
+): Promise<void> {
+  if (path.extname(sourcePath).toLowerCase() === SVG_EXTENSION) {
+    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf);
+    return;
+  }
+
+  await writeRasterImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+}
+
+async function writeRasterImageAsPdf(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
@@ -138,6 +169,153 @@ async function writePngAsPdf(
   await mkdir(path.dirname(outputPath), { recursive: true });
   signal?.throwIfAborted();
   await writeFile(outputPath, pdfBytes);
+}
+
+async function writeSvgAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+  svgToPdf?: SvgToPdfOptions,
+): Promise<void> {
+  const options = svgToPdf ?? {
+    engine: "puppeteer",
+    rsvgConvertPath: "rsvg-convert",
+    puppeteerBrowserChannel: "chrome",
+  };
+  const size = await readSvgSize(sourcePath);
+
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  if (options.engine === "rsvg-convert") {
+    await writeSvgAsPdfWithRsvgConvert(sourcePath, outputPath, options.rsvgConvertPath, signal);
+  } else {
+    await writeSvgAsPdfWithPuppeteer(sourcePath, outputPath, size, options, signal);
+  }
+
+  signal?.throwIfAborted();
+  await normalizePdfPageSize(outputPath, size.width, size.height);
+}
+
+async function readSvgSize(sourcePath: string): Promise<{ width: number; height: number }> {
+  const metadata = await sharp(sourcePath).metadata();
+  const { width, height } = metadata;
+
+  if (!width || !height) {
+    throw new Error(`Could not determine SVG dimensions: ${sourcePath}`);
+  }
+
+  return { width, height };
+}
+
+async function writeSvgAsPdfWithRsvgConvert(
+  sourcePath: string,
+  outputPath: string,
+  rsvgConvertPath: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  await execFileAsync(rsvgConvertPath, ["--format=pdf", "--output", outputPath, sourcePath], {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
+    signal,
+  });
+}
+
+async function writeSvgAsPdfWithPuppeteer(
+  sourcePath: string,
+  outputPath: string,
+  size: { width: number; height: number },
+  options: SvgToPdfOptions,
+  signal?: AbortSignal,
+): Promise<void> {
+  const rawSvg = await readFile(sourcePath, "utf8");
+  const svg = rawSvg.replace(/^<\?xml[^>]*\?>/i, "").trim();
+  signal?.throwIfAborted();
+
+  let browser: Browser | undefined;
+
+  try {
+    browser = await launch({
+      headless: true,
+      env: puppeteerLaunchEnv(),
+      ...(options.puppeteerExecutablePath
+        ? { executablePath: options.puppeteerExecutablePath }
+        : { channel: options.puppeteerBrowserChannel }),
+    });
+    signal?.throwIfAborted();
+
+    const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (request.isNavigationRequest()) {
+        request.continue().catch(() => {});
+        return;
+      }
+      request.abort().catch(() => {});
+    });
+    await page.setContent(svgPageHtml(svg, size), { waitUntil: "load" });
+    signal?.throwIfAborted();
+    await page.pdf({
+      path: outputPath,
+      width: `${size.width / 72}in`,
+      height: `${size.height / 72}in`,
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      printBackground: true,
+      preferCSSPageSize: false,
+    });
+  } finally {
+    await browser?.close().catch(() => {});
+  }
+}
+
+function puppeteerLaunchEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  return env;
+}
+
+function svgPageHtml(svg: string, size: { width: number; height: number }): string {
+  return [
+    "<!doctype html>",
+    "<html>",
+    "<head>",
+    '<meta charset="utf-8">',
+    "<style>",
+    "@page { margin: 0; }",
+    `html, body { margin: 0; width: ${size.width}px; height: ${size.height}px; overflow: hidden; }`,
+    "svg { display: block; width: 100%; height: 100%; }",
+    "</style>",
+    "</head>",
+    "<body>",
+    svg,
+    "</body>",
+    "</html>",
+  ].join("");
+}
+
+async function normalizePdfPageSize(
+  outputPath: string,
+  width: number,
+  height: number,
+): Promise<void> {
+  const pdfDocument = await PDFDocument.load(await readFile(outputPath));
+  if (pdfDocument.getPageCount() === 0) {
+    throw new Error(`Generated PDF has no pages: ${outputPath}`);
+  }
+
+  const firstPage = pdfDocument.getPage(0);
+  setPageSize(firstPage, width, height);
+
+  await writeFile(outputPath, await pdfDocument.save());
+}
+
+function setPageSize(page: PDFPage, width: number, height: number): void {
+  page.setMediaBox(0, 0, width, height);
+  page.setCropBox(0, 0, width, height);
 }
 
 async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {

@@ -215,6 +215,16 @@ Webviewを使用しない出力形式基準コマンドは、`docs/specs/convers
 - 生成PDFは1ページ
 - ページサイズは120pt × 80pt
 
+### SVGからPDF
+
+SVGからPDFへ変換する場合、PDFは1ページとする。
+
+- PDFページ幅はSVGの`width`または`viewBox`から決めた幅と同じ数値のpointにする
+- PDFページ高さはSVGの`height`または`viewBox`から決めた高さと同じ数値のpointにする
+- SVGからPDFへの変換方式は`latex-graphics-helper.convertToPdf.svg.engine`で選択する
+- `puppeteer`を選択した場合は、`latex-graphics-helper.convertToPdf.svg.puppeteer.browserChannel`または`latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath`で使用ブラウザを選択する
+- `rsvg-convert`を選択した場合は、`latex-graphics-helper.execPath.rsvgConvert`を使用する
+
 ### PDFから画像
 
 PDFから画像へ変換する場合、DPIから出力pixel数を決める。

@@ -17,6 +17,9 @@ importers:
       pdfjs-dist:
         specifier: ^6.0.227
         version: 6.0.227
+      puppeteer-core:
+        specifier: ^25.2.1
+        version: 25.2.1
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -50,7 +53,7 @@ importers:
         version: 0.0.12
       '@vscode/test-electron':
         specifier: ^3.0.0
-        version: 3.0.0(supports-color@8.1.1)
+        version: 3.0.0
       '@vscode/vsce':
         specifier: ^3.9.2
         version: 3.9.2(supports-color@8.1.1)
@@ -74,7 +77,7 @@ importers:
         version: 1.70.0
       rulesync:
         specifier: 8.31.0
-        version: 8.31.0(valibot@1.4.1(typescript@6.0.3))
+        version: 8.31.0(supports-color@8.1.1)(valibot@1.4.1(typescript@6.0.3))
       sinon:
         specifier: ^22.0.0
         version: 22.0.0
@@ -1007,6 +1010,16 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  '@puppeteer/browsers@3.0.5':
+    resolution: {integrity: sha512-xYXNuEQmHNIPWWcbL/skf2KF7seyp7c1xmKFRk3wmdFx7VwBsKVrtOLKs8ecaezsKPsWeF1YsgwIiElAscaryA==}
+    engines: {node: '>=22.12.0'}
+    hasBin: true
+    peerDependencies:
+      proxy-agent: '>=8.0.1'
+    peerDependenciesMeta:
+      proxy-agent:
+        optional: true
+
   '@rolldown/binding-android-arm64@1.0.3':
     resolution: {integrity: sha512-454rs7jHngixp/NMxd5srYD57OnzSlZ/eFTETjORQHLwJG1lRtmNOJcBerZlfu4GjKqeq8aCCIQrMdHyhI51Hw==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1570,6 +1583,12 @@ packages:
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
 
+  chromium-bidi@16.0.1:
+    resolution: {integrity: sha512-J63PGu/9PpeCwLIcKYyzWP6yaVL5pxuBc0shlYCYM8BaAkmlwiQboXO1iNbOgSDbVklEyYFfNEcHD8oOAWacUA==}
+    engines: {node: '>=20.19.0 <22.0.0 || >=22.12.0'}
+    peerDependencies:
+      devtools-protocol: '*'
+
   ci-info@2.0.0:
     resolution: {integrity: sha512-5tK7EtrZ0N+OLFMthtqOj4fI2Jeb88C4CAZPu25LDVUgXJ0A3Js4PMGqrn0JU1W0Mh1/Z8wZzYPxqUrXeBboCQ==}
 
@@ -1745,6 +1764,9 @@ packages:
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
+
+  devtools-protocol@0.0.1638949:
+    resolution: {integrity: sha512-mXwg4Fqnv0WR4iuAT/gYUmctNkjILwXFHyZ+m7Ty1dfr0ezZt2U3gnrrJTfRobJTHoXf+IbuFvFITzLrLFjwJA==}
 
   diff@7.0.0:
     resolution: {integrity: sha512-PJWHUb1RFevKCwaFA9RlG5tCd+FO5iRh9A8HEtkmBH2Li03iJriB6m6JIN4rGz3K3JLawI7/veA1xzRKP6ISBw==}
@@ -2686,6 +2708,9 @@ packages:
     resolution: {integrity: sha512-tEBHqDnIoM/1rXME1zgka9g6Q2lcoCkxHLuc7ODJ5BxbP5d4c2Z5cGgtXAku59200Cx7diuHTOYfSBD8n6mm8A==}
     engines: {node: '>=16 || 14 >=14.17'}
 
+  mitt@3.0.1:
+    resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
+
   mkdirp-classic@0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
 
@@ -2693,6 +2718,10 @@ packages:
     resolution: {integrity: sha512-nS9xOGbw2I3cjCpxwZAEJ9xK9lmJ08vEkQvLtz4du9ZrF9UrjRpeJGiIgl2Z+Qs++pmB4ecDe48Fwsh+j+j7xA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     hasBin: true
+
+  modern-tar@0.7.6:
+    resolution: {integrity: sha512-sweCIVXzx1aIGTCdzcMlSZt1h8k5Tmk08VNAuRk3IU28XamGiOH5ypi11g6De2CH7PhYqSSnGy2A/EFhbWnVKg==}
+    engines: {node: '>=18.0.0'}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -2965,6 +2994,10 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  puppeteer-core@25.2.1:
+    resolution: {integrity: sha512-MwEZ4FFGJ1ZLOmu/04eISxoEMKtCnHyJBRFfgpwPPSYNG6gT6Xw1laNziFSV7uwDcx3jK+ATYIo9SfOd8Uhc3w==}
+    engines: {node: '>=22.12.0'}
 
   pure-rand@6.1.0:
     resolution: {integrity: sha512-bVWawvoZoBYpp6yIoQtQXHZjmz35RSVHnUOTefl8Vcjr8snTPY1wnpSPMWekcFwbxI6gtmT7rSYPFvz71ldiOA==}
@@ -3421,6 +3454,9 @@ packages:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
     engines: {node: '>= 18'}
 
+  typed-query-selector@2.12.2:
+    resolution: {integrity: sha512-EOPFbyIub4ngnEdqi2yOcNeDLaX/0jcE1JoAXQDDMIthap7FoN795lc/SHfIq2d416VufXpM8z/lD+WRm2gfOQ==}
+
   typed-rest-client@1.8.11:
     resolution: {integrity: sha512-5UvfMpd1oelmUPRbbaVnq+rHP7ng2cE4qoQkQeAqxRL6PklkxsM0g32/HL0yfvruK6ojQ5x8EE+HF4YV6DtuCA==}
 
@@ -3613,6 +3649,9 @@ packages:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
 
+  webdriver-bidi-protocol@0.4.2:
+    resolution: {integrity: sha512-VSV+fzfChirL3e7jay2yUC7B4HQCGtEWEg/MSSQbK+qWbqeGlRLlXTzPpYr3XGUvbpDHumWZBJxgesg4N7dbtA==}
+
   webidl-conversions@8.0.1:
     resolution: {integrity: sha512-BMhLD/Sw+GbJC21C/UgyaZX41nPt8bUTg+jWyDeg7e7YN4xOM05YPSIXceACnXVtqyEw/LMClUQMtMZ+PGGpqQ==}
     engines: {node: '>=20'}
@@ -3661,6 +3700,18 @@ packages:
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
+
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   wsl-utils@0.1.0:
     resolution: {integrity: sha512-h3Fbisa2nKGPxCpm89Hk33lBLsnaGBvctQopaBSOW/uIs6FTe1ATyAnKFJrzVs9vpGdsTe73WF3V4lIsk4Gacw==}
@@ -3765,6 +3816,9 @@ packages:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
     peerDependencies:
       zod: ^3.25.28 || ^4
+
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
@@ -4186,7 +4240,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
+  '@modelcontextprotocol/sdk@1.29.0(supports-color@8.1.1)(zod@4.4.3)':
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.26)
       ajv: 8.20.0
@@ -4196,8 +4250,8 @@ snapshots:
       cross-spawn: 7.0.6
       eventsource: 3.0.7
       eventsource-parser: 3.1.0
-      express: 5.2.1
-      express-rate-limit: 8.5.2(express@5.2.1)
+      express: 5.2.1(supports-color@8.1.1)
+      express-rate-limit: 8.5.2(express@5.2.1(supports-color@8.1.1))
       hono: 4.12.26
       jose: 6.2.3
       json-schema-typed: 8.0.2
@@ -4537,6 +4591,11 @@ snapshots:
     dependencies:
       playwright: 1.61.0
 
+  '@puppeteer/browsers@3.0.5':
+    dependencies:
+      modern-tar: 0.7.6
+      yargs: 18.0.0
+
   '@rolldown/binding-android-arm64@1.0.3':
     optional: true
 
@@ -4712,7 +4771,7 @@ snapshots:
     dependencies:
       '@textlint/ast-node-types': 15.7.1
 
-  '@tokenizer/inflate@0.4.1':
+  '@tokenizer/inflate@0.4.1(supports-color@8.1.1)':
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       token-types: 6.1.2
@@ -4784,8 +4843,8 @@ snapshots:
 
   '@typespec/ts-http-runtime@0.3.6':
     dependencies:
-      http-proxy-agent: 7.0.2(supports-color@8.1.1)
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
       tslib: 2.8.1
     transitivePeerDependencies:
       - supports-color
@@ -4849,10 +4908,10 @@ snapshots:
     transitivePeerDependencies:
       - monocart-coverage-reports
 
-  '@vscode/test-electron@3.0.0(supports-color@8.1.1)':
+  '@vscode/test-electron@3.0.0':
     dependencies:
-      http-proxy-agent: 7.0.2(supports-color@8.1.1)
-      https-proxy-agent: 7.0.6(supports-color@8.1.1)
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
       jszip: 3.10.1
       ora: 8.2.0
       semver: 7.8.4
@@ -4944,7 +5003,7 @@ snapshots:
       mime-types: 3.0.2
       negotiator: 1.0.0
 
-  agent-base@6.0.2:
+  agent-base@6.0.2(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
@@ -4994,11 +5053,11 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.18.1(debug@4.4.3):
+  axios@1.18.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
       form-data: 4.0.6
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.1(supports-color@8.1.1)
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
@@ -5053,7 +5112,7 @@ snapshots:
       readable-stream: 3.6.2
     optional: true
 
-  body-parser@2.3.0:
+  body-parser@2.3.0(supports-color@8.1.1):
     dependencies:
       bytes: 3.1.2
       content-type: 2.0.0
@@ -5187,6 +5246,12 @@ snapshots:
 
   chownr@1.1.4:
     optional: true
+
+  chromium-bidi@16.0.1(devtools-protocol@0.0.1638949):
+    dependencies:
+      devtools-protocol: 0.0.1638949
+      mitt: 3.0.1
+      zod: 3.25.76
 
   ci-info@2.0.0: {}
 
@@ -5335,6 +5400,8 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
+  devtools-protocol@0.0.1638949: {}
+
   diff@7.0.0: {}
 
   diff@9.0.0: {}
@@ -5473,15 +5540,15 @@ snapshots:
 
   expect-type@1.3.0: {}
 
-  express-rate-limit@8.5.2(express@5.2.1):
+  express-rate-limit@8.5.2(express@5.2.1(supports-color@8.1.1)):
     dependencies:
-      express: 5.2.1
+      express: 5.2.1(supports-color@8.1.1)
       ip-address: 10.2.0
 
-  express@5.2.1:
+  express@5.2.1(supports-color@8.1.1):
     dependencies:
       accepts: 2.0.0
-      body-parser: 2.3.0
+      body-parser: 2.3.0(supports-color@8.1.1)
       content-disposition: 1.1.0
       content-type: 1.0.5
       cookie: 0.7.2
@@ -5491,7 +5558,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       etag: 1.8.1
-      finalhandler: 2.1.1
+      finalhandler: 2.1.1(supports-color@8.1.1)
       fresh: 2.0.0
       http-errors: 2.0.1
       merge-descriptors: 2.0.0
@@ -5502,8 +5569,8 @@ snapshots:
       proxy-addr: 2.0.7
       qs: 6.15.2
       range-parser: 1.2.1
-      router: 2.2.0
-      send: 1.2.1
+      router: 2.2.0(supports-color@8.1.1)
+      send: 1.2.1(supports-color@8.1.1)
       serve-static: 2.2.1
       statuses: 2.0.2
       type-is: 2.1.0
@@ -5531,15 +5598,15 @@ snapshots:
 
   fast-uri@3.1.2: {}
 
-  fastmcp@4.3.0(@valibot/to-json-schema@1.7.1(valibot@1.4.1(typescript@6.0.3)))(effect@3.21.3)(sury@10.0.4):
+  fastmcp@4.3.0(@valibot/to-json-schema@1.7.1(valibot@1.4.1(typescript@6.0.3)))(effect@3.21.3)(supports-color@8.1.1)(sury@10.0.4):
     dependencies:
-      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.29.0(supports-color@8.1.1)(zod@4.4.3)
       '@standard-schema/spec': 1.1.0
       execa: 9.6.1
-      file-type: 21.3.4
+      file-type: 21.3.4(supports-color@8.1.1)
       fuse.js: 7.4.2
       hono: 4.12.26
-      mcp-proxy: 6.5.2
+      mcp-proxy: 6.5.2(supports-color@8.1.1)
       strict-event-emitter-types: 2.0.0
       undici: 7.28.0
       uri-templates: 0.2.0
@@ -5567,9 +5634,9 @@ snapshots:
     dependencies:
       is-unicode-supported: 2.1.0
 
-  file-type@21.3.4:
+  file-type@21.3.4(supports-color@8.1.1):
     dependencies:
-      '@tokenizer/inflate': 0.4.1
+      '@tokenizer/inflate': 0.4.1(supports-color@8.1.1)
       strtok3: 10.3.5
       token-types: 6.1.2
       uint8array-extras: 1.5.0
@@ -5580,7 +5647,7 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
-  finalhandler@2.1.1:
+  finalhandler@2.1.1(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       encodeurl: 2.0.0
@@ -5598,7 +5665,7 @@ snapshots:
 
   flat@5.0.2: {}
 
-  follow-redirects@1.16.0(debug@4.4.3):
+  follow-redirects@1.16.0(debug@4.4.3(supports-color@8.1.1)):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 
@@ -5791,21 +5858,21 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-agent@7.0.2(supports-color@8.1.1):
+  http-proxy-agent@7.0.2:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@5.0.1:
+  https-proxy-agent@5.0.1(supports-color@8.1.1):
     dependencies:
-      agent-base: 6.0.2
+      agent-base: 6.0.2(supports-color@8.1.1)
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@7.0.6(supports-color@8.1.1):
+  https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.4
       debug: 4.4.3(supports-color@8.1.1)
@@ -6034,7 +6101,7 @@ snapshots:
 
   koa-compose@4.1.0: {}
 
-  koa-router@14.0.0:
+  koa-router@14.0.0(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       http-errors: 2.0.1
@@ -6229,9 +6296,9 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-proxy@6.5.2:
+  mcp-proxy@6.5.2(supports-color@8.1.1):
     dependencies:
-      pipenet: 1.4.2
+      pipenet: 1.4.2(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6286,6 +6353,8 @@ snapshots:
 
   minipass@7.1.3: {}
 
+  mitt@3.0.1: {}
+
   mkdirp-classic@0.5.3:
     optional: true
 
@@ -6312,6 +6381,8 @@ snapshots:
       yargs: 17.7.3
       yargs-parser: 21.1.1
       yargs-unparser: 2.0.0
+
+  modern-tar@0.7.6: {}
 
   ms@2.1.3: {}
 
@@ -6401,7 +6472,7 @@ snapshots:
     dependencies:
       '@vscode/vsce': 3.9.2(supports-color@8.1.1)
       commander: 6.2.1
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
       is-ci: 2.0.0
       leven: 3.1.0
       semver: 7.8.4
@@ -6547,13 +6618,13 @@ snapshots:
 
   picomatch@4.0.4: {}
 
-  pipenet@1.4.2:
+  pipenet@1.4.2(supports-color@8.1.1):
     dependencies:
-      axios: 1.18.1(debug@4.4.3)
+      axios: 1.18.1(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1)
       debug: 4.4.3(supports-color@8.1.1)
       human-readable-ids: 1.0.4
       koa: 3.2.1
-      koa-router: 14.0.0
+      koa-router: 14.0.0(supports-color@8.1.1)
       pump: 3.0.4
       tldjs: 2.3.2
       yargs: 18.0.0
@@ -6617,6 +6688,19 @@ snapshots:
   punycode.js@2.3.1: {}
 
   punycode@2.3.1: {}
+
+  puppeteer-core@25.2.1:
+    dependencies:
+      '@puppeteer/browsers': 3.0.5
+      chromium-bidi: 16.0.1(devtools-protocol@0.0.1638949)
+      devtools-protocol: 0.0.1638949
+      typed-query-selector: 2.12.2
+      webdriver-bidi-protocol: 0.4.2
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - proxy-agent
+      - utf-8-validate
 
   pure-rand@6.1.0: {}
 
@@ -6723,7 +6807,7 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.0.3
       '@rolldown/binding-win32-x64-msvc': 1.0.3
 
-  router@2.2.0:
+  router@2.2.0(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       depd: 2.0.0
@@ -6733,9 +6817,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  rulesync@8.31.0(valibot@1.4.1(typescript@6.0.3)):
+  rulesync@8.31.0(supports-color@8.1.1)(valibot@1.4.1(typescript@6.0.3)):
     dependencies:
-      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
+      '@modelcontextprotocol/sdk': 1.29.0(supports-color@8.1.1)(zod@4.4.3)
       '@octokit/request-error': 7.1.0
       '@octokit/rest': 22.0.1
       '@toon-format/toon': 2.3.0
@@ -6743,7 +6827,7 @@ snapshots:
       commander: 15.0.0
       effect: 3.21.3
       es-toolkit: 1.47.1
-      fastmcp: 4.3.0(@valibot/to-json-schema@1.7.1(valibot@1.4.1(typescript@6.0.3)))(effect@3.21.3)(sury@10.0.4)
+      fastmcp: 4.3.0(@valibot/to-json-schema@1.7.1(valibot@1.4.1(typescript@6.0.3)))(effect@3.21.3)(supports-color@8.1.1)(sury@10.0.4)
       globby: 16.2.0
       gray-matter: 4.0.3
       js-yaml: 4.2.0
@@ -6800,7 +6884,7 @@ snapshots:
 
   semver@7.8.4: {}
 
-  send@1.2.1:
+  send@1.2.1(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       encodeurl: 2.0.0
@@ -6831,7 +6915,7 @@ snapshots:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
-      send: 1.2.1
+      send: 1.2.1(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -7167,6 +7251,8 @@ snapshots:
       media-typer: 1.1.0
       mime-types: 3.0.2
 
+  typed-query-selector@2.12.2: {}
+
   typed-rest-client@1.8.11:
     dependencies:
       qs: 6.15.2
@@ -7288,6 +7374,8 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
+  webdriver-bidi-protocol@0.4.2: {}
+
   webidl-conversions@8.0.1: {}
 
   whatwg-encoding@3.1.1:
@@ -7336,6 +7424,8 @@ snapshots:
       strip-ansi: 7.2.0
 
   wrappy@1.0.2: {}
+
+  ws@8.21.0: {}
 
   wsl-utils@0.1.0:
     dependencies:
@@ -7424,5 +7514,7 @@ snapshots:
   zod-to-json-schema@3.25.2(zod@4.4.3):
     dependencies:
       zod: 4.4.3
+
+  zod@3.25.76: {}
 
   zod@4.4.3: {}
