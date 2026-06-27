@@ -47,7 +47,12 @@ jobs:
                       echo '```'
                     } >> "$GITHUB_STEP_SUMMARY"
 
-                    message="$(tail -n 80 vscode-test.log | perl -0777 -pe 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
+                    awk '/[0-9]+ failing/{flag=1} flag{print}' vscode-test.log > vscode-test-failure-summary.log
+                    if [ ! -s vscode-test-failure-summary.log ]; then
+                      tail -n 80 vscode-test.log > vscode-test-failure-summary.log
+                    fi
+
+                    message="$(cat vscode-test-failure-summary.log | perl -0777 -pe 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
                     echo "::error title=Windows VS Code test failed::$message"
                   fi
               shell: bash
