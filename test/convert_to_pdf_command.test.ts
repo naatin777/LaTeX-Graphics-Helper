@@ -106,9 +106,7 @@ suite("convertToPdf command", () => {
     await assertImageVariantsConvertToPdf(jpegAndWebpVariants);
   });
 
-  test("converts an AVIF file to a one-page PDF with the image pixel size as page points", async function () {
-    this.timeout(180_000);
-
+  test("converts an AVIF file to a one-page PDF with the image pixel size as page points", async () => {
     await assertImageVariantsConvertToPdf([avifVariant]);
   });
 
