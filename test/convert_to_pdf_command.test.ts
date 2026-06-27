@@ -31,8 +31,8 @@ import sharp from "sharp";
 import * as vscode from "vscode";
 
 import {
-  clearNotificationsAfterDelay,
   runCommandAndClearNotifications,
+  runCommandAndClearNotificationsUntilDone,
 } from "./helpers/vscode_command.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -156,7 +156,7 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(pngPath),
         [vscode.Uri.file(pngPath), vscode.Uri.file(unsupportedPath)],
       );
-      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
     } finally {
@@ -177,7 +177,7 @@ suite("convertToPdf command", () => {
         CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(pdfPath),
       );
-      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
     } finally {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
