@@ -110,8 +110,7 @@ async function writePngAsPdf(
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
-  const image = sharp(sourcePath);
-  const metadata = await image.metadata();
+  const metadata = await sharp(sourcePath).metadata();
   signal?.throwIfAborted();
   const { width, height } = metadata;
 
@@ -119,7 +118,7 @@ async function writePngAsPdf(
     throw new Error(`Could not determine image dimensions: ${sourcePath}`);
   }
 
-  const imageBuffer = await image.png().toBuffer();
+  const imageBuffer = await sharp(sourcePath).png().toBuffer();
   signal?.throwIfAborted();
   const pdfDocument = await PDFDocument.create();
   const page = pdfDocument.addPage([width, height]);
