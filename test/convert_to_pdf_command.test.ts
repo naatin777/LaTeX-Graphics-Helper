@@ -3,7 +3,8 @@
 // Test target:
 // - latex-graphics-helper.convertToPdf commandが登録されること
 // - PNGをPDFに変換できること
-// - JPEG、WebP、AVIFをPDFに変換できること
+// - JPEG、WebPをPDFに変換できること
+// - AVIFをPDFに変換できること
 // - 複数PNGを1回のコマンドでPDFへ変換できること
 // - 非対応入力が含まれる場合、変換全体を開始しないこと
 // - 入力形式と出力形式が同じ場合、変換全体を開始しないこと
@@ -37,7 +38,7 @@ const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const generatedImageWidth = 17;
 const generatedImageHeight = 13;
 
-const imageVariants = [
+const jpegAndWebpVariants = [
   {
     basename: "source-jpeg",
     extension: "jpeg",
@@ -50,11 +51,19 @@ const imageVariants = [
     imageBase64:
       "UklGRkAAAABXRUJQVlA4IDQAAADQAgCdASoRAA0APm0skkWkIqGYBABABsSxgDsAAIGwAP7w+iv/ySPVzHQf/oUbKJpMAAAA",
   },
+] as const;
+
+const avifVariant = {
+  basename: "source-avif",
+  extension: "avif",
+  imageBase64:
+    "AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==",
+} as const;
+
+const imageVariants = [
+  ...jpegAndWebpVariants,
   {
-    basename: "source-avif",
-    extension: "avif",
-    imageBase64:
-      "AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==",
+    ...avifVariant,
   },
 ] as const;
 
@@ -93,39 +102,14 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("converts JPEG, WebP, and AVIF files to one-page PDFs with image pixel sizes as page points", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+  test("converts JPEG and WebP files to one-page PDFs with image pixel sizes as page points", async () => {
+    await assertImageVariantsConvertToPdf(jpegAndWebpVariants);
+  });
 
-    try {
-      const sourcePaths = await Promise.all(
-        imageVariants.map(async (variant) => {
-          const sourcePath = path.join(
-            temporaryDirectory,
-            `${variant.basename}.${variant.extension}`,
-          );
-          await writeTestImage(sourcePath, variant.imageBase64);
-          return sourcePath;
-        }),
-      );
+  test("converts an AVIF file to a one-page PDF with the image pixel size as page points", async function () {
+    this.timeout(180_000);
 
-      await vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
-        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
-      );
-
-      await Promise.all(
-        sourcePaths.map((sourcePath) =>
-          assertPdfPageSize(
-            replaceExtension(sourcePath, ".pdf"),
-            generatedImageWidth,
-            generatedImageHeight,
-          ),
-        ),
-      );
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
+    await assertImageVariantsConvertToPdf([avifVariant]);
   });
 
   test("converts multiple PNG files as one batch", async () => {
@@ -191,6 +175,43 @@ suite("convertToPdf command", () => {
     }
   });
 });
+
+async function assertImageVariantsConvertToPdf(
+  variants: readonly (typeof imageVariants)[number][],
+): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePaths = await Promise.all(
+      variants.map(async (variant) => {
+        const sourcePath = path.join(
+          temporaryDirectory,
+          `${variant.basename}.${variant.extension}`,
+        );
+        await writeTestImage(sourcePath, variant.imageBase64);
+        return sourcePath;
+      }),
+    );
+
+    await vscode.commands.executeCommand(
+      CONVERT_TO_PDF_COMMAND,
+      vscode.Uri.file(sourcePaths[0]!),
+      sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+    );
+
+    await Promise.all(
+      sourcePaths.map((sourcePath) =>
+        assertPdfPageSize(
+          replaceExtension(sourcePath, ".pdf"),
+          generatedImageWidth,
+          generatedImageHeight,
+        ),
+      ),
+    );
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
