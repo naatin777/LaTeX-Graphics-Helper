@@ -5,6 +5,8 @@
 // - PNGをPDFに変換できること
 // - JPEG、WebPをPDFに変換できること
 // - AVIFをPDFに変換できること
+// - SVGをPDFに変換できること
+// - PNGとSVGを1回のコマンドでPDFへ変換できること
 // - 複数PNGを1回のコマンドでPDFへ変換できること
 // - 非対応入力が含まれる場合、変換全体を開始しないこと
 // - 入力形式と出力形式が同じ場合、変換全体を開始しないこと
@@ -15,7 +17,7 @@
 // - VS Codeの通知API。通知UIの選択はここでは対象外にし、command completionを直接検証する。
 //
 // Not tested:
-// - SVG、Draw.ioからPDFへの変換詳細
+// - Draw.ioからPDFへの変換詳細
 // - 画像を1つのPDFへ結合する機能
 // - context menuの画面上の表示
 // - Safe Modeダイアログの画面表示
@@ -32,11 +34,15 @@ import sharp from "sharp";
 import sinon from "sinon";
 import * as vscode from "vscode";
 
+import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const generatedImageWidth = 17;
 const generatedImageHeight = 13;
+const generatedSvgWidth = 31;
+const generatedSvgHeight = 19;
 
 const jpegAndWebpVariants = [
   {
@@ -108,6 +114,53 @@ suite("convertToPdf command", () => {
 
   test("converts an AVIF file to a one-page PDF with the image pixel size as page points", async () => {
     await assertImageVariantsConvertToPdf([avifVariant]);
+  });
+
+  test("converts an SVG to a one-page PDF with the SVG width and height as page points", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      const outputPath = path.join(temporaryDirectory, "source.pdf");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertPdfPageSize(outputPath, generatedSvgWidth, generatedSvgHeight);
+    } finally {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test("converts PNG and SVG files as one batch", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const pngPath = path.join(temporaryDirectory, "source-png.png");
+      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
+      await copyFile(fixturePngPath, pngPath);
+      await writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(pngPath),
+        [vscode.Uri.file(pngPath), vscode.Uri.file(svgPath)],
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, ".pdf"), pngPath);
+      await assertPdfPageSize(
+        replaceExtension(svgPath, ".pdf"),
+        generatedSvgWidth,
+        generatedSvgHeight,
+      );
+    } finally {
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
   });
 
   test("converts multiple PNG files as one batch", async () => {
@@ -239,6 +292,17 @@ async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string)
   await assertPdfPageSize(pdfPath, imageMetadata.width, imageMetadata.height);
 }
 
+async function writeTestImage(filePath: string, imageBase64: string): Promise<void> {
+  await writeFile(filePath, Buffer.from(imageBase64, "base64"));
+}
+
+async function writeTestSvg(filePath: string, width: number, height: number): Promise<void> {
+  await writeFile(
+    filePath,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="#285078"/></svg>`,
+  );
+}
+
 async function assertPdfPageSize(
   pdfPath: string,
   expectedWidth: number,
@@ -251,10 +315,6 @@ async function assertPdfPageSize(
   const { width, height } = page.getSize();
   assertApproximatelyEqual(width, expectedWidth, 0.01);
   assertApproximatelyEqual(height, expectedHeight, 0.01);
-}
-
-async function writeTestImage(filePath: string, imageBase64: string): Promise<void> {
-  await writeFile(filePath, Buffer.from(imageBase64, "base64"));
 }
 
 function replaceExtension(filePath: string, extension: string): string {

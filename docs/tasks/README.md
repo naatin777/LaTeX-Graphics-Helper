@@ -62,6 +62,8 @@
 - [0042: 実行可能な変換context menuを共有サブメニューへ集約する](0042-consolidate-existing-convert-context-menu.md)
 - [0043: JPEG/WebP/AVIFをPDFに変換する失敗テストを追加する](0043-add-convert-to-pdf-image-format-tests.md)
 - [0044: JPEG/WebP/AVIFをPDFに変換する](0044-implement-convert-to-pdf-image-formats.md)
+- [0045: SVGをPDFに変換する失敗テストを追加する](0045-add-convert-to-pdf-svg-tests.md)
+- [0046: SVGをPDFに変換する](0046-implement-convert-to-pdf-svg.md)
 
 ## Todo Tasks
 

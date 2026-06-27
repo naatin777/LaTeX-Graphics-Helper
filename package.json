@@ -58,6 +58,7 @@
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.0.227",
+    "puppeteer-core": "^25.2.1",
     "sharp": "^0.34.5",
     "solid-js": "^1.9.13",
     "xml2js": "^0.6.2"
@@ -246,6 +247,31 @@
           "type": "string",
           "default": "rsvg-convert",
           "description": "%config.execPath.rsvgConvert%"
+        },
+        "latex-graphics-helper.convertToPdf.svg.engine": {
+          "type": "string",
+          "enum": [
+            "puppeteer",
+            "rsvg-convert"
+          ],
+          "default": "puppeteer",
+          "description": "%config.convertToPdf.svg.engine%"
+        },
+        "latex-graphics-helper.convertToPdf.svg.puppeteer.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-dev",
+            "chrome-canary"
+          ],
+          "default": "chrome",
+          "description": "%config.convertToPdf.svg.puppeteer.browserChannel%"
+        },
+        "latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.convertToPdf.svg.puppeteer.executablePath%"
         },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
