@@ -94,7 +94,11 @@ suite("convertToPdf command", () => {
         vscode.Uri.file(sourcePaths[0]!),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
-      await runCommandAndClearNotifications(commandExecution, clearNotificationsAfterDelay);
+      await runCommandAndClearNotifications(commandExecution, async () => {
+        await Promise.all(
+          sourcePaths.map((sourcePath) => waitForFile(replaceExtension(sourcePath, ".pdf"))),
+        );
+      });
 
       await Promise.all(
         sourcePaths.map((sourcePath) =>
