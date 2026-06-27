@@ -70,7 +70,7 @@ suite("convertToPdf command", () => {
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
+      await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
@@ -110,7 +110,7 @@ suite("convertToPdf command", () => {
         ),
       );
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
+      await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
@@ -142,7 +142,7 @@ suite("convertToPdf command", () => {
         secondSourcePath,
       );
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
+      await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
@@ -164,7 +164,7 @@ suite("convertToPdf command", () => {
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
+      await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
@@ -183,7 +183,7 @@ suite("convertToPdf command", () => {
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
     } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
+      await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 });
@@ -197,6 +197,15 @@ async function createTemporaryWorkspaceDirectory(): Promise<string> {
   );
   await mkdir(temporaryDirectory, { recursive: true });
   return temporaryDirectory;
+}
+
+async function removeTemporaryDirectory(directoryPath: string): Promise<void> {
+  await rm(directoryPath, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
 }
 
 async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string): Promise<void> {
