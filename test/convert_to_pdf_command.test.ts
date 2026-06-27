@@ -38,9 +38,24 @@ const generatedImageWidth = 17;
 const generatedImageHeight = 13;
 
 const imageVariants = [
-  { basename: "source-jpeg", extension: "jpeg", format: "jpeg" },
-  { basename: "source-webp", extension: "webp", format: "webp" },
-  { basename: "source-avif", extension: "avif", format: "avif" },
+  {
+    basename: "source-jpeg",
+    extension: "jpeg",
+    imageBase64:
+      "/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAANABEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCbAL6KAA//2Q==",
+  },
+  {
+    basename: "source-webp",
+    extension: "webp",
+    imageBase64:
+      "UklGRkAAAABXRUJQVlA4IDQAAADQAgCdASoRAA0APm0skkWkIqGYBABABsSxgDsAAIGwAP7w+iv/ySPVzHQf/oUbKJpMAAAA",
+  },
+  {
+    basename: "source-avif",
+    extension: "avif",
+    imageBase64:
+      "AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==",
+  },
 ] as const;
 
 suite("convertToPdf command", () => {
@@ -88,7 +103,7 @@ suite("convertToPdf command", () => {
             temporaryDirectory,
             `${variant.basename}.${variant.extension}`,
           );
-          await writeTestImage(sourcePath, variant.format);
+          await writeTestImage(sourcePath, variant.imageBase64);
           return sourcePath;
         }),
       );
@@ -219,20 +234,8 @@ async function assertPdfPageSize(
   assertApproximatelyEqual(height, expectedHeight, 0.01);
 }
 
-async function writeTestImage(
-  filePath: string,
-  format: (typeof imageVariants)[number]["format"],
-): Promise<void> {
-  await sharp({
-    create: {
-      width: generatedImageWidth,
-      height: generatedImageHeight,
-      channels: 4,
-      background: { r: 40, g: 80, b: 120, alpha: 1 },
-    },
-  })
-    .toFormat(format)
-    .toFile(filePath);
+async function writeTestImage(filePath: string, imageBase64: string): Promise<void> {
+  await writeFile(filePath, Buffer.from(imageBase64, "base64"));
 }
 
 function replaceExtension(filePath: string, extension: string): string {
