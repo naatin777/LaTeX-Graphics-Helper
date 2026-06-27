@@ -31,5 +31,13 @@ jobs:
             - shell: pwsh
               run: .github/scripts/install-image-tools-windows.ps1
 
-            - run: pnpm run test
+            - run: |
+                  set -o pipefail
+                  pnpm run test 2>&1 | tee vscode-test.log
               shell: bash
+
+            - uses: actions/upload-artifact@v6
+              if: failure()
+              with:
+                  name: vscode-test-windows-log
+                  path: vscode-test.log
