@@ -36,6 +36,22 @@ jobs:
                   pnpm run test 2>&1 | tee vscode-test.log
               shell: bash
 
+            - name: Annotate VS Code test failure
+              if: failure()
+              run: |
+                  if [ -f vscode-test.log ]; then
+                    {
+                      echo "### Windows VS Code test log tail"
+                      echo '```text'
+                      tail -n 120 vscode-test.log
+                      echo '```'
+                    } >> "$GITHUB_STEP_SUMMARY"
+
+                    message="$(tail -n 80 vscode-test.log | perl -0777 -pe 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g')"
+                    echo "::error title=Windows VS Code test failed::$message"
+                  fi
+              shell: bash
+
             - uses: actions/upload-artifact@v6
               if: failure()
               with:
