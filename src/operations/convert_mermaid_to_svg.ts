@@ -152,8 +152,8 @@ async function writeMermaidAsSvg(
     signal?.throwIfAborted();
 
     await execFileAsync(
-      mermaidCliPath,
-      ["-i", sourcePath, "-o", outputPath, "-p", puppeteerConfigPath],
+      process.execPath,
+      [mermaidCliPath, "-i", sourcePath, "-o", outputPath, "-p", puppeteerConfigPath],
       {
         encoding: "utf8",
         maxBuffer: 10 * 1024 * 1024,

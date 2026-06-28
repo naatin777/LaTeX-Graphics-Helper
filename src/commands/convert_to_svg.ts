@@ -140,12 +140,7 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): ConvertMermai
 }
 
 function resolveMermaidCliPath(extensionPath: string): string {
-  return path.join(
-    extensionPath,
-    "node_modules",
-    ".bin",
-    process.platform === "win32" ? "mmdc.cmd" : "mmdc",
-  );
+  return path.join(extensionPath, "node_modules", "@mermaid-js", "mermaid-cli", "src", "cli.js");
 }
 
 function isAbortError(error: unknown): boolean {

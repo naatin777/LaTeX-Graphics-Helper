@@ -28,6 +28,7 @@
 - READMEにはknown issuesとしてLinux sandbox issueや、既存Chromium利用設定に関する項目がある。
 - `mmdc`は`-p --puppeteerConfigFile`でPuppeteer launch optionのJSONを受け取れる。
 - `channel: "chrome"`を指定すると、Puppeteer管理ブラウザではなくユーザー環境のChromeを使える。
+- Windowsでは`.cmd`を`execFile`で直接起動するより、`node @mermaid-js/mermaid-cli/src/cli.js`として起動する方がOS差を避けやすい。
 
 ## 実装判断への影響
 
@@ -36,6 +37,7 @@
 - `@mermaid-js/mermaid-cli`はdependencyとして追加し、同梱される`mmdc`を呼び出す方針にする。
 - Puppeteer管理Chromeのinstallは前提にしない。
 - 初期実装ではPuppeteer configとして`channel: "chrome"`を渡し、必要なら`settings.json`で`executablePath`を指定できるようにする。
+- `mmdc.cmd`は直接起動せず、dependency内のCLI JavaScriptをNode.jsで実行する。
 - 初期実装ではMermaid CLIのデフォルト設定を使う。
 - テーマ、背景色、CSS、config fileは将来拡張候補として扱う。
 
