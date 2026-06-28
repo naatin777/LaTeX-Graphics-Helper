@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
+import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from "./commands/convert_to_svg.js";
 import {
   convertToPdfCommand,
   convertPngToPdfCommand,
@@ -25,6 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
     ),
     vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, undoLastConversion),
     vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
+    vscode.commands.registerCommand(
+      CONVERT_TO_SVG_COMMAND,
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToSvgCommand(uri, uris),
+    ),
     vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
   );
 }

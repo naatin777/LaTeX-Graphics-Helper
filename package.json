@@ -55,6 +55,7 @@
     "package": "pnpm run build && vsce package"
   },
   "dependencies": {
+    "@mermaid-js/mermaid-cli": "^11.15.0",
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.0.227",
@@ -132,6 +133,11 @@
         "command": "latex-graphics-helper.convertToPdf",
         "title": "%command.convertToPdf%",
         "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.convertToSvg",
+        "title": "%command.convertToSvg%",
+        "category": "LaTeX Graphics Helper"
       }
     ],
     "menus": {
@@ -154,7 +160,7 @@
         {
           "submenu": "latex-graphics-helper.convert",
           "group": "latex-graphics-helper",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -198,6 +204,11 @@
           "command": "latex-graphics-helper.convertToPdf",
           "group": "latex-graphics-helper.convert@1",
           "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif)$/ && config.latex-graphics-helper.contextMenu.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertToSvg",
+          "group": "latex-graphics-helper.convert@6",
+          "when": "resourceExtname =~ /^\\.(mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertMermaid.enabled"
         }
       ],
       "commandPalette": [
@@ -272,6 +283,22 @@
           "type": "string",
           "default": "",
           "description": "%config.convertToPdf.svg.puppeteer.executablePath%"
+        },
+        "latex-graphics-helper.convertToSvg.mermaid.puppeteer.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-dev",
+            "chrome-canary"
+          ],
+          "default": "chrome",
+          "description": "%config.convertToSvg.mermaid.puppeteer.browserChannel%"
+        },
+        "latex-graphics-helper.convertToSvg.mermaid.puppeteer.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.convertToSvg.mermaid.puppeteer.executablePath%"
         },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
@@ -457,6 +484,11 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}.avif",
           "description": "%config.outputPath.convertSvgToAvif%"
         },
+        "latex-graphics-helper.outputPath.convertMermaidToSvg": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.svg",
+          "description": "%config.outputPath.convertMermaidToSvg%"
+        },
         "latex-graphics-helper.contextMenu.enabled": {
           "type": "boolean",
           "default": true,
@@ -511,6 +543,11 @@
           "type": "boolean",
           "default": true,
           "description": "%config.contextMenu.convertSvg.enabled%"
+        },
+        "latex-graphics-helper.contextMenu.convertMermaid.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.contextMenu.convertMermaid.enabled%"
         }
       }
     }

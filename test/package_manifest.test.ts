@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
 const LEGACY_TO_PDF_COMMANDS = [
   "latex-graphics-helper.convertDrawioToPdf",
@@ -20,7 +21,7 @@ const LEGACY_TO_PDF_COMMANDS = [
 interface PackageJson {
   contributes: {
     commands: { command: string; title: string }[];
-    menus: Record<string, { command?: string; submenu?: string }[]>;
+    menus: Record<string, { command?: string; submenu?: string; when?: string }[]>;
     submenus: { id: string; label: string }[];
   };
 }
@@ -59,6 +60,25 @@ suite("package manifest conversion menu", () => {
     }
   });
 
+  test("shows convertToSvg for Mermaid files under the shared Convert submenu", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertToSvg = convertMenu.find((entry) => entry.command === CONVERT_TO_SVG_COMMAND);
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("mmd") &&
+          entry.when.includes("mermaid"),
+      ),
+    );
+    assert.ok(convertToSvg);
+    assert.ok(convertToSvg.when?.includes("mmd"));
+    assert.ok(convertToSvg.when?.includes("mermaid"));
+  });
+
   test("uses output-format labels for the Japanese Convert menu", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
@@ -69,6 +89,7 @@ suite("package manifest conversion menu", () => {
     assert.strictEqual(convertToPdf?.title, "%command.convertToPdf%");
     assert.strictEqual(jaMessages["submenu.convert"], "変換");
     assert.strictEqual(jaMessages["command.convertToPdf"], "PDF");
+    assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
   });
 });
 
