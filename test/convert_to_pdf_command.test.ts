@@ -6,6 +6,7 @@
 // - JPEG、WebPをPDFに変換できること
 // - AVIFをPDFに変換できること
 // - SVGをPDFに変換できること
+// - MermaidをPDFに変換できること
 // - PNGとSVGを1回のコマンドでPDFへ変換できること
 // - 複数PNGを1回のコマンドでPDFへ変換できること
 // - 非対応入力が含まれる場合、変換全体を開始しないこと
@@ -136,6 +137,14 @@ suite("convertToPdf command", () => {
     }
   });
 
+  test("converts an .mmd file to a readable PDF", async () => {
+    await assertMermaidFileConvertsToPdf("source.mmd");
+  });
+
+  test("converts a .mermaid file to a readable PDF", async () => {
+    await assertMermaidFileConvertsToPdf("source.mermaid");
+  });
+
   test("converts PNG and SVG files as one batch", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
@@ -264,6 +273,29 @@ async function assertImageVariantsConvertToPdf(
   }
 }
 
+async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    const outputPath = replaceExtension(sourcePath, ".pdf");
+    await writeFile(
+      sourcePath,
+      ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
+    );
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_PDF_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadablePdfWithAtLeastOnePage(outputPath);
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
+
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   assert.ok(workspaceFolder);
@@ -301,6 +333,12 @@ async function writeTestSvg(filePath: string, width: number, height: number): Pr
     filePath,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="#285078"/></svg>`,
   );
+}
+
+async function assertReadablePdfWithAtLeastOnePage(pdfPath: string): Promise<void> {
+  const pdf = await PDFDocument.load(await readFile(pdfPath));
+
+  assert.ok(pdf.getPageCount() >= 1);
 }
 
 async function assertPdfPageSize(

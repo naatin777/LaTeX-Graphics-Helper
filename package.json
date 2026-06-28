@@ -203,7 +203,7 @@
         {
           "command": "latex-graphics-helper.convertToPdf",
           "group": "latex-graphics-helper.convert@1",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",
@@ -488,6 +488,11 @@
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.svg",
           "description": "%config.outputPath.convertMermaidToSvg%"
+        },
+        "latex-graphics-helper.outputPath.convertMermaidToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "%config.outputPath.convertMermaidToPdf%"
         },
         "latex-graphics-helper.contextMenu.enabled": {
           "type": "boolean",

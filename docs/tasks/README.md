@@ -65,9 +65,10 @@
 - [0045: SVGをPDFに変換する失敗テストを追加する](0045-add-convert-to-pdf-svg-tests.md)
 - [0046: SVGをPDFに変換する](0046-implement-convert-to-pdf-svg.md)
 - [0047: Mermaidファイル変換の仕様を決める](0047-design-mermaid-file-conversion.md)
+- [0048: 未実装・保留事項を整理する](0048-track-unimplemented-work.md)
 - [0049: MermaidをSVGに変換する失敗テストを追加する](0049-add-convert-to-svg-mermaid-tests.md)
 - [0050: MermaidをSVGに変換する](0050-implement-convert-to-svg-mermaid.md)
+- [0051: MermaidをPDFに変換する失敗テストを追加する](0051-add-convert-to-pdf-mermaid-tests.md)
+- [0052: MermaidをPDFに変換する](0052-implement-convert-to-pdf-mermaid.md)
 
 ## Todo Tasks
-
-- [0048: 未実装・保留事項を整理する](0048-track-unimplemented-work.md)

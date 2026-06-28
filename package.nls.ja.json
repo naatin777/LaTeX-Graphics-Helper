@@ -52,6 +52,7 @@
   "config.outputPath.convertSvgToWebp": "SVGをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertSvgToAvif": "SVGをAVIFに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToSvg": "MermaidファイルをSVGに変換した後の出力ファイル名",
+  "config.outputPath.convertMermaidToPdf": "MermaidファイルをPDFに変換した後の出力ファイル名",
 
   "config.contextMenu.enabled": "コンテキストメニューを有効にする",
   "config.contextMenu.cropPdf.enabled": "PDFをクロップするコンテキストメニューを有効にする",
@@ -64,7 +65,7 @@
   "config.contextMenu.convertWebp.enabled": "WebPをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertAvif.enabled": "AVIFをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertSvg.enabled": "SVGをPDFや画像形式に変換するコンテキストメニューを有効にする",
-  "config.contextMenu.convertMermaid.enabled": "MermaidファイルをSVGに変換するコンテキストメニューを有効にする",
+  "config.contextMenu.convertMermaid.enabled": "Mermaidファイルを変換するコンテキストメニューを有効にする",
 
   "submenu.cropPdf": "PDFをクロップ",
   "command.cropPdf.auto": "自動クロップ",

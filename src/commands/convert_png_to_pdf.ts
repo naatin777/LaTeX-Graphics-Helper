@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
@@ -16,7 +18,16 @@ export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const UNDO_ACTION = "Undo";
 const PNG_EXTENSIONS = [".png"] as const;
-const PDF_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif", ".svg"] as const;
+const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
+const PDF_IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".avif",
+  ".svg",
+  ...MERMAID_EXTENSIONS,
+] as const;
 
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
@@ -61,8 +72,17 @@ async function convertSelectedPngFilesToPdf(
       "outputPath.convertPngToPdf",
       DEFAULT_OUTPUT_PATH,
     );
+    const mermaidOutputTemplate = configuration.get<string>(
+      "outputPath.convertMermaidToPdf",
+      DEFAULT_OUTPUT_PATH,
+    );
     const svgToPdf = readSvgToPdfOptions(configuration);
-    const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
+    const jobs = sourceUris.map((sourceUri) =>
+      createJob(
+        sourceUri,
+        outputTemplateForSource(sourceUri, outputTemplate, mermaidOutputTemplate),
+      ),
+    );
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -119,6 +139,20 @@ async function convertSelectedPngFilesToPdf(
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(`${messages.errorPrefix}: ${message}`);
   }
+}
+
+function outputTemplateForSource(
+  sourceUri: vscode.Uri,
+  outputTemplate: string,
+  mermaidOutputTemplate: string,
+): string {
+  const extension = path.extname(sourceUri.fsPath).toLowerCase();
+
+  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
+    return mermaidOutputTemplate;
+  }
+
+  return outputTemplate;
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
