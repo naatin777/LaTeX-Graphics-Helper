@@ -15,7 +15,7 @@ Done
 - `@mermaid-js/mermaid-cli`をdependencyとして追加する
 - `latex-graphics-helper.convertToSvg`を登録する
 - Explorer context menuの`変換 > SVG`から`.mmd`と`.mermaid`を変換できる
-- Mermaid CLIの`mmdc`を使ってSVGを直接出力する
+- Mermaid CLIの`run` APIを使ってSVGを直接出力する
 - Puppeteer管理Chromeのinstallは前提にせず、既定では`browserChannel: "chrome"`でユーザー環境のChromeを使う
 - 必要に応じて`convertToSvg.mermaid.puppeteer.executablePath`でブラウザ実行ファイルを指定できる
 - 出力先は`outputPath.convertMermaidToSvg`で決める
@@ -39,7 +39,7 @@ Done
 
 - Mermaid → PDF / PNG / JPEG / WebP / AVIF
 - Mermaid theme / look / backgroundColorなどの設定追加
-- `@mermaid-js/mermaid-cli`のNode.js API利用
+- `@mermaid-js/mermaid-cli`の内部ファイルや`.bin/mmdc`の直接解決
 - 既存変換処理の大規模リファクタリング
 
 ## 関連

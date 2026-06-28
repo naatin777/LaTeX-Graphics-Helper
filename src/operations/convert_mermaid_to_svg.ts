@@ -1,8 +1,7 @@
-import { execFile } from "node:child_process";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { promisify } from "node:util";
 
+import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
 import pLimit from "p-limit";
 
 import {
@@ -18,7 +17,6 @@ import {
 
 const CONVERSION_CONCURRENCY = 2;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const execFileAsync = promisify(execFile);
 
 export interface ConvertMermaidToSvgJob {
   sourcePath: string;
@@ -28,7 +26,6 @@ export interface ConvertMermaidToSvgJob {
 
 export interface ConvertMermaidToSvgFilesOptions {
   jobs: ConvertMermaidToSvgJob[];
-  mermaidCliPath: string;
   puppeteer: MermaidPuppeteerOptions;
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
@@ -52,16 +49,7 @@ export async function convertMermaidToSvgFiles(
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
-      limit(() =>
-        stageMermaidConversion(
-          job,
-          index,
-          runId,
-          options.mermaidCliPath,
-          options.puppeteer,
-          options.signal,
-        ),
-      ),
+      limit(() => stageMermaidConversion(job, index, runId, options.puppeteer, options.signal)),
     ),
   );
 
@@ -101,7 +89,6 @@ async function stageMermaidConversion(
   job: ConvertMermaidToSvgJob,
   index: number,
   runId: string,
-  mermaidCliPath: string,
   puppeteer: MermaidPuppeteerOptions,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
@@ -115,14 +102,7 @@ async function stageMermaidConversion(
     "result.svg",
   );
 
-  await writeMermaidAsSvg(
-    job.sourcePath,
-    stagedOutputPath,
-    job.workspacePath,
-    mermaidCliPath,
-    puppeteer,
-    signal,
-  );
+  await writeMermaidAsSvg(job.sourcePath, stagedOutputPath, job.workspacePath, puppeteer, signal);
   signal?.throwIfAborted();
 
   return {
@@ -136,7 +116,6 @@ async function writeMermaidAsSvg(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  mermaidCliPath: string,
   puppeteer: MermaidPuppeteerOptions,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -145,30 +124,27 @@ async function writeMermaidAsSvg(
   await mkdir(path.dirname(outputPath), { recursive: true });
   signal?.throwIfAborted();
 
-  const puppeteerConfigPath = `${outputPath}.puppeteer.json`;
-
   try {
-    await writeFile(puppeteerConfigPath, JSON.stringify(createPuppeteerConfig(puppeteer)));
-    signal?.throwIfAborted();
-
-    await execFileAsync(
-      process.execPath,
-      [mermaidCliPath, "-i", sourcePath, "-o", outputPath, "-p", puppeteerConfigPath],
-      {
-        encoding: "utf8",
-        maxBuffer: 10 * 1024 * 1024,
-        signal,
-      },
-    );
+    await runMermaidCli(sourcePath, asSvgOutputPath(outputPath), {
+      outputFormat: "svg",
+      puppeteerConfig: createPuppeteerConfig(puppeteer),
+      quiet: true,
+    });
   } catch (error) {
     if (isAbortError(error)) {
       throw error;
     }
 
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
-  } finally {
-    await rm(puppeteerConfigPath, { force: true });
   }
+}
+
+function asSvgOutputPath(outputPath: string): `${string}.svg` {
+  if (!outputPath.toLowerCase().endsWith(".svg")) {
+    throw new Error(`Mermaid SVG output path must end with .svg: ${outputPath}`);
+  }
+
+  return outputPath as `${string}.svg`;
 }
 
 function createPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {

@@ -28,8 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
     vscode.commands.registerCommand(
       CONVERT_TO_SVG_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
-        convertToSvgCommand(context.extensionPath, uri, uris),
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToSvgCommand(uri, uris),
     ),
     vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
   );

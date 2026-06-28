@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
@@ -16,11 +14,7 @@ export const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.svg";
 const UNDO_ACTION = "Undo";
 
-export async function convertToSvgCommand(
-  extensionPath: string,
-  uri?: vscode.Uri,
-  uris?: vscode.Uri[],
-): Promise<void> {
+export async function convertToSvgCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -34,7 +28,6 @@ export async function convertToSvgCommand(
       DEFAULT_OUTPUT_PATH,
     );
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
-    const mermaidCliPath = resolveMermaidCliPath(extensionPath);
     const puppeteer = readMermaidPuppeteerOptions(configuration);
     const outputs = await vscode.window.withProgress(
       {
@@ -56,7 +49,6 @@ export async function convertToSvgCommand(
           progress.report({ message: "Preparing SVG conversion..." });
           return await convertMermaidToSvgFiles({
             jobs,
-            mermaidCliPath,
             puppeteer,
             signal: abortController.signal,
             resolveOutputConflicts,
@@ -137,10 +129,6 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): ConvertMermai
       workspaceName: workspace.name,
     }),
   };
-}
-
-function resolveMermaidCliPath(extensionPath: string): string {
-  return path.join(extensionPath, "node_modules", "@mermaid-js", "mermaid-cli", "src", "cli.js");
 }
 
 function isAbortError(error: unknown): boolean {

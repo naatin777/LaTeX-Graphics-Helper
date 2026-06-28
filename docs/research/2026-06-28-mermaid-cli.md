@@ -27,17 +27,19 @@
 - CSSやconfig fileを使ったカスタムも可能。
 - READMEにはknown issuesとしてLinux sandbox issueや、既存Chromium利用設定に関する項目がある。
 - `mmdc`は`-p --puppeteerConfigFile`でPuppeteer launch optionのJSONを受け取れる。
+- Node.js APIの`run`は`puppeteerConfig` optionでPuppeteer launch optionを受け取れる。
 - `channel: "chrome"`を指定すると、Puppeteer管理ブラウザではなくユーザー環境のChromeを使える。
-- Windowsでは`.cmd`を`execFile`で直接起動するより、`node @mermaid-js/mermaid-cli/src/cli.js`として起動する方がOS差を避けやすい。
+- Windowsでは`.cmd`を`execFile`で直接起動するとOS差が出やすい。
 
 ## 実装判断への影響
 
-- 初期実装では、Node.js APIではなくCLI実行を優先する。
-  - 理由: README上でNode.js APIはsemver保証対象外とされているため。
-- `@mermaid-js/mermaid-cli`はdependencyとして追加し、同梱される`mmdc`を呼び出す方針にする。
+- 初期実装では、`@mermaid-js/mermaid-cli`の`run` APIを使う。
+  - 理由: READMEに記載された利用方法であり、package内部の`src/cli.js`や`.bin/mmdc`を独自に解決するより実装が単純になるため。
+  - 注意: README上でNode.js APIはsemver保証対象外とされているため、major/minor update時はテストで実挙動を確認する。
+- `@mermaid-js/mermaid-cli`はdependencyとして追加する。
 - Puppeteer管理Chromeのinstallは前提にしない。
 - 初期実装ではPuppeteer configとして`channel: "chrome"`を渡し、必要なら`settings.json`で`executablePath`を指定できるようにする。
-- `mmdc.cmd`は直接起動せず、dependency内のCLI JavaScriptをNode.jsで実行する。
+- `mmdc.cmd`、`.bin/mmdc`、dependency内部のCLI JavaScriptは直接起動しない。
 - 初期実装ではMermaid CLIのデフォルト設定を使う。
 - テーマ、背景色、CSS、config fileは将来拡張候補として扱う。
 
@@ -50,6 +52,6 @@
 ## 再確認条件
 
 - `@mermaid-js/mermaid-cli`のmajor versionを更新する場合。
-- Node.js APIを使いたくなった場合。
+- Node.js APIの引数仕様やsemver保証状況が変わった場合。
 - Chrome検出、Chromium download、extension package sizeが問題になった場合。
 - Mermaidのtheme/configをsettings化する場合。
