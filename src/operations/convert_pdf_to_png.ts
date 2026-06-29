@@ -119,16 +119,26 @@ async function stagePdfPageConversion(
 }
 
 async function validateJobPaths(jobs: ConvertPdfToPngPageJob[]): Promise<void> {
-  await Promise.all(
-    jobs.flatMap((job) => [
-      assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
-      assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
+  const sourceWorkspaces = new Map<string, string>();
+  const workspacePaths = new Set<string>();
+
+  for (const job of jobs) {
+    sourceWorkspaces.set(job.sourcePath, job.workspacePath);
+    workspacePaths.add(job.workspacePath);
+  }
+
+  await Promise.all([
+    ...[...sourceWorkspaces.entries()].map(([sourcePath, workspacePath]) =>
+      assertExistingPathInWorkspace(sourcePath, workspacePath),
+    ),
+    ...[...workspacePaths].map((workspacePath) =>
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "convert-pdf-to-png"),
-        job.workspacePath,
+        path.join(workspacePath, ".latex-graphics-helper", "convert-pdf-to-png"),
+        workspacePath,
       ),
-    ]),
-  );
+    ),
+    ...jobs.map((job) => assertWritablePathInWorkspace(job.outputPath, job.workspacePath)),
+  ]);
 }
 
 function validateJobs(jobs: ConvertPdfToPngPageJob[]): void {
