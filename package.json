@@ -98,7 +98,7 @@
                 {
                     "command": "latex-graphics-helper.convertDrawioToPdf",
                     "group": "latex-graphics-helper",
-                    "when": "resourceExtname == .drawio || resourceExtname == .dio"
+                    "when": "resourceExtname == .drawio || resourceExtname == .dio || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/"
                 },
                 {
                     "submenu": "latex-graphics-helper.convertPdfToImage",
@@ -108,7 +108,7 @@
                 {
                     "command": "latex-graphics-helper.convertPngToPdf",
                     "group": "latex-graphics-helper",
-                    "when": "resourceExtname == .png"
+                    "when": "resourceExtname == .png && !(resourceFilename =~ /\\.(drawio|dio)\\.png$/)"
                 },
                 {
                     "command": "latex-graphics-helper.convertJpegToPdf",
@@ -118,7 +118,7 @@
                 {
                     "command": "latex-graphics-helper.convertSvgToPdf",
                     "group": "latex-graphics-helper",
-                    "when": "resourceExtname == .svg"
+                    "when": "resourceExtname == .svg && !(resourceFilename =~ /\\.(drawio|dio)\\.svg$/)"
                 }
             ],
             "latex-graphics-helper.convertPdfToImage": [
