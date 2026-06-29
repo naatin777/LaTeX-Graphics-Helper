@@ -101,6 +101,7 @@
 
   "submenu.convertPng": "PNGを変換",
   "command.convertToPdf": "PDF",
+  "command.convertToPng": "PNG",
   "command.convertToSvg": "SVG",
   "command.convertPngToPdf": "PNGをPDFに変換",
   "command.convertPngToJpeg": "PNGをJPEGに変換",

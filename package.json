@@ -135,6 +135,11 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.convertToPng",
+        "title": "%command.convertToPng%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.convertToSvg",
         "title": "%command.convertToSvg%",
         "category": "LaTeX Graphics Helper"
@@ -160,7 +165,7 @@
         {
           "submenu": "latex-graphics-helper.convert",
           "group": "latex-graphics-helper",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "resourceExtname =~ /^\\.(pdf|png|jpg|jpeg|webp|avif|svg|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -204,6 +209,11 @@
           "command": "latex-graphics-helper.convertToPdf",
           "group": "latex-graphics-helper.convert@1",
           "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertToPng",
+          "group": "latex-graphics-helper.convert@2",
+          "when": "resourceExtname =~ /^\\.(pdf|jpg|jpeg|webp|avif|svg)$/ && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",

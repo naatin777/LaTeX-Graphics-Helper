@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
 const LEGACY_TO_PDF_COMMANDS = [
@@ -17,12 +18,28 @@ const LEGACY_TO_PDF_COMMANDS = [
   "latex-graphics-helper.convertAvifToPdf",
   "latex-graphics-helper.convertSvgToPdf",
 ] as const;
+const PAGE_BASED_OUTPUT_PATHS = [
+  "latex-graphics-helper.outputPath.convertDrawioToPdf",
+  "latex-graphics-helper.outputPath.convertDrawioToPng",
+  "latex-graphics-helper.outputPath.convertDrawioToJpeg",
+  "latex-graphics-helper.outputPath.convertDrawioToWebp",
+  "latex-graphics-helper.outputPath.convertDrawioToAvif",
+  "latex-graphics-helper.outputPath.convertDrawioToSvg",
+  "latex-graphics-helper.outputPath.convertPdfToPng",
+  "latex-graphics-helper.outputPath.convertPdfToJpeg",
+  "latex-graphics-helper.outputPath.convertPdfToWebp",
+  "latex-graphics-helper.outputPath.convertPdfToAvif",
+  "latex-graphics-helper.outputPath.convertPdfToSvg",
+] as const;
 
 interface PackageJson {
   contributes: {
     commands: { command: string; title: string }[];
     menus: Record<string, { command?: string; submenu?: string; when?: string }[]>;
     submenus: { id: string; label: string }[];
+    configuration: {
+      properties: Record<string, { default?: string }>;
+    };
   };
 }
 
@@ -63,6 +80,25 @@ suite("package manifest conversion menu", () => {
     }
   });
 
+  test("shows convertToPng under the shared Convert submenu for supported non-PNG inputs", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertToPng = convertMenu.find((entry) => entry.command === CONVERT_TO_PNG_COMMAND);
+
+    assert.ok(commandIds.has(CONVERT_TO_PNG_COMMAND));
+    assert.ok(explorerContext.some((entry) => entry.submenu === CONVERT_SUBMENU));
+    assert.ok(convertToPng);
+    assert.ok(convertToPng.when?.includes("pdf"));
+    assert.ok(convertToPng.when?.includes("jpg"));
+    assert.ok(convertToPng.when?.includes("jpeg"));
+    assert.ok(convertToPng.when?.includes("webp"));
+    assert.ok(convertToPng.when?.includes("avif"));
+    assert.ok(convertToPng.when?.includes("svg"));
+    assert.ok(!convertToPng.when?.includes("png"));
+  });
+
   test("shows convertToSvg for Mermaid files under the shared Convert submenu", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
@@ -92,7 +128,21 @@ suite("package manifest conversion menu", () => {
     assert.strictEqual(convertToPdf?.title, "%command.convertToPdf%");
     assert.strictEqual(jaMessages["submenu.convert"], "変換");
     assert.strictEqual(jaMessages["command.convertToPdf"], "PDF");
+    assert.strictEqual(jaMessages["command.convertToPng"], "PNG");
     assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
+  });
+
+  test("uses page variables in page-based output path defaults", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+
+    for (const key of PAGE_BASED_OUTPUT_PATHS) {
+      const defaultValue = packageJson.contributes.configuration.properties[key]?.default;
+
+      assert.ok(
+        defaultValue?.includes("${page}"),
+        `${key} default output path should include \${page}`,
+      );
+    }
   });
 });
 

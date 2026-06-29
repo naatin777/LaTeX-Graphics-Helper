@@ -70,5 +70,10 @@
 - [0050: MermaidをSVGに変換する](0050-implement-convert-to-svg-mermaid.md)
 - [0051: MermaidをPDFに変換する失敗テストを追加する](0051-add-convert-to-pdf-mermaid-tests.md)
 - [0052: MermaidをPDFに変換する](0052-implement-convert-to-pdf-mermaid.md)
+- [0053: 現在の変換実装に合わせてtest-matrixを更新する](0053-update-test-matrix-for-current-conversions.md)
+- [0054: PNGに変換コマンドの失敗テストを追加する](0054-add-convert-to-png-output-format-tests.md)
+- [0055: PNGに変換コマンドをメニューへ追加する](0055-implement-convert-to-png-output-format-menu.md)
+- [0056: PDFをPNGに変換する失敗テストを追加する](0056-add-convert-to-png-pdf-tests.md)
+- [0057: ページ単位変換の出力パスにpage変数を必須化する失敗テストを追加する](0057-add-page-variable-required-tests.md)
 
 ## Todo Tasks

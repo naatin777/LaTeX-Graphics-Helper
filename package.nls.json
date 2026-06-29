@@ -86,6 +86,7 @@
   "command.convertPdfToAvif": "Convert PDF to AVIF",
   "submenu.convertPng": "Convert PNG",
   "command.convertToPdf": "PDF",
+  "command.convertToPng": "PNG",
   "command.convertToSvg": "SVG",
   "command.convertPngToPdf": "Convert PNG to PDF",
   "command.convertPngToJpeg": "Convert PNG to JPEG",
