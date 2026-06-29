@@ -6,6 +6,8 @@
   "config.convertToPdf.svg.engine": "SVGをPDFに変換するときに使用する変換方式",
   "config.convertToPdf.svg.puppeteer.browserChannel": "SVGをPDFに変換するときにpuppeteer-coreが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToPdf.svg.puppeteer.executablePath": "SVGをPDFに変換するときにpuppeteer-coreが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
+  "config.convertToPdf.mermaid.puppeteer.browserChannel": "MermaidファイルをPDFに変換するときにMermaid CLIが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
+  "config.convertToPdf.mermaid.puppeteer.executablePath": "MermaidファイルをPDFに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
   "config.convertToSvg.mermaid.puppeteer.browserChannel": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToSvg.mermaid.puppeteer.executablePath": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
 

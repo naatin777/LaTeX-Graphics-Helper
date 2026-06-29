@@ -6,6 +6,8 @@
   "config.convertToPdf.svg.engine": "Engine used when converting SVG files to PDF.",
   "config.convertToPdf.svg.puppeteer.browserChannel": "Chrome browser channel used by puppeteer-core when converting SVG files to PDF. Ignored when an executable path is set.",
   "config.convertToPdf.svg.puppeteer.executablePath": "Browser executable path used by puppeteer-core when converting SVG files to PDF. If set, this takes precedence over the browser channel.",
+  "config.convertToPdf.mermaid.puppeteer.browserChannel": "Chrome browser channel used by Mermaid CLI when converting Mermaid files to PDF. Ignored when an executable path is set.",
+  "config.convertToPdf.mermaid.puppeteer.executablePath": "Browser executable path used by Mermaid CLI when converting Mermaid files to PDF. If set, this takes precedence over the browser channel.",
   "config.convertToSvg.mermaid.puppeteer.browserChannel": "Chrome browser channel used by Mermaid CLI when converting Mermaid files to SVG. Ignored when an executable path is set.",
   "config.convertToSvg.mermaid.puppeteer.executablePath": "Browser executable path used by Mermaid CLI when converting Mermaid files to SVG. If set, this takes precedence over the browser channel.",
   "config.outputPath.cropPdf": "Output file name after cropping the PDF",

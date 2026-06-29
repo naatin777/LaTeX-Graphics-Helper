@@ -35,6 +35,11 @@ export interface SvgToPdfOptions {
   puppeteerExecutablePath?: string;
 }
 
+export interface MermaidPuppeteerOptions {
+  browserChannel: string;
+  executablePath?: string;
+}
+
 export interface ConvertPngToPdfOptions {
   sourcePath: string;
   outputPath: string;
@@ -55,6 +60,7 @@ export interface ConvertPngToPdfFilesOptions {
   signal?: AbortSignal;
   supportedExtensions?: readonly string[];
   svgToPdf?: SvgToPdfOptions;
+  mermaid?: MermaidPuppeteerOptions;
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -81,7 +87,9 @@ export async function convertPngToPdfFiles(
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
-      limit(() => stagePngConversion(job, index, runId, options.signal, options.svgToPdf)),
+      limit(() =>
+        stagePngConversion(job, index, runId, options.signal, options.svgToPdf, options.mermaid),
+      ),
     ),
   );
 
@@ -100,6 +108,7 @@ async function stagePngConversion(
   runId: string,
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
+  mermaid?: MermaidPuppeteerOptions,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -111,7 +120,14 @@ async function stagePngConversion(
     "result.pdf",
   );
 
-  await writeImageAsPdf(job.sourcePath, stagedOutputPath, job.workspacePath, signal, svgToPdf);
+  await writeImageAsPdf(
+    job.sourcePath,
+    stagedOutputPath,
+    job.workspacePath,
+    signal,
+    svgToPdf,
+    mermaid,
+  );
   signal?.throwIfAborted();
 
   return {
@@ -127,11 +143,12 @@ async function writeImageAsPdf(
   workspacePath: string,
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
+  mermaid?: MermaidPuppeteerOptions,
 ): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
-    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal);
+    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
     return;
   }
 
@@ -148,6 +165,7 @@ async function writeMermaidAsPdf(
   outputPath: string,
   workspacePath: string,
   signal?: AbortSignal,
+  mermaid?: MermaidPuppeteerOptions,
 ): Promise<void> {
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(outputPath, workspacePath);
@@ -157,10 +175,7 @@ async function writeMermaidAsPdf(
   try {
     await runMermaidCli(sourcePath, asPdfOutputPath(outputPath), {
       outputFormat: "pdf",
-      puppeteerConfig: {
-        channel: "chrome",
-        headless: true,
-      },
+      puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
       quiet: true,
     });
   } catch (error) {
@@ -170,6 +185,22 @@ async function writeMermaidAsPdf(
 
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
   }
+}
+
+function createMermaidPuppeteerConfig(
+  options: MermaidPuppeteerOptions = { browserChannel: "chrome" },
+): Record<string, unknown> {
+  if (options.executablePath) {
+    return {
+      executablePath: options.executablePath,
+      headless: true,
+    };
+  }
+
+  return {
+    channel: options.browserChannel,
+    headless: true,
+  };
 }
 
 function asPdfOutputPath(outputPath: string): `${string}.pdf` {

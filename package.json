@@ -284,6 +284,22 @@
           "default": "",
           "description": "%config.convertToPdf.svg.puppeteer.executablePath%"
         },
+        "latex-graphics-helper.convertToPdf.mermaid.puppeteer.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-dev",
+            "chrome-canary"
+          ],
+          "default": "chrome",
+          "description": "%config.convertToPdf.mermaid.puppeteer.browserChannel%"
+        },
+        "latex-graphics-helper.convertToPdf.mermaid.puppeteer.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.convertToPdf.mermaid.puppeteer.executablePath%"
+        },
         "latex-graphics-helper.convertToSvg.mermaid.puppeteer.browserChannel": {
           "type": "string",
           "enum": [
