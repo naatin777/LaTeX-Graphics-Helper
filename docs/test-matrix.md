@@ -36,7 +36,7 @@
 | Config           | pasteClipboardImageAs = ask のときpickerを出す |                                          | Not Covered  |                                                          |
 | Error handling   | 外部コマンド失敗時にOutputへログを出す         | `test/crop_pdf_auto.test.ts`             | Covered      | Ghostscript失敗時のログ出力を検証                        |
 | UI               | Safe Modeのstatus barとmodal dialogを表示する  | `test/safe_mode_status_bar.test.ts`      | Partial      | status bar挙動はCovered。画面上の描画外観は対象外        |
-| Not implemented  | `convertToPng`出力形式基準コマンド             |                                          | Not Covered  | 未実装                                                   |
+| Image conversion | PDFをPNGに変換する                             | `test/convert_to_png_command.test.ts`    | Covered      | command経由。1ページPDF、出力サイズ、`${page}`必須を検証 |
 | Not implemented  | `convertToJpeg`出力形式基準コマンド            |                                          | Not Covered  | 未実装                                                   |
 | Not implemented  | `convertToWebp`出力形式基準コマンド            |                                          | Not Covered  | 未実装                                                   |
 | Not implemented  | `convertToAvif`出力形式基準コマンド            |                                          | Not Covered  | 未実装                                                   |

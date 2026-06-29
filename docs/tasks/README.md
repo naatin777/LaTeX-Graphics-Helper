@@ -75,5 +75,6 @@
 - [0055: PNGに変換コマンドをメニューへ追加する](0055-implement-convert-to-png-output-format-menu.md)
 - [0056: PDFをPNGに変換する失敗テストを追加する](0056-add-convert-to-png-pdf-tests.md)
 - [0057: ページ単位変換の出力パスにpage変数を必須化する失敗テストを追加する](0057-add-page-variable-required-tests.md)
+- [0058: PDFをPNGに変換する最小実装を追加する](0058-implement-convert-to-png-pdf.md)
 
 ## Todo Tasks
