@@ -29,13 +29,13 @@ export async function convertDrawioToPdf(
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PdfPath[]> {
     const parsedPath = path.parse(inputPath);
-    const drawioInputPath = path.join(parsedPath.dir, parsedPath.name) as DrawioPath;
+    const drawioInputPath = `${inputPath}.drawio` as DrawioPath;
     const temporaryPdfPath = `${path.join(parsedPath.dir, parsedPath.name)}.pdf` as PdfPath;
 
     if (isEditableDrawioImage(inputPath)) {
         await execFileInWorkspace(
             appConfig.execPathDrawio,
-            [inputPath, '-o', drawioInputPath, '-xf', 'xml'],
+            ['-x', '-f', 'xml', '-o', drawioInputPath, inputPath],
             workspaceFolder,
         );
     }
