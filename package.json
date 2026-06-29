@@ -203,7 +203,7 @@
         {
           "command": "latex-graphics-helper.convertToPdf",
           "group": "latex-graphics-helper.convert@1",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",
@@ -283,6 +283,22 @@
           "type": "string",
           "default": "",
           "description": "%config.convertToPdf.svg.puppeteer.executablePath%"
+        },
+        "latex-graphics-helper.convertToPdf.mermaid.puppeteer.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-dev",
+            "chrome-canary"
+          ],
+          "default": "chrome",
+          "description": "%config.convertToPdf.mermaid.puppeteer.browserChannel%"
+        },
+        "latex-graphics-helper.convertToPdf.mermaid.puppeteer.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.convertToPdf.mermaid.puppeteer.executablePath%"
         },
         "latex-graphics-helper.convertToSvg.mermaid.puppeteer.browserChannel": {
           "type": "string",
@@ -488,6 +504,11 @@
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.svg",
           "description": "%config.outputPath.convertMermaidToSvg%"
+        },
+        "latex-graphics-helper.outputPath.convertMermaidToPdf": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "%config.outputPath.convertMermaidToPdf%"
         },
         "latex-graphics-helper.contextMenu.enabled": {
           "type": "boolean",

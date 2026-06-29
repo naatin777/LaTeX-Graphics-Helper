@@ -1,9 +1,12 @@
+import path from "node:path";
+
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
+  type MermaidPuppeteerOptions,
   type SvgToPdfEngine,
   type SvgToPdfOptions,
 } from "../operations/convert_png_to_pdf.js";
@@ -16,7 +19,16 @@ export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const UNDO_ACTION = "Undo";
 const PNG_EXTENSIONS = [".png"] as const;
-const PDF_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".avif", ".svg"] as const;
+const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
+const PDF_IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".avif",
+  ".svg",
+  ...MERMAID_EXTENSIONS,
+] as const;
 
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
@@ -62,7 +74,10 @@ async function convertSelectedPngFilesToPdf(
       DEFAULT_OUTPUT_PATH,
     );
     const svgToPdf = readSvgToPdfOptions(configuration);
-    const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
+    const mermaid = readMermaidPuppeteerOptions(configuration);
+    const jobs = sourceUris.map((sourceUri) =>
+      createJob(sourceUri, outputTemplateForSource(sourceUri, configuration, outputTemplate)),
+    );
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -87,6 +102,7 @@ async function convertSelectedPngFilesToPdf(
             resolveOutputConflicts,
             supportedExtensions: messages.supportedExtensions,
             svgToPdf,
+            mermaid,
           });
         } finally {
           cancellationSubscription.dispose();
@@ -121,6 +137,40 @@ async function convertSelectedPngFilesToPdf(
   }
 }
 
+function outputTemplateForSource(
+  sourceUri: vscode.Uri,
+  configuration: vscode.WorkspaceConfiguration,
+  pngOutputTemplate: string,
+): string {
+  const extension = path.extname(sourceUri.fsPath).toLowerCase();
+
+  switch (extension) {
+    case ".png": {
+      return pngOutputTemplate;
+    }
+    case ".jpg":
+    case ".jpeg": {
+      return configuration.get<string>("outputPath.convertJpegToPdf", DEFAULT_OUTPUT_PATH);
+    }
+    case ".webp": {
+      return configuration.get<string>("outputPath.convertWebpToPdf", DEFAULT_OUTPUT_PATH);
+    }
+    case ".avif": {
+      return configuration.get<string>("outputPath.convertAvifToPdf", DEFAULT_OUTPUT_PATH);
+    }
+    case ".svg": {
+      return configuration.get<string>("outputPath.convertSvgToPdf", DEFAULT_OUTPUT_PATH);
+    }
+    case ".mmd":
+    case ".mermaid": {
+      return configuration.get<string>("outputPath.convertMermaidToPdf", DEFAULT_OUTPUT_PATH);
+    }
+    default: {
+      return DEFAULT_OUTPUT_PATH;
+    }
+  }
+}
+
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
   const executablePath = configuration
     .get<string>("convertToPdf.svg.puppeteer.executablePath", "")
@@ -134,6 +184,22 @@ function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgT
       "chrome",
     ),
     ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),
+  };
+}
+
+function readMermaidPuppeteerOptions(
+  configuration: vscode.WorkspaceConfiguration,
+): MermaidPuppeteerOptions {
+  const executablePath = configuration
+    .get<string>("convertToPdf.mermaid.puppeteer.executablePath", "")
+    .trim();
+
+  return {
+    browserChannel: configuration.get<string>(
+      "convertToPdf.mermaid.puppeteer.browserChannel",
+      "chrome",
+    ),
+    ...(executablePath ? { executablePath } : {}),
   };
 }
 

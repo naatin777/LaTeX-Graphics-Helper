@@ -43,10 +43,13 @@ suite("package manifest conversion menu", () => {
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const submenu = packageJson.contributes.submenus.find((entry) => entry.id === CONVERT_SUBMENU);
+    const convertToPdf = convertMenu.find((entry) => entry.command === CONVERT_TO_PDF_COMMAND);
 
     assert.strictEqual(submenu?.label, "%submenu.convert%");
     assert.ok(explorerContext.some((entry) => entry.submenu === CONVERT_SUBMENU));
-    assert.ok(convertMenu.some((entry) => entry.command === CONVERT_TO_PDF_COMMAND));
+    assert.ok(convertToPdf);
+    assert.ok(convertToPdf.when?.includes("mmd"));
+    assert.ok(convertToPdf.when?.includes("mermaid"));
 
     const menuCommandIds = new Set(
       Object.entries(packageJson.contributes.menus)

@@ -3,6 +3,7 @@ import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
+import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
 import pLimit from "p-limit";
 import { PDFDocument, type PDFPage } from "pdf-lib";
 import { launch, type Browser, type ChromeReleaseChannel } from "puppeteer-core";
@@ -22,6 +23,7 @@ import {
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
 const SVG_EXTENSION = ".svg";
+const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
 const execFileAsync = promisify(execFile);
 
 export type SvgToPdfEngine = "puppeteer" | "rsvg-convert";
@@ -31,6 +33,11 @@ export interface SvgToPdfOptions {
   rsvgConvertPath: string;
   puppeteerBrowserChannel: ChromeReleaseChannel;
   puppeteerExecutablePath?: string;
+}
+
+export interface MermaidPuppeteerOptions {
+  browserChannel: string;
+  executablePath?: string;
 }
 
 export interface ConvertPngToPdfOptions {
@@ -53,6 +60,7 @@ export interface ConvertPngToPdfFilesOptions {
   signal?: AbortSignal;
   supportedExtensions?: readonly string[];
   svgToPdf?: SvgToPdfOptions;
+  mermaid?: MermaidPuppeteerOptions;
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -79,7 +87,9 @@ export async function convertPngToPdfFiles(
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
-      limit(() => stagePngConversion(job, index, runId, options.signal, options.svgToPdf)),
+      limit(() =>
+        stagePngConversion(job, index, runId, options.signal, options.svgToPdf, options.mermaid),
+      ),
     ),
   );
 
@@ -98,6 +108,7 @@ async function stagePngConversion(
   runId: string,
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
+  mermaid?: MermaidPuppeteerOptions,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -109,7 +120,14 @@ async function stagePngConversion(
     "result.pdf",
   );
 
-  await writeImageAsPdf(job.sourcePath, stagedOutputPath, job.workspacePath, signal, svgToPdf);
+  await writeImageAsPdf(
+    job.sourcePath,
+    stagedOutputPath,
+    job.workspacePath,
+    signal,
+    svgToPdf,
+    mermaid,
+  );
   signal?.throwIfAborted();
 
   return {
@@ -125,13 +143,72 @@ async function writeImageAsPdf(
   workspacePath: string,
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
+  mermaid?: MermaidPuppeteerOptions,
 ): Promise<void> {
-  if (path.extname(sourcePath).toLowerCase() === SVG_EXTENSION) {
+  const extension = path.extname(sourcePath).toLowerCase();
+
+  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
+    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
+    return;
+  }
+
+  if (extension === SVG_EXTENSION) {
     await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf);
     return;
   }
 
   await writeRasterImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+}
+
+async function writeMermaidAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+  mermaid?: MermaidPuppeteerOptions,
+): Promise<void> {
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  try {
+    await runMermaidCli(sourcePath, asPdfOutputPath(outputPath), {
+      outputFormat: "pdf",
+      puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
+      quiet: true,
+    });
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
+  }
+}
+
+function createMermaidPuppeteerConfig(
+  options: MermaidPuppeteerOptions = { browserChannel: "chrome" },
+): Record<string, unknown> {
+  if (options.executablePath) {
+    return {
+      executablePath: options.executablePath,
+      headless: true,
+    };
+  }
+
+  return {
+    channel: options.browserChannel,
+    headless: true,
+  };
+}
+
+function asPdfOutputPath(outputPath: string): `${string}.pdf` {
+  if (!outputPath.toLowerCase().endsWith(".pdf")) {
+    throw new Error(`Mermaid PDF output path must end with .pdf: ${outputPath}`);
+  }
+
+  return outputPath as `${string}.pdf`;
 }
 
 async function writeRasterImageAsPdf(
@@ -276,6 +353,18 @@ function puppeteerLaunchEnv(): NodeJS.ProcessEnv {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   return env;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 function svgPageHtml(svg: string, size: { width: number; height: number }): string {

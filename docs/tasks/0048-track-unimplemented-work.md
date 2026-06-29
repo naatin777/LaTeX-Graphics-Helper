@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -16,7 +16,7 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
 
 現時点では`latex-graphics-helper.convertToPdf`は実装済みだが、他の出力形式基準コマンドはまだ実装されていない。
 
-また、Mermaid変換は仕様検討中であり、実装はまだ行っていない。
+また、Mermaid変換は段階的に実装している。
 
 ## 現在実装済み
 
@@ -26,7 +26,15 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
   - WebP → PDF
   - AVIF → PDF
   - SVG → PDF
+  - Mermaid → PDF
+    - `.mmd`
+    - `.mermaid`
+- `latex-graphics-helper.convertToSvg`
+  - Mermaid → SVG
+    - `.mmd`
+    - `.mermaid`
 - 共有`変換`サブメニュー配下の`PDF`
+- 共有`変換`サブメニュー配下の`SVG`
 - SVG→PDFの変換方式設定
   - `puppeteer`
   - `rsvg-convert`
@@ -45,7 +53,6 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
 - `latex-graphics-helper.convertToJpeg`
 - `latex-graphics-helper.convertToWebp`
 - `latex-graphics-helper.convertToAvif`
-- `latex-graphics-helper.convertToSvg`
 
 ### 変換組み合わせ
 
@@ -58,20 +65,18 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
 
 ### Mermaid
 
-Mermaid変換は未実装。
+Mermaid → SVGは実装済み。
 
-- `.mmd` → SVG/PNG/JPEG/WebP/AVIF/PDF
-- `.mermaid` → SVG/PNG/JPEG/WebP/AVIF/PDF
-- `@mermaid-js/mermaid-cli` dependency追加
-- Mermaid用context menu条件
-- Mermaid用outputPath設定
-- Mermaid変換テスト
+以下はまだ未実装。
+
+- `.mmd` → PNG/JPEG/WebP/AVIF
+- `.mermaid` → PNG/JPEG/WebP/AVIF
 
 Mermaid専用の公開コマンドは作らない。出力形式基準コマンドへ入力形式として追加する。
 
-現時点では`convertToPdf`だけが実装済みなので、Mermaid → PDFは既存コマンド拡張で進められる。一方、Mermaid → SVG/PNG/JPEG/WebP/AVIFは、それぞれ`convertToSvg`、`convertToPng`、`convertToJpeg`、`convertToWebp`、`convertToAvif`の実装に依存する。
+Mermaid → PNG/JPEG/WebP/AVIFは、それぞれ`convertToPng`、`convertToJpeg`、`convertToWebp`、`convertToAvif`の実装に依存する。
 
-仕様は`docs/tasks/0047-design-mermaid-file-conversion.md`で検討中。
+仕様は`docs/tasks/0047-design-mermaid-file-conversion.md`で決定済み。
 
 ### ドキュメント・テスト管理
 

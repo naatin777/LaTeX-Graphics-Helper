@@ -6,6 +6,8 @@
   "config.convertToPdf.svg.engine": "SVGをPDFに変換するときに使用する変換方式",
   "config.convertToPdf.svg.puppeteer.browserChannel": "SVGをPDFに変換するときにpuppeteer-coreが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToPdf.svg.puppeteer.executablePath": "SVGをPDFに変換するときにpuppeteer-coreが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
+  "config.convertToPdf.mermaid.puppeteer.browserChannel": "MermaidファイルをPDFに変換するときにMermaid CLIが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
+  "config.convertToPdf.mermaid.puppeteer.executablePath": "MermaidファイルをPDFに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
   "config.convertToSvg.mermaid.puppeteer.browserChannel": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToSvg.mermaid.puppeteer.executablePath": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
 
@@ -52,6 +54,7 @@
   "config.outputPath.convertSvgToWebp": "SVGをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertSvgToAvif": "SVGをAVIFに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToSvg": "MermaidファイルをSVGに変換した後の出力ファイル名",
+  "config.outputPath.convertMermaidToPdf": "MermaidファイルをPDFに変換した後の出力ファイル名",
 
   "config.contextMenu.enabled": "コンテキストメニューを有効にする",
   "config.contextMenu.cropPdf.enabled": "PDFをクロップするコンテキストメニューを有効にする",
@@ -64,7 +67,7 @@
   "config.contextMenu.convertWebp.enabled": "WebPをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertAvif.enabled": "AVIFをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertSvg.enabled": "SVGをPDFや画像形式に変換するコンテキストメニューを有効にする",
-  "config.contextMenu.convertMermaid.enabled": "MermaidファイルをSVGに変換するコンテキストメニューを有効にする",
+  "config.contextMenu.convertMermaid.enabled": "Mermaidファイルを変換するコンテキストメニューを有効にする",
 
   "submenu.cropPdf": "PDFをクロップ",
   "command.cropPdf.auto": "自動クロップ",
