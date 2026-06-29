@@ -22,15 +22,24 @@ function isEditableDrawioImage(inputPath: DrawioPath): boolean {
     return /\.(drawio|dio)\.(png|svg)$/.test(fileName);
 }
 
+function getDrawioOutputBasePath(inputPath: DrawioPath): string {
+    if (isEditableDrawioImage(inputPath)) {
+        return inputPath.replace(/\.(drawio|dio)\.(png|svg)$/i, '');
+    }
+
+    const parsedPath = path.parse(inputPath);
+    return path.join(parsedPath.dir, parsedPath.name);
+}
+
 export async function convertDrawioToPdf(
     appConfig: AppConfig,
     inputPath: DrawioPath,
     outputTemplatePath: PdfTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PdfPath[]> {
-    const parsedPath = path.parse(inputPath);
+    const outputBasePath = getDrawioOutputBasePath(inputPath);
     const drawioInputPath = `${inputPath}.drawio` as DrawioPath;
-    const temporaryPdfPath = `${path.join(parsedPath.dir, parsedPath.name)}.pdf` as PdfPath;
+    const temporaryPdfPath = `${outputBasePath}.pdf` as PdfPath;
 
     if (isEditableDrawioImage(inputPath)) {
         await execFileInWorkspace(
