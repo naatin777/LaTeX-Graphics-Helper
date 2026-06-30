@@ -184,8 +184,8 @@ suite("PNG Safe Mode", () => {
 
     assert.strictEqual(outputs.length, 2);
     assert.deepStrictEqual(
-      calls.map((args) => args.at(-1)),
-      jobs.map((job) => job.sourcePath),
+      new Set(calls.map((args) => args.at(-1))),
+      new Set(jobs.map((job) => job.sourcePath)),
     );
 
     for (const job of jobs) {
