@@ -1,3 +1,17 @@
+autoInstallPeers: true
+
+engineStrict: true
+
+minimumReleaseAge: 1440
+
+nodeLinker: hoisted
+
+packageManagerStrict: true
+
+strictPeerDependencies: true
+
+verifyDepsBeforeRun: false
+
 allowBuilds:
   '@vscode/vsce-sign': true
   keytar: true
