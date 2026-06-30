@@ -601,7 +601,24 @@ async function createFakeDrawioCommand(
   if (process.platform === "win32") {
     await writeFile(
       commandPath,
-      `@echo off\r\n"${process.execPath}" "${scriptPath}" "${fixturePdfPath}" %*\r\n`,
+      [
+        "@echo off",
+        "setlocal",
+        'set "outputPath="',
+        ":parse",
+        'if "%~1"=="" goto copy',
+        'if "%~1"=="-o" (',
+        "  shift",
+        '  set "outputPath=%~1"',
+        ")",
+        "shift",
+        "goto parse",
+        ":copy",
+        'if "%outputPath%"=="" exit /b 1',
+        `copy /Y "${fixturePdfPath}" "%outputPath%" >nul`,
+        "exit /b %ERRORLEVEL%",
+        "",
+      ].join("\r\n"),
     );
   } else {
     await writeFile(
