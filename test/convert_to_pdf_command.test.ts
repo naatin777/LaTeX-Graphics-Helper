@@ -75,7 +75,7 @@ const imageVariants = [
   },
 ] as const;
 
-suite("convertToPdf command", () => {
+suite("PDFに変換コマンド", () => {
   let sandbox: sinon.SinonSandbox;
 
   setup(() => {
@@ -88,13 +88,13 @@ suite("convertToPdf command", () => {
     sandbox.restore();
   });
 
-  test("command is registered", async () => {
+  test("コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes(CONVERT_TO_PDF_COMMAND));
   });
 
-  test("converts a PNG to a one-page PDF with the image pixel size as page points", async () => {
+  test("PNGを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -110,15 +110,15 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("converts JPEG and WebP files to one-page PDFs with image pixel sizes as page points", async () => {
+  test("JPEGとWebPを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
     await assertImageVariantsConvertToPdf(jpegAndWebpVariants);
   });
 
-  test("converts an AVIF file to a one-page PDF with the image pixel size as page points", async () => {
+  test("AVIFを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
     await assertImageVariantsConvertToPdf([avifVariant]);
   });
 
-  test("converts an SVG to a one-page PDF with the SVG width and height as page points", async () => {
+  test("SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -138,15 +138,15 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("converts an .mmd file to a readable PDF", async () => {
+  test(".mmdファイルを読み取り可能なPDFへ変換する", async () => {
     await assertMermaidFileConvertsToPdf("source.mmd");
   });
 
-  test("converts a .mermaid file to a readable PDF", async () => {
+  test(".mermaidファイルを読み取り可能なPDFへ変換する", async () => {
     await assertMermaidFileConvertsToPdf("source.mermaid");
   });
 
-  test("converts files with uppercase extensions", async () => {
+  test("大文字拡張子のファイルを変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -166,7 +166,7 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("uses the editable Draw.io image base path for output templates", () => {
+  test("編集可能なDraw.io画像では出力テンプレートにベースパスを使う", () => {
     assert.strictEqual(
       templateSourcePathForSource(path.join("workspace", "source.drawio.png")),
       path.join("workspace", "source"),
@@ -177,7 +177,7 @@ suite("convertToPdf command", () => {
     );
   });
 
-  test("converts PNG and SVG files as one batch", async () => {
+  test("PNGとSVGを1つのバッチとして変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -204,7 +204,7 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("converts multiple PNG files as one batch", async () => {
+  test("複数PNGを1つのバッチとして変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -232,7 +232,7 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("does not convert any file when an unsupported input is included", async () => {
+  test("非対応入力が含まれる場合はどのファイルも変換しない", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -252,7 +252,7 @@ suite("convertToPdf command", () => {
     }
   });
 
-  test("does not convert a PDF to PDF", async () => {
+  test("PDFからPDFへは変換しない", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {

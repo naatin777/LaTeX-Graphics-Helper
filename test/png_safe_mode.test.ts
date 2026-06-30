@@ -42,8 +42,8 @@ const editableDrawioImageExtensions = [
   ".dio.svg",
 ] as const;
 
-suite("PNG Safe Mode", () => {
-  test("stages every conversion before reflecting all outputs", async () => {
+suite("PNG変換のSafe Mode", () => {
+  test("すべての変換を作業領域に作成してから出力へ反映する", async () => {
     const { workspacePath, jobs } = await createJobs(["first", "second"]);
 
     const outputs = await convertPngToPdfFiles({
@@ -70,7 +70,7 @@ suite("PNG Safe Mode", () => {
     await assert.doesNotReject(access(path.join(stagedRoot, "2", "result.pdf")));
   });
 
-  test("uses one conflict decision for the whole batch and keeps both files", async () => {
+  test("バッチ全体で1回だけ競合判断を行い、両方残す", async () => {
     const { workspacePath, jobs } = await createJobs(["first", "second"]);
     await writeFile(jobs[0]!.outputPath, "old-first");
     await writeFile(jobs[1]!.outputPath, "old-second");
@@ -95,7 +95,7 @@ suite("PNG Safe Mode", () => {
     assert.strictEqual(await readFile(jobs[1]!.outputPath, "utf8"), "old-second");
   });
 
-  test("does not reflect any output when overwrite is declined", async () => {
+  test("上書きしない判断の場合はどの出力も反映しない", async () => {
     const { jobs } = await createJobs(["first", "second"]);
     await writeFile(jobs[0]!.outputPath, "old-first");
 
@@ -111,7 +111,7 @@ suite("PNG Safe Mode", () => {
     await assert.rejects(access(jobs[1]!.outputPath));
   });
 
-  test("does not reflect earlier jobs when a later PNG conversion fails", async () => {
+  test("後続のPNG変換が失敗した場合は先行ジョブの出力も反映しない", async () => {
     const { workspacePath, jobs } = await createJobs(["first", "second"]);
     const invalidSourcePath = path.join(workspacePath, "invalid.png");
     await writeFile(invalidSourcePath, "not a PNG");
@@ -130,7 +130,7 @@ suite("PNG Safe Mode", () => {
     await Promise.all(jobs.map((job) => assert.rejects(access(job.outputPath))));
   });
 
-  test("backs up overwritten files and restores them through the undo operation", async () => {
+  test("上書きファイルをバックアップし、undo操作で復元する", async () => {
     const { jobs } = await createJobs(["first", "second"]);
     await writeFile(jobs[0]!.outputPath, "old-first");
     await writeFile(jobs[1]!.outputPath, "old-second");
@@ -148,7 +148,7 @@ suite("PNG Safe Mode", () => {
     assert.strictEqual(await readFile(jobs[1]!.outputPath, "utf8"), "old-second");
   });
 
-  test("does not reflect output when already cancelled", async () => {
+  test("既にキャンセル済みの場合は出力へ反映しない", async () => {
     const { jobs } = await createJobs(["first", "second"]);
     const abortController = new AbortController();
     abortController.abort();
@@ -165,7 +165,7 @@ suite("PNG Safe Mode", () => {
     await Promise.all(jobs.map((job) => assert.rejects(access(job.outputPath))));
   });
 
-  test("converts editable Draw.io PNG and SVG files through the injected Draw.io runner", async () => {
+  test("編集可能なDraw.io PNG/SVGを注入したDraw.io runnerで変換する", async () => {
     const { jobs } = await createEditableDrawioJobs([
       ["source.drawio.png", "source.pdf"],
       ["diagram.dio.svg", "diagram.pdf"],
@@ -194,7 +194,7 @@ suite("PNG Safe Mode", () => {
     }
   });
 
-  test("keeps both files for editable Draw.io image output conflicts", async () => {
+  test("編集可能なDraw.io画像の出力競合では両方残す", async () => {
     const { jobs, workspacePath } = await createEditableDrawioJobs([
       ["source.drawio.png", "source.pdf"],
     ]);
@@ -221,7 +221,7 @@ suite("PNG Safe Mode", () => {
     assert.strictEqual(pdf.getPageCount(), 1);
   });
 
-  test("backs up overwritten editable Draw.io image output and restores it through undo", async () => {
+  test("編集可能なDraw.io画像の上書き出力をバックアップしundoで復元する", async () => {
     const { jobs } = await createEditableDrawioJobs([["source.drawio.png", "source.pdf"]]);
     await writeFile(jobs[0]!.outputPath, "old output");
 

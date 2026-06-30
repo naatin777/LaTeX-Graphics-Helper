@@ -25,8 +25,8 @@ import {
   type RunGhostscript,
 } from "../src/operations/crop_pdf_auto.js";
 
-suite("cropPdfFiles", () => {
-  test("uses Ghostscript only once for bbox and crops all pages with pdf-lib", async () => {
+suite("PDF自動crop処理", () => {
+  test("bbox取得にGhostscriptを1回だけ使い、全ページをpdf-libでcropする", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "output", "source-crop.pdf");
@@ -106,7 +106,7 @@ suite("cropPdfFiles", () => {
     await assert.rejects(access(path.join(workDirectory, "pages"), constants.F_OK));
   });
 
-  test("keeps the original MediaBox for a blank page", async () => {
+  test("空白ページでは元のMediaBoxを維持する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "blank.pdf");
     const outputPath = path.join(workspacePath, "blank-crop.pdf");
@@ -133,7 +133,7 @@ suite("cropPdfFiles", () => {
     });
   });
 
-  test("limits concurrent PDF conversions with p-limit", async () => {
+  test("p-limitでPDF変換の同時実行数を制限する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const jobs = await Promise.all(
       ["first", "second", "third", "fourth"].map(async (name) => {
@@ -172,7 +172,7 @@ suite("cropPdfFiles", () => {
     assert.strictEqual(maximumActive, 2);
   });
 
-  test("does not overwrite an existing output", async () => {
+  test("既存の出力を上書きしない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -194,7 +194,7 @@ suite("cropPdfFiles", () => {
     assert.strictEqual(await readFile(outputPath, "utf8"), "existing");
   });
 
-  test("rejects an input file outside its declared workspace before running Ghostscript", async () => {
+  test("Ghostscript実行前に宣言workspace外の入力ファイルを拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsideDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-outside-"));
     const sourcePath = path.join(outsideDirectory, "source.pdf");
@@ -219,7 +219,7 @@ suite("cropPdfFiles", () => {
     assert.strictEqual(ghostscriptCalled, false);
   });
 
-  test("rejects an output path outside the workspace before running Ghostscript", async () => {
+  test("Ghostscript実行前にworkspace外の出力パスを拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsideDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-outside-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
@@ -244,7 +244,7 @@ suite("cropPdfFiles", () => {
     assert.strictEqual(ghostscriptCalled, false);
   });
 
-  test("does not start Ghostscript when already cancelled", async () => {
+  test("既にキャンセル済みの場合はGhostscriptを開始しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -272,7 +272,7 @@ suite("cropPdfFiles", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("passes cancellation to a running Ghostscript operation", async () => {
+  test("実行中のGhostscript処理へキャンセルを伝える", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -303,7 +303,7 @@ suite("cropPdfFiles", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("does not start queued conversions after cancellation", async () => {
+  test("キャンセル後はqueue内の変換を開始しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const abortController = new AbortController();
     const jobs = await Promise.all(
@@ -350,7 +350,7 @@ suite("cropPdfFiles", () => {
     }
   });
 
-  test("throws an error when Ghostscript executable is not found", async () => {
+  test("Ghostscript実行ファイルが見つからない場合はエラーにする", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -375,7 +375,7 @@ suite("cropPdfFiles", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("throws an error when Ghostscript execution fails", async () => {
+  test("Ghostscript実行が失敗した場合はエラーにする", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -398,7 +398,7 @@ suite("cropPdfFiles", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("logs Ghostscript execution failure to output channel", async () => {
+  test("Ghostscript実行失敗をOutput channelへ記録する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source-crop.pdf");
@@ -434,8 +434,8 @@ suite("cropPdfFiles", () => {
   });
 });
 
-suite("parseBoundingBoxes", () => {
-  test("parses Ghostscript HiResBoundingBox output", () => {
+suite("BoundingBoxのparse処理", () => {
+  test("GhostscriptのHiResBoundingBox出力をparseする", () => {
     assert.deepStrictEqual(parseBoundingBoxes("%%HiResBoundingBox: -1.5 2 30.25 40\n"), [
       { left: -1.5, bottom: 2, right: 30.25, top: 40 },
     ]);

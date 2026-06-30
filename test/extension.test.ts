@@ -10,14 +10,14 @@ import * as vscode from "vscode";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-suite("Extension Test Suite", () => {
-  test("extension is registered", () => {
+suite("拡張機能の基本動作", () => {
+  test("拡張機能が登録されている", () => {
     const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
 
     assert.ok(extension);
   });
 
-  test("extension activates", async () => {
+  test("拡張機能をactivateできる", async () => {
     const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
 
     assert.ok(extension);
@@ -27,25 +27,25 @@ suite("Extension Test Suite", () => {
     assert.strictEqual(extension.isActive, true);
   });
 
-  test("auto crop command is registered", async () => {
+  test("自動cropコマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes("latex-graphics-helper.cropPdf.auto"));
   });
 
-  test("split all pages command is registered", async () => {
+  test("全ページ分割コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes("latex-graphics-helper.splitPdf.allPages"));
   });
 
-  test("convert PNG to PDF command is registered", async () => {
+  test("PNGからPDFへの変換コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes("latex-graphics-helper.convertPngToPdf"));
   });
 
-  test("convert PNG to PDF command executes and converts file", async () => {
+  test("PNGからPDFへの変換コマンドを実行してファイル変換できる", async () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder);
 

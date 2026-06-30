@@ -22,8 +22,8 @@ import {
   assertWritablePathInWorkspace,
 } from "../src/security/workspace_path.js";
 
-suite("workspace path security", () => {
-  test("allows an existing file inside the workspace", async () => {
+suite("workspaceパスの安全性", () => {
+  test("workspace内の既存ファイルを許可する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const sourcePath = path.join(workspacePath, "figures", "sample.pdf");
     await mkdir(path.dirname(sourcePath), { recursive: true });
@@ -32,14 +32,14 @@ suite("workspace path security", () => {
     await assert.doesNotReject(assertExistingPathInWorkspace(sourcePath, workspacePath));
   });
 
-  test("allows a not-yet-created write path inside the workspace", async () => {
+  test("workspace内の未作成書き込み先を許可する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outputPath = path.join(workspacePath, "generated", "nested", "sample.pdf");
 
     await assert.doesNotReject(assertWritablePathInWorkspace(outputPath, workspacePath));
   });
 
-  test("rejects an existing file outside the workspace", async () => {
+  test("workspace外の既存ファイルを拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsidePath = path.join(
       await mkdtemp(path.join(os.tmpdir(), "lgh-outside-")),
@@ -53,7 +53,7 @@ suite("workspace path security", () => {
     );
   });
 
-  test("rejects a not-yet-created write path outside the workspace", async () => {
+  test("workspace外の未作成書き込み先を拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsidePath = path.join(
       await mkdtemp(path.join(os.tmpdir(), "lgh-outside-")),
@@ -67,7 +67,7 @@ suite("workspace path security", () => {
     );
   });
 
-  test("rejects a sibling directory that only shares the workspace prefix", async () => {
+  test("workspace名のprefixだけが一致する兄弟ディレクトリを拒否する", async () => {
     const parentPath = await mkdtemp(path.join(os.tmpdir(), "lgh-prefix-"));
     const workspacePath = path.join(parentPath, "project");
     const siblingPath = path.join(parentPath, "project-backup", "sample.pdf");
@@ -81,7 +81,7 @@ suite("workspace path security", () => {
     );
   });
 
-  test("rejects reading through a symlink to outside the workspace", async () => {
+  test("workspace外へのsymlinkを経由した読み込みを拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsideDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-outside-"));
     const outsideFile = path.join(outsideDirectory, "sample.pdf");
@@ -95,7 +95,7 @@ suite("workspace path security", () => {
     );
   });
 
-  test("rejects writing through a symlink to outside the workspace", async () => {
+  test("workspace外へのsymlinkを経由した書き込みを拒否する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const outsideDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-outside-"));
     const linkedDirectory = path.join(workspacePath, "linked");
@@ -107,7 +107,7 @@ suite("workspace path security", () => {
     );
   });
 
-  test("allows paths inside a workspace that is itself a symlink", async () => {
+  test("workspace自体がsymlinkの場合でもworkspace内のパスを許可する", async () => {
     const actualWorkspace = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-"));
     const symlinkParent = await mkdtemp(path.join(os.tmpdir(), "lgh-workspace-link-"));
     const workspacePath = path.join(symlinkParent, "project");

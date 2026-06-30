@@ -26,8 +26,8 @@ interface PackageJson {
   };
 }
 
-suite("package manifest conversion menu", () => {
-  test("keeps convertToPdf public and hides legacy PDF conversion commands from public commands", async () => {
+suite("package.jsonの変換メニュー定義", () => {
+  test("PDFに変換コマンドだけを公開し、旧PDF変換コマンドは公開しない", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
 
@@ -38,7 +38,7 @@ suite("package manifest conversion menu", () => {
     }
   });
 
-  test("shows convertToPdf under a shared Convert submenu in Explorer context menu", async () => {
+  test("Explorerの変換サブメニューにPDFに変換コマンドを表示する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
@@ -77,7 +77,7 @@ suite("package manifest conversion menu", () => {
     }
   });
 
-  test("matches convertToPdf context menu inputs case-insensitively", async () => {
+  test("convertToPdfのcontext menu入力を大文字小文字非依存で判定する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
@@ -93,7 +93,7 @@ suite("package manifest conversion menu", () => {
     }
   });
 
-  test("shows convertToSvg for Mermaid files under the shared Convert submenu", async () => {
+  test("Mermaidファイルでは変換サブメニューにSVGに変換コマンドを表示する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
@@ -112,7 +112,7 @@ suite("package manifest conversion menu", () => {
     assert.ok(convertToSvg.when?.includes("mermaid"));
   });
 
-  test("uses output-format labels for the Japanese Convert menu", async () => {
+  test("日本語の変換メニューには出力形式のラベルを使う", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
     const convertToPdf = packageJson.contributes.commands.find(

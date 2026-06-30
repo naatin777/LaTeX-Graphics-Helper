@@ -26,7 +26,7 @@ import * as vscode from "vscode";
 
 import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from "../src/commands/safe_mode.js";
 
-suite("Safe Mode status bar", () => {
+suite("Safe Modeステータスバー", () => {
   let sandbox: sinon.SinonSandbox;
   let storage: MemoryState;
   let statusBarItem: FakeStatusBarItem;
@@ -56,7 +56,7 @@ suite("Safe Mode status bar", () => {
     sandbox.restore();
   });
 
-  test("creates and shows a Safe Mode ON status bar item by default", () => {
+  test("初期状態ではSafe Mode ONのステータスバー項目を作成して表示する", () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
     assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: ON");
@@ -65,7 +65,7 @@ suite("Safe Mode status bar", () => {
     assert.strictEqual(statusBarItem.showCallCount, 1);
   });
 
-  test("updates status bar text and persisted state when toggle command runs", async () => {
+  test("切り替えコマンド実行時に表示文言と永続化状態を更新する", async () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
     await registeredCommand?.();
@@ -79,7 +79,7 @@ suite("Safe Mode status bar", () => {
     assert.strictEqual(storage.get("safeMode.enabled"), true);
   });
 
-  test("restores Safe Mode OFF status from global state on initialization", async () => {
+  test("初期化時にglobalStateからSafe Mode OFF状態を復元する", async () => {
     await storage.update("safeMode.enabled", false);
 
     initializeSafeMode(createExtensionContext(storage, subscriptions));
@@ -87,7 +87,7 @@ suite("Safe Mode status bar", () => {
     assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: OFF");
   });
 
-  test("registers the status bar item and command disposable in subscriptions", () => {
+  test("ステータスバー項目とコマンドのdisposableをsubscriptionsに登録する", () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
     assert.strictEqual(subscriptions.length, 2);

@@ -24,7 +24,7 @@ import * as vscode from "vscode";
 
 import { initializeSafeMode, resolveOutputConflicts } from "../src/commands/safe_mode.js";
 
-suite("Safe Mode dialog decision", () => {
+suite("Safe Modeダイアログの判断", () => {
   let sandbox: sinon.SinonSandbox;
   let storage: MemoryState;
   let showWarningMessageStub: sinon.SinonStub;
@@ -46,31 +46,31 @@ suite("Safe Mode dialog decision", () => {
     sandbox.restore();
   });
 
-  test("returns keep-both when Keep Both is selected", async () => {
+  test("Keep Bothを選択した場合はkeep-bothを返す", async () => {
     showWarningMessageStub.resolves({ title: "Keep Both" });
 
     assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "keep-both");
   });
 
-  test("returns cancel when Do Not Overwrite is selected", async () => {
+  test("Do Not Overwriteを選択した場合はcancelを返す", async () => {
     showWarningMessageStub.resolves({ title: "Do Not Overwrite" });
 
     assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "cancel");
   });
 
-  test("returns overwrite when Overwrite is selected", async () => {
+  test("Overwriteを選択した場合はoverwriteを返す", async () => {
     showWarningMessageStub.resolves({ title: "Overwrite" });
 
     assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "overwrite");
   });
 
-  test("returns cancel when the dialog is closed", async () => {
+  test("ダイアログを閉じた場合はcancelを返す", async () => {
     showWarningMessageStub.resolves(undefined);
 
     assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "cancel");
   });
 
-  test("marks Do Not Overwrite as the close affordance and does not pass a standalone Cancel item", async () => {
+  test("Do Not Overwriteを閉じる操作として扱い、単独のCancel項目は渡さない", async () => {
     showWarningMessageStub.resolves({ title: "Do Not Overwrite" });
 
     await resolveOutputConflicts(["/workspace/sample.pdf"]);
@@ -90,7 +90,7 @@ suite("Safe Mode dialog decision", () => {
     );
   });
 
-  test("returns overwrite without showing a dialog when Safe Mode is disabled", async () => {
+  test("Safe Modeが無効な場合はダイアログを出さずoverwriteを返す", async () => {
     await storage.update("safeMode.enabled", false);
     initializeSafeMode(createExtensionContext(storage));
 
@@ -98,7 +98,7 @@ suite("Safe Mode dialog decision", () => {
     assert.strictEqual(showWarningMessageStub.callCount, 0);
   });
 
-  test("shows one dialog for multiple conflicts and includes the conflict count", async () => {
+  test("複数競合でもダイアログは1回だけ表示し、競合数を含める", async () => {
     showWarningMessageStub.resolves({ title: "Overwrite" });
 
     assert.strictEqual(
