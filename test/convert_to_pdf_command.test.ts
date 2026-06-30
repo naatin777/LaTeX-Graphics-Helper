@@ -26,7 +26,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,6 +36,7 @@ import sinon from "sinon";
 import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+import { templateSourcePathForSource } from "../src/commands/convert_png_to_pdf.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
@@ -143,6 +144,37 @@ suite("convertToPdf command", () => {
 
   test("converts a .mermaid file to a readable PDF", async () => {
     await assertMermaidFileConvertsToPdf("source.mermaid");
+  });
+
+  test("converts files with uppercase extensions", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const pngPath = path.join(temporaryDirectory, "raster.PNG");
+
+      await copyFile(fixturePngPath, pngPath);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(pngPath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, "raster.pdf"), pngPath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("uses the editable Draw.io image base path for output templates", () => {
+    assert.strictEqual(
+      templateSourcePathForSource(path.join("workspace", "source.drawio.png")),
+      path.join("workspace", "source"),
+    );
+    assert.strictEqual(
+      templateSourcePathForSource(path.join("workspace", "diagram.DIO.SVG")),
+      path.join("workspace", "diagram"),
+    );
   });
 
   test("converts PNG and SVG files as one batch", async () => {
@@ -370,7 +402,7 @@ function assertApproximatelyEqual(actual: number, expected: number, tolerance: n
 }
 
 async function assertFileDoesNotExist(filePath: string): Promise<void> {
-  await assert.rejects(readFile(filePath), (error) => {
+  await assert.rejects(access(filePath), (error) => {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
   });
 }

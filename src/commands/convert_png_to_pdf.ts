@@ -6,6 +6,7 @@ import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
+  type DrawioToPdfOptions,
   type MermaidPuppeteerOptions,
   type SvgToPdfEngine,
   type SvgToPdfOptions,
@@ -20,6 +21,12 @@ const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const UNDO_ACTION = "Undo";
 const PNG_EXTENSIONS = [".png"] as const;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
+const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
+] as const;
 const PDF_IMAGE_EXTENSIONS = [
   ".png",
   ".jpg",
@@ -28,6 +35,7 @@ const PDF_IMAGE_EXTENSIONS = [
   ".avif",
   ".svg",
   ...MERMAID_EXTENSIONS,
+  ...EDITABLE_DRAWIO_IMAGE_EXTENSIONS,
 ] as const;
 
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
@@ -75,8 +83,13 @@ async function convertSelectedPngFilesToPdf(
     );
     const svgToPdf = readSvgToPdfOptions(configuration);
     const mermaid = readMermaidPuppeteerOptions(configuration);
+    const drawio = readDrawioToPdfOptions(configuration);
     const jobs = sourceUris.map((sourceUri) =>
-      createJob(sourceUri, outputTemplateForSource(sourceUri, configuration, outputTemplate)),
+      createJob(
+        sourceUri,
+        outputTemplateForSource(sourceUri, configuration, outputTemplate),
+        templateSourcePathForSource(sourceUri.fsPath),
+      ),
     );
     const outputs = await vscode.window.withProgress(
       {
@@ -103,6 +116,7 @@ async function convertSelectedPngFilesToPdf(
             supportedExtensions: messages.supportedExtensions,
             svgToPdf,
             mermaid,
+            drawio,
           });
         } finally {
           cancellationSubscription.dispose();
@@ -142,7 +156,12 @@ function outputTemplateForSource(
   configuration: vscode.WorkspaceConfiguration,
   pngOutputTemplate: string,
 ): string {
-  const extension = path.extname(sourceUri.fsPath).toLowerCase();
+  const sourcePath = sourceUri.fsPath;
+  const extension = path.extname(sourcePath).toLowerCase();
+
+  if (isEditableDrawioImagePath(sourcePath)) {
+    return configuration.get<string>("outputPath.convertDrawioToPdf", DEFAULT_OUTPUT_PATH);
+  }
 
   switch (extension) {
     case ".png": {
@@ -169,6 +188,14 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
+}
+
+export function templateSourcePathForSource(sourcePath: string): string {
+  if (!isEditableDrawioImagePath(sourcePath)) {
+    return sourcePath;
+  }
+
+  return sourcePath.replace(/\.(drawio|dio)\.(png|svg)$/i, "");
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
@@ -203,6 +230,18 @@ function readMermaidPuppeteerOptions(
   };
 }
 
+function readDrawioToPdfOptions(configuration: vscode.WorkspaceConfiguration): DrawioToPdfOptions {
+  const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
+
+  return {
+    drawioPath: configuredPath || defaultDrawioPath(),
+  };
+}
+
+function defaultDrawioPath(): string {
+  return process.platform === "win32" ? "drawio.exe" : "drawio";
+}
+
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
   const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
@@ -210,7 +249,11 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   return [...uniqueUris.values()];
 }
 
-function createJob(sourceUri: vscode.Uri, outputTemplate: string): ConvertPngToPdfJob {
+function createJob(
+  sourceUri: vscode.Uri,
+  outputTemplate: string,
+  templateSourcePath: string,
+): ConvertPngToPdfJob {
   if (sourceUri.scheme !== "file") {
     throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
   }
@@ -225,11 +268,16 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): ConvertPngToP
     sourcePath: sourceUri.fsPath,
     workspacePath: workspace.uri.fsPath,
     outputPath: resolveOutputPath(outputTemplate, {
-      sourcePath: sourceUri.fsPath,
+      sourcePath: templateSourcePath,
       workspacePath: workspace.uri.fsPath,
       workspaceName: workspace.name,
     }),
   };
+}
+
+function isEditableDrawioImagePath(sourcePath: string): boolean {
+  const lowerSourcePath = sourcePath.toLowerCase();
+  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function isAbortError(error: unknown): boolean {

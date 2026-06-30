@@ -50,6 +50,20 @@ suite("package manifest conversion menu", () => {
     assert.ok(convertToPdf);
     assert.ok(convertToPdf.when?.includes("mmd"));
     assert.ok(convertToPdf.when?.includes("mermaid"));
+    assert.ok(convertToPdf.when?.includes("drawio"));
+    assert.ok(convertToPdf.when?.includes("dio"));
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("resourceFilename") &&
+          entry.when.includes("drawio") &&
+          entry.when.includes("dio") &&
+          entry.when.includes("png") &&
+          entry.when.includes("svg"),
+      ),
+    );
 
     const menuCommandIds = new Set(
       Object.entries(packageJson.contributes.menus)
@@ -60,6 +74,22 @@ suite("package manifest conversion menu", () => {
 
     for (const legacyCommand of LEGACY_TO_PDF_COMMANDS) {
       assert.ok(!menuCommandIds.has(legacyCommand), `${legacyCommand} should not be in menus`);
+    }
+  });
+
+  test("matches convertToPdf context menu inputs case-insensitively", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertSubmenu = explorerContext.find((entry) => entry.submenu === CONVERT_SUBMENU);
+    const convertToPdf = convertMenu.find((entry) => entry.command === CONVERT_TO_PDF_COMMAND);
+
+    assert.ok(convertSubmenu?.when);
+    assert.ok(convertToPdf?.when);
+
+    for (const whenClause of [convertSubmenu.when, convertToPdf.when]) {
+      assert.match(whenClause, /resourceExtname =~ \/.+\/i/);
+      assert.match(whenClause, /resourceFilename =~ \/.+\/i/);
     }
   });
 

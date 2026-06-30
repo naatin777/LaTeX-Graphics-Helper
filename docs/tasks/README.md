@@ -70,5 +70,12 @@
 - [0050: MermaidをSVGに変換する](0050-implement-convert-to-svg-mermaid.md)
 - [0051: MermaidをPDFに変換する失敗テストを追加する](0051-add-convert-to-pdf-mermaid-tests.md)
 - [0052: MermaidをPDFに変換する](0052-implement-convert-to-pdf-mermaid.md)
+- [0053: editable Draw.io画像をPDF変換対象にする失敗テストを追加する](0053-add-editable-drawio-image-to-pdf-tests.md)
+- [0054: editable Draw.io画像をPDF変換対象にする](0054-implement-editable-drawio-image-to-pdf.md)
+- [0055: editable Draw.io画像のSafe Mode・Undo・cancelテストを追加する](0055-add-editable-drawio-image-flow-tests.md)
+- [0056: 大文字拡張子の扱いを全体確認する](0056-audit-uppercase-extension-handling.md)
+- [0058: 変換context menuの拡張子判定を大文字小文字非依存にする](0058-make-convert-context-menu-extension-matching-case-insensitive.md)
 
 ## Todo Tasks
+
+- [0057: テスト名を日本語で分かりやすく整理する](0057-make-test-names-easier-to-read-in-japanese.md)
