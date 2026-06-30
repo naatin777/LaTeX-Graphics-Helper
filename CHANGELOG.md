@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.1
+
+- Fix pdfcrop path handling on Windows
+
 ## 0.5.0
 
 - Support editable Draw.io PNG and SVG files
