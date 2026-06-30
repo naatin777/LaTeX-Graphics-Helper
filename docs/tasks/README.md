@@ -79,5 +79,6 @@
 - [0059: テスト名を全体的に日本語化する](0059-localize-test-names-broadly.md)
 - [0060: pnpm実行時にnode_modulesが再作成される問題を調査する](0060-investigate-pnpm-node-modules-recreation.md)
 - [0061: pnpm 11向けに設定置き場とdeps status checkを整理する](0061-align-pnpm-config-for-v11-deps-status.md)
+- [0062: 変換機能ドキュメントを現在の実装に合わせる](0062-update-conversion-docs.md)
 
 ## Todo Tasks
