@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.0
+
+- Support editable Draw.io PNG and SVG files
+
 ## 0.4.0
 
 - Delete AI function
