@@ -1,4 +1,6 @@
 import * as assert from 'node:assert';
+import { readFile } from 'node:fs/promises';
+import * as path from 'node:path';
 
 import { restore, stub } from 'sinon';
 import * as vscode from 'vscode';
@@ -58,6 +60,37 @@ suite('VS Code command e2e Test Suite', () => {
                 `Expected command to be registered: ${commandId}`,
             );
         }
+    });
+
+    test('should show Draw.io PDF conversion for editable PNG and SVG files', async () => {
+        const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
+        assert.ok(extension);
+
+        const packageJson = JSON.parse(
+            await readFile(path.join(extension.extensionPath, 'package.json'), 'utf8'),
+        );
+        const explorerContext = packageJson.contributes.menus['explorer/context'];
+        const explorerEntry = explorerContext.find(
+            (entry: { command?: string }) =>
+                entry.command === 'latex-graphics-helper.convertDrawioToPdf',
+        );
+
+        assert.ok(explorerEntry.when.includes('resourceExtname == .drawio'));
+        assert.ok(explorerEntry.when.includes('resourceExtname == .dio'));
+        assert.ok(explorerEntry.when.includes('resourceFilename =~'));
+        assert.ok(explorerEntry.when.includes('(png|svg)'));
+
+        const pngToPdfEntry = explorerContext.find(
+            (entry: { command?: string }) =>
+                entry.command === 'latex-graphics-helper.convertPngToPdf',
+        );
+        const svgToPdfEntry = explorerContext.find(
+            (entry: { command?: string }) =>
+                entry.command === 'latex-graphics-helper.convertSvgToPdf',
+        );
+
+        assert.ok(pngToPdfEntry.when.includes('!(resourceFilename =~'));
+        assert.ok(svgToPdfEntry.when.includes('!(resourceFilename =~'));
     });
 
     test('should show an error when commands are invoked without selected files', async () => {
