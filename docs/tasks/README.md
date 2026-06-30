@@ -71,6 +71,7 @@
 - [0051: MermaidをPDFに変換する失敗テストを追加する](0051-add-convert-to-pdf-mermaid-tests.md)
 - [0052: MermaidをPDFに変換する](0052-implement-convert-to-pdf-mermaid.md)
 - [0053: editable Draw.io画像をPDF変換対象にする失敗テストを追加する](0053-add-editable-drawio-image-to-pdf-tests.md)
+- [0055: editable Draw.io画像のSafe Mode・Undo・cancelテストを追加する](0055-add-editable-drawio-image-flow-tests.md)
 
 ## Todo Tasks
 

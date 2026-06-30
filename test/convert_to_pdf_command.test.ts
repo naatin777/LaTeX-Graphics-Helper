@@ -26,7 +26,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -178,6 +178,158 @@ suite("convertToPdf command", () => {
 
       await assertReadablePdfWithAtLeastOnePage(drawioPngOutputPath);
       await assertReadablePdfWithAtLeastOnePage(dioSvgOutputPath);
+    } finally {
+      await configuration.update(
+        "execPath.drawio",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("keeps both files for editable Draw.io image output conflicts in Safe Mode", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+    const showWarningMessage = sandbox
+      .stub(vscode.window, "showWarningMessage")
+      .resolves({ title: "Keep Both" });
+
+    try {
+      const fixturePdfPath = path.join(temporaryDirectory, "fixture.pdf");
+      const sourcePath = path.join(temporaryDirectory, "source.drawio.png");
+      const originalOutputPath = path.join(temporaryDirectory, "source.pdf");
+      const keptOutputPath = path.join(temporaryDirectory, "source-1.pdf");
+      const fakeDrawioPath = await createFakeDrawioCommand(temporaryDirectory, fixturePdfPath);
+
+      await writeOnePagePdf(fixturePdfPath);
+      await writeFile(sourcePath, "editable drawio png");
+      await writeFile(originalOutputPath, "old output");
+      await configuration.update(
+        "execPath.drawio",
+        fakeDrawioPath,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        "${fileDirname}/${fileBasenameNoExtension}.pdf",
+        vscode.ConfigurationTarget.Workspace,
+      );
+
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+
+      assert.ok(showWarningMessage.calledOnce);
+      assert.strictEqual(await readFile(originalOutputPath, "utf8"), "old output");
+      await assertReadablePdfWithAtLeastOnePage(keptOutputPath);
+    } finally {
+      await configuration.update(
+        "execPath.drawio",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("undo restores overwritten output after editable Draw.io image conversion", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+    (vscode.window.showInformationMessage as sinon.SinonStub).resolves("Undo");
+    sandbox.stub(vscode.window, "showWarningMessage").resolves({ title: "Overwrite" });
+
+    try {
+      const fixturePdfPath = path.join(temporaryDirectory, "fixture.pdf");
+      const sourcePath = path.join(temporaryDirectory, "source.drawio.png");
+      const outputPath = path.join(temporaryDirectory, "source.pdf");
+      const fakeDrawioPath = await createFakeDrawioCommand(temporaryDirectory, fixturePdfPath);
+
+      await writeOnePagePdf(fixturePdfPath);
+      await writeFile(sourcePath, "editable drawio png");
+      await writeFile(outputPath, "old output");
+      await configuration.update(
+        "execPath.drawio",
+        fakeDrawioPath,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        "${fileDirname}/${fileBasenameNoExtension}.pdf",
+        vscode.ConfigurationTarget.Workspace,
+      );
+
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+
+      assert.strictEqual(await readFile(outputPath, "utf8"), "old output");
+      assert.ok(
+        (vscode.window.showInformationMessage as sinon.SinonStub)
+          .getCalls()
+          .some((call) => String(call.args[0]).includes("Converted 1 file(s) to PDF.")),
+      );
+    } finally {
+      await configuration.update(
+        "execPath.drawio",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("does not reflect editable Draw.io image output when already cancelled", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+    sandbox.stub(vscode.window, "withProgress").callsFake(async (_options, task) => {
+      return await task(
+        { report: () => {} },
+        {
+          isCancellationRequested: true,
+          onCancellationRequested: () => ({ dispose: () => {} }),
+        },
+      );
+    });
+
+    try {
+      const fixturePdfPath = path.join(temporaryDirectory, "fixture.pdf");
+      const sourcePath = path.join(temporaryDirectory, "source.drawio.png");
+      const outputPath = path.join(temporaryDirectory, "source.pdf");
+      const fakeDrawioPath = await createFakeDrawioCommand(temporaryDirectory, fixturePdfPath);
+
+      await writeOnePagePdf(fixturePdfPath);
+      await writeFile(sourcePath, "editable drawio png");
+      await configuration.update(
+        "execPath.drawio",
+        fakeDrawioPath,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        "${fileDirname}/${fileBasenameNoExtension}.pdf",
+        vscode.ConfigurationTarget.Workspace,
+      );
+
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+
+      await assertFileDoesNotExist(outputPath);
+      assert.ok(
+        (vscode.window.showInformationMessage as sinon.SinonStub)
+          .getCalls()
+          .some((call) => String(call.args[0]).includes("PDF conversion was cancelled.")),
+      );
     } finally {
       await configuration.update(
         "execPath.drawio",
@@ -467,7 +619,7 @@ function assertApproximatelyEqual(actual: number, expected: number, tolerance: n
 }
 
 async function assertFileDoesNotExist(filePath: string): Promise<void> {
-  await assert.rejects(readFile(filePath), (error) => {
+  await assert.rejects(access(filePath), (error) => {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
   });
 }
