@@ -24,6 +24,12 @@ const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
 const SVG_EXTENSION = ".svg";
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
+const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
+] as const;
 const execFileAsync = promisify(execFile);
 
 export type SvgToPdfEngine = "puppeteer" | "rsvg-convert";
@@ -38,6 +44,10 @@ export interface SvgToPdfOptions {
 export interface MermaidPuppeteerOptions {
   browserChannel: string;
   executablePath?: string;
+}
+
+export interface DrawioToPdfOptions {
+  drawioPath: string;
 }
 
 export interface ConvertPngToPdfOptions {
@@ -61,6 +71,7 @@ export interface ConvertPngToPdfFilesOptions {
   supportedExtensions?: readonly string[];
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
+  drawio?: DrawioToPdfOptions;
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -88,7 +99,15 @@ export async function convertPngToPdfFiles(
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
       limit(() =>
-        stagePngConversion(job, index, runId, options.signal, options.svgToPdf, options.mermaid),
+        stagePngConversion(
+          job,
+          index,
+          runId,
+          options.signal,
+          options.svgToPdf,
+          options.mermaid,
+          options.drawio,
+        ),
       ),
     ),
   );
@@ -109,6 +128,7 @@ async function stagePngConversion(
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
+  drawio?: DrawioToPdfOptions,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -127,6 +147,7 @@ async function stagePngConversion(
     signal,
     svgToPdf,
     mermaid,
+    drawio,
   );
   signal?.throwIfAborted();
 
@@ -144,8 +165,14 @@ async function writeImageAsPdf(
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
+  drawio?: DrawioToPdfOptions,
 ): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
+
+  if (isEditableDrawioImagePath(sourcePath)) {
+    await writeDrawioAsPdf(sourcePath, outputPath, workspacePath, signal, drawio);
+    return;
+  }
 
   if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
     await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
@@ -158,6 +185,25 @@ async function writeImageAsPdf(
   }
 
   await writeRasterImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+}
+
+async function writeDrawioAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+  drawio: DrawioToPdfOptions = { drawioPath: "drawio" },
+): Promise<void> {
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  await execFileAsync(drawio.drawioPath, ["-x", "-f", "pdf", "-o", outputPath, sourcePath], {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
+    signal,
+  });
 }
 
 async function writeMermaidAsPdf(
@@ -430,10 +476,20 @@ function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly 
   );
 
   for (const job of jobs) {
-    if (!supportedExtensionSet.has(path.extname(job.sourcePath).toLowerCase())) {
+    if (!isSupportedSourcePath(job.sourcePath, supportedExtensionSet)) {
       throw new Error(`Unsupported image format: ${job.sourcePath}`);
     }
   }
+}
+
+function isSupportedSourcePath(sourcePath: string, supportedExtensionSet: Set<string>): boolean {
+  const lowerSourcePath = sourcePath.toLowerCase();
+  return [...supportedExtensionSet].some((extension) => lowerSourcePath.endsWith(extension));
+}
+
+function isEditableDrawioImagePath(sourcePath: string): boolean {
+  const lowerSourcePath = sourcePath.toLowerCase();
+  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 async function assertOutputDoesNotExist(outputPath: string): Promise<void> {

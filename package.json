@@ -160,7 +160,7 @@
         {
           "submenu": "latex-graphics-helper.convert",
           "group": "latex-graphics-helper",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "(resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/) && config.latex-graphics-helper.contextMenu.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -203,7 +203,7 @@
         {
           "command": "latex-graphics-helper.convertToPdf",
           "group": "latex-graphics-helper.convert@1",
-          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "(resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|mmd|mermaid)$/ || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/) && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",

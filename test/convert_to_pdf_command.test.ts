@@ -273,7 +273,7 @@ suite("convertToPdf command", () => {
       assert.ok(
         (vscode.window.showInformationMessage as sinon.SinonStub)
           .getCalls()
-          .some((call) => String(call.args[0]).includes("Converted 1 file(s) to PDF.")),
+          .some((call) => String(call.args[0]).includes("Removed the last conversion output.")),
       );
     } finally {
       await configuration.update(
@@ -520,7 +520,7 @@ async function createFakeDrawioCommand(
   directoryPath: string,
   fixturePdfPath: string,
 ): Promise<string> {
-  const scriptPath = path.join(directoryPath, "fake-drawio.js");
+  const scriptPath = path.join(directoryPath, "fake-drawio.cjs");
   const commandPath = path.join(
     directoryPath,
     process.platform === "win32" ? "fake-drawio.cmd" : "fake-drawio",
