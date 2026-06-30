@@ -190,7 +190,7 @@ function outputTemplateForSource(
   }
 }
 
-function templateSourcePathForSource(sourcePath: string): string {
+export function templateSourcePathForSource(sourcePath: string): string {
   if (!isEditableDrawioImagePath(sourcePath)) {
     return sourcePath;
   }

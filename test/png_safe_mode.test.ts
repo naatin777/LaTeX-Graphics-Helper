@@ -5,6 +5,7 @@
 // - Safe Modeの両方残す・上書きしない・上書きするがバッチ全体へ適用されること
 // - 変換失敗とキャンセル時に指定出力先へ何も反映しないこと
 // - 上書き後の直前変換取消で元ファイルを復元すること
+// - editable Draw.io画像変換にもSafe ModeとUndoが効くこと
 //
 // Mocked:
 // - Safe Modeの競合判断
@@ -12,7 +13,7 @@
 // Not tested:
 // - VS Codeのダイアログとstatus barの描画
 // - VS CodeのwithProgress表示
-// - 他の画像形式
+// - JPEG/WebP/AVIF/SVG/Mermaid
 
 import assert from "node:assert/strict";
 import { access, copyFile, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
@@ -25,6 +26,7 @@ import { PDFDocument } from "pdf-lib";
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
+  type RunDrawio,
 } from "../src/operations/convert_png_to_pdf.js";
 import {
   createConversionUndoRecord,
@@ -33,6 +35,12 @@ import {
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
+const editableDrawioImageExtensions = [
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
+] as const;
 
 suite("PNG Safe Mode", () => {
   test("stages every conversion before reflecting all outputs", async () => {
@@ -156,6 +164,82 @@ suite("PNG Safe Mode", () => {
 
     await Promise.all(jobs.map((job) => assert.rejects(access(job.outputPath))));
   });
+
+  test("converts editable Draw.io PNG and SVG files through the injected Draw.io runner", async () => {
+    const { jobs } = await createEditableDrawioJobs([
+      ["source.drawio.png", "source.pdf"],
+      ["diagram.dio.svg", "diagram.pdf"],
+    ]);
+    const calls: string[][] = [];
+
+    const outputs = await convertPngToPdfFiles({
+      jobs,
+      supportedExtensions: editableDrawioImageExtensions,
+      drawio: {
+        drawioPath: "drawio",
+        runDrawio: createPdfWritingDrawioRunner(calls),
+      },
+      resolveOutputConflicts: async () => "overwrite",
+    });
+
+    assert.strictEqual(outputs.length, 2);
+    assert.deepStrictEqual(
+      calls.map((args) => args.at(-1)),
+      jobs.map((job) => job.sourcePath),
+    );
+
+    for (const job of jobs) {
+      const pdf = await PDFDocument.load(await readFile(job.outputPath));
+      assert.strictEqual(pdf.getPageCount(), 1);
+    }
+  });
+
+  test("keeps both files for editable Draw.io image output conflicts", async () => {
+    const { jobs, workspacePath } = await createEditableDrawioJobs([
+      ["source.drawio.png", "source.pdf"],
+    ]);
+    const originalOutputPath = jobs[0]!.outputPath;
+    const keptOutputPath = path.join(workspacePath, "source-1.pdf");
+    await writeFile(originalOutputPath, "old output");
+
+    const outputs = await convertPngToPdfFiles({
+      jobs,
+      supportedExtensions: editableDrawioImageExtensions,
+      drawio: {
+        drawioPath: "drawio",
+        runDrawio: createPdfWritingDrawioRunner(),
+      },
+      resolveOutputConflicts: async () => "keep-both",
+    });
+
+    assert.deepStrictEqual(
+      outputs.map((output) => output.outputPath),
+      [keptOutputPath],
+    );
+    assert.strictEqual(await readFile(originalOutputPath, "utf8"), "old output");
+    const pdf = await PDFDocument.load(await readFile(keptOutputPath));
+    assert.strictEqual(pdf.getPageCount(), 1);
+  });
+
+  test("backs up overwritten editable Draw.io image output and restores it through undo", async () => {
+    const { jobs } = await createEditableDrawioJobs([["source.drawio.png", "source.pdf"]]);
+    await writeFile(jobs[0]!.outputPath, "old output");
+
+    const outputs = await convertPngToPdfFiles({
+      jobs,
+      supportedExtensions: editableDrawioImageExtensions,
+      drawio: {
+        drawioPath: "drawio",
+        runDrawio: createPdfWritingDrawioRunner(),
+      },
+      resolveOutputConflicts: async () => "overwrite",
+    });
+
+    const undoRecord = await createConversionUndoRecord(outputs);
+    await undoConversionOutputs(undoRecord);
+
+    assert.strictEqual(await readFile(jobs[0]!.outputPath, "utf8"), "old output");
+  });
 });
 
 async function createJobs(names: string[]): Promise<{
@@ -177,4 +261,38 @@ async function createJobs(names: string[]): Promise<{
   );
 
   return { workspacePath, jobs };
+}
+
+async function createEditableDrawioJobs(
+  entries: [sourceName: string, outputName: string][],
+): Promise<{
+  workspacePath: string;
+  jobs: ConvertPngToPdfJob[];
+}> {
+  const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-drawio-safe-test-"));
+  const jobs = await Promise.all(
+    entries.map(async ([sourceName, outputName]) => {
+      const sourcePath = path.join(workspacePath, sourceName);
+      await writeFile(sourcePath, "editable drawio image");
+
+      return {
+        sourcePath,
+        outputPath: path.join(workspacePath, outputName),
+        workspacePath,
+      };
+    }),
+  );
+
+  return { workspacePath, jobs };
+}
+
+function createPdfWritingDrawioRunner(calls: string[][] = []): RunDrawio {
+  return async (_executable, args) => {
+    calls.push(args);
+    const outputPath = args[args.indexOf("-o") + 1];
+    assert.ok(outputPath);
+    const document = await PDFDocument.create();
+    document.addPage([120, 80]);
+    await writeFile(outputPath, await document.save());
+  };
 }

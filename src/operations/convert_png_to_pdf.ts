@@ -48,7 +48,10 @@ export interface MermaidPuppeteerOptions {
 
 export interface DrawioToPdfOptions {
   drawioPath: string;
+  runDrawio?: RunDrawio;
 }
+
+export type RunDrawio = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 
 export interface ConvertPngToPdfOptions {
   sourcePath: string;
@@ -199,7 +202,19 @@ async function writeDrawioAsPdf(
   await mkdir(path.dirname(outputPath), { recursive: true });
   signal?.throwIfAborted();
 
-  await execFileAsync(drawio.drawioPath, ["-x", "-f", "pdf", "-o", outputPath, sourcePath], {
+  await (drawio.runDrawio ?? executeDrawio)(
+    drawio.drawioPath,
+    ["-x", "-f", "pdf", "-o", outputPath, sourcePath],
+    signal,
+  );
+}
+
+async function executeDrawio(
+  executable: string,
+  args: string[],
+  signal?: AbortSignal,
+): Promise<void> {
+  await execFileAsync(executable, args, {
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     signal,
