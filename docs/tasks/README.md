@@ -77,5 +77,7 @@
 - [0057: テスト名を日本語で分かりやすく整理する](0057-make-test-names-easier-to-read-in-japanese.md)
 - [0058: 変換context menuの拡張子判定を大文字小文字非依存にする](0058-make-convert-context-menu-extension-matching-case-insensitive.md)
 - [0059: テスト名を全体的に日本語化する](0059-localize-test-names-broadly.md)
+- [0060: pnpm実行時にnode_modulesが再作成される問題を調査する](0060-investigate-pnpm-node-modules-recreation.md)
+- [0061: pnpm 11向けに設定置き場とdeps status checkを整理する](0061-align-pnpm-config-for-v11-deps-status.md)
 
 ## Todo Tasks
