@@ -14,14 +14,14 @@ import assert from "node:assert/strict";
 
 import { SafeModeState } from "../src/application/safe_mode.js";
 
-suite("SafeModeState", () => {
-  test("is enabled by default", () => {
+suite("Safe Mode状態", () => {
+  test("初期状態では有効である", () => {
     const state = new SafeModeState(new MemoryState());
 
     assert.strictEqual(state.isEnabled(), true);
   });
 
-  test("persists the toggled value in global state", async () => {
+  test("切り替えた値をglobalStateに保存する", async () => {
     const storage = new MemoryState();
     const state = new SafeModeState(storage);
 

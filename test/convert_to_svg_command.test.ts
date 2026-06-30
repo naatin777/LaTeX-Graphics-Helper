@@ -28,7 +28,7 @@ import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_comma
 
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 
-suite("convertToSvg command", () => {
+suite("SVGに変換コマンド", () => {
   let sandbox: sinon.SinonSandbox;
 
   setup(() => {
@@ -41,17 +41,17 @@ suite("convertToSvg command", () => {
     sandbox.restore();
   });
 
-  test("command is registered", async () => {
+  test("コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes(CONVERT_TO_SVG_COMMAND));
   });
 
-  test("converts an .mmd file to SVG", async () => {
+  test(".mmdファイルをSVGへ変換する", async () => {
     await assertMermaidFileConvertsToSvg("source.mmd");
   });
 
-  test("converts a .mermaid file to SVG", async () => {
+  test(".mermaidファイルをSVGへ変換する", async () => {
     await assertMermaidFileConvertsToSvg("source.mermaid");
   });
 });

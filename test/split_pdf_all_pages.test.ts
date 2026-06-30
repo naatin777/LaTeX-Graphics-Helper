@@ -21,8 +21,8 @@ import { PDFDocument } from "pdf-lib";
 
 import { splitPdfAllPages } from "../src/operations/split_pdf_all_pages.js";
 
-suite("splitPdfAllPages", () => {
-  test("splits every page with one-based page numbers and keeps staging files", async () => {
+suite("PDF全ページ分割", () => {
+  test("すべてのページを1始まりのページ番号で分割し、作業ファイルを残す", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputDirectory = path.join(workspacePath, "source");
@@ -59,7 +59,7 @@ suite("splitPdfAllPages", () => {
     await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "3.pdf")));
   });
 
-  test("splits multiple PDFs after all inputs succeed", async () => {
+  test("複数PDFはすべての入力が成功してから出力する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
     const firstSourcePath = path.join(workspacePath, "first.pdf");
     const secondSourcePath = path.join(workspacePath, "second.pdf");
@@ -80,7 +80,7 @@ suite("splitPdfAllPages", () => {
     await assert.doesNotReject(access(path.join(workspacePath, "second", "1.pdf")));
   });
 
-  test("does not create any output when an output already exists", async () => {
+  test("出力先が既に存在する場合は何も作成しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const firstOutputPath = path.join(workspacePath, "source", "1.pdf");
@@ -106,7 +106,7 @@ suite("splitPdfAllPages", () => {
     assert.strictEqual(await readFile(secondOutputPath, "utf8"), "existing");
   });
 
-  test("does not create output when page paths collide", async () => {
+  test("ページごとの出力パスが衝突する場合は出力しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "same.pdf");
@@ -128,7 +128,7 @@ suite("splitPdfAllPages", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("does not create output when cancelled", async () => {
+  test("キャンセルされた場合は出力しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
     const sourcePath = path.join(workspacePath, "source.pdf");
     const outputPath = path.join(workspacePath, "source", "1.pdf");

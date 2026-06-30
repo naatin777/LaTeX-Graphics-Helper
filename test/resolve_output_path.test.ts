@@ -5,8 +5,8 @@ import path from "node:path";
 
 import { resolveOutputPath } from "../src/config/resolve_output_path.js";
 
-suite("resolveOutputPath", () => {
-  test("expands source variables from the original PDF path", () => {
+suite("出力パスのテンプレート解決", () => {
+  test("元PDFパスからsource系変数を展開する", () => {
     const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "sample.pdf");
 
@@ -23,7 +23,7 @@ suite("resolveOutputPath", () => {
     assert.strictEqual(result, path.join(workspacePath, "figures", "sample-crop.pdf"));
   });
 
-  test("resolves relative output paths from the workspace", () => {
+  test("相対出力パスをworkspace基準で解決する", () => {
     const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "sample.pdf");
 
@@ -36,7 +36,7 @@ suite("resolveOutputPath", () => {
     assert.strictEqual(result, path.join(workspacePath, "generated", "figures", "sample.pdf"));
   });
 
-  test("does not expand template syntax contained in a file name", () => {
+  test("ファイル名に含まれるテンプレート構文は再展開しない", () => {
     const workspacePath = path.resolve(path.sep, "workspace");
     const sourcePath = path.join(workspacePath, "figures", "${fileExtname}.pdf");
 
@@ -49,7 +49,7 @@ suite("resolveOutputPath", () => {
     assert.strictEqual(result, path.join(workspacePath, "${fileExtname}-crop.pdf"));
   });
 
-  test("rejects unsupported template variables", () => {
+  test("未対応のテンプレート変数を拒否する", () => {
     const workspacePath = path.resolve(path.sep, "workspace");
 
     assert.throws(

@@ -77,7 +77,7 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("matches convertToPdf context menu inputs case-insensitively", async () => {
+  test("convertToPdfのcontext menu入力を大文字小文字非依存で判定する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];

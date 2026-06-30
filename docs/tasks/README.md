@@ -76,5 +76,6 @@
 - [0056: 大文字拡張子の扱いを全体確認する](0056-audit-uppercase-extension-handling.md)
 - [0057: テスト名を日本語で分かりやすく整理する](0057-make-test-names-easier-to-read-in-japanese.md)
 - [0058: 変換context menuの拡張子判定を大文字小文字非依存にする](0058-make-convert-context-menu-extension-matching-case-insensitive.md)
+- [0059: テスト名を全体的に日本語化する](0059-localize-test-names-broadly.md)
 
 ## Todo Tasks

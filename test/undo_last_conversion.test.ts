@@ -22,8 +22,8 @@ import {
   undoConversionOutputs,
 } from "../src/operations/undo_last_conversion.js";
 
-suite("undoConversionOutputs", () => {
-  test("deletes all unchanged outputs and keeps workspace staging files", async () => {
+suite("直前変換の取り消し処理", () => {
+  test("変更されていない出力を削除し、workspace内の作業ファイルは残す", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const firstOutputPath = path.join(workspacePath, "output", "first.pdf");
     const secondOutputPath = path.join(workspacePath, "output", "second.pdf");
@@ -50,7 +50,7 @@ suite("undoConversionOutputs", () => {
     await assert.doesNotReject(access(stagedOutputPath));
   });
 
-  test("does not delete any output when one output was modified", async () => {
+  test("出力の1つが変更されている場合はどの出力も削除しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const firstOutputPath = path.join(workspacePath, "first.pdf");
     const secondOutputPath = path.join(workspacePath, "second.pdf");
@@ -68,7 +68,7 @@ suite("undoConversionOutputs", () => {
     await assert.doesNotReject(access(secondOutputPath));
   });
 
-  test("does not delete any output when one output is missing", async () => {
+  test("出力の1つが存在しない場合はどの出力も削除しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const firstOutputPath = path.join(workspacePath, "first.pdf");
     const secondOutputPath = path.join(workspacePath, "second.pdf");
@@ -85,7 +85,7 @@ suite("undoConversionOutputs", () => {
     await assert.doesNotReject(access(firstOutputPath));
   });
 
-  test("does not delete any output when one path becomes a symlink outside the workspace", async () => {
+  test("出力の1つがworkspace外へのsymlinkになった場合はどの出力も削除しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const outsidePath = path.join(
       await mkdtemp(path.join(os.tmpdir(), "lgh-undo-outside-")),
@@ -109,7 +109,7 @@ suite("undoConversionOutputs", () => {
     await assert.doesNotReject(access(outsidePath));
   });
 
-  test("restores the previous file after an overwritten output is undone", async () => {
+  test("上書きされた出力を取り消すと以前のファイルを復元する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const outputPath = path.join(workspacePath, "output.pdf");
     const previousFilePath = path.join(workspacePath, ".latex-graphics-helper", "output.previous");
@@ -126,7 +126,7 @@ suite("undoConversionOutputs", () => {
     await assert.doesNotReject(access(previousFilePath));
   });
 
-  test("does not restore an overwritten output when it changed after conversion", async () => {
+  test("変換後に出力が変更されている場合は上書き前のファイルを復元しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const outputPath = path.join(workspacePath, "output.pdf");
     const previousFilePath = path.join(workspacePath, ".latex-graphics-helper", "output.previous");

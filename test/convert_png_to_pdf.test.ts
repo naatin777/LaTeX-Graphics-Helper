@@ -21,8 +21,8 @@ import { convertPngToPdf } from "../src/operations/convert_png_to_pdf.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-suite("convertPngToPdf", () => {
-  test("converts PNG to PDF", async () => {
+suite("PNGからPDFへの変換処理", () => {
+  test("PNGをPDFへ変換する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-png-test-"));
     const sourcePath = path.join(workspacePath, "source.png");
     const outputPath = path.join(workspacePath, "output.pdf");

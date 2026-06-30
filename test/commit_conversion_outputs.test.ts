@@ -18,8 +18,8 @@ import path from "node:path";
 
 import { commitConversionOutputs } from "../src/operations/commit_conversion_outputs.js";
 
-suite("commitConversionOutputs", () => {
-  test("keeps both files using the smallest available numeric suffix", async () => {
+suite("変換結果の反映処理", () => {
+  test("両方残す場合は最小の連番suffixで保存する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-commit-test-"));
     const stagedOutputPath = path.join(workspacePath, ".latex-graphics-helper", "result.pdf");
     const outputPath = path.join(workspacePath, "sample.pdf");
@@ -37,7 +37,7 @@ suite("commitConversionOutputs", () => {
     assert.strictEqual(await readFile(path.join(workspacePath, "sample-2.pdf"), "utf8"), "new");
   });
 
-  test("asks for one decision for multiple conflicts", async () => {
+  test("複数の競合があっても判断は1回だけ求める", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-commit-test-"));
     const outputs = await Promise.all(
       ["first", "second"].map(async (name) => {
@@ -61,7 +61,7 @@ suite("commitConversionOutputs", () => {
     assert.deepStrictEqual(new Set(decisions[0]), new Set(outputs.map((item) => item.outputPath)));
   });
 
-  test("does not commit any output when overwrite is declined", async () => {
+  test("上書きしない判断の場合はどの出力も反映しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-commit-test-"));
     const stagedOutputPath = path.join(workspacePath, ".latex-graphics-helper", "result.pdf");
     const outputPath = path.join(workspacePath, "sample.pdf");
@@ -78,7 +78,7 @@ suite("commitConversionOutputs", () => {
     assert.strictEqual(await readFile(outputPath, "utf8"), "old");
   });
 
-  test("backs up an existing file before overwrite", async () => {
+  test("上書き前に既存ファイルをバックアップする", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-commit-test-"));
     const stagedOutputPath = path.join(workspacePath, ".latex-graphics-helper", "result.pdf");
     const outputPath = path.join(workspacePath, "sample.pdf");
