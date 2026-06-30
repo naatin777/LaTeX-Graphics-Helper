@@ -171,10 +171,12 @@ suite("convertToPdf command", () => {
         vscode.ConfigurationTarget.Workspace,
       );
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(drawioPngPath), [
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(drawioPngPath),
-        vscode.Uri.file(dioSvgPath),
-      ]);
+        [vscode.Uri.file(drawioPngPath), vscode.Uri.file(dioSvgPath)],
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertReadablePdfWithAtLeastOnePage(drawioPngOutputPath);
       await assertReadablePdfWithAtLeastOnePage(dioSvgOutputPath);
@@ -217,10 +219,12 @@ suite("convertToPdf command", () => {
         vscode.ConfigurationTarget.Workspace,
       );
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath), [
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
         vscode.Uri.file(pngPath),
-        vscode.Uri.file(drawioPath),
-      ]);
+        [vscode.Uri.file(pngPath), vscode.Uri.file(drawioPath)],
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, "raster.pdf"), pngPath);
       await assertReadablePdfWithAtLeastOnePage(path.join(temporaryDirectory, "diagram.pdf"));
@@ -267,7 +271,11 @@ suite("convertToPdf command", () => {
         vscode.ConfigurationTarget.Workspace,
       );
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       assert.ok(showWarningMessage.calledOnce);
       assert.strictEqual(await readFile(originalOutputPath, "utf8"), "old output");
@@ -313,7 +321,11 @@ suite("convertToPdf command", () => {
         vscode.ConfigurationTarget.Workspace,
       );
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       assert.strictEqual(await readFile(outputPath, "utf8"), "old output");
       assert.ok(

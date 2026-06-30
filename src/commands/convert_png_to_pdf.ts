@@ -195,7 +195,7 @@ function templateSourcePathForSource(sourcePath: string): string {
     return sourcePath;
   }
 
-  return sourcePath.slice(0, -path.extname(sourcePath).length);
+  return sourcePath.replace(/\.(drawio|dio)\.(png|svg)$/i, "");
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
