@@ -193,6 +193,52 @@ suite("convertToPdf command", () => {
     }
   });
 
+  test("converts files with uppercase extensions", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+
+    try {
+      const fixturePdfPath = path.join(temporaryDirectory, "fixture.pdf");
+      const pngPath = path.join(temporaryDirectory, "raster.PNG");
+      const drawioPath = path.join(temporaryDirectory, "diagram.DRAWIO.PNG");
+      const fakeDrawioPath = await createFakeDrawioCommand(temporaryDirectory, fixturePdfPath);
+
+      await writeOnePagePdf(fixturePdfPath);
+      await copyFile(fixturePngPath, pngPath);
+      await writeFile(drawioPath, "editable drawio png");
+      await configuration.update(
+        "execPath.drawio",
+        fakeDrawioPath,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        "${fileDirname}/${fileBasenameNoExtension}.pdf",
+        vscode.ConfigurationTarget.Workspace,
+      );
+
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath), [
+        vscode.Uri.file(pngPath),
+        vscode.Uri.file(drawioPath),
+      ]);
+
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, "raster.pdf"), pngPath);
+      await assertReadablePdfWithAtLeastOnePage(path.join(temporaryDirectory, "diagram.pdf"));
+    } finally {
+      await configuration.update(
+        "execPath.drawio",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
   test("keeps both files for editable Draw.io image output conflicts in Safe Mode", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
     const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");

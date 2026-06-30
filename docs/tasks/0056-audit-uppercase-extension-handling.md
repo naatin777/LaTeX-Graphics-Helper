@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -41,3 +41,13 @@ Todo
 
 - `pnpm run check`
 - 必要なら `pnpm run test`
+
+## 確認結果
+
+- command実行時の大文字拡張子は、追加テストで以下を確認した。
+  - `.PNG`
+  - `.DRAWIO.PNG`
+- context menuの`resourceExtname` / `resourceFilename`条件は、大文字拡張子を拾えない可能性がある。
+  - `package.json`のwhen clauseがcase-sensitiveな正規表現になっている。
+  - `test/package_manifest.test.ts`に失敗テストを追加した。
+- 実装修正は別タスク`0058`で行う。

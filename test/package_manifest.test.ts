@@ -77,6 +77,22 @@ suite("package manifest conversion menu", () => {
     }
   });
 
+  test("matches convertToPdf context menu inputs case-insensitively", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertSubmenu = explorerContext.find((entry) => entry.submenu === CONVERT_SUBMENU);
+    const convertToPdf = convertMenu.find((entry) => entry.command === CONVERT_TO_PDF_COMMAND);
+
+    assert.ok(convertSubmenu?.when);
+    assert.ok(convertToPdf?.when);
+
+    for (const whenClause of [convertSubmenu.when, convertToPdf.when]) {
+      assert.match(whenClause, /resourceExtname =~ \/.+\/i/);
+      assert.match(whenClause, /resourceFilename =~ \/.+\/i/);
+    }
+  });
+
   test("shows convertToSvg for Mermaid files under the shared Convert submenu", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
