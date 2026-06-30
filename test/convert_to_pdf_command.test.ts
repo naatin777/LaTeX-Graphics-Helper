@@ -26,7 +26,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -143,6 +143,54 @@ suite("convertToPdf command", () => {
 
   test("converts a .mermaid file to a readable PDF", async () => {
     await assertMermaidFileConvertsToPdf("source.mermaid");
+  });
+
+  test("converts editable Draw.io PNG and SVG files with Draw.io output template", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+
+    try {
+      const fixturePdfPath = path.join(temporaryDirectory, "fixture.pdf");
+      const drawioPngPath = path.join(temporaryDirectory, "source.drawio.png");
+      const dioSvgPath = path.join(temporaryDirectory, "diagram.dio.svg");
+      const drawioPngOutputPath = path.join(temporaryDirectory, "source.pdf");
+      const dioSvgOutputPath = path.join(temporaryDirectory, "diagram.pdf");
+      const fakeDrawioPath = await createFakeDrawioCommand(temporaryDirectory, fixturePdfPath);
+
+      await writeOnePagePdf(fixturePdfPath);
+      await writeFile(drawioPngPath, "editable drawio png");
+      await writeFile(dioSvgPath, "editable drawio svg");
+      await configuration.update(
+        "execPath.drawio",
+        fakeDrawioPath,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        "${fileDirname}/${fileBasenameNoExtension}.pdf",
+        vscode.ConfigurationTarget.Workspace,
+      );
+
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(drawioPngPath), [
+        vscode.Uri.file(drawioPngPath),
+        vscode.Uri.file(dioSvgPath),
+      ]);
+
+      await assertReadablePdfWithAtLeastOnePage(drawioPngOutputPath);
+      await assertReadablePdfWithAtLeastOnePage(dioSvgOutputPath);
+    } finally {
+      await configuration.update(
+        "execPath.drawio",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await configuration.update(
+        "outputPath.convertDrawioToPdf",
+        undefined,
+        vscode.ConfigurationTarget.Workspace,
+      );
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 
   test("converts PNG and SVG files as one batch", async () => {
@@ -314,6 +362,55 @@ async function removeTemporaryDirectory(directoryPath: string): Promise<void> {
     maxRetries: 10,
     retryDelay: 100,
   });
+}
+
+async function createFakeDrawioCommand(
+  directoryPath: string,
+  fixturePdfPath: string,
+): Promise<string> {
+  const scriptPath = path.join(directoryPath, "fake-drawio.js");
+  const commandPath = path.join(
+    directoryPath,
+    process.platform === "win32" ? "fake-drawio.cmd" : "fake-drawio",
+  );
+
+  await writeFile(
+    scriptPath,
+    [
+      "const { copyFileSync, writeFileSync } = require('node:fs');",
+      "const [fixturePdfPath, ...args] = process.argv.slice(2);",
+      "const outputPath = args[args.indexOf('-o') + 1];",
+      "if (args.includes('xml')) {",
+      "  writeFileSync(outputPath, '<mxfile><diagram name=\"Page 1\" /></mxfile>');",
+      "} else {",
+      "  copyFileSync(fixturePdfPath, outputPath);",
+      "}",
+    ].join("\n"),
+  );
+
+  if (process.platform === "win32") {
+    await writeFile(
+      commandPath,
+      `@echo off\r\n"${process.execPath}" "${scriptPath}" "${fixturePdfPath}" %*\r\n`,
+    );
+  } else {
+    await writeFile(
+      commandPath,
+      [
+        "#!/bin/sh",
+        `exec ${JSON.stringify(process.execPath)} ${JSON.stringify(scriptPath)} ${JSON.stringify(fixturePdfPath)} "$@"`,
+      ].join("\n"),
+    );
+    await chmod(commandPath, 0o755);
+  }
+
+  return commandPath;
+}
+
+async function writeOnePagePdf(filePath: string): Promise<void> {
+  const document = await PDFDocument.create();
+  document.addPage([120, 80]);
+  await writeFile(filePath, await document.save());
 }
 
 async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string): Promise<void> {

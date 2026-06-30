@@ -50,6 +50,20 @@ suite("package manifest conversion menu", () => {
     assert.ok(convertToPdf);
     assert.ok(convertToPdf.when?.includes("mmd"));
     assert.ok(convertToPdf.when?.includes("mermaid"));
+    assert.ok(convertToPdf.when?.includes("drawio"));
+    assert.ok(convertToPdf.when?.includes("dio"));
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("resourceFilename") &&
+          entry.when.includes("drawio") &&
+          entry.when.includes("dio") &&
+          entry.when.includes("png") &&
+          entry.when.includes("svg"),
+      ),
+    );
 
     const menuCommandIds = new Set(
       Object.entries(packageJson.contributes.menus)
