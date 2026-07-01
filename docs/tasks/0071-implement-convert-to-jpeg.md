@@ -13,6 +13,7 @@ Done
 - `latex-graphics-helper.convertToJpeg` をpackage manifestへ追加する
 - `latex-graphics-helper.convertToJpeg` をVS Code commandとして登録する
 - PNGをJPEGへ変換できる
+- WebP / AVIF / SVG / PDF / MermaidをJPEGへ変換できる
 - JPEG出力がSafe Mode / Undo / progress / cancellationの既存フローに乗る
 - タスク一覧にこのタスクを追加する
 
@@ -47,4 +48,10 @@ Done
 
 - `CI=true pnpm run check` は成功した
 - `CI=true pnpm run test -- --grep "JPEGに変換|変換サブメニューにJPEG"` は成功した
+  - PNG → JPEG
+  - WebP → JPEG
+  - AVIF → JPEG
+  - SVG → JPEG
+  - PDF → JPEG
+  - Mermaid → JPEG
 - `CI=true pnpm run test` は成功した
