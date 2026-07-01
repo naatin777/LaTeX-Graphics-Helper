@@ -41,14 +41,10 @@ const imageVariants = [
   {
     basename: "source-webp",
     extension: "webp",
-    imageBase64:
-      "UklGRkAAAABXRUJQVlA4IDQAAADQAgCdASoRAA0APm0skkWkIqGYBABABsSxgDsAAIGwAP7w+iv/ySPVzHQf/oUbKJpMAAAA",
   },
   {
     basename: "source-avif",
     extension: "avif",
-    imageBase64:
-      "AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==",
   },
 ] as const;
 
@@ -101,7 +97,7 @@ suite("JPEGに変換コマンド", () => {
             temporaryDirectory,
             `${variant.basename}.${variant.extension}`,
           );
-          await writeFile(sourcePath, Buffer.from(variant.imageBase64, "base64"));
+          await writeImageFixture(sourcePath, variant.extension);
           return sourcePath;
         }),
       );
@@ -227,6 +223,22 @@ async function writeTwoPagePdf(filePath: string): Promise<void> {
   document.addPage([72, 36]);
   document.addPage([36, 72]);
   await writeFile(filePath, await document.save());
+}
+
+async function writeImageFixture(filePath: string, extension: string): Promise<void> {
+  const image = sharp(await readFile(fixturePngPath));
+
+  if (extension === "webp") {
+    await image.webp().toFile(filePath);
+    return;
+  }
+
+  if (extension === "avif") {
+    await image.avif({ effort: 0 }).toFile(filePath);
+    return;
+  }
+
+  throw new Error(`Unsupported generated fixture extension: ${extension}`);
 }
 
 async function assertReadableJpeg(filePath: string): Promise<void> {
