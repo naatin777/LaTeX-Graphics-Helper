@@ -101,6 +101,9 @@
 - `README.md` は `README.ja.md` を元に自然な英語へ翻訳する。
 - 英語READMEでは、実装以上に機能を盛らない。
 - 作業用ドキュメントは日本語でよい。
+- 成果物ごとの詳細な言語方針は `docs/adr/0011-define-language-policy-for-project-artifacts.md` に従う。
+- PR title、commit message、branch name、CHANGELOG、CI名、コード識別子、設定キーは英語にする。
+- 仕様、ADR、タスク、調査メモ、PROJECT_STATE、AGENTS、test suite / test nameは日本語にする。
 
 ## 作業後の報告
 
