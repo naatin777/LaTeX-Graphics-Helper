@@ -9,6 +9,7 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
+const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
 const LEGACY_TO_PDF_COMMANDS = [
@@ -174,6 +175,35 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.ok(convertToJpeg.when?.includes("dio"));
   });
 
+  test("変換サブメニューにWebPに変換コマンドを表示する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertToWebp = convertMenu.find((entry) => entry.command === CONVERT_TO_WEBP_COMMAND);
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("mmd") &&
+          entry.when.includes("mermaid") &&
+          entry.when.includes("drawio") &&
+          entry.when.includes("dio"),
+      ),
+    );
+    assert.ok(convertToWebp);
+    assert.ok(convertToWebp.when?.includes("pdf"));
+    assert.ok(convertToWebp.when?.includes("png"));
+    assert.ok(convertToWebp.when?.includes("jpg"));
+    assert.ok(convertToWebp.when?.includes("jpeg"));
+    assert.ok(convertToWebp.when?.includes("svg"));
+    assert.ok(convertToWebp.when?.includes("mmd"));
+    assert.ok(convertToWebp.when?.includes("mermaid"));
+    assert.ok(convertToWebp.when?.includes("avif"));
+    assert.ok(convertToWebp.when?.includes("drawio"));
+    assert.ok(convertToWebp.when?.includes("dio"));
+  });
+
   test("日本語の変換メニューには出力形式のラベルを使う", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
@@ -186,6 +216,7 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.strictEqual(jaMessages["command.convertToPdf"], "PDF");
     assert.strictEqual(jaMessages["command.convertToPng"], "PNG");
     assert.strictEqual(jaMessages["command.convertToJpeg"], "JPEG");
+    assert.strictEqual(jaMessages["command.convertToWebp"], "WebP");
     assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
   });
 });

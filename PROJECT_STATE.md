@@ -17,8 +17,8 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - PDF crop
 - PDF split
 - PDF merge
-- PDF to PNG/JPEG/SVG conversion
-- PNG/JPEG/SVG to PDF conversion
+- PDF to PNG/JPEG/WebP/SVG conversion
+- PNG/JPEG/WebP/SVG to PDF conversion
 - Draw.io to PDF conversion
 - Insert LaTeX code from PDF
 - Insert LaTeX code from clipboard image

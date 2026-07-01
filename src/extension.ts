@@ -4,6 +4,7 @@ import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
 import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from "./commands/convert_to_jpeg.js";
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from "./commands/convert_to_png.js";
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from "./commands/convert_to_svg.js";
+import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from "./commands/convert_to_webp.js";
 import {
   convertToPdfCommand,
   convertPngToPdfCommand,
@@ -35,6 +36,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       CONVERT_TO_JPEG_COMMAND,
       (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToJpegCommand(uri, uris),
+    ),
+    vscode.commands.registerCommand(
+      CONVERT_TO_WEBP_COMMAND,
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToWebpCommand(uri, uris),
     ),
     vscode.commands.registerCommand(
       CONVERT_TO_SVG_COMMAND,
