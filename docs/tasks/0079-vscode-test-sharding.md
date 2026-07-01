@@ -4,6 +4,19 @@
 
 Done
 
+## 検証結果
+
+採用しない。
+
+理由:
+
+- GitHub ActionsのLinuxでは、片方のshardだけ失敗する状態になった
+- GitHub ActionsのWindowsでは、shard process起動時に `spawn EINVAL` が発生した
+- VS Code integration testはworkspace / user-data-dir / extensions-dir / Extension Hostが絡むため、単純なprocess分割の安定化コストが高い
+- `actions/setup-node` / `pnpm/action-setup` / `pnpm install --frozen-lockfile` の重さは、このshard分割では解決しない
+
+次にCI時間を改善する場合は、GitHub Actionsのdependency setup重複を調査する別タスクで扱う。
+
 ## 目的
 
 `test:vscode` が長いため、1つのExtension Host内でMocha並列化するのではなく、複数の `vscode-test` プロセスへshard分割して並列実行できるか検証する。

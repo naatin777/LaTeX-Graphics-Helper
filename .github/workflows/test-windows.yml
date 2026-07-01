@@ -34,5 +34,5 @@ jobs:
             - shell: pwsh
               run: .github/scripts/verify-image-tools-windows.ps1
 
-            - run: pnpm run test:vscode:sharded
+            - run: pnpm run test
               shell: bash
