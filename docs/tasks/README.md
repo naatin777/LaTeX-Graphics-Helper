@@ -87,5 +87,6 @@
 - [0067: プロジェクト成果物ごとの言語方針を決める](0067-decide-language-policy.md)
 - [0068: commit messageとPR bodyの定型を決める](0068-standardize-commit-and-pr-format.md)
 - [0069: outputPathテンプレート変数の入力基準を整理する](0069-define-output-path-template-source-semantics.md)
+- [0070: convertToJpegの失敗テストを追加する](0070-add-convert-to-jpeg-tests.md)
 
 ## Todo Tasks
