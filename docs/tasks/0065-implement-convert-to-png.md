@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -47,3 +47,21 @@ Todo
 
 - `pnpm run check`
 - `pnpm run test`
+
+## 実施内容
+
+- `latex-graphics-helper.convertToPng`を登録した
+- Explorerの`変換 > PNG`へ追加した
+- PDF / SVG / Mermaid / Draw.io / JPEG / WebP / AVIF入力をPNGへ変換する処理を追加した
+- PNG入力はPNG変換対象外として拒否するようにした
+- Mermaid → PNGはMermaid CLIで直接出力するようにした
+- Draw.io → PNGはDraw.io CLIでPDFを作成してからPDF→PNGへ変換するようにした
+- 変換結果の反映は既存のSafe Mode / Undo対応処理に乗せた
+- `outputPath.convertMermaidToPng`設定を追加した
+- Draw.ioがPDF経由でPNG化されることをoperation testで確認した
+
+## 確認結果
+
+- `CI=true pnpm run check`
+- `CI=true pnpm run test -- --grep "PNGに変換|package.jsonの変換メニュー定義"`
+- `CI=true pnpm run test`
