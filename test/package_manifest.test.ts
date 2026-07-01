@@ -95,7 +95,7 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("Mermaidファイルでは変換サブメニューにSVGに変換コマンドを表示する", async () => {
+  test("変換サブメニューにSVGに変換コマンドを表示する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
@@ -110,8 +110,11 @@ suite("package.jsonの変換メニュー定義", () => {
       ),
     );
     assert.ok(convertToSvg);
+    assert.ok(convertToSvg.when?.includes("pdf"));
     assert.ok(convertToSvg.when?.includes("mmd"));
     assert.ok(convertToSvg.when?.includes("mermaid"));
+    assert.ok(convertToSvg.when?.includes("drawio"));
+    assert.ok(convertToSvg.when?.includes("dio"));
   });
 
   test("変換サブメニューにPNGに変換コマンドを表示する", async () => {

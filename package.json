@@ -228,7 +228,7 @@
         {
           "command": "latex-graphics-helper.convertToSvg",
           "group": "latex-graphics-helper.convert@6",
-          "when": "resourceExtname =~ /^\\.(mmd|mermaid)$/i && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertMermaid.enabled"
+          "when": "(resourceExtname =~ /^\\.(pdf|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertSvg.enabled"
         }
       ],
       "commandPalette": [

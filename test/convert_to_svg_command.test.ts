@@ -4,12 +4,16 @@
 // - latex-graphics-helper.convertToSvg commandが登録されること
 // - .mmdをSVGに変換できること
 // - .mermaidをSVGに変換できること
+// - PDFをページごとのSVGへ変換できること
 // - SVG出力が壊れておらず、Mermaid由来のテキストを含むこと
 //
 // Mocked:
 // - VS Codeの通知API。通知UIの選択はここでは対象外にし、command completionを直接検証する。
 //
 // Not tested:
+// - Draw.io → SVGの実CLI経路
+//   - fake Draw.io CLIをcommand testで直接扱うとWindowsのexecFile差で不安定になりやすい。
+//   - runnerを注入できるoperation testとして固定する。
 // - Mermaid → PDF / PNG / JPEG / WebP / AVIF
 // - Mermaid theme / look / backgroundColor
 // - context menuの画面上の表示
@@ -21,6 +25,7 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { PDFDocument } from "pdf-lib";
 import sinon from "sinon";
 import * as vscode from "vscode";
 
@@ -53,6 +58,28 @@ suite("SVGに変換コマンド", () => {
 
   test(".mermaidファイルをSVGへ変換する", async () => {
     await assertMermaidFileConvertsToSvg("source.mermaid");
+  });
+
+  test("PDFをページごとのSVGへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.pdf");
+      const firstOutputPath = path.join(temporaryDirectory, "source-1.svg");
+      const secondOutputPath = path.join(temporaryDirectory, "source-2.svg");
+      await writeTwoPagePdf(sourcePath);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_SVG_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertGeneratedSvg(firstOutputPath);
+      await assertGeneratedSvg(secondOutputPath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 });
 
@@ -105,6 +132,19 @@ async function assertGeneratedMermaidSvg(filePath: string): Promise<void> {
   assert.match(svg, /<svg[\s>]/);
   assert.match(svg, /Mermaid Alpha/);
   assert.match(svg, /Mermaid Beta/);
+}
+
+async function writeTwoPagePdf(filePath: string): Promise<void> {
+  const document = await PDFDocument.create();
+  document.addPage([72, 36]);
+  document.addPage([36, 72]);
+  await writeFile(filePath, await document.save());
+}
+
+async function assertGeneratedSvg(filePath: string): Promise<void> {
+  const svg = await readFile(filePath, "utf8");
+
+  assert.match(svg, /<svg[\s>]/);
 }
 
 function replaceExtension(filePath: string, extension: string): string {
