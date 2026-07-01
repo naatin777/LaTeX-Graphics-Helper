@@ -1,0 +1,384 @@
+import { execFile } from "node:child_process";
+import { mkdir, readFile } from "node:fs/promises";
+import path from "node:path";
+import { promisify } from "node:util";
+
+import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
+import pLimit from "p-limit";
+import sharp from "sharp";
+
+import {
+  assertExistingPathInWorkspace,
+  assertWritablePathInWorkspace,
+} from "../security/workspace_path.js";
+import {
+  commitConversionOutputs,
+  type CommittedConversionOutput,
+  type OutputConflictDecision,
+  type PreparedConversionOutput,
+} from "./commit_conversion_outputs.js";
+import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
+import type { RunPdfToPng } from "./convert_to_png.js";
+
+const CONVERSION_CONCURRENCY = 2;
+const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
+const RASTER_IMAGE_EXTENSIONS = [".png", ".webp", ".avif"] as const;
+const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
+] as const;
+const execFileAsync = promisify(execFile);
+
+export interface ConvertToJpegJob {
+  sourcePath: string;
+  outputPath: string;
+  workspacePath: string;
+  page?: number;
+}
+
+export interface DrawioToJpegOptions {
+  drawioPath: string;
+  runDrawio?: RunDrawio;
+}
+
+export interface ConvertToJpegFilesOptions {
+  jobs: ConvertToJpegJob[];
+  pdftocairoPath: string;
+  mermaid: MermaidPuppeteerOptions;
+  drawio: DrawioToJpegOptions;
+  runPdfToPng?: RunPdfToPng;
+  runId?: string;
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  signal?: AbortSignal;
+}
+
+export async function convertToJpegFiles(
+  options: ConvertToJpegFilesOptions,
+): Promise<CommittedConversionOutput[]> {
+  options.signal?.throwIfAborted();
+  validateJobs(options.jobs);
+  await validateJobPaths(options.jobs);
+  options.signal?.throwIfAborted();
+
+  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const limit = pLimit(CONVERSION_CONCURRENCY);
+  const stagedOutputs = await Promise.all(
+    options.jobs.map((job, index) =>
+      limit(() =>
+        stageJpegConversion(
+          job,
+          index,
+          runId,
+          options.pdftocairoPath,
+          options.mermaid,
+          options.drawio,
+          options.runPdfToPng,
+          options.signal,
+        ),
+      ),
+    ),
+  );
+
+  options.signal?.throwIfAborted();
+  return commitConversionOutputs(stagedOutputs, {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+  });
+}
+
+async function stageJpegConversion(
+  job: ConvertToJpegJob,
+  index: number,
+  runId: string,
+  pdftocairoPath: string,
+  mermaid: MermaidPuppeteerOptions,
+  drawio: DrawioToJpegOptions,
+  runPdfToPng: RunPdfToPng | undefined,
+  signal?: AbortSignal,
+): Promise<PreparedConversionOutput> {
+  signal?.throwIfAborted();
+  const stageDirectory = path.join(
+    job.workspacePath,
+    ".latex-graphics-helper",
+    "convert-to-jpeg",
+    runId,
+    `${index + 1}`,
+  );
+  const stagedOutputPath = path.join(stageDirectory, "result.jpeg");
+
+  await writeSourceAsJpeg(
+    job,
+    stagedOutputPath,
+    stageDirectory,
+    pdftocairoPath,
+    mermaid,
+    drawio,
+    runPdfToPng,
+    signal,
+  );
+  signal?.throwIfAborted();
+
+  return {
+    stagedOutputPath,
+    outputPath: job.outputPath,
+    workspacePath: job.workspacePath,
+  };
+}
+
+async function writeSourceAsJpeg(
+  job: ConvertToJpegJob,
+  outputPath: string,
+  stageDirectory: string,
+  pdftocairoPath: string,
+  mermaid: MermaidPuppeteerOptions,
+  drawio: DrawioToJpegOptions,
+  runPdfToPng: RunPdfToPng | undefined,
+  signal?: AbortSignal,
+): Promise<void> {
+  const extension = path.extname(job.sourcePath).toLowerCase();
+
+  if (isEditableDrawioImagePath(job.sourcePath)) {
+    await writeDrawioAsJpeg(
+      job,
+      outputPath,
+      stageDirectory,
+      pdftocairoPath,
+      drawio,
+      runPdfToPng,
+      signal,
+    );
+    return;
+  }
+
+  if (extension === ".pdf") {
+    await writePdfPageAsJpeg(
+      job.sourcePath,
+      outputPath,
+      stageDirectory,
+      job.workspacePath,
+      pdftocairoPath,
+      job.page,
+      runPdfToPng,
+      signal,
+    );
+    return;
+  }
+
+  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
+    await writeMermaidAsJpeg(
+      job.sourcePath,
+      outputPath,
+      stageDirectory,
+      job.workspacePath,
+      mermaid,
+      signal,
+    );
+    return;
+  }
+
+  await writeImageAsJpeg(job.sourcePath, outputPath, job.workspacePath, signal);
+}
+
+async function writeDrawioAsJpeg(
+  job: ConvertToJpegJob,
+  outputPath: string,
+  stageDirectory: string,
+  pdftocairoPath: string,
+  drawio: DrawioToJpegOptions,
+  runPdfToPng: RunPdfToPng | undefined,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
+  const pdfPath = path.join(stageDirectory, "drawio.pdf");
+  await assertWritablePathInWorkspace(pdfPath, job.workspacePath);
+  await mkdir(path.dirname(pdfPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  await (drawio.runDrawio ?? executeDrawio)(
+    drawio.drawioPath,
+    ["-x", "-f", "pdf", "-o", pdfPath, job.sourcePath],
+    signal,
+  );
+  await writePdfPageAsJpeg(
+    pdfPath,
+    outputPath,
+    stageDirectory,
+    job.workspacePath,
+    pdftocairoPath,
+    job.page ?? 1,
+    runPdfToPng,
+    signal,
+  );
+}
+
+async function writePdfPageAsJpeg(
+  sourcePath: string,
+  outputPath: string,
+  stageDirectory: string,
+  workspacePath: string,
+  pdftocairoPath: string,
+  page = 1,
+  runPdfToPng?: RunPdfToPng,
+  signal?: AbortSignal,
+): Promise<void> {
+  const pngPath = path.join(stageDirectory, "source.png");
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  await mkdir(path.dirname(pngPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  if (runPdfToPng) {
+    await runPdfToPng(sourcePath, pngPath, page, signal);
+  } else {
+    const outputPrefix = pngPath.slice(0, -path.extname(pngPath).length);
+    await execFileAsync(
+      pdftocairoPath,
+      ["-png", "-singlefile", "-f", String(page), "-l", String(page), sourcePath, outputPrefix],
+      {
+        encoding: "utf8",
+        maxBuffer: 10 * 1024 * 1024,
+        signal,
+      },
+    );
+  }
+
+  await writeImageAsJpeg(pngPath, outputPath, workspacePath, signal);
+}
+
+async function writeMermaidAsJpeg(
+  sourcePath: string,
+  outputPath: string,
+  stageDirectory: string,
+  workspacePath: string,
+  mermaid: MermaidPuppeteerOptions,
+  signal?: AbortSignal,
+): Promise<void> {
+  const pngPath = path.join(stageDirectory, "mermaid.png");
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  await mkdir(path.dirname(pngPath), { recursive: true });
+  signal?.throwIfAborted();
+
+  try {
+    await runMermaidCli(sourcePath, asPngOutputPath(pngPath), {
+      outputFormat: "png",
+      puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
+      quiet: true,
+    });
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
+
+    throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
+  }
+
+  await writeImageAsJpeg(pngPath, outputPath, workspacePath, signal);
+}
+
+async function writeImageAsJpeg(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  const sourceBuffer = await readFile(sourcePath);
+  signal?.throwIfAborted();
+  await sharp(sourceBuffer).jpeg().toFile(outputPath);
+}
+
+async function executeDrawio(
+  executable: string,
+  args: string[],
+  signal?: AbortSignal,
+): Promise<void> {
+  await execFileAsync(executable, args, {
+    encoding: "utf8",
+    maxBuffer: 10 * 1024 * 1024,
+    signal,
+  });
+}
+
+async function validateJobPaths(jobs: ConvertToJpegJob[]): Promise<void> {
+  await Promise.all(
+    jobs.flatMap((job) => [
+      assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
+      assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
+      assertWritablePathInWorkspace(
+        path.join(job.workspacePath, ".latex-graphics-helper", "convert-to-jpeg"),
+        job.workspacePath,
+      ),
+    ]),
+  );
+}
+
+function validateJobs(jobs: ConvertToJpegJob[]): void {
+  if (jobs.length === 0) {
+    throw new Error("No files were selected.");
+  }
+
+  for (const job of jobs) {
+    if (!isSupportedSourcePath(job.sourcePath)) {
+      throw new Error(`Unsupported input for JPEG conversion: ${job.sourcePath}`);
+    }
+  }
+}
+
+function isSupportedSourcePath(sourcePath: string): boolean {
+  const extension = path.extname(sourcePath).toLowerCase();
+
+  return (
+    extension === ".pdf" ||
+    extension === ".svg" ||
+    MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number]) ||
+    RASTER_IMAGE_EXTENSIONS.includes(extension as (typeof RASTER_IMAGE_EXTENSIONS)[number]) ||
+    isEditableDrawioImagePath(sourcePath)
+  );
+}
+
+function isEditableDrawioImagePath(sourcePath: string): boolean {
+  const lowerSourcePath = sourcePath.toLowerCase();
+  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
+}
+
+function asPngOutputPath(outputPath: string): `${string}.png` {
+  if (!outputPath.toLowerCase().endsWith(".png")) {
+    throw new Error(`PNG output path must end with .png: ${outputPath}`);
+  }
+
+  return outputPath as `${string}.png`;
+}
+
+function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {
+  if (options.executablePath) {
+    return {
+      executablePath: options.executablePath,
+      headless: true,
+    };
+  }
+
+  return {
+    channel: options.browserChannel,
+    headless: true,
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    const stderr = "stderr" in error && typeof error.stderr === "string" ? error.stderr.trim() : "";
+    return stderr ? `${error.message}\n${stderr}` : error.message;
+  }
+
+  return String(error);
+}
