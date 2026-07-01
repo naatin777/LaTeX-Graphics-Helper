@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 
+import { convertToAvifCommand, CONVERT_TO_AVIF_COMMAND } from "./commands/convert_to_avif.js";
 import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
 import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from "./commands/convert_to_jpeg.js";
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from "./commands/convert_to_png.js";
@@ -40,6 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       CONVERT_TO_WEBP_COMMAND,
       (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToWebpCommand(uri, uris),
+    ),
+    vscode.commands.registerCommand(
+      CONVERT_TO_AVIF_COMMAND,
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToAvifCommand(uri, uris),
     ),
     vscode.commands.registerCommand(
       CONVERT_TO_SVG_COMMAND,

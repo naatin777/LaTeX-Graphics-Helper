@@ -150,6 +150,11 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.convertToAvif",
+        "title": "%command.convertToAvif%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.convertToSvg",
         "title": "%command.convertToSvg%",
         "category": "LaTeX Graphics Helper"
@@ -234,6 +239,11 @@
           "command": "latex-graphics-helper.convertToWebp",
           "group": "latex-graphics-helper.convert@4",
           "when": "(resourceExtname =~ /^\\.(pdf|png|jpg|jpeg|avif|svg|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertToAvif",
+          "group": "latex-graphics-helper.convert@5",
+          "when": "(resourceExtname =~ /^\\.(pdf|png|jpg|jpeg|webp|svg|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",
@@ -345,6 +355,20 @@
           "type": "string",
           "default": "",
           "description": "%config.convertToSvg.mermaid.puppeteer.executablePath%"
+        },
+        "latex-graphics-helper.convertToWebp.effort": {
+          "type": "integer",
+          "default": 4,
+          "minimum": 0,
+          "maximum": 6,
+          "description": "%config.convertToWebp.effort%"
+        },
+        "latex-graphics-helper.convertToAvif.effort": {
+          "type": "integer",
+          "default": 4,
+          "minimum": 0,
+          "maximum": 9,
+          "description": "%config.convertToAvif.effort%"
         },
         "latex-graphics-helper.outputPath.cropPdf": {
           "type": "string",
@@ -554,6 +578,11 @@
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.webp",
           "description": "%config.outputPath.convertMermaidToWebp%"
+        },
+        "latex-graphics-helper.outputPath.convertMermaidToAvif": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.avif",
+          "description": "%config.outputPath.convertMermaidToAvif%"
         },
         "latex-graphics-helper.contextMenu.enabled": {
           "type": "boolean",

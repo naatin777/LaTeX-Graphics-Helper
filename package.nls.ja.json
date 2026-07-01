@@ -10,6 +10,8 @@
   "config.convertToPdf.mermaid.puppeteer.executablePath": "MermaidファイルをPDFに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
   "config.convertToSvg.mermaid.puppeteer.browserChannel": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToSvg.mermaid.puppeteer.executablePath": "MermaidファイルをSVGに変換するときにMermaid CLIが使用するブラウザ実行ファイルのパス。指定した場合はブラウザチャンネルより優先されます。",
+  "config.convertToWebp.effort": "WebP出力をエンコードするときのCPU effort。0が最速、6が最も低速です。",
+  "config.convertToAvif.effort": "AVIF出力をエンコードするときのCPU effort。0が最速、9が最も低速です。",
 
   "config.outputPath.cropPdf": "PDFをクロップした後の出力ファイル名",
   "config.outputPath.splitPdf": "PDF分割後の各ページの出力ファイル名",
@@ -58,6 +60,7 @@
   "config.outputPath.convertMermaidToPng": "MermaidファイルをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToJpeg": "MermaidファイルをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToWebp": "MermaidファイルをWebPに変換した後の出力ファイル名",
+  "config.outputPath.convertMermaidToAvif": "MermaidファイルをAVIFに変換した後の出力ファイル名",
 
   "config.contextMenu.enabled": "コンテキストメニューを有効にする",
   "config.contextMenu.cropPdf.enabled": "PDFをクロップするコンテキストメニューを有効にする",
@@ -107,6 +110,7 @@
   "command.convertToPng": "PNG",
   "command.convertToJpeg": "JPEG",
   "command.convertToWebp": "WebP",
+  "command.convertToAvif": "AVIF",
   "command.convertToSvg": "SVG",
   "command.convertPngToPdf": "PNGをPDFに変換",
   "command.convertPngToJpeg": "PNGをJPEGに変換",

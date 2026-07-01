@@ -92,5 +92,6 @@
 - [0072: 変換テストのfixture方針を記録する](0072-document-test-fixture-policy.md)
 - [0073: convertToSvgの入力形式をPDFとDraw.ioへ広げる](0073-expand-convert-to-svg-inputs.md)
 - [0074: convertToWebpを実装する](0074-implement-convert-to-webp.md)
+- [0075: convertToAvifを実装する](0075-implement-convert-to-avif.md)
 
 ## Todo Tasks

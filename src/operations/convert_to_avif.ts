@@ -23,7 +23,7 @@ import type { RunPdfToPng } from "./convert_to_png.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".avif"] as const;
+const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"] as const;
 const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
   ".drawio.png",
   ".dio.png",
@@ -32,36 +32,36 @@ const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
 ] as const;
 const execFileAsync = promisify(execFile);
 
-export interface ConvertToWebpJob {
+export interface ConvertToAvifJob {
   sourcePath: string;
   outputPath: string;
   workspacePath: string;
   page?: number;
 }
 
-export interface DrawioToWebpOptions {
+export interface DrawioToAvifOptions {
   drawioPath: string;
   runDrawio?: RunDrawio;
 }
 
-export interface WebpOutputOptions {
+export interface AvifOutputOptions {
   effort: number;
 }
 
-export interface ConvertToWebpFilesOptions {
-  jobs: ConvertToWebpJob[];
+export interface ConvertToAvifFilesOptions {
+  jobs: ConvertToAvifJob[];
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioToWebpOptions;
-  webp: WebpOutputOptions;
+  drawio: DrawioToAvifOptions;
+  avif: AvifOutputOptions;
   runPdfToPng?: RunPdfToPng;
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
 }
 
-export async function convertToWebpFiles(
-  options: ConvertToWebpFilesOptions,
+export async function convertToAvifFiles(
+  options: ConvertToAvifFilesOptions,
 ): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
@@ -73,14 +73,14 @@ export async function convertToWebpFiles(
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
       limit(() =>
-        stageWebpConversion(
+        stageAvifConversion(
           job,
           index,
           runId,
           options.pdftocairoPath,
           options.mermaid,
           options.drawio,
-          options.webp,
+          options.avif,
           options.runPdfToPng,
           options.signal,
         ),
@@ -97,14 +97,14 @@ export async function convertToWebpFiles(
   });
 }
 
-async function stageWebpConversion(
-  job: ConvertToWebpJob,
+async function stageAvifConversion(
+  job: ConvertToAvifJob,
   index: number,
   runId: string,
   pdftocairoPath: string,
   mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToWebpOptions,
-  webp: WebpOutputOptions,
+  drawio: DrawioToAvifOptions,
+  avif: AvifOutputOptions,
   runPdfToPng: RunPdfToPng | undefined,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
@@ -112,20 +112,20 @@ async function stageWebpConversion(
   const stageDirectory = path.join(
     job.workspacePath,
     ".latex-graphics-helper",
-    "convert-to-webp",
+    "convert-to-avif",
     runId,
     `${index + 1}`,
   );
-  const stagedOutputPath = path.join(stageDirectory, "result.webp");
+  const stagedOutputPath = path.join(stageDirectory, "result.avif");
 
-  await writeSourceAsWebp(
+  await writeSourceAsAvif(
     job,
     stagedOutputPath,
     stageDirectory,
     pdftocairoPath,
     mermaid,
     drawio,
-    webp,
+    avif,
     runPdfToPng,
     signal,
   );
@@ -138,27 +138,27 @@ async function stageWebpConversion(
   };
 }
 
-async function writeSourceAsWebp(
-  job: ConvertToWebpJob,
+async function writeSourceAsAvif(
+  job: ConvertToAvifJob,
   outputPath: string,
   stageDirectory: string,
   pdftocairoPath: string,
   mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToWebpOptions,
-  webp: WebpOutputOptions,
+  drawio: DrawioToAvifOptions,
+  avif: AvifOutputOptions,
   runPdfToPng: RunPdfToPng | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(job.sourcePath)) {
-    await writeDrawioAsWebp(
+    await writeDrawioAsAvif(
       job,
       outputPath,
       stageDirectory,
       pdftocairoPath,
       drawio,
-      webp,
+      avif,
       runPdfToPng,
       signal,
     );
@@ -166,13 +166,13 @@ async function writeSourceAsWebp(
   }
 
   if (extension === ".pdf") {
-    await writePdfPageAsWebp(
+    await writePdfPageAsAvif(
       job.sourcePath,
       outputPath,
       stageDirectory,
       job.workspacePath,
       pdftocairoPath,
-      webp,
+      avif,
       job.page,
       runPdfToPng,
       signal,
@@ -181,28 +181,28 @@ async function writeSourceAsWebp(
   }
 
   if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
-    await writeMermaidAsWebp(
+    await writeMermaidAsAvif(
       job.sourcePath,
       outputPath,
       stageDirectory,
       job.workspacePath,
       mermaid,
-      webp,
+      avif,
       signal,
     );
     return;
   }
 
-  await writeImageAsWebp(job.sourcePath, outputPath, job.workspacePath, webp, signal);
+  await writeImageAsAvif(job.sourcePath, outputPath, job.workspacePath, avif, signal);
 }
 
-async function writeDrawioAsWebp(
-  job: ConvertToWebpJob,
+async function writeDrawioAsAvif(
+  job: ConvertToAvifJob,
   outputPath: string,
   stageDirectory: string,
   pdftocairoPath: string,
-  drawio: DrawioToWebpOptions,
-  webp: WebpOutputOptions,
+  drawio: DrawioToAvifOptions,
+  avif: AvifOutputOptions,
   runPdfToPng: RunPdfToPng | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -217,26 +217,26 @@ async function writeDrawioAsWebp(
     ["-x", "-f", "pdf", "-o", pdfPath, job.sourcePath],
     signal,
   );
-  await writePdfPageAsWebp(
+  await writePdfPageAsAvif(
     pdfPath,
     outputPath,
     stageDirectory,
     job.workspacePath,
     pdftocairoPath,
-    webp,
+    avif,
     job.page ?? 1,
     runPdfToPng,
     signal,
   );
 }
 
-async function writePdfPageAsWebp(
+async function writePdfPageAsAvif(
   sourcePath: string,
   outputPath: string,
   stageDirectory: string,
   workspacePath: string,
   pdftocairoPath: string,
-  webp: WebpOutputOptions,
+  avif: AvifOutputOptions,
   page = 1,
   runPdfToPng?: RunPdfToPng,
   signal?: AbortSignal,
@@ -262,16 +262,16 @@ async function writePdfPageAsWebp(
     );
   }
 
-  await writeImageAsWebp(pngPath, outputPath, workspacePath, webp, signal);
+  await writeImageAsAvif(pngPath, outputPath, workspacePath, avif, signal);
 }
 
-async function writeMermaidAsWebp(
+async function writeMermaidAsAvif(
   sourcePath: string,
   outputPath: string,
   stageDirectory: string,
   workspacePath: string,
   mermaid: MermaidPuppeteerOptions,
-  webp: WebpOutputOptions,
+  avif: AvifOutputOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   const pngPath = path.join(stageDirectory, "mermaid.png");
@@ -294,14 +294,14 @@ async function writeMermaidAsWebp(
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
   }
 
-  await writeImageAsWebp(pngPath, outputPath, workspacePath, webp, signal);
+  await writeImageAsAvif(pngPath, outputPath, workspacePath, avif, signal);
 }
 
-async function writeImageAsWebp(
+async function writeImageAsAvif(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  webp: WebpOutputOptions,
+  avif: AvifOutputOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -309,7 +309,7 @@ async function writeImageAsWebp(
   await mkdir(path.dirname(outputPath), { recursive: true });
   const sourceBuffer = await readFile(sourcePath);
   signal?.throwIfAborted();
-  await sharp(sourceBuffer).webp({ effort: webp.effort }).toFile(outputPath);
+  await sharp(sourceBuffer).avif({ effort: avif.effort }).toFile(outputPath);
 }
 
 async function executeDrawio(
@@ -324,27 +324,27 @@ async function executeDrawio(
   });
 }
 
-async function validateJobPaths(jobs: ConvertToWebpJob[]): Promise<void> {
+async function validateJobPaths(jobs: ConvertToAvifJob[]): Promise<void> {
   await Promise.all(
     jobs.flatMap((job) => [
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "convert-to-webp"),
+        path.join(job.workspacePath, ".latex-graphics-helper", "convert-to-avif"),
         job.workspacePath,
       ),
     ]),
   );
 }
 
-function validateJobs(jobs: ConvertToWebpJob[]): void {
+function validateJobs(jobs: ConvertToAvifJob[]): void {
   if (jobs.length === 0) {
     throw new Error("No files were selected.");
   }
 
   for (const job of jobs) {
     if (!isSupportedSourcePath(job.sourcePath)) {
-      throw new Error(`Unsupported input for WebP conversion: ${job.sourcePath}`);
+      throw new Error(`Unsupported input for AVIF conversion: ${job.sourcePath}`);
     }
   }
 }

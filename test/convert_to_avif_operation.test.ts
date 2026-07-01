@@ -1,8 +1,8 @@
 /* oxlint-disable vitest/expect-expect */
 
 // Test target:
-// - editable Draw.io画像をWebPへ変換するとき、Draw.io CLIへWebP/JPEG直接出力を要求せずPDFを経由すること
-// - PDFからWebPへ変換するとき、PNGを中間形式に使うこと
+// - editable Draw.io画像をAVIFへ変換するとき、Draw.io CLIへAVIF/JPEG直接出力を要求せずPDFを経由すること
+// - PDFからAVIFへ変換するとき、PNGを中間形式に使うこと
 //
 // Not tested:
 // - Draw.io CLI実体での変換
@@ -16,20 +16,20 @@ import path from "node:path";
 
 import sharp from "sharp";
 
-import { convertToWebpFiles } from "../src/operations/convert_to_webp.js";
+import { convertToAvifFiles } from "../src/operations/convert_to_avif.js";
 
-suite("WebPに変換する処理", () => {
-  test("編集可能なDraw.io画像はPDFとPNGを経由してWebPへ変換する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-convert-to-webp-operation-"));
+suite("AVIFに変換する処理", () => {
+  test("編集可能なDraw.io画像はPDFとPNGを経由してAVIFへ変換する", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-convert-to-avif-operation-"));
 
     try {
       const sourcePath = path.join(workspacePath, "source.drawio.png");
-      const outputPath = path.join(workspacePath, "source", "1.webp");
+      const outputPath = path.join(workspacePath, "source", "1.avif");
       const drawioCalls: string[][] = [];
       const pdfToPngCalls: { sourcePath: string; outputPath: string; page: number }[] = [];
       await writeFile(sourcePath, "editable drawio image placeholder");
 
-      await convertToWebpFiles({
+      await convertToAvifFiles({
         jobs: [
           {
             sourcePath,
@@ -51,7 +51,7 @@ suite("WebPに変換する処理", () => {
             await writeFile(args[outputIndex]!, "%PDF-1.7\n");
           },
         },
-        webp: {
+        avif: {
           effort: 0,
         },
         runPdfToPng: async (pdfPath, pngPath, page) => {
@@ -75,7 +75,7 @@ suite("WebPに変換する処理", () => {
       const expectedPdfPath = path.join(
         workspacePath,
         ".latex-graphics-helper",
-        "convert-to-webp",
+        "convert-to-avif",
         "test-run",
         "1",
         "drawio.pdf",
@@ -89,7 +89,7 @@ suite("WebPに変換する処理", () => {
           outputPath: path.join(
             workspacePath,
             ".latex-graphics-helper",
-            "convert-to-webp",
+            "convert-to-avif",
             "test-run",
             "1",
             "source.png",
@@ -99,7 +99,7 @@ suite("WebPに変換する処理", () => {
       ]);
 
       const metadata = await sharp(await readFile(outputPath)).metadata();
-      assert.strictEqual(metadata.format, "webp");
+      assert.strictEqual(metadata.format, "heif");
       assert.ok(metadata.width);
       assert.ok(metadata.height);
     } finally {

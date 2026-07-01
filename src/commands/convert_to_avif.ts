@@ -7,24 +7,24 @@ import * as vscode from "vscode";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import {
-  convertToWebpFiles,
-  type ConvertToWebpJob,
-  type DrawioToWebpOptions,
-  type WebpOutputOptions,
-} from "../operations/convert_to_webp.js";
+  convertToAvifFiles,
+  type AvifOutputOptions,
+  type ConvertToAvifJob,
+  type DrawioToAvifOptions,
+} from "../operations/convert_to_avif.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
-export const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
+export const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.webp";
-const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.webp";
-const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.webp";
-const DEFAULT_WEBP_EFFORT = 4;
+const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.avif";
+const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.avif";
+const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.avif";
+const DEFAULT_AVIF_EFFORT = 4;
 const UNDO_ACTION = "Undo";
 
-export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -37,13 +37,13 @@ export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration);
-    const drawio = readDrawioToWebpOptions(configuration);
-    const webp = readWebpOutputOptions(configuration);
+    const drawio = readDrawioToAvifOptions(configuration);
+    const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Converting ${sourceUris.length} file(s) to WebP`,
+        title: `Converting ${sourceUris.length} file(s) to AVIF`,
         cancellable: true,
       },
       async (progress, token) => {
@@ -57,13 +57,13 @@ export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
             abortController.abort();
           }
 
-          progress.report({ message: "Preparing WebP conversion..." });
-          return await convertToWebpFiles({
+          progress.report({ message: "Preparing AVIF conversion..." });
+          return await convertToAvifFiles({
             jobs,
             pdftocairoPath,
             mermaid,
             drawio,
-            webp,
+            avif,
             signal: abortController.signal,
             resolveOutputConflicts,
           });
@@ -73,7 +73,7 @@ export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
       },
     );
 
-    const successMessage = `Converted ${outputs.length} file(s) to WebP.`;
+    const successMessage = `Converted ${outputs.length} file(s) to AVIF.`;
     let undoId: string;
 
     try {
@@ -91,19 +91,19 @@ export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage("WebP conversion was cancelled.");
+      await vscode.window.showInformationMessage("AVIF conversion was cancelled.");
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(`Failed to convert to WebP: ${message}`);
+    await vscode.window.showErrorMessage(`Failed to convert to AVIF: ${message}`);
   }
 }
 
 async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
-): Promise<ConvertToWebpJob[]> {
+): Promise<ConvertToAvifJob[]> {
   if (sourceUri.scheme !== "file") {
     throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
   }
@@ -117,8 +117,8 @@ async function createJobs(
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 
-  if (extension === ".webp" && !isEditableDrawioImagePath(sourcePath)) {
-    throw new Error(`Unsupported input for WebP conversion: ${sourcePath}`);
+  if (extension === ".avif" && !isEditableDrawioImagePath(sourcePath)) {
+    throw new Error(`Unsupported input for AVIF conversion: ${sourcePath}`);
   }
 
   if (extension === ".pdf") {
@@ -148,7 +148,7 @@ async function createPdfJobs(
   sourcePath: string,
   workspace: vscode.WorkspaceFolder,
   configuration: vscode.WorkspaceConfiguration,
-): Promise<ConvertToWebpJob[]> {
+): Promise<ConvertToAvifJob[]> {
   const document = await PDFDocument.load(await readFile(sourcePath));
   const pageCount = document.getPageCount();
 
@@ -157,7 +157,7 @@ async function createPdfJobs(
   }
 
   const outputTemplate = configuration.get<string>(
-    "outputPath.convertPdfToWebp",
+    "outputPath.convertPdfToAvif",
     DEFAULT_PDF_OUTPUT_PATH,
   );
 
@@ -184,26 +184,26 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>("outputPath.convertDrawioToWebp", DEFAULT_DRAWIO_OUTPUT_PATH);
+    return configuration.get<string>("outputPath.convertDrawioToAvif", DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
     case ".png": {
-      return configuration.get<string>("outputPath.convertPngToWebp", DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>("outputPath.convertPngToAvif", DEFAULT_OUTPUT_PATH);
     }
     case ".jpg":
     case ".jpeg": {
-      return configuration.get<string>("outputPath.convertJpegToWebp", DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>("outputPath.convertJpegToAvif", DEFAULT_OUTPUT_PATH);
     }
-    case ".avif": {
-      return configuration.get<string>("outputPath.convertAvifToWebp", DEFAULT_OUTPUT_PATH);
+    case ".webp": {
+      return configuration.get<string>("outputPath.convertWebpToAvif", DEFAULT_OUTPUT_PATH);
     }
     case ".svg": {
-      return configuration.get<string>("outputPath.convertSvgToWebp", DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>("outputPath.convertSvgToAvif", DEFAULT_OUTPUT_PATH);
     }
     case ".mmd":
     case ".mermaid": {
-      return configuration.get<string>("outputPath.convertMermaidToWebp", DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>("outputPath.convertMermaidToAvif", DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;
@@ -227,9 +227,9 @@ function readMermaidPuppeteerOptions(
   };
 }
 
-function readDrawioToWebpOptions(
+function readDrawioToAvifOptions(
   configuration: vscode.WorkspaceConfiguration,
-): DrawioToWebpOptions {
+): DrawioToAvifOptions {
   const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
 
   return {
@@ -237,11 +237,11 @@ function readDrawioToWebpOptions(
   };
 }
 
-function readWebpOutputOptions(configuration: vscode.WorkspaceConfiguration): WebpOutputOptions {
-  const effort = configuration.get<number>("convertToWebp.effort", DEFAULT_WEBP_EFFORT);
+function readAvifOutputOptions(configuration: vscode.WorkspaceConfiguration): AvifOutputOptions {
+  const effort = configuration.get<number>("convertToAvif.effort", DEFAULT_AVIF_EFFORT);
 
-  if (!Number.isInteger(effort) || effort < 0 || effort > 6) {
-    throw new Error(`convertToWebp.effort must be an integer between 0 and 6: ${effort}`);
+  if (!Number.isInteger(effort) || effort < 0 || effort > 9) {
+    throw new Error(`convertToAvif.effort must be an integer between 0 and 9: ${effort}`);
   }
 
   return { effort };
