@@ -54,18 +54,20 @@ Command Paletteでは、検索しやすさを優先して`PDFに変換`のよう
 
 現行の`package.json`で公開されている対応関係を維持する。
 
-| 出力形式 | 対応入力形式                        |
-| -------- | ----------------------------------- |
-| PDF      | Draw.io、PNG、JPEG、WebP、AVIF、SVG |
-| PNG      | Draw.io、PDF、JPEG、WebP、AVIF、SVG |
-| JPEG     | Draw.io、PDF、PNG、WebP、AVIF、SVG  |
-| WebP     | Draw.io、PDF、PNG、JPEG、AVIF、SVG  |
-| AVIF     | Draw.io、PDF、PNG、JPEG、WebP、SVG  |
-| SVG      | Draw.io、PDF                        |
+| 出力形式 | 対応入力形式                                 |
+| -------- | -------------------------------------------- |
+| PDF      | Draw.io、PNG、JPEG、WebP、AVIF、SVG、Mermaid |
+| PNG      | Draw.io、PDF、JPEG、WebP、AVIF、SVG、Mermaid |
+| JPEG     | Draw.io、PDF、PNG、WebP、AVIF、SVG、Mermaid  |
+| WebP     | Draw.io、PDF、PNG、JPEG、AVIF、SVG、Mermaid  |
+| AVIF     | Draw.io、PDF、PNG、JPEG、WebP、SVG、Mermaid  |
+| SVG      | Draw.io、PDF、Mermaid                        |
 
 現在対応していない組み合わせは、この再設計では追加しない。
 
 Mermaid入力（`.mmd`、`.mermaid`）は`## Mermaid入力`で別途定義する。実装は段階的に追加する。
+
+Draw.io入力には、通常の`.drawio` / `.dio`に加えて、editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`）を含める。
 
 ## 混在選択
 
@@ -247,6 +249,24 @@ pixelHeight = round(pageHeightPt / 72 * dpi)
 画像から画像へ変換する場合、基本的に入力画像のpixel幅・高さを維持する。
 
 フォーマット特性でmetadata差が出る場合は、対象形式のテストタスクで許容範囲を明記する。
+
+### Draw.ioから画像
+
+Draw.ioをPNG/JPEG/WebP/AVIFなどの画像へ変換する場合、Draw.io CLIの画像出力を直接使わず、必ずPDFを経由する。
+
+理由:
+
+- Draw.io CLIで直接PNG/JPEGへ出すと、数式が描画されないケースがある。
+- PDF経由にすることで、Draw.io内の数式を保持した変換結果を優先する。
+
+例:
+
+```text
+Draw.io → PDF → PNG
+Draw.io → PDF → JPEG
+```
+
+PDF経由の中間ファイルは`.latex-graphics-helper/`配下に作成し、最終出力の反映はSafe Mode / Undoの通常フローに従う。
 
 ### SVG
 
