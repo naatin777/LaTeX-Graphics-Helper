@@ -36,7 +36,7 @@ import sinon from "sinon";
 import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
-import { templateSourcePathForSource } from "../src/commands/convert_png_to_pdf.js";
+import { logicalSourcePathForOutputTemplate } from "../src/commands/convert_png_to_pdf.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
@@ -166,14 +166,18 @@ suite("PDFに変換コマンド", () => {
     }
   });
 
-  test("編集可能なDraw.io画像では出力テンプレートにベースパスを使う", () => {
+  test("編集可能なDraw.io画像では出力テンプレートに論理入力パスを使う", () => {
     assert.strictEqual(
-      templateSourcePathForSource(path.join("workspace", "source.drawio.png")),
+      logicalSourcePathForOutputTemplate(path.join("workspace", "source.drawio.png")),
       path.join("workspace", "source"),
     );
     assert.strictEqual(
-      templateSourcePathForSource(path.join("workspace", "diagram.DIO.SVG")),
+      logicalSourcePathForOutputTemplate(path.join("workspace", "diagram.DIO.SVG")),
       path.join("workspace", "diagram"),
+    );
+    assert.strictEqual(
+      logicalSourcePathForOutputTemplate(path.join("workspace", "image.png")),
+      path.join("workspace", "image.png"),
     );
   });
 

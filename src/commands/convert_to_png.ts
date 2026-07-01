@@ -13,7 +13,7 @@ import {
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
-import { templateSourcePathForSource } from "./convert_png_to_pdf.js";
+import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
 
 export const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 
@@ -124,7 +124,7 @@ async function createJobs(
   const page = isEditableDrawioImagePath(sourcePath) ? "1" : undefined;
   const outputTemplate = outputTemplateForSource(sourcePath, configuration);
   const outputPath = resolveOutputPath(outputTemplate, {
-    sourcePath: templateSourcePathForSource(sourcePath),
+    sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
     workspacePath: workspace.uri.fsPath,
     workspaceName: workspace.name,
     ...(page !== undefined && { page }),
