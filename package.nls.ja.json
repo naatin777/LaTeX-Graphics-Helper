@@ -57,6 +57,7 @@
   "config.outputPath.convertMermaidToPdf": "MermaidファイルをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToPng": "MermaidファイルをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToJpeg": "MermaidファイルをJPEGに変換した後の出力ファイル名",
+  "config.outputPath.convertMermaidToWebp": "MermaidファイルをWebPに変換した後の出力ファイル名",
 
   "config.contextMenu.enabled": "コンテキストメニューを有効にする",
   "config.contextMenu.cropPdf.enabled": "PDFをクロップするコンテキストメニューを有効にする",
@@ -105,6 +106,7 @@
   "command.convertToPdf": "PDF",
   "command.convertToPng": "PNG",
   "command.convertToJpeg": "JPEG",
+  "command.convertToWebp": "WebP",
   "command.convertToSvg": "SVG",
   "command.convertPngToPdf": "PNGをPDFに変換",
   "command.convertPngToJpeg": "PNGをJPEGに変換",
