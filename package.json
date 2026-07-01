@@ -140,6 +140,11 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.convertToJpeg",
+        "title": "%command.convertToJpeg%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.convertToSvg",
         "title": "%command.convertToSvg%",
         "category": "LaTeX Graphics Helper"
@@ -214,6 +219,11 @@
           "command": "latex-graphics-helper.convertToPng",
           "group": "latex-graphics-helper.convert@2",
           "when": "(resourceExtname =~ /^\\.(pdf|jpg|jpeg|webp|avif|svg|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertToJpeg",
+          "group": "latex-graphics-helper.convert@3",
+          "when": "(resourceExtname =~ /^\\.(pdf|png|webp|avif|svg|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
         },
         {
           "command": "latex-graphics-helper.convertToSvg",
@@ -524,6 +534,11 @@
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.png",
           "description": "%config.outputPath.convertMermaidToPng%"
+        },
+        "latex-graphics-helper.outputPath.convertMermaidToJpeg": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.jpeg",
+          "description": "%config.outputPath.convertMermaidToJpeg%"
         },
         "latex-graphics-helper.contextMenu.enabled": {
           "type": "boolean",
