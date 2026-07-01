@@ -89,5 +89,6 @@
 - [0069: outputPathテンプレート変数の入力基準を整理する](0069-define-output-path-template-source-semantics.md)
 - [0070: convertToJpegの失敗テストを追加する](0070-add-convert-to-jpeg-tests.md)
 - [0071: convertToJpegを実装する](0071-implement-convert-to-jpeg.md)
+- [0072: 変換テストのfixture方針を記録する](0072-document-test-fixture-policy.md)
 
 ## Todo Tasks
