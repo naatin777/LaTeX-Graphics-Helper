@@ -55,6 +55,58 @@ mock は使ってよい。
 // - LaTeXコンパイル結果
 ```
 
+## 変換テストのfixture方針
+
+画像/PDF変換テストでは、できるだけ実ファイルを読み込む経路を通す。
+
+優先順位:
+
+1. `test/fixtures/` などに置いたfixtureファイルをそのまま入力にする
+2. 既存fixtureファイルを読み込み、テスト中の一時ディレクトリへ別形式の入力ファイルを生成する
+3. どうしても必要な場合だけ、小さなbase64文字列などの埋め込みfixtureを使う
+
+理由:
+
+- 実際のextension利用時と同じfile path / file read経路を通せる
+- base64文字列だけでは、ファイル読み込み・拡張子・metadata取得・OS差の問題を見落としやすい
+- 変換テストでは「変換関数がBufferを処理できること」だけでなく、「ユーザーが選んだファイルを読んで変換できること」が重要
+
+例:
+
+```ts
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import sharp from "sharp";
+import * as vscode from "vscode";
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const sourcePng = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
+const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-convert-test-"));
+
+try {
+  const sourceWebp = path.join(temporaryDirectory, "source.webp");
+
+  await sharp(await readFile(sourcePng))
+    .webp()
+    .toFile(sourceWebp);
+
+  await vscode.commands.executeCommand(commandId, vscode.Uri.file(sourceWebp));
+} finally {
+  await rm(temporaryDirectory, { recursive: true, force: true });
+}
+```
+
+base64埋め込みを使ってよい例:
+
+- 外部ツールやライブラリで生成が重すぎる形式を、最小fixtureとして固定したい場合
+- 既存fixtureから安定して生成できない形式を扱う場合
+- そのテストの目的がファイル読み込みではなく、特定のバイナリ内容への耐性確認である場合
+
+base64埋め込みを使う場合は、コメントまたはタスクに理由を書く。
+
 ## 禁止するテスト
 
 - 実装の都合だけを固定するテスト

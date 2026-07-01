@@ -65,6 +65,7 @@
 - カバレッジを追う前に、主要な挙動を安定させる。
 - VS Code command testで通知を出す可能性がある場合、`executeCommand`を直接`await`せず、通知を閉じてからcommand実行Promiseを待つ。
 - 通知待ち対策には`test/helpers/vscode_command.ts`のhelperを使う。
+- 画像/PDF変換テストでは、base64文字列を直接埋め込むより、既存fixtureファイルを読み込むか、fixtureファイルから一時入力ファイルを生成して実ファイル読み込み経路を通す。
 
 優先してテストするもの。
 
