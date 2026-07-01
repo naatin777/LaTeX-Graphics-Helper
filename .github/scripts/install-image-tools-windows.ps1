@@ -45,6 +45,15 @@ if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullNa
 if (-not (Test-Path $rsvgConvert)) { throw "missing $rsvgConvert" }
 if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
 
+$chromeCandidates = @(
+	(Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'),
+	(Join-Path ${env:ProgramFiles(x86)} 'Google/Chrome/Application/chrome.exe')
+)
+$chrome = $chromeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $chrome) {
+	throw 'Chrome executable was not found.'
+}
+
 $settingsDir = Join-Path 'test/fixtures/workspace' '.vscode'
 New-Item -ItemType Directory -Force -Path $settingsDir | Out-Null
 $settingsPath = Join-Path $settingsDir 'settings.json'
@@ -52,6 +61,9 @@ $settings = [ordered]@{
 	'latex-graphics-helper.execPath.ghostscript' = $gs.FullName
 	'latex-graphics-helper.execPath.pdftocairo' = $pdftocairo.FullName
 	'latex-graphics-helper.execPath.rsvgConvert' = $rsvgConvert
+	'latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath' = $chrome
+	'latex-graphics-helper.convertToPdf.mermaid.puppeteer.executablePath' = $chrome
+	'latex-graphics-helper.convertToSvg.mermaid.puppeteer.executablePath' = $chrome
 }
 $settings | ConvertTo-Json | Set-Content $settingsPath -Encoding utf8
 Get-Content $settingsPath

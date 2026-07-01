@@ -31,5 +31,8 @@ jobs:
             - run: bash .github/scripts/install-test-tools-linux.sh
               shell: bash
 
+            - run: bash .github/scripts/verify-image-tools-unix.sh
+              shell: bash
+
             - run: xvfb-run pnpm run test
               shell: bash

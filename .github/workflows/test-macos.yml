@@ -31,5 +31,8 @@ jobs:
             - run: bash .github/scripts/install-image-tools-macos.sh
               shell: bash
 
+            - run: bash .github/scripts/verify-image-tools-unix.sh
+              shell: bash
+
             - run: pnpm run test
               shell: bash
