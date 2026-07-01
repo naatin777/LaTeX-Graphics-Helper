@@ -12,6 +12,7 @@ import {
   type DrawioToJpegOptions,
 } from "../operations/convert_to_jpeg.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -44,28 +45,17 @@ export async function convertToJpegCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
         cancellable: true,
       },
       async (progress, token) => {
-        const abortController = new AbortController();
-        const cancellationSubscription = token.onCancellationRequested(() => {
-          abortController.abort();
-        });
-
-        try {
-          if (token.isCancellationRequested) {
-            abortController.abort();
-          }
-
+        return withCancellationSignal(token, async (signal) => {
           progress.report({ message: "Preparing JPEG conversion..." });
-          return await convertToJpegFiles({
+          return convertToJpegFiles({
             jobs,
             pdftocairoPath,
             mermaid,
             drawio,
-            signal: abortController.signal,
+            signal,
             resolveOutputConflicts,
           });
-        } finally {
-          cancellationSubscription.dispose();
-        }
+        });
       },
     );
 

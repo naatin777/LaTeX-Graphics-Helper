@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_pages.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -29,25 +30,14 @@ export async function splitPdfAllPagesCommand(
         cancellable: true,
       },
       async (progress, token) => {
-        const abortController = new AbortController();
-        const cancellationSubscription = token.onCancellationRequested(() => {
-          abortController.abort();
-        });
-
-        try {
-          if (token.isCancellationRequested) {
-            abortController.abort();
-          }
-
+        return withCancellationSignal(token, async (signal) => {
           progress.report({ message: "Preparing PDF split..." });
-          return await splitPdfAllPages({
+          return splitPdfAllPages({
             jobs,
-            signal: abortController.signal,
+            signal,
             resolveOutputConflicts,
           });
-        } finally {
-          cancellationSubscription.dispose();
-        }
+        });
       },
     );
 

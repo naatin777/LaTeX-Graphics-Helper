@@ -13,6 +13,7 @@ import {
   type DrawioToAvifOptions,
 } from "../operations/convert_to_avif.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -47,29 +48,18 @@ export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
         cancellable: true,
       },
       async (progress, token) => {
-        const abortController = new AbortController();
-        const cancellationSubscription = token.onCancellationRequested(() => {
-          abortController.abort();
-        });
-
-        try {
-          if (token.isCancellationRequested) {
-            abortController.abort();
-          }
-
+        return withCancellationSignal(token, async (signal) => {
           progress.report({ message: "Preparing AVIF conversion..." });
-          return await convertToAvifFiles({
+          return convertToAvifFiles({
             jobs,
             pdftocairoPath,
             mermaid,
             drawio,
             avif,
-            signal: abortController.signal,
+            signal,
             resolveOutputConflicts,
           });
-        } finally {
-          cancellationSubscription.dispose();
-        }
+        });
       },
     );
 
