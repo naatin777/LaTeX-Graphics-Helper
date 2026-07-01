@@ -103,10 +103,79 @@ ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし
 - 迷った場合は「作業判断の正確さが重要なら日本語」「公開履歴・コード・外部APIなら英語」を基準にする
 - PR titleとcommit messageは英語にする
 - PR bodyは英語を基本にする。ただし、複雑な判断やメンテナ向け補足は日本語を併記してよい
+- PR bodyは `.github/PULL_REQUEST_TEMPLATE.md` の見出しに沿って書く
+- commit messageは、Conventional Commitsを基本にする
+- commit messageの形式は `<type>(<scope>): <description>` または `<type>: <description>` にする
+- commit messageの例: `docs: document project language policy`, `fix(pdfcrop): normalize Windows paths`, `test(convert): add PNG output coverage`
+- 1つのcommitには1つの目的だけを含める。別目的の変更はcommitを分ける
 - issue bodyやreview commentは、正確な意思疎通を優先して日本語でもよい
 - READMEの意味が変わる場合は、先に `README.ja.md` を更新してから `README.md` へ反映する
 - `package.nls.json` と `package.nls.ja.json` は同じ意味になるように更新する
 - テスト名を英語へ戻さない。CIログ上の仕様把握を優先して日本語を使う
+
+## PRテンプレート
+
+PR bodyは以下の構成を基本にする。
+
+```markdown
+## Summary
+
+- What changed.
+- Why this change is needed.
+
+## Verification
+
+- Command or check that was run.
+- Manual check if needed.
+
+## Notes
+
+- Risks, follow-up tasks, or reviewer notes.
+```
+
+`Notes` に書くことがない場合は `- None.` と書く。
+
+## commit messageテンプレート
+
+commit messageはConventional Commitsを基本にする。
+
+```text
+<type>(<scope>): <description>
+```
+
+scopeが不要な場合は以下でもよい。
+
+```text
+<type>: <description>
+```
+
+ルール:
+
+- 英語で書く
+- descriptionの先頭は小文字にする
+- 末尾にピリオドを付けない
+- 原則として1行にする
+- `WIP`、`fix`、`update` だけのような内容が分からないmessageにしない
+- 破壊的変更がある場合は `!` またはbodyの `BREAKING CHANGE:` で明示する
+- scopeは短く、対象が分かる名前にする
+
+よく使うtype:
+
+- `feat`
+- `fix`
+- `docs`
+- `test`
+- `refactor`
+- `build`
+- `ci`
+- `chore`
+
+例:
+
+- `docs: document project language policy`
+- `fix(pdfcrop): normalize Windows paths`
+- `test(convert): add PNG output coverage`
+- `ci(tools): verify external converters through settings`
 
 ## 見直す条件
 

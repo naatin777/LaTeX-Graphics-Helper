@@ -105,6 +105,18 @@
 - PR title、commit message、branch name、CHANGELOG、CI名、コード識別子、設定キーは英語にする。
 - 仕様、ADR、タスク、調査メモ、PROJECT_STATE、AGENTS、test suite / test nameは日本語にする。
 
+## commit / PR 方針
+
+- commit messageはConventional Commitsを基本にする。
+- commit messageは `<type>(<scope>): <description>` または `<type>: <description>` の形にする。
+- descriptionは英語の小文字始まりにし、末尾にピリオドを付けない。
+- 例: `docs: document project language policy`, `fix(pdfcrop): normalize Windows paths`, `test(convert): add PNG output coverage`
+- 1つのcommitには1つの目的だけを含める。
+- PR titleは英語で、PR全体の目的が分かる短い文にする。
+- PR bodyは `.github/PULL_REQUEST_TEMPLATE.md` に沿って書く。
+- PR bodyの `Verification` には実行した確認コマンドを書く。
+- 確認できていないことを、確認済みのように書かない。
+
 ## 作業後の報告
 
 変更後は以下を説明する。
