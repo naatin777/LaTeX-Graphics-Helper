@@ -151,6 +151,39 @@ ${fileDirname}/${fileBasenameNoExtension}-${page}.svg
 
 既存設定のキーに誤りがある場合も、この仕様タスクでは修正しない。修正が必要なら別タスクで扱う。
 
+## outputPathテンプレート変数の入力基準
+
+`outputPath.*` のテンプレート変数は、変換途中に作る一時ファイルや中間ファイルではなく、ユーザーが選択した入力ファイルを基準に展開する。
+
+例:
+
+- PDFからPNGへ変換する場合、`${file}` は元PDFを指す
+- Draw.ioからPNGへ変換する場合、`${file}` は中間PDFではなく元Draw.io入力を指す
+- MermaidからPDFへ変換する場合、`${file}` は元Mermaidファイルを指す
+
+editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`）は、画像ファイルではなくDraw.io入力として扱う。
+
+この場合、テンプレート変数の基準には論理入力パスを使う。論理入力パスは、editable Draw.io画像の接尾辞を落としたパスとする。
+
+| 選択された入力 | 論理入力パス |
+| -------------- | ------------ |
+| `a.drawio.png` | `a`          |
+| `a.dio.png`    | `a`          |
+| `a.drawio.svg` | `a`          |
+| `a.dio.svg`    | `a`          |
+
+理由:
+
+- `a.drawio.png` は通常のPNGではなく、Draw.io編集情報を含む入力として扱うため
+- defaultの `${fileBasenameNoExtension}.pdf` が `a.drawio.pdf` ではなく `a.pdf` になる方が直感的なため
+- Draw.ioから画像への変換では中間PDFを作るが、その一時PDF名をユーザー向けの出力名へ漏らさないため
+
+注意:
+
+- `${fileExtname}` も論理入力パスから展開する
+- editable Draw.io画像で元の画像拡張子そのものをテンプレートに使う変数は、現時点では提供しない
+- 必要になった場合は、元ファイル名用の別変数を追加するタスクとして扱う
+
 ## 既存コマンドIDの移行方針
 
 既存の入力形式・出力形式ペア別コマンドは、公開UIから外す。

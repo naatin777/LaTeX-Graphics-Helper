@@ -88,7 +88,7 @@ async function convertSelectedPngFilesToPdf(
       createJob(
         sourceUri,
         outputTemplateForSource(sourceUri, configuration, outputTemplate),
-        templateSourcePathForSource(sourceUri.fsPath),
+        logicalSourcePathForOutputTemplate(sourceUri.fsPath),
       ),
     );
     const outputs = await vscode.window.withProgress(
@@ -190,7 +190,7 @@ function outputTemplateForSource(
   }
 }
 
-export function templateSourcePathForSource(sourcePath: string): string {
+export function logicalSourcePathForOutputTemplate(sourcePath: string): string {
   if (!isEditableDrawioImagePath(sourcePath)) {
     return sourcePath;
   }
