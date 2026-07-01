@@ -10,6 +10,7 @@ const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
 const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
+const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
 const LEGACY_TO_PDF_COMMANDS = [
@@ -24,6 +25,18 @@ const LEGACY_TO_PDF_COMMANDS = [
 interface PackageJson {
   contributes: {
     commands: { command: string; title: string }[];
+    configuration: {
+      properties: Record<
+        string,
+        {
+          type: string;
+          default: unknown;
+          minimum?: number;
+          maximum?: number;
+          description: string;
+        }
+      >;
+    };
     menus: Record<string, { command?: string; submenu?: string; when?: string }[]>;
     submenus: { id: string; label: string }[];
   };
@@ -204,6 +217,35 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.ok(convertToWebp.when?.includes("dio"));
   });
 
+  test("変換サブメニューにAVIFに変換コマンドを表示する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertToAvif = convertMenu.find((entry) => entry.command === CONVERT_TO_AVIF_COMMAND);
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("mmd") &&
+          entry.when.includes("mermaid") &&
+          entry.when.includes("drawio") &&
+          entry.when.includes("dio"),
+      ),
+    );
+    assert.ok(convertToAvif);
+    assert.ok(convertToAvif.when?.includes("pdf"));
+    assert.ok(convertToAvif.when?.includes("png"));
+    assert.ok(convertToAvif.when?.includes("jpg"));
+    assert.ok(convertToAvif.when?.includes("jpeg"));
+    assert.ok(convertToAvif.when?.includes("webp"));
+    assert.ok(convertToAvif.when?.includes("svg"));
+    assert.ok(convertToAvif.when?.includes("mmd"));
+    assert.ok(convertToAvif.when?.includes("mermaid"));
+    assert.ok(convertToAvif.when?.includes("drawio"));
+    assert.ok(convertToAvif.when?.includes("dio"));
+  });
+
   test("日本語の変換メニューには出力形式のラベルを使う", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
@@ -217,7 +259,28 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.strictEqual(jaMessages["command.convertToPng"], "PNG");
     assert.strictEqual(jaMessages["command.convertToJpeg"], "JPEG");
     assert.strictEqual(jaMessages["command.convertToWebp"], "WebP");
+    assert.strictEqual(jaMessages["command.convertToAvif"], "AVIF");
     assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
+  });
+
+  test("WebPとAVIFのeffort設定を公開する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const properties = packageJson.contributes.configuration.properties;
+
+    assert.deepStrictEqual(properties["latex-graphics-helper.convertToWebp.effort"], {
+      type: "integer",
+      default: 4,
+      minimum: 0,
+      maximum: 6,
+      description: "%config.convertToWebp.effort%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.convertToAvif.effort"], {
+      type: "integer",
+      default: 4,
+      minimum: 0,
+      maximum: 9,
+      description: "%config.convertToAvif.effort%",
+    });
   });
 });
 
