@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
 const LEGACY_TO_PDF_COMMANDS = [
@@ -112,6 +113,35 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.ok(convertToSvg.when?.includes("mermaid"));
   });
 
+  test("変換サブメニューにPNGに変換コマンドを表示する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertToPng = convertMenu.find((entry) => entry.command === CONVERT_TO_PNG_COMMAND);
+
+    assert.ok(
+      explorerContext.some(
+        (entry) =>
+          entry.submenu === CONVERT_SUBMENU &&
+          entry.when?.includes("mmd") &&
+          entry.when.includes("mermaid") &&
+          entry.when.includes("drawio") &&
+          entry.when.includes("dio"),
+      ),
+    );
+    assert.ok(convertToPng);
+    assert.ok(convertToPng.when?.includes("pdf"));
+    assert.ok(convertToPng.when?.includes("svg"));
+    assert.ok(convertToPng.when?.includes("mmd"));
+    assert.ok(convertToPng.when?.includes("mermaid"));
+    assert.ok(convertToPng.when?.includes("jpg"));
+    assert.ok(convertToPng.when?.includes("jpeg"));
+    assert.ok(convertToPng.when?.includes("webp"));
+    assert.ok(convertToPng.when?.includes("avif"));
+    assert.ok(convertToPng.when?.includes("drawio"));
+    assert.ok(convertToPng.when?.includes("dio"));
+  });
+
   test("日本語の変換メニューには出力形式のラベルを使う", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
@@ -122,6 +152,7 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.strictEqual(convertToPdf?.title, "%command.convertToPdf%");
     assert.strictEqual(jaMessages["submenu.convert"], "変換");
     assert.strictEqual(jaMessages["command.convertToPdf"], "PDF");
+    assert.strictEqual(jaMessages["command.convertToPng"], "PNG");
     assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
   });
 });
