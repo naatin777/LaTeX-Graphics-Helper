@@ -11,6 +11,7 @@ import {
   type SvgToPdfEngine,
   type SvgToPdfOptions,
 } from "../operations/convert_png_to_pdf.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -98,29 +99,18 @@ async function convertSelectedPngFilesToPdf(
         cancellable: true,
       },
       async (progress, token) => {
-        const abortController = new AbortController();
-        const cancellationSubscription = token.onCancellationRequested(() => {
-          abortController.abort();
-        });
-
-        try {
-          if (token.isCancellationRequested) {
-            abortController.abort();
-          }
-
+        return withCancellationSignal(token, async (signal) => {
           progress.report({ message: "Preparing PDF conversion..." });
-          return await convertPngToPdfFiles({
+          return convertPngToPdfFiles({
             jobs,
-            signal: abortController.signal,
+            signal,
             resolveOutputConflicts,
             supportedExtensions: messages.supportedExtensions,
             svgToPdf,
             mermaid,
             drawio,
           });
-        } finally {
-          cancellationSubscription.dispose();
-        }
+        });
       },
     );
 

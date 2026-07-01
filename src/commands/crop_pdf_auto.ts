@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 
@@ -39,27 +40,19 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
         cancellable: true,
       },
       async (progress, token) => {
-        const abortController = new AbortController();
-        const cancellationSubscription = token.onCancellationRequested(() => {
-          abortController.abort();
-        });
-
         try {
-          if (token.isCancellationRequested) {
-            abortController.abort();
-          }
-
-          progress.report({ message: "Preparing PDF conversion..." });
-          return await cropPdfFiles({
-            jobs,
-            margin: selectedMargin,
-            ghostscriptPath,
-            signal: abortController.signal,
-            outputChannel,
-            resolveOutputConflicts,
+          return await withCancellationSignal(token, async (signal) => {
+            progress.report({ message: "Preparing PDF conversion..." });
+            return cropPdfFiles({
+              jobs,
+              margin: selectedMargin,
+              ghostscriptPath,
+              signal,
+              outputChannel,
+              resolveOutputConflicts,
+            });
           });
         } finally {
-          cancellationSubscription.dispose();
           outputChannel.dispose();
         }
       },
