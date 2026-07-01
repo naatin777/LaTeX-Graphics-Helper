@@ -94,5 +94,8 @@
 - [0074: convertToWebpを実装する](0074-implement-convert-to-webp.md)
 - [0075: convertToAvifを実装する](0075-implement-convert-to-avif.md)
 - [0076: withProgress cancellation handlingを共通化する](0076-common-progress-cancellation.md)
+- [0077: Playwrightテストをsrc配下から移動する](0077-relocate-playwright-tests.md)
 
 ## Todo Tasks
+
+- [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)

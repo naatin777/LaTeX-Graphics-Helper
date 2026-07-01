@@ -6,7 +6,7 @@ import { defineConfig } from '@playwright/test';
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-    testDir: path.join(rootDir, 'src/test/playwright'),
+    testDir: path.join(rootDir, 'test/playwright'),
     testMatch: '**/*.spec.ts',
     timeout: 120_000,
     expect: {
