@@ -31,5 +31,8 @@ jobs:
             - shell: pwsh
               run: .github/scripts/install-image-tools-windows.ps1
 
+            - shell: pwsh
+              run: .github/scripts/verify-image-tools-windows.ps1
+
             - run: pnpm run test
               shell: bash

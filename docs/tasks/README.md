@@ -83,5 +83,6 @@
 - [0063: convertToPngの仕様を決める](0063-design-convert-to-png.md)
 - [0064: convertToPngの失敗テストを追加する](0064-add-convert-to-png-tests.md)
 - [0065: convertToPngを実装する](0065-implement-convert-to-png.md)
+- [0066: GitHub Actionsで外部変換ツールを実体確認する](0066-verify-ci-external-tools.md)
 
 ## Todo Tasks
