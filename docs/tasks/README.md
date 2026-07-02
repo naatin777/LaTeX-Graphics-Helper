@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
+なし。
 
 ## Rules
 
@@ -98,8 +98,8 @@
 - [0079: vscode-testをshard並列実行できるか検証する](0079-vscode-test-sharding.md)
 - [0080: VS Code integration testで各テストの所要時間を表示する](0080-show-vscode-test-durations.md)
 - [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
+- [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
 
 ## Todo Tasks
 
 - [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)
-- [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
