@@ -2,7 +2,34 @@
 
 ## Status
 
-In Progress
+Done
+
+## 検証結果
+
+採用する。
+
+PR #290 の `check` jobで、`pnpm/action-setup` をCorepack方式へ置き換えた結果、job全体の時間が短縮した。
+
+変更前のPR #289:
+
+- job全体: 38秒
+- `pnpm/action-setup`: 14秒
+- `actions/setup-node`: 8秒
+- `pnpm install --frozen-lockfile`: 7秒
+- setup/install合計: 約29秒
+
+変更後のPR #290:
+
+- job全体: 25秒
+- `corepack enable`: 0秒
+- `corepack prepare pnpm@11.8.0 --activate`: 0秒
+- `actions/setup-node`: 2秒
+- `pnpm install --frozen-lockfile`: 10秒
+- setup/install合計: 約12秒
+
+`pnpm install` は少し増えたが、`pnpm/action-setup` と `actions/setup-node` が大きく短縮されたため、全体では改善した。
+
+次は `docs/tasks/0082-expand-corepack-setup-to-ci-workflows.md` で、他のCI workflowへ展開する。
 
 ## 目的
 
