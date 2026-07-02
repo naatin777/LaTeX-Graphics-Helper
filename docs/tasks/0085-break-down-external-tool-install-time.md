@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -70,3 +70,68 @@ GitHub Actionsのvscode-test workflowで実行している外部変換ツールi
 ## 確認方法
 
 - PR上の GitHub Actions `vscode-test` jobs
+
+## 実測結果
+
+計測対象PR:
+
+- #294 `ci: add external tool install timing`
+- 実行日時: 2026-07-02
+
+### Linux
+
+workflow:
+
+- `Test (Linux)` / `vscode-test`
+- job時間: 1m25s
+
+install / verify内訳:
+
+- `apt-get update`: 7s
+- `install Ghostscript / Poppler / rsvg / xvfb`: 6s
+- `write VS Code settings`: 0s
+- `rsvg-convert SVG to PDF smoke test`: 0s
+- `pdftocairo PDF to PNG smoke test`: 0s
+
+### macOS
+
+workflow:
+
+- `Test (macOS)` / `vscode-test`
+- job時間: 2m35s
+
+install / verify内訳:
+
+- `brew install Poppler / rsvg / Ghostscript`: 32s
+- `write VS Code settings`: 0s
+- `rsvg-convert SVG to PDF smoke test`: 0s
+- `pdftocairo PDF to PNG smoke test`: 0s
+
+### Windows
+
+workflow:
+
+- `Test (Windows)` / `vscode-test`
+- job時間: 2m24s
+
+install / verify内訳:
+
+- `download Poppler`: 0.7s
+- `extract Poppler`: 1.5s
+- `download rsvg-convert`: 0.3s
+- `download Ghostscript`: 0.4s
+- `extract Ghostscript`: 2.4s
+- `write VS Code settings`: 0.0s
+- `rsvg-convert SVG to PDF smoke test`: 0.0s
+- `pdftocairo PDF to PNG smoke test`: 0.0s
+
+## 分かったこと
+
+- 外部ツールinstallだけを見ると、macOSのHomebrew installが最も重い。
+- Windowsはダウンロードと展開を分けた結果、Ghostscript展開とPoppler展開が主な時間になっている。
+- Linuxは`apt-get update`とinstallが同程度で、どちらか一方だけが極端に重い状態ではない。
+- smoke test自体は全OSでほぼ無視できる時間だった。
+
+## 次タスク候補
+
+- [0086: macOSの外部ツールinstall時間を削減する](0086-reduce-macos-external-tool-install-time.md)
