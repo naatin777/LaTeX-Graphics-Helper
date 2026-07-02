@@ -108,6 +108,7 @@
 - [0088: 出力形式基準コマンド実装後の変換ドキュメントを同期する](0088-sync-conversion-docs-after-output-format-commands.md)
 - [0089: 出力形式基準のoutputPath設定移行方針を決める](0089-design-output-format-output-path-settings.md)
 - [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
+- [0093: GitHub Actionsの重複表示を減らす](0093-consolidate-ci-workflows.md)
 
 ## Todo Tasks
 

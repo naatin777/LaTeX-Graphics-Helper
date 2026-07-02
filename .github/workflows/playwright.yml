@@ -1,4 +1,4 @@
-name: Playwright (Linux)
+name: Playwright
 
 on:
     pull_request:
@@ -7,7 +7,7 @@ on:
             - main
 
 concurrency:
-    group: playwright-linux-${{ github.ref }}
+    group: playwright-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
@@ -27,9 +27,26 @@ jobs:
                   EVENT_BEFORE: ${{ github.event.before }}
 
     playwright:
+        name: playwright (${{ matrix.label }})
         needs: changes
         if: needs.changes.outputs.docs_only != 'true'
-        runs-on: ubuntu-latest
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      label: Linux
+                      test_command: xvfb-run pnpm run test:playwright
+                      artifact_suffix: linux
+                    - os: macos-latest
+                      label: macOS
+                      test_command: pnpm run test:playwright
+                      artifact_suffix: macos
+                    - os: windows-latest
+                      label: Windows
+                      test_command: pnpm run test:playwright
+                      artifact_suffix: windows
         steps:
             - uses: actions/checkout@v7
 
@@ -48,13 +65,13 @@ jobs:
             - run: pnpm exec playwright install
               shell: bash
 
-            - run: xvfb-run pnpm run test:playwright
+            - run: ${{ matrix.test_command }}
               shell: bash
 
             - if: failure()
               uses: actions/upload-artifact@v7
               with:
-                  name: playwright-report-linux
+                  name: playwright-report-${{ matrix.artifact_suffix }}
                   path: |
                       playwright-report/
                       test-results/
