@@ -100,7 +100,9 @@
 - [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
 - [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
 - [0083: GitHub Actions parallel stepsの適用候補を調査する](0083-audit-github-actions-parallel-steps.md)
+- [0084: Playwright browser cacheを導入すべきか評価する](0084-evaluate-playwright-browser-cache.md)
 
 ## Todo Tasks
 
 - [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)
+- [0085: 外部ツールinstall時間をOS別に分解する](0085-break-down-external-tool-install-time.md)
