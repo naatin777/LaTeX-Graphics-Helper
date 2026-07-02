@@ -99,6 +99,7 @@
 - [0080: VS Code integration testで各テストの所要時間を表示する](0080-show-vscode-test-durations.md)
 - [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
 - [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
+- [0083: GitHub Actions parallel stepsの適用候補を調査する](0083-audit-github-actions-parallel-steps.md)
 
 ## Todo Tasks
 
