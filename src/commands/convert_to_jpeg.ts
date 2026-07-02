@@ -4,6 +4,7 @@ import path from "node:path";
 import { PDFDocument } from "pdf-lib";
 import * as vscode from "vscode";
 
+import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import {
@@ -32,8 +33,16 @@ export async function convertToJpegCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
     }
 
     const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
+    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(
+      configuration,
+      "outputPath.convertToJpeg",
+    );
     const jobs = (
-      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration)))
+      await Promise.all(
+        sourceUris.map((sourceUri) =>
+          createJobs(sourceUri, configuration, outputFormatOutputTemplate),
+        ),
+      )
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToJpegOptions(configuration);
@@ -96,6 +105,7 @@ export async function convertToJpegCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
 async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
+  outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToJpegJob[]> {
   if (sourceUri.scheme !== "file") {
     throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
@@ -115,11 +125,15 @@ async function createJobs(
   }
 
   if (extension === ".pdf") {
-    return createPdfJobs(sourcePath, workspace, configuration);
+    return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 
   const page = isEditableDrawioImagePath(sourcePath) ? "1" : undefined;
-  const outputTemplate = outputTemplateForSource(sourcePath, configuration);
+  const outputTemplate = outputTemplateForSource(
+    sourcePath,
+    configuration,
+    outputFormatOutputTemplate,
+  );
   const outputPath = resolveOutputPath(outputTemplate, {
     sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
     workspacePath: workspace.uri.fsPath,
@@ -141,6 +155,7 @@ async function createPdfJobs(
   sourcePath: string,
   workspace: vscode.WorkspaceFolder,
   configuration: vscode.WorkspaceConfiguration,
+  outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToJpegJob[]> {
   const document = await PDFDocument.load(await readFile(sourcePath));
   const pageCount = document.getPageCount();
@@ -149,10 +164,9 @@ async function createPdfJobs(
     throw new Error(`PDF has no pages: ${sourcePath}`);
   }
 
-  const outputTemplate = configuration.get<string>(
-    "outputPath.convertPdfToJpeg",
-    DEFAULT_PDF_OUTPUT_PATH,
-  );
+  const outputTemplate =
+    outputFormatOutputTemplate ??
+    configuration.get<string>("outputPath.convertPdfToJpeg", DEFAULT_PDF_OUTPUT_PATH);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
@@ -173,7 +187,12 @@ async function createPdfJobs(
 function outputTemplateForSource(
   sourcePath: string,
   configuration: vscode.WorkspaceConfiguration,
+  outputFormatOutputTemplate: string | undefined,
 ): string {
+  if (outputFormatOutputTemplate !== undefined) {
+    return outputFormatOutputTemplate;
+  }
+
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {

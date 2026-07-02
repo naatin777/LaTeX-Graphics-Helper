@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -42,3 +42,11 @@ Todo
 
 - `CI=true pnpm run check`
 - `CI=true pnpm run test`
+
+## 実装内容
+
+- `outputPath.convertToPdf` / `outputPath.convertToPng` / `outputPath.convertToJpeg` / `outputPath.convertToWebp` / `outputPath.convertToAvif` / `outputPath.convertToSvg` をVS Code設定として追加した
+- 新設定のdefaultは空文字にし、空文字または空白のみの場合は既存のペア別設定へfallbackするようにした
+- 出力形式基準コマンドでは、新設定が指定されている場合に入力形式別設定より優先するようにした
+- 複数ページ入力では`${page}`を含める必要がある場合を設定descriptionに追記した
+- 既存ペア別設定は削除していない

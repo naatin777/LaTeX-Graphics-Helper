@@ -15,6 +15,12 @@
 
   "config.outputPath.cropPdf": "PDFをクロップした後の出力ファイル名",
   "config.outputPath.splitPdf": "PDF分割後の各ページの出力ファイル名",
+  "config.outputPath.convertToPdf": "PDFに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
+  "config.outputPath.convertToPng": "PNGに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
+  "config.outputPath.convertToJpeg": "JPEGに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
+  "config.outputPath.convertToWebp": "WebPに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
+  "config.outputPath.convertToAvif": "AVIFに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
+  "config.outputPath.convertToSvg": "SVGに変換するときの出力ファイル名。空の場合は入力形式と出力形式のペア別設定を使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
   "config.cropPdf.marginOptions": "PDFの自動クロップ時に表示する余白の選択肢（単位: PDFポイント）",
 
   "config.outputPath.convertDrawioToPdf": "Draw.ioファイルをPDFに変換した後の出力ファイル名",

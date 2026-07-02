@@ -2,6 +2,7 @@ import path from "node:path";
 
 import * as vscode from "vscode";
 
+import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
   convertPngToPdfFiles,
@@ -56,6 +57,7 @@ export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
     successKey: "message.convertToPdf.success",
     failedKey: "message.convertToPdf.failed",
     cancelledKey: "message.convertToPdf.cancelled",
+    outputFormatOutputPathKey: "outputPath.convertToPdf",
   });
 }
 
@@ -68,6 +70,7 @@ async function convertSelectedPngFilesToPdf(
     successKey: "message.convertPngToPdf.success" | "message.convertToPdf.success";
     failedKey: "message.convertPngToPdf.failed" | "message.convertToPdf.failed";
     cancelledKey: "message.convertPngToPdf.cancelled" | "message.convertToPdf.cancelled";
+    outputFormatOutputPathKey?: "outputPath.convertToPdf";
   },
 ): Promise<void> {
   try {
@@ -82,13 +85,22 @@ async function convertSelectedPngFilesToPdf(
       "outputPath.convertPngToPdf",
       DEFAULT_OUTPUT_PATH,
     );
+    const outputFormatOutputTemplate =
+      messages.outputFormatOutputPathKey === undefined
+        ? undefined
+        : readOutputFormatOutputTemplate(configuration, messages.outputFormatOutputPathKey);
     const svgToPdf = readSvgToPdfOptions(configuration);
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToPdfOptions(configuration);
     const jobs = sourceUris.map((sourceUri) =>
       createJob(
         sourceUri,
-        outputTemplateForSource(sourceUri, configuration, outputTemplate),
+        outputTemplateForSource(
+          sourceUri,
+          configuration,
+          outputTemplate,
+          outputFormatOutputTemplate,
+        ),
         logicalSourcePathForOutputTemplate(sourceUri.fsPath),
       ),
     );
@@ -148,7 +160,12 @@ function outputTemplateForSource(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
   pngOutputTemplate: string,
+  outputFormatOutputTemplate: string | undefined,
 ): string {
+  if (outputFormatOutputTemplate !== undefined) {
+    return outputFormatOutputTemplate;
+  }
+
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 

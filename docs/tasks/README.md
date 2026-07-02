@@ -108,8 +108,9 @@
 - [0088: 出力形式基準コマンド実装後の変換ドキュメントを同期する](0088-sync-conversion-docs-after-output-format-commands.md)
 - [0089: 出力形式基準のoutputPath設定移行方針を決める](0089-design-output-format-output-path-settings.md)
 - [0090: 出力形式基準outputPath設定のテストを追加する](0090-add-output-format-output-path-setting-tests.md)
+- [0091: 出力形式基準outputPath設定を実装する](0091-implement-output-format-output-path-settings.md)
 - [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
 
 ## Todo Tasks
 
-- [0091: 出力形式基準outputPath設定を実装する](0091-implement-output-format-output-path-settings.md)
+なし
