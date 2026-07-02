@@ -6,8 +6,8 @@
 
 English | [日本語](README.ja.md)
 
-This is an extension designed to intuitively handle PDF and image files within VS Code.
-It provides PDF splitting and cropping, conversion from images/SVG/Mermaid/editable Draw.io images to PDF, Mermaid to SVG conversion, and LaTeX code generation.
+This extension is designed to make PDF and image files easier to handle in VS Code.
+It provides PDF splitting and cropping, conversion between PDF, image, SVG, Mermaid, and editable Draw.io image files, and LaTeX code generation.
 
 ## Demo
 
@@ -21,9 +21,9 @@ It provides PDF splitting and cropping, conversion from images/SVG/Mermaid/edita
 
 ### Conversion
 
-- **Convert to PDF**: Converts PNG, JPEG, WebP, AVIF, SVG, Mermaid files, and editable Draw.io images to PDF.
-- **Convert to SVG**: Converts Mermaid files to SVG.
-- **Shared conversion menu**: In the Explorer context menu, choose output formats such as `Convert > PDF` or `Convert > SVG`.
+- **Output-format based conversion**: In the Explorer context menu, choose output formats such as `Convert > PDF`, `Convert > PNG`, `Convert > JPEG`, `Convert > WebP`, `Convert > AVIF`, or `Convert > SVG`.
+- **PDF / image / SVG / Mermaid / Draw.io conversion**: Convert supported inputs to the selected output format.
+- **Mixed selection**: Convert multiple supported input formats to the same output format in one operation.
 
 ### LaTeX Code Generation
 
@@ -44,21 +44,23 @@ You can install this extension in one of the following ways:
 
 ## Commands
 
-| Feature                | Input                                                | Output                  | Use case                                   | Required external tools           |
-| ---------------------- | ---------------------------------------------------- | ----------------------- | ------------------------------------------ | --------------------------------- |
-| Crop PDF margins       | `.pdf`                                               | `.pdf`                  | Remove margins from figure PDFs            | Ghostscript                       |
-| Split PDF              | `.pdf`                                               | `.pdf`                  | Split a PDF into single pages              | None                              |
-| Convert to PDF         | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`            | `.pdf`                  | Convert raster images to PDF               | None                              |
-| Convert to PDF         | `.svg`                                               | `.pdf`                  | Convert SVG figures to PDF                 | `rsvg-convert` or Chrome/Chromium |
-| Convert to PDF         | `.mmd`, `.mermaid`                                   | `.pdf`                  | Convert Mermaid diagrams to PDF            | Chrome/Chromium                   |
-| Convert to PDF         | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg` | `.pdf`                  | Convert editable Draw.io images            | Draw.io Desktop                   |
-| Convert to SVG         | `.mmd`, `.mermaid`                                   | `.svg`                  | Convert Mermaid diagrams to SVG            | Chrome/Chromium                   |
-| Insert PDF into LaTeX  | `.pdf`                                               | LaTeX code              | Generate `figure` / `includegraphics` code | None                              |
-| Insert clipboard image | Clipboard image                                      | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format          |
+| Feature                | Input                                                                               | Output                  | Use case                                   | Required external tools  |
+| ---------------------- | ----------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------ | ------------------------ |
+| Crop PDF margins       | `.pdf`                                                                              | `.pdf`                  | Remove margins from figure PDFs            | Ghostscript              |
+| Split PDF              | `.pdf`                                                                              | `.pdf`                  | Split a PDF into single pages              | None                     |
+| Convert to PDF         | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                           | `.pdf`                  | Convert raster images to PDF               | None                     |
+| Convert to PDF         | `.svg`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.pdf`                  | Convert figure files to PDF                | Depends on input format  |
+| Convert to PNG         | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images | `.png`                  | Convert figure files to PNG                | Depends on input format  |
+| Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Depends on input format  |
+| Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Depends on input format  |
+| Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Depends on input format  |
+| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.svg`                  | Convert figure files to SVG                | Depends on input format  |
+| Insert PDF into LaTeX  | `.pdf`                                                                              | LaTeX code              | Generate `figure` / `includegraphics` code | None                     |
+| Insert clipboard image | Clipboard image                                                                     | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format |
 
 ## Required Tools
 
-- **Draw.io**: The Draw.io desktop application is required to convert editable Draw.io images (`.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`) to PDF. Download it from [Draw.io](https://github.com/jgraph/drawio-desktop/releases).
+- **Draw.io**: The Draw.io desktop application is required to convert editable Draw.io images (`.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`). Download it from [Draw.io](https://github.com/jgraph/drawio-desktop/releases).
 - **Ghostscript**: Required for PDF margin detection during PDF cropping.
 - **rsvg-convert**: SVG to PDF conversion requires rsvg-convert (from [librsvg](https://wiki.gnome.org/Projects/LibRsvg)). On macOS: `brew install librsvg`. On Debian/Ubuntu: `apt install librsvg2-bin`.
 - **Google Chrome / Chromium**: Required when using the Puppeteer backend for SVG conversion and when converting Mermaid files.

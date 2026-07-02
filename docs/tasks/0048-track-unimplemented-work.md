@@ -30,11 +30,49 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
     - `.mmd`
     - `.mermaid`
 - `latex-graphics-helper.convertToSvg`
+  - PDF → SVG
+  - Draw.io → SVG
   - Mermaid → SVG
     - `.mmd`
     - `.mermaid`
+- `latex-graphics-helper.convertToPng`
+  - PDF → PNG
+  - JPEG → PNG
+  - WebP → PNG
+  - AVIF → PNG
+  - SVG → PNG
+  - Mermaid → PNG
+  - Draw.io → PNG
+- `latex-graphics-helper.convertToJpeg`
+  - PDF → JPEG
+  - PNG → JPEG
+  - WebP → JPEG
+  - AVIF → JPEG
+  - SVG → JPEG
+  - Mermaid → JPEG
+  - Draw.io → JPEG
+- `latex-graphics-helper.convertToWebp`
+  - PDF → WebP
+  - PNG → WebP
+  - JPEG → WebP
+  - AVIF → WebP
+  - SVG → WebP
+  - Mermaid → WebP
+  - Draw.io → WebP
+- `latex-graphics-helper.convertToAvif`
+  - PDF → AVIF
+  - PNG → AVIF
+  - JPEG → AVIF
+  - WebP → AVIF
+  - SVG → AVIF
+  - Mermaid → AVIF
+  - Draw.io → AVIF
 - 共有`変換`サブメニュー配下の`PDF`
 - 共有`変換`サブメニュー配下の`SVG`
+- 共有`変換`サブメニュー配下の`PNG`
+- 共有`変換`サブメニュー配下の`JPEG`
+- 共有`変換`サブメニュー配下の`WebP`
+- 共有`変換`サブメニュー配下の`AVIF`
 - SVG→PDFの変換方式設定
   - `puppeteer`
   - `rsvg-convert`
@@ -43,49 +81,24 @@ AIが「仕様には書いてあるが実装済みではないもの」を実装
 - progress / cancellation の基本
 - workspace内作業領域 `.latex-graphics-helper/` を使った安全な反映
 
-## 未実装
+## 未実装・保留
 
-### 出力形式基準コマンド
+2026-07-02時点で、出力形式基準コマンドの主要な変換組み合わせは実装済み。
 
-以下の公開コマンドは仕様上の方針としては存在するが、まだ実装していない。
+今後の保留事項:
 
-- `latex-graphics-helper.convertToPng`
-- `latex-graphics-helper.convertToJpeg`
-- `latex-graphics-helper.convertToWebp`
-- `latex-graphics-helper.convertToAvif`
-
-### 変換組み合わせ
-
-以下はまだ統合コマンドとして実装していない。
-
-- PDF → PNG/JPEG/WebP/AVIF/SVG
-- SVG → PNG/JPEG/WebP/AVIF
-- PNG/JPEG/WebP/AVIF → PNG/JPEG/WebP/AVIF
-- Draw.io → PDF/PNG/JPEG/WebP/AVIF/SVG の出力形式基準コマンド統合
-
-### Mermaid
-
-Mermaid → SVGは実装済み。
-
-以下はまだ未実装。
-
-- `.mmd` → PNG/JPEG/WebP/AVIF
-- `.mermaid` → PNG/JPEG/WebP/AVIF
-
-Mermaid専用の公開コマンドは作らない。出力形式基準コマンドへ入力形式として追加する。
-
-Mermaid → PNG/JPEG/WebP/AVIFは、それぞれ`convertToPng`、`convertToJpeg`、`convertToWebp`、`convertToAvif`の実装に依存する。
-
-仕様は`docs/tasks/0047-design-mermaid-file-conversion.md`で決定済み。
+- 画像を1つのPDFへ結合する機能
+- PDFページを1つの画像へ結合する機能
+- 出力形式基準の新しい`outputPath.convertTo*`設定への移行
+- Mermaid theme / look / backgroundColor の設定化
+- editable Draw.io画像で、元ファイル名・元拡張子そのものをoutputPathテンプレートで参照する変数追加
 
 ### ドキュメント・テスト管理
 
 - `docs/test-matrix.md`が現状実装とずれている可能性がある
-  - `convertToPdf`の対応入力が古い可能性がある
+  - 0088で更新する
 - READMEが最新実装とずれている可能性がある
-  - 画像からPDFへの対応形式
-  - SVG→PDFのバックエンド説明
-  - 出力形式基準コマンドの説明
+  - 0088で更新する
 
 ## Dependabotの扱い
 
