@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 # e2e tools used by conversion tests on Windows.
 $popplerVersion = '24.08.0-0'

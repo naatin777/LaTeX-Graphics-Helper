@@ -19,6 +19,7 @@ Done
 - bash scriptの`run_timed` helperを削除した
 - PowerShell scriptの`Invoke-TimedStep` helperを削除した
 - install / verify処理は、計測前と同じ素直な逐次実行に戻した
+- Windowsの`Invoke-WebRequest`でprogress描画を抑制し、CIログ出力とdownload処理を軽くした
 - 0085の実測記録は削除せず、タスク文書に残した
 
 ## 変更ファイル
