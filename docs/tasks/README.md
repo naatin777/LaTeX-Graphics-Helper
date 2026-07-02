@@ -106,5 +106,9 @@
 - [0086: macOSの外部ツールinstall時間を削減する](0086-reduce-macos-external-tool-install-time.md)
 - [0087: 一時的なCI計測wrapperを通常運用から外す](0087-remove-temporary-ci-timing-wrappers.md)
 - [0088: 出力形式基準コマンド実装後の変換ドキュメントを同期する](0088-sync-conversion-docs-after-output-format-commands.md)
+- [0089: 出力形式基準のoutputPath設定移行方針を決める](0089-design-output-format-output-path-settings.md)
 
 ## Todo Tasks
+
+- [0090: 出力形式基準outputPath設定のテストを追加する](0090-add-output-format-output-path-setting-tests.md)
+- [0091: 出力形式基準outputPath設定を実装する](0091-implement-output-format-output-path-settings.md)

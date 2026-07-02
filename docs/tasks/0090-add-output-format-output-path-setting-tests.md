@@ -1,0 +1,35 @@
+# タスク: 出力形式基準outputPath設定のテストを追加する
+
+## Status
+
+Todo
+
+## 目的
+
+`outputPath.convertTo*` 設定を実装する前に、新設定と既存ペア別設定の優先順位をテストで固定する。
+
+## 完了条件
+
+- `outputPath.convertToPdf` が設定されている場合、PDF出力コマンドでペア別設定より優先されることをテストする
+- `outputPath.convertToPng` が設定されている場合、PNG出力コマンドでペア別設定より優先されることをテストする
+- `outputPath.convertToSvg` が設定されている場合、PDF入力などページ出力を含む変換で `${page}` を扱えることをテストする
+- 新設定が空文字、トリムして空文字、または未設定の場合、既存ペア別設定へfallbackすることをテストする
+
+## 変更可能なファイル
+
+- `test/`
+
+## 対象外
+
+- `src/` の実装変更
+- `package.json` の設定追加
+- 既存テスト期待値の都合のよい変更
+
+## 関連
+
+- `docs/specs/output-format-conversion.md`
+- `docs/tasks/0089-design-output-format-output-path-settings.md`
+
+## 確認方法
+
+- `CI=true pnpm run test -- --grep "outputPath"`

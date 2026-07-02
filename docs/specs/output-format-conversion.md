@@ -139,7 +139,7 @@ ${fileDirname}/${fileBasenameNoExtension}-${page}.svg
 - `latex-graphics-helper.outputPath.convertJpegToPdf`
 - `latex-graphics-helper.outputPath.convertPdfToPng`
 
-出力形式基準コマンドは、内部で入力形式を判定し、対応する既存設定を使用する。
+出力形式基準コマンドは、内部で入力形式を判定し、対応する既存設定をfallbackとして使用する。
 
 理由:
 
@@ -147,7 +147,58 @@ ${fileDirname}/${fileBasenameNoExtension}-${page}.svg
 - Draw.ioのページ出力と画像の単一出力では、自然な初期値が異なる
 - 1つの`outputPath.convertToPdf`だけへ急に統合すると、既存の出力規則を変えやすい
 
-将来、出力形式基準の設定を追加する場合は、新設定を優先し、既存ペア別設定をfallbackとして読む。
+### 新しい出力形式基準設定
+
+今後、以下の設定を追加する。
+
+| 設定キー                                         | 対象コマンド                          |
+| ------------------------------------------------ | ------------------------------------- |
+| `latex-graphics-helper.outputPath.convertToPdf`  | `latex-graphics-helper.convertToPdf`  |
+| `latex-graphics-helper.outputPath.convertToPng`  | `latex-graphics-helper.convertToPng`  |
+| `latex-graphics-helper.outputPath.convertToJpeg` | `latex-graphics-helper.convertToJpeg` |
+| `latex-graphics-helper.outputPath.convertToWebp` | `latex-graphics-helper.convertToWebp` |
+| `latex-graphics-helper.outputPath.convertToAvif` | `latex-graphics-helper.convertToAvif` |
+| `latex-graphics-helper.outputPath.convertToSvg`  | `latex-graphics-helper.convertToSvg`  |
+
+新設定の既定値は空文字にする。
+
+空文字、またはトリム後に空文字になる値は「出力形式基準設定を使わない」という意味にする。
+
+理由:
+
+- VS Code設定はpackage manifestに既定値を持つため、通常の文字列既定値を入れると既存ペア別設定より常に優先されてしまう
+- 既存ユーザーのペア別設定を壊さず、明示的に新設定を書いた場合だけ移行できる
+
+### 優先順位
+
+出力パス設定は以下の順で解決する。
+
+1. 対応する `outputPath.convertTo*` が空文字（トリム後）でなければ使う
+2. 空文字（トリム後）または未設定なら、既存ペア別 `outputPath.convertXToY` を使う
+3. 既存ペア別設定も未設定なら、そのペア別設定の既定値を使う
+
+例:
+
+- PNG → PDFで `outputPath.convertToPdf` が空文字（トリム後）でなければ、それを使う
+- PNG → PDFで `outputPath.convertToPdf` が空文字（トリム後）なら、`outputPath.convertPngToPdf` を使う
+- PDF → PNGで `outputPath.convertToPng` が空文字（トリム後）でなければ、それを使う
+- PDF → PNGで `outputPath.convertToPng` が空文字（トリム後）なら、`outputPath.convertPdfToPng` を使う
+
+### ページ番号変数
+
+PDFから画像・SVGへ変換する場合は、出力形式基準設定を使う場合でも `${page}` を使える。
+
+PDF入力やDraw.io入力のようにページ単位の出力になる変換では、出力パスが同じ変換内で重複した場合に全体停止する。
+
+`outputPath.convertToPng` などに `${page}` を含めるかどうかはユーザー設定に委ねる。ただし、複数ページ入力で `${page}` がなく出力先が重複する場合は、既存の重複検出により全体停止する。
+
+ユーザーがこの挙動を理解しやすいよう、VS Code設定のdescriptionには、複数ページ入力の変換時には `${page}` を含める必要がある旨の注意書きを追加する。
+
+### 既存設定の扱い
+
+既存ペア別設定は、この移行では削除しない。
+
+削除やdeprecated表示は、十分に移行期間を置いた後に別タスクで判断する。
 
 既存設定のキーに誤りがある場合も、この仕様タスクでは修正しない。修正が必要なら別タスクで扱う。
 
