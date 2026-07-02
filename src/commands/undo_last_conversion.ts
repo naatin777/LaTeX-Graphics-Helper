@@ -6,6 +6,7 @@ import {
   type ConversionUndoRecord,
   undoConversionOutputs,
 } from "../operations/undo_last_conversion.js";
+import { userMessage } from "./user_messages.js";
 
 export const UNDO_LAST_CONVERSION_COMMAND = "latex-graphics-helper.undoLastConversion";
 
@@ -20,22 +21,20 @@ export async function rememberLastConversion(outputs: ConversionOutput[]): Promi
 export async function undoLastConversion(expectedId?: string): Promise<void> {
   try {
     if (!lastConversion) {
-      await vscode.window.showInformationMessage("There is no conversion to undo.");
+      await vscode.window.showInformationMessage(userMessage("message.undo.none"));
       return;
     }
 
     if (expectedId && expectedId !== lastConversion.id) {
-      await vscode.window.showWarningMessage(
-        "A newer conversion has completed. The older conversion was not removed.",
-      );
+      await vscode.window.showWarningMessage(userMessage("message.undo.newerConversionCompleted"));
       return;
     }
 
     await undoConversionOutputs(lastConversion);
     lastConversion = undefined;
-    await vscode.window.showInformationMessage("Removed the last conversion output.");
+    await vscode.window.showInformationMessage(userMessage("message.undo.removedLastOutput"));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(`Could not undo the last conversion: ${message}`);
+    await vscode.window.showErrorMessage(userMessage("message.undo.failed", message));
   }
 }

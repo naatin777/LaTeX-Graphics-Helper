@@ -14,12 +14,12 @@ import {
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { userMessage } from "./user_messages.js";
 
 export const CONVERT_PNG_TO_PDF_COMMAND = "latex-graphics-helper.convertPngToPdf";
 export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
-const UNDO_ACTION = "Undo";
 const PNG_EXTENSIONS = [".png"] as const;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
 const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
@@ -42,20 +42,20 @@ const PDF_IMAGE_EXTENSIONS = [
 export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PNG_EXTENSIONS,
-    titleInputName: "PNG",
-    successInputName: "PNG",
-    errorPrefix: "Failed to convert PNG to PDF",
-    cancelMessage: "PNG conversion was cancelled.",
+    titleKey: "message.progress.convertPngToPdf.title",
+    successKey: "message.convertPngToPdf.success",
+    failedKey: "message.convertPngToPdf.failed",
+    cancelledKey: "message.convertPngToPdf.cancelled",
   });
 }
 
 export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PDF_IMAGE_EXTENSIONS,
-    titleInputName: "selected",
-    successInputName: "file",
-    errorPrefix: "Failed to convert to PDF",
-    cancelMessage: "PDF conversion was cancelled.",
+    titleKey: "message.progress.convertToPdf.title",
+    successKey: "message.convertToPdf.success",
+    failedKey: "message.convertToPdf.failed",
+    cancelledKey: "message.convertToPdf.cancelled",
   });
 }
 
@@ -64,10 +64,10 @@ async function convertSelectedPngFilesToPdf(
   uris: vscode.Uri[] | undefined,
   messages: {
     supportedExtensions: readonly string[];
-    titleInputName: string;
-    successInputName: string;
-    errorPrefix: string;
-    cancelMessage: string;
+    titleKey: "message.progress.convertPngToPdf.title" | "message.progress.convertToPdf.title";
+    successKey: "message.convertPngToPdf.success" | "message.convertToPdf.success";
+    failedKey: "message.convertPngToPdf.failed" | "message.convertToPdf.failed";
+    cancelledKey: "message.convertPngToPdf.cancelled" | "message.convertToPdf.cancelled";
   },
 ): Promise<void> {
   try {
@@ -95,12 +95,12 @@ async function convertSelectedPngFilesToPdf(
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Converting ${jobs.length} ${messages.titleInputName} file(s) to PDF`,
+        title: userMessage(messages.titleKey, jobs.length),
         cancellable: true,
       },
       async (progress, token) => {
         return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: "Preparing PDF conversion..." });
+          progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
           return convertPngToPdfFiles({
             jobs,
             signal,
@@ -114,30 +114,33 @@ async function convertSelectedPngFilesToPdf(
       },
     );
 
-    const successMessage = `Converted ${outputs.length} ${messages.successInputName} file(s) to PDF.`;
+    const successMessage = userMessage(messages.successKey, outputs.length);
     let undoId: string;
 
     try {
       undoId = await rememberLastConversion(outputs);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(`${successMessage} Undo is unavailable: ${message}`);
+      await vscode.window.showWarningMessage(
+        userMessage("message.undoUnavailable", successMessage, message),
+      );
       return;
     }
 
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, UNDO_ACTION);
+    const undoAction = userMessage("message.action.undo");
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
-    if (selectedAction === UNDO_ACTION) {
+    if (selectedAction === undoAction) {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(messages.cancelMessage);
+      await vscode.window.showInformationMessage(userMessage(messages.cancelledKey));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(`${messages.errorPrefix}: ${message}`);
+    await vscode.window.showErrorMessage(userMessage(messages.failedKey, message));
   }
 }
 

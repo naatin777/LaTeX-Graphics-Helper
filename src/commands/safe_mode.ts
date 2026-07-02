@@ -2,19 +2,9 @@ import * as vscode from "vscode";
 
 import { SafeModeState } from "../application/safe_mode.js";
 import type { OutputConflictDecision } from "../operations/commit_conversion_outputs.js";
+import { userMessage } from "./user_messages.js";
 
 export const TOGGLE_SAFE_MODE_COMMAND = "latex-graphics-helper.toggleSafeMode";
-
-const KEEP_BOTH = "Keep Both";
-const DO_NOT_OVERWRITE = "Do Not Overwrite";
-const OVERWRITE = "Overwrite";
-
-const KEEP_BOTH_ITEM: vscode.MessageItem = { title: KEEP_BOTH };
-const DO_NOT_OVERWRITE_ITEM: vscode.MessageItem = {
-  title: DO_NOT_OVERWRITE,
-  isCloseAffordance: true,
-};
-const OVERWRITE_ITEM: vscode.MessageItem = { title: OVERWRITE };
 
 let safeModeState: SafeModeState | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
@@ -45,19 +35,24 @@ export async function resolveOutputConflicts(conflicts: string[]): Promise<Outpu
     return "overwrite";
   }
 
+  const keepBoth = userMessage("message.safeMode.keepBoth");
+  const overwrite = userMessage("message.safeMode.overwrite");
   const selected = await vscode.window.showWarningMessage(
-    `${conflicts.length} output file(s) already exist.`,
+    userMessage("message.safeMode.conflicts", conflicts.length),
     { modal: true },
-    KEEP_BOTH_ITEM,
-    DO_NOT_OVERWRITE_ITEM,
-    OVERWRITE_ITEM,
+    { title: keepBoth },
+    {
+      title: userMessage("message.safeMode.doNotOverwrite"),
+      isCloseAffordance: true,
+    },
+    { title: overwrite },
   );
 
-  if (selected?.title === KEEP_BOTH) {
+  if (selected?.title === keepBoth) {
     return "keep-both";
   }
 
-  if (selected?.title === OVERWRITE) {
+  if (selected?.title === overwrite) {
     return "overwrite";
   }
 
