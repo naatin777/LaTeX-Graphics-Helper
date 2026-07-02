@@ -11,7 +11,24 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            docs_only: ${{ steps.detect.outputs.docs_only }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: 0
+
+            - id: detect
+              run: bash .github/scripts/detect-docs-only.sh
+              shell: bash
+              env:
+                  EVENT_BEFORE: ${{ github.event.before }}
+
     vscode-test:
+        needs: changes
+        if: needs.changes.outputs.docs_only != 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v7
