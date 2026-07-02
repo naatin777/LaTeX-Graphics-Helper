@@ -5,10 +5,10 @@ import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { userMessage } from "./user_messages.js";
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
-const UNDO_ACTION = "Undo";
 
 export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
   try {
@@ -36,13 +36,13 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Cropping ${jobs.length} PDF file(s)`,
+        title: userMessage("message.progress.cropPdf.title", jobs.length),
         cancellable: true,
       },
       async (progress, token) => {
         try {
           return await withCancellationSignal(token, async (signal) => {
-            progress.report({ message: "Preparing PDF conversion..." });
+            progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
             return cropPdfFiles({
               jobs,
               margin: selectedMargin,
@@ -58,30 +58,33 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
       },
     );
 
-    const successMessage = `Cropped ${jobs.length} PDF file(s).`;
+    const successMessage = userMessage("message.cropPdf.success", jobs.length);
     let undoId: string;
 
     try {
       undoId = await rememberLastConversion(outputs);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(`${successMessage} Undo is unavailable: ${message}`);
+      await vscode.window.showWarningMessage(
+        userMessage("message.undoUnavailable", successMessage, message),
+      );
       return;
     }
 
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, UNDO_ACTION);
+    const undoAction = userMessage("message.action.undo");
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
-    if (selectedAction === UNDO_ACTION) {
+    if (selectedAction === undoAction) {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage("PDF cropping was cancelled.");
+      await vscode.window.showInformationMessage(userMessage("message.cropPdf.cancelled"));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(`Failed to crop PDF: ${message}`);
+    await vscode.window.showErrorMessage(userMessage("message.cropPdf.failed", message));
   }
 }
 

@@ -95,6 +95,7 @@
 - [0075: convertToAvifを実装する](0075-implement-convert-to-avif.md)
 - [0076: withProgress cancellation handlingを共通化する](0076-common-progress-cancellation.md)
 - [0077: Playwrightテストをsrc配下から移動する](0077-relocate-playwright-tests.md)
+- [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)
 - [0079: vscode-testをshard並列実行できるか検証する](0079-vscode-test-sharding.md)
 - [0080: VS Code integration testで各テストの所要時間を表示する](0080-show-vscode-test-durations.md)
 - [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
@@ -106,5 +107,3 @@
 - [0087: 一時的なCI計測wrapperを通常運用から外す](0087-remove-temporary-ci-timing-wrappers.md)
 
 ## Todo Tasks
-
-- [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)

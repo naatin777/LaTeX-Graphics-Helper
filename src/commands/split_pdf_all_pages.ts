@@ -5,9 +5,9 @@ import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { userMessage } from "./user_messages.js";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
-const UNDO_ACTION = "Undo";
 
 export async function splitPdfAllPagesCommand(
   uri?: vscode.Uri,
@@ -26,12 +26,12 @@ export async function splitPdfAllPagesCommand(
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Splitting ${jobs.length} PDF file(s)`,
+        title: userMessage("message.progress.splitPdf.title", jobs.length),
         cancellable: true,
       },
       async (progress, token) => {
         return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: "Preparing PDF split..." });
+          progress.report({ message: userMessage("message.progress.preparePdfSplit") });
           return splitPdfAllPages({
             jobs,
             signal,
@@ -41,30 +41,33 @@ export async function splitPdfAllPagesCommand(
       },
     );
 
-    const successMessage = `Created ${outputs.length} split PDF file(s).`;
+    const successMessage = userMessage("message.splitPdf.success", outputs.length);
     let undoId: string;
 
     try {
       undoId = await rememberLastConversion(outputs);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(`${successMessage} Undo is unavailable: ${message}`);
+      await vscode.window.showWarningMessage(
+        userMessage("message.undoUnavailable", successMessage, message),
+      );
       return;
     }
 
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, UNDO_ACTION);
+    const undoAction = userMessage("message.action.undo");
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
-    if (selectedAction === UNDO_ACTION) {
+    if (selectedAction === undoAction) {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage("PDF splitting was cancelled.");
+      await vscode.window.showInformationMessage(userMessage("message.splitPdf.cancelled"));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(`Failed to split PDF: ${message}`);
+    await vscode.window.showErrorMessage(userMessage("message.splitPdf.failed", message));
   }
 }
 

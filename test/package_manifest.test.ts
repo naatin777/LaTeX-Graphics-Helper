@@ -263,6 +263,13 @@ suite("package.jsonの変換メニュー定義", () => {
     assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
   });
 
+  test("英語と日本語のNLSキーが一致している", async () => {
+    const enMessages = await readJson<Record<string, string>>("package.nls.json");
+    const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
+
+    assert.deepStrictEqual(sortedKeys(jaMessages), sortedKeys(enMessages));
+  });
+
   test("WebPとAVIFのeffort設定を公開する", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const properties = packageJson.contributes.configuration.properties;
@@ -287,4 +294,11 @@ suite("package.jsonの変換メニュー定義", () => {
 async function readJson<T>(relativePath: string): Promise<T> {
   const content = await readFile(path.join(repositoryRoot, relativePath), "utf8");
   return JSON.parse(content) as T;
+}
+
+function sortedKeys(record: Record<string, string>): string[] {
+  const keys = Object.keys(record);
+  // 比較用の一時配列だけを並び替えるため、呼び出し元の値は変更しない。
+  // oxlint-disable-next-line unicorn/no-array-sort
+  return keys.sort();
 }
