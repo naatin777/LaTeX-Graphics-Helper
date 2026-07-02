@@ -95,6 +95,7 @@
 - [0075: convertToAvifを実装する](0075-implement-convert-to-avif.md)
 - [0076: withProgress cancellation handlingを共通化する](0076-common-progress-cancellation.md)
 - [0077: Playwrightテストをsrc配下から移動する](0077-relocate-playwright-tests.md)
+- [0079: vscode-testをshard並列実行できるか検証する](0079-vscode-test-sharding.md)
 
 ## Todo Tasks
 
