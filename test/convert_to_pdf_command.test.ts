@@ -36,6 +36,7 @@ import sinon from "sinon";
 import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+import { withWorkspaceSettings } from "./helpers/workspace_settings.js";
 import { logicalSourcePathForOutputTemplate } from "../src/commands/convert_png_to_pdf.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -108,6 +109,45 @@ suite("PDFに変換コマンド", () => {
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test("outputPath.convertToPdfが設定されている場合はペア別設定より優先する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.png");
+      const outputPath = path.join(temporaryDirectory, "to-pdf-source.pdf");
+      await copyFile(fixturePngPath, sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          "latex-graphics-helper.outputPath.convertToPdf":
+            "${fileDirname}/to-pdf-${fileBasenameNoExtension}.pdf",
+          "latex-graphics-helper.outputPath.convertPngToPdf":
+            "${fileDirname}/pair-${fileBasenameNoExtension}.pdf",
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
+      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source.pdf"));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("outputPath.convertToPdfが空文字の場合はペア別設定へfallbackする", async () => {
+    await assertConvertToPdfOutputPathFallsBackToPairSetting("");
+  });
+
+  test("outputPath.convertToPdfが空白のみの場合はペア別設定へfallbackする", async () => {
+    await assertConvertToPdfOutputPathFallsBackToPairSetting("   ");
+  });
+
+  test("outputPath.convertToPdfが未設定の場合はペア別設定へfallbackする", async () => {
+    await assertConvertToPdfOutputPathFallsBackToPairSetting(undefined);
   });
 
   test("JPEGとWebPを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
@@ -271,6 +311,33 @@ suite("PDFに変換コマンド", () => {
     }
   });
 });
+
+async function assertConvertToPdfOutputPathFallsBackToPairSetting(
+  convertToPdfTemplate: string | undefined,
+): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, "source.png");
+    const outputPath = path.join(temporaryDirectory, "pair-source.pdf");
+    await copyFile(fixturePngPath, sourcePath);
+
+    await withWorkspaceSettings(
+      {
+        "latex-graphics-helper.outputPath.convertToPdf": convertToPdfTemplate,
+        "latex-graphics-helper.outputPath.convertPngToPdf":
+          "${fileDirname}/pair-${fileBasenameNoExtension}.pdf",
+      },
+      async () => {
+        await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+      },
+    );
+
+    await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function assertImageVariantsConvertToPdf(
   variants: readonly (typeof imageVariants)[number][],

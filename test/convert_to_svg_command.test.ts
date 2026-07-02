@@ -22,7 +22,7 @@
 // - cancellation tokenのUI操作
 
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { PDFDocument } from "pdf-lib";
@@ -30,6 +30,7 @@ import sinon from "sinon";
 import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+import { withWorkspaceSettings } from "./helpers/workspace_settings.js";
 
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 
@@ -77,6 +78,40 @@ suite("SVGに変換コマンド", () => {
 
       await assertGeneratedSvg(firstOutputPath);
       await assertGeneratedSvg(secondOutputPath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("outputPath.convertToSvgが設定されている場合はペア別設定より優先してpageを展開する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.pdf");
+      const firstOutputPath = path.join(temporaryDirectory, "to-svg-source-1.svg");
+      const secondOutputPath = path.join(temporaryDirectory, "to-svg-source-2.svg");
+      await writeTwoPagePdf(sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          "latex-graphics-helper.outputPath.convertToSvg":
+            "${fileDirname}/to-svg-${fileBasenameNoExtension}-${page}.svg",
+          "latex-graphics-helper.outputPath.convertPdfToSvg":
+            "${fileDirname}/pair-${fileBasenameNoExtension}-${page}.svg",
+        },
+        async () => {
+          const commandExecution = vscode.commands.executeCommand(
+            CONVERT_TO_SVG_COMMAND,
+            vscode.Uri.file(sourcePath),
+          );
+          await runCommandAndClearNotificationsUntilDone(commandExecution);
+        },
+      );
+
+      await assertGeneratedSvg(firstOutputPath);
+      await assertGeneratedSvg(secondOutputPath);
+      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source-1.svg"));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source-2.svg"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
@@ -152,4 +187,10 @@ function replaceExtension(filePath: string, extension: string): string {
     path.dirname(filePath),
     `${path.basename(filePath, path.extname(filePath))}${extension}`,
   );
+}
+
+async function assertFileDoesNotExist(filePath: string): Promise<void> {
+  await assert.rejects(access(filePath), (error) => {
+    return error instanceof Error && "code" in error && error.code === "ENOENT";
+  });
 }
