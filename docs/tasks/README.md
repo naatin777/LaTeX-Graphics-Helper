@@ -6,7 +6,7 @@
 
 ## Current Task
 
-なし。
+- [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
 
 ## Rules
 
