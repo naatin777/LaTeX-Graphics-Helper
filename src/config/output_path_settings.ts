@@ -6,9 +6,9 @@ export function readOutputFormatOutputTemplate(
   configuration: ConfigurationReader,
   key: string,
 ): string | undefined {
-  const template = configuration.get<string>(key, "");
+  const template = configuration.get<unknown>(key, "");
 
-  if (template.trim() === "") {
+  if (typeof template !== "string" || template.trim() === "") {
     return undefined;
   }
 

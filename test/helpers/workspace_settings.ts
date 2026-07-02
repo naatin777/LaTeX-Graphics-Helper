@@ -22,15 +22,19 @@ export async function withWorkspaceSettings(
     nextSettings[key] = value;
   }
 
+  const changedKeys = Object.keys(settings).filter((key) => {
+    return originalSettings[key] !== nextSettings[key];
+  });
+
   await mkdir(path.dirname(settingsPath), { recursive: true });
-  const settingsChanged = onceWorkspaceConfigurationChanges(settings);
+  const settingsChanged = onceWorkspaceConfigurationChanges(changedKeys);
   await writeWorkspaceSettings(settingsPath, nextSettings);
 
   try {
     await settingsChanged;
     await callback();
   } finally {
-    const settingsRestored = onceWorkspaceConfigurationChanges(settings);
+    const settingsRestored = onceWorkspaceConfigurationChanges(changedKeys);
     await restoreWorkspaceSettings(settingsPath, originalSettingsText);
     await settingsRestored;
   }
@@ -82,11 +86,7 @@ async function restoreWorkspaceSettings(
   await writeFile(settingsPath, originalSettingsText);
 }
 
-function onceWorkspaceConfigurationChanges(settings: Record<string, unknown>): Promise<void> {
-  const changedKeys = Object.entries(settings)
-    .filter(([, value]) => value !== undefined)
-    .map(([key]) => key);
-
+function onceWorkspaceConfigurationChanges(changedKeys: string[]): Promise<void> {
   if (changedKeys.length === 0) {
     return Promise.resolve();
   }
