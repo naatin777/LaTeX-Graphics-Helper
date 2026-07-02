@@ -7,7 +7,7 @@
 [English](README.md) | 日本語
 
 VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
-PDF の分割、トリミング、画像・SVG・Mermaid・Draw.io 画像の PDF 変換、Mermaid の SVG 変換、LaTeX コード生成などを提供します。
+PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.io 画像の形式変換、LaTeX コード生成などを提供します。
 
 ## デモ
 
@@ -21,9 +21,9 @@ PDF の分割、トリミング、画像・SVG・Mermaid・Draw.io 画像の PDF
 
 ### 変換
 
-- **PDF へ変換**: PNG, JPEG, WebP, AVIF, SVG, Mermaid ファイル、editable Draw.io 画像を PDF 形式に変換します。
-- **SVG へ変換**: Mermaid ファイルを SVG 形式に変換します。
-- **共有変換メニュー**: Explorer の右クリックメニューでは `変換 > PDF` / `変換 > SVG` のように出力形式を選びます。
+- **出力形式を選ぶ変換**: Explorer の右クリックメニューでは `変換 > PDF` / `変換 > PNG` / `変換 > JPEG` / `変換 > WebP` / `変換 > AVIF` / `変換 > SVG` のように、出力形式を選んで変換します。
+- **PDF / 画像 / SVG / Mermaid / Draw.io の変換**: 対応入力を、選択した出力形式へまとめて変換します。
+- **混在選択**: 同じ出力形式へ変換できる複数形式のファイルを、1回の操作で変換できます。
 
 ### LaTeX コード生成
 
@@ -32,17 +32,19 @@ PDF の分割、トリミング、画像・SVG・Mermaid・Draw.io 画像の PDF
 
 ## コマンド一覧
 
-| 機能                            | 入力                                                 | 出力                        | 主な用途                                | 必要な外部ツール                        |
-| ------------------------------- | ---------------------------------------------------- | --------------------------- | --------------------------------------- | --------------------------------------- |
-| PDF の余白トリミング            | `.pdf`                                               | `.pdf`                      | 図版 PDF の余白を削除                   | Ghostscript                             |
-| PDF の分割                      | `.pdf`                                               | `.pdf`                      | PDF をページごとに分割                  | 不要                                    |
-| PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`            | `.pdf`                      | ラスター画像を PDF に変換               | 不要                                    |
-| PDF へ変換                      | `.svg`                                               | `.pdf`                      | SVG 図版を PDF に変換                   | `rsvg-convert` または Chrome / Chromium |
-| PDF へ変換                      | `.mmd`, `.mermaid`                                   | `.pdf`                      | Mermaid 図を PDF に変換                 | Chrome / Chromium                       |
-| PDF へ変換                      | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg` | `.pdf`                      | editable Draw.io 画像を PDF に変換      | Draw.io Desktop                         |
-| SVG へ変換                      | `.mmd`, `.mermaid`                                   | `.svg`                      | Mermaid 図を SVG に変換                 | Chrome / Chromium                       |
-| PDF の LaTeX 挿入               | `.pdf`                                               | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                                    |
-| クリップボード画像の LaTeX 挿入 | クリップボード画像                                   | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります                |
+| 機能                            | 入力                                                                              | 出力                        | 主な用途                                | 必要な外部ツール         |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------- | --------------------------------------- | ------------------------ |
+| PDF の余白トリミング            | `.pdf`                                                                            | `.pdf`                      | 図版 PDF の余白を削除                   | Ghostscript              |
+| PDF の分割                      | `.pdf`                                                                            | `.pdf`                      | PDF をページごとに分割                  | 不要                     |
+| PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                         | `.pdf`                      | ラスター画像を PDF に変換               | 不要                     |
+| PDF へ変換                      | `.svg`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.pdf`                      | 図版ファイルを PDF に変換               | 入力形式により異なります |
+| PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | 入力形式により異なります |
+| JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | 入力形式により異なります |
+| WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | 入力形式により異なります |
+| AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | 入力形式により異なります |
+| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.svg`                      | 図版ファイルを SVG に変換               | 入力形式により異なります |
+| PDF の LaTeX 挿入               | `.pdf`                                                                            | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                     |
+| クリップボード画像の LaTeX 挿入 | クリップボード画像                                                                | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります |
 
 ## インストール方法
 
@@ -64,12 +66,12 @@ Open VSX Registry からもインストールできます。
 
 一部の機能では、VS Code 拡張機能とは別に外部ツールが必要です。使用する機能に応じて、必要なツールをインストールしてください。
 
-| ツール                   | 用途                                | 必須になる機能                                       | 備考                                                  |
-| ------------------------ | ----------------------------------- | ---------------------------------------------------- | ----------------------------------------------------- |
-| Ghostscript              | PDF の余白検出                      | PDF トリミング                                       | `gs` または `gswin64c` が利用可能である必要があります |
-| rsvg-convert             | SVG から PDF への変換               | SVG から PDF 変換                                    | SVG 変換バックエンドの 1 つです                       |
-| Google Chrome / Chromium | SVG / Mermaid から PDF/SVG への変換 | SVG から PDF、MermaidからPDF/SVG                     | puppeteer-core / Mermaid CLI から使用します           |
-| Draw.io Desktop          | editable Draw.io 画像の PDF 変換    | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg` | Draw.io デスクトップアプリケーションが必要です        |
+| ツール                   | 用途                        | 必須になる機能                                        | 備考                                                  |
+| ------------------------ | --------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| Ghostscript              | PDF の余白検出              | PDF トリミング                                        | `gs` または `gswin64c` が利用可能である必要があります |
+| rsvg-convert             | SVG から PDF への変換       | SVG から PDF 変換                                     | SVG 変換バックエンドの 1 つです                       |
+| Google Chrome / Chromium | SVG / Mermaid 変換          | SVG から PDF、Mermaid から PDF/PNG/JPEG/WebP/AVIF/SVG | puppeteer-core / Mermaid CLI から使用します           |
+| Draw.io Desktop          | editable Draw.io 画像の変換 | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`  | Draw.io デスクトップアプリケーションが必要です        |
 
 ### すべての機能を利用する場合
 
