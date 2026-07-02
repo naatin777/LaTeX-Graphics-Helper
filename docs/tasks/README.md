@@ -107,6 +107,7 @@
 - [0087: 一時的なCI計測wrapperを通常運用から外す](0087-remove-temporary-ci-timing-wrappers.md)
 - [0088: 出力形式基準コマンド実装後の変換ドキュメントを同期する](0088-sync-conversion-docs-after-output-format-commands.md)
 - [0089: 出力形式基準のoutputPath設定移行方針を決める](0089-design-output-format-output-path-settings.md)
+- [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
 
 ## Todo Tasks
 
