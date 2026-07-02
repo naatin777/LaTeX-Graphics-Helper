@@ -81,7 +81,7 @@ parallel stepsそのものより、以下を優先する。
 
 ## 参考
 
-- `docs/research/2026-07-02-github-actions-parallel-steps.md`
+- [GitHub Actions parallel steps調査](../research/2026-07-02-github-actions-parallel-steps.md)
 
 ## 変更可能なファイル
 
