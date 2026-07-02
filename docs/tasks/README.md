@@ -96,6 +96,7 @@
 - [0076: withProgress cancellation handlingを共通化する](0076-common-progress-cancellation.md)
 - [0077: Playwrightテストをsrc配下から移動する](0077-relocate-playwright-tests.md)
 - [0079: vscode-testをshard並列実行できるか検証する](0079-vscode-test-sharding.md)
+- [0080: VS Code integration testで各テストの所要時間を表示する](0080-show-vscode-test-durations.md)
 
 ## Todo Tasks
 
