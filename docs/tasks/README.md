@@ -105,3 +105,4 @@
 ## Todo Tasks
 
 - [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)
+- [0085: 外部ツールinstall時間をOS別に分解する](0085-break-down-external-tool-install-time.md)
