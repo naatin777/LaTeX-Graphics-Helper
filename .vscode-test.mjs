@@ -30,6 +30,9 @@ export default defineConfig({
 		// 遅いテストの目安。
 		slow: 5000,
 
+		// 各test caseの所要時間をCIログから確認できるようにする。
+		reporter: 'list',
+
 		// async test の取りこぼしを減らす。
 		color: true,
 	},
