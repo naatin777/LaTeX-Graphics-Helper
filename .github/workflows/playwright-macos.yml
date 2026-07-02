@@ -16,9 +16,11 @@ jobs:
         steps:
             - uses: actions/checkout@v7
 
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.8.0
+            - run: corepack enable
+              shell: bash
+
+            - run: corepack prepare pnpm@11.8.0 --activate
+              shell: bash
 
             - uses: actions/setup-node@v6
               with:

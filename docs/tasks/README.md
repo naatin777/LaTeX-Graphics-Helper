@@ -6,7 +6,7 @@
 
 ## Current Task
 
-なし。
+- [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
 
 ## Rules
 
