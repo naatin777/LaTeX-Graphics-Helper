@@ -6,17 +6,14 @@ echo "Verifying image conversion tools..."
 run_timed() {
 	local label="$1"
 	shift
-	local started_at
-	started_at="$(date +%s)"
+	local start="$SECONDS"
 	echo "::group::${label}"
 	set +e
-	"$@"
+	(set -e; "$@")
 	local exit_code="$?"
 	set -e
-	local ended_at
-	ended_at="$(date +%s)"
 	echo "::endgroup::"
-	echo "[timing] ${label}: $((ended_at - started_at))s"
+	echo "[timing] ${label}: $((SECONDS - start))s"
 	return "$exit_code"
 }
 
