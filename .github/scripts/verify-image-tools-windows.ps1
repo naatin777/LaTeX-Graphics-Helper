@@ -1,24 +1,5 @@
 $ErrorActionPreference = 'Stop'
 
-function Invoke-TimedStep {
-	param(
-		[Parameter(Mandatory = $true)]
-		[string] $Name,
-		[Parameter(Mandatory = $true)]
-		[scriptblock] $ScriptBlock
-	)
-
-	Write-Host "::group::$Name"
-	$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-	try {
-		& $ScriptBlock
-	} finally {
-		$stopwatch.Stop()
-		Write-Host '::endgroup::'
-		Write-Host ("[timing] {0}: {1:N1}s" -f $Name, $stopwatch.Elapsed.TotalSeconds)
-	}
-}
-
 Write-Host 'Verifying image conversion tools...'
 
 $settingsPath = Join-Path 'test/fixtures/workspace/.vscode' 'settings.json'
@@ -63,17 +44,13 @@ try {
 </svg>
 '@ | Set-Content $svgPath -Encoding utf8
 
-	Invoke-TimedStep 'rsvg-convert SVG to PDF smoke test' {
-		& $rsvgConvert --format=pdf --output $pdfPath $svgPath
-		if ($LASTEXITCODE -ne 0) { throw "rsvg-convert failed with exit code $LASTEXITCODE" }
-	}
+	& $rsvgConvert --format=pdf --output $pdfPath $svgPath
+	if ($LASTEXITCODE -ne 0) { throw "rsvg-convert failed with exit code $LASTEXITCODE" }
 	if (-not (Test-Path $pdfPath)) { throw "missing generated PDF: $pdfPath" }
 	if ((Get-Item $pdfPath).Length -le 0) { throw "generated PDF is empty: $pdfPath" }
 
-	Invoke-TimedStep 'pdftocairo PDF to PNG smoke test' {
-		& $pdftocairo -png -singlefile $pdfPath $pngPrefix
-		if ($LASTEXITCODE -ne 0) { throw "pdftocairo failed with exit code $LASTEXITCODE" }
-	}
+	& $pdftocairo -png -singlefile $pdfPath $pngPrefix
+	if ($LASTEXITCODE -ne 0) { throw "pdftocairo failed with exit code $LASTEXITCODE" }
 	if (-not (Test-Path $pngPath)) { throw "missing generated PNG: $pngPath" }
 	if ((Get-Item $pngPath).Length -le 0) { throw "generated PNG is empty: $pngPath" }
 } finally {

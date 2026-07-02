@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -49,3 +49,11 @@ GitHub Actionsの`Test (macOS)` / `vscode-test`で、外部変換ツールinstal
 - 環境変数だけでpathを注入せず、VS Code test fixtureの`settings.json`にexecPathを書く方針を維持する。
 - Homebrew cacheを入れる場合は、cache restore/save自体の時間も含めて評価する。
 - GitHub-hosted runnerのpreinstalled toolに依存する場合は、runner image更新で壊れるリスクを記録する。
+
+## 結論
+
+現時点では実装しない。
+
+0085の実測では、macOSの`brew install Poppler / rsvg / Ghostscript`は32秒だった。削減できる可能性はあるが、CI全体の最長待ち時間はWindowsの`vscode-test`が支配しやすく、macOSのHomebrew installだけを最適化してもPR全体の待ち時間は劇的には改善しない。
+
+そのため、Homebrew cacheやpreinstalled tool依存などの複雑なCI最適化は採用しない。今後、macOSの外部ツールinstallが明確な律速になった場合に再検討する。

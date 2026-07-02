@@ -3,20 +3,6 @@ set -euo pipefail
 
 echo "Verifying image conversion tools..."
 
-run_timed() {
-	local label="$1"
-	shift
-	local start="$SECONDS"
-	echo "::group::${label}"
-	set +e
-	(set -e; "$@")
-	local exit_code="$?"
-	set -e
-	echo "::endgroup::"
-	echo "[timing] ${label}: $((SECONDS - start))s"
-	return "$exit_code"
-}
-
 settings_path="test/fixtures/workspace/.vscode/settings.json"
 
 read_setting() {
@@ -61,10 +47,10 @@ cat >"${svg_path}" <<'SVG'
 </svg>
 SVG
 
-run_timed "rsvg-convert SVG to PDF smoke test" "${rsvg_convert_path}" --format=pdf --output "${pdf_path}" "${svg_path}"
+"${rsvg_convert_path}" --format=pdf --output "${pdf_path}" "${svg_path}"
 test -s "${pdf_path}"
 
-run_timed "pdftocairo PDF to PNG smoke test" "${pdftocairo_path}" -png -singlefile "${pdf_path}" "${png_prefix}"
+"${pdftocairo_path}" -png -singlefile "${pdf_path}" "${png_prefix}"
 test -s "${png_path}"
 
 echo "Image conversion tool smoke test passed."
