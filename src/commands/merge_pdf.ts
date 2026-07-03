@@ -5,9 +5,9 @@ import * as vscode from "vscode";
 import { mergePdf } from "../operations/merge_pdf.js";
 import { userMessage } from "./user_messages.js";
 
-export const MERGE_PDF_SELECTED_PAGES_COMMAND = "latex-graphics-helper.mergePdf.selectedPages";
+export const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
 
-export async function mergePdfSelectedPagesCommand(
+export async function mergePdfSelectedFilesCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
 ): Promise<void> {

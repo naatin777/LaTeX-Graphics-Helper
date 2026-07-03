@@ -10,13 +10,14 @@ import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
 
-const MERGE_PDF_SELECTED_PAGES_COMMAND = "latex-graphics-helper.mergePdf.selectedPages";
+const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
 
 suite("PDF結合コマンド", () => {
   test("現行の選択PDF結合コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 
-    assert.ok(commands.includes(MERGE_PDF_SELECTED_PAGES_COMMAND));
+    assert.ok(commands.includes(MERGE_PDF_SELECTED_FILES_COMMAND));
+    assert.ok(!commands.includes("latex-graphics-helper.mergePdf.selectedPages"));
   });
 
   test("複数PDFを選択順に1つのPDFへ結合する", async () => {
@@ -41,7 +42,7 @@ suite("PDF結合コマンド", () => {
       sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
 
       const commandExecution = vscode.commands.executeCommand(
-        MERGE_PDF_SELECTED_PAGES_COMMAND,
+        MERGE_PDF_SELECTED_FILES_COMMAND,
         vscode.Uri.file(firstPdfPath),
         [vscode.Uri.file(firstPdfPath), vscode.Uri.file(secondPdfPath)],
       );

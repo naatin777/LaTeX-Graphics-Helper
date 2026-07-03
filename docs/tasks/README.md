@@ -122,6 +122,7 @@
 - [0115: v0.5.1からの破壊的変更を文書化する](0115-decide-v051-legacy-compatibility.md)
 - [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
 - [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)
+- [0118: mergePdf quick系command IDをselectedFilesへ寄せる](0118-rename-merge-pdf-selected-files-command.md)
 
 ## Todo Tasks
 
@@ -140,5 +141,4 @@
 - [0109: mergePdf GUIの仕様を決める](0109-design-merge-pdf-gui.md)
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
-- [0118: mergePdf quick系command IDをselectedFilesへ寄せる](0118-rename-merge-pdf-selected-files-command.md)
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)

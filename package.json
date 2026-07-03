@@ -120,8 +120,8 @@
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.mergePdf.selectedPages",
-        "title": "%command.mergePdf.selectedPages%",
+        "command": "latex-graphics-helper.mergePdf.selectedFiles",
+        "title": "%command.mergePdf.selectedFiles%",
         "category": "LaTeX Graphics Helper"
       },
       {
@@ -209,7 +209,7 @@
       ],
       "latex-graphics-helper.mergePdf": [
         {
-          "command": "latex-graphics-helper.mergePdf.selectedPages",
+          "command": "latex-graphics-helper.mergePdf.selectedFiles",
           "group": "latex-graphics-helper.mergePdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.mergePdf.enabled"
         },

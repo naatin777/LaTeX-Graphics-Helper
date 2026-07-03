@@ -87,7 +87,7 @@
   "command.splitPdf.allPages": "Split all pages",
   "command.splitPdf.manual": "Split PDF manually",
   "submenu.mergePdf": "Merge PDFs",
-  "command.mergePdf.selectedPages": "Merge PDFs in selected order",
+  "command.mergePdf.selectedFiles": "Merge selected PDF files",
   "command.mergePdf.manual": "Merge PDFs manually",
   "submenu.convert": "Convert",
   "submenu.convertDrawio": "Convert Draw.io file",

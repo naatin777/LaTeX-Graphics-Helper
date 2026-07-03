@@ -8,7 +8,7 @@ Done
 
 追加済みの失敗テストを通す最小範囲で、現行PDF結合コマンドの基本動作を実装する。
 
-旧 `latex-graphics-helper.mergePdf` command IDは復元しない。v1.0.0へ向けた破壊的変更として、現行の `mergePdf.selectedPages` または仕様で決めた現行commandへ移行する。
+旧 `latex-graphics-helper.mergePdf` command IDは復元しない。v1.0.0へ向けた破壊的変更として、現行の `mergePdf.selectedFiles` へ移行する。
 
 ## 完了条件
 

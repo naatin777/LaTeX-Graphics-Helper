@@ -8,7 +8,7 @@ Done
 
 現行のPDF結合コマンドで、複数PDFを1つのPDFへ結合する基本動作を実装する前に、失敗テストを追加する。
 
-旧 `latex-graphics-helper.mergePdf` command IDは復元しない。対象は現行の `latex-graphics-helper.mergePdf.selectedPages` または仕様で決めた現行commandとする。
+旧 `latex-graphics-helper.mergePdf` command IDは復元しない。対象は現行の `latex-graphics-helper.mergePdf.selectedFiles` とする。
 
 ## 完了条件
 
@@ -21,7 +21,7 @@ Done
 ## 追加したテスト
 
 - `test/merge_pdf_command.test.ts`
-  - `latex-graphics-helper.mergePdf.selectedPages` が登録されていること
+  - `latex-graphics-helper.mergePdf.selectedFiles` が登録されていること
   - 複数PDFを選択順に1つのPDFへ結合し、ページ数とページサイズ順が維持されること
 
 ## mock方針
@@ -43,8 +43,8 @@ Done
 
 - `CI=true pnpm run test -- --grep "PDF結合コマンド"` を実行した。
 - 現状はgrep指定が実質全体VS Code testとして走るが、追加した2件は以下の理由で失敗した。
-  - `latex-graphics-helper.mergePdf.selectedPages` が登録されていない
-  - `command 'latex-graphics-helper.mergePdf.selectedPages' not found`
+  - `latex-graphics-helper.mergePdf.selectedFiles` が登録されていない
+  - `command 'latex-graphics-helper.mergePdf.selectedFiles' not found`
 
 ## 変更可能なファイル
 
