@@ -114,6 +114,7 @@
 - [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
 - [0093: GitHub Actionsの重複表示を減らす](0093-consolidate-ci-workflows.md)
 - [0094: 未実装・保留事項を個別タスクへ分割する](0094-split-backlog-into-actionable-tasks.md)
+- [0095: READMEとtest matrixを最新実装に同期する](0095-sync-readme-and-test-matrix-with-current-implementation.md)
 - [0102: PDF manual GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
 - [0112: v0.5.1公開機能との差分を整理する](0112-track-v051-public-feature-parity.md)
 - [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
@@ -121,7 +122,6 @@
 
 ## Todo Tasks
 
-- [0095: READMEとtest matrixを最新実装に同期する](0095-sync-readme-and-test-matrix-with-current-implementation.md)
 - [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
 - [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
 - [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)

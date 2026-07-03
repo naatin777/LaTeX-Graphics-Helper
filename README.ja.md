@@ -28,7 +28,7 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.i
 ### LaTeX コード生成
 
 - **PDF の LaTeX 挿入**: PDF ファイルを LaTeX ドキュメントにドラッグ&ドロップすると、`figure` / `includegraphics` を含む LaTeX コードを自動挿入します。
-- **クリップボード画像の LaTeX 挿入**: クリップボードの画像を LaTeX ドキュメントに貼り付けると、画像ファイルを保存し、対応する LaTeX コードを挿入します。
+- **クリップボード画像の LaTeX 挿入**: クリップボードの画像を LaTeX ドキュメントに貼り付けると、PDF / 画像のどちらで保存するかを選び、保存先を編集してから、対応する LaTeX コードを挿入します。
 
 ## コマンド一覧
 
@@ -128,12 +128,22 @@ Draw.io Desktop は以下からインストールしてください。
 
 主な設定項目は以下の通りです。
 
-| 設定                                          | 既定値         | 説明                                                                                                                      |
-| --------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `latex-graphics-helper.pasteClipboardImageAs` | `ask`          | クリップボード画像の LaTeX への貼り付け方法です。`ask` では PDF / 画像を選択し、`pdf` または `image` では選択を省略します |
-| `latex-graphics-helper.execPath.drawio`       | 空文字         | Draw.io 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                                        |
-| `latex-graphics-helper.execPath.rsvgConvert`  | `rsvg-convert` | `rsvg-convert` 実行ファイルへのパスです                                                                                   |
-| `latex-graphics-helper.execPath.ghostscript`  | 空文字         | Ghostscript 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                                    |
+| 設定                                                       | 既定値                         | 説明                                                                                                           |
+| ---------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `latex-graphics-helper.outputPath.clipboardImage`          | `${fileDirname}/${dateNow}`    | クリップボード画像を貼り付けるときに表示する既定の保存先です。貼り付け時に編集でき、拡張子は自動で追加されます |
+| `latex-graphics-helper.figure.placementOptions`            | `[H]` など                     | `figure` 環境の配置オプション候補です                                                                          |
+| `latex-graphics-helper.figure.alignmentOptions`            | `\centering` など              | `figure` 内の配置コマンド候補です                                                                              |
+| `latex-graphics-helper.figure.graphicsOptions`             | `[width=1.0\linewidth]` など   | `includegraphics` のオプション候補です                                                                         |
+| `latex-graphics-helper.subfigure.verticalAlignmentOptions` | `[t]` など                     | 複数PDFをdropしたときの `minipage` 縦位置候補です                                                              |
+| `latex-graphics-helper.subfigure.widthOptions`             | `{0.45\linewidth}` など        | 複数PDFをdropしたときの `minipage` 幅候補です                                                                  |
+| `latex-graphics-helper.subfigure.spacingOptions`           | `\hspace{0.01\linewidth}` など | 複数PDFをdropしたときの図間スペース候補です                                                                    |
+| `latex-graphics-helper.execPath.drawio`                    | 空文字                         | Draw.io 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                             |
+| `latex-graphics-helper.execPath.ghostscript`               | 空文字                         | Ghostscript 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                         |
+| `latex-graphics-helper.execPath.pdftocairo`                | `pdftocairo`                   | `pdftocairo` 実行ファイルへのパスです                                                                          |
+| `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | `rsvg-convert` 実行ファイルへのパスです                                                                        |
+| `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVGをPDFへ変換するときのバックエンドです。`puppeteer` または `rsvg-convert` を選択できます                     |
+| `latex-graphics-helper.convertToWebp.effort`               | `4`                            | WebP出力のエンコードeffortです                                                                                 |
+| `latex-graphics-helper.convertToAvif.effort`               | `4`                            | AVIF出力のエンコードeffortです                                                                                 |
 
 出力ファイル名や LaTeX snippet の候補も VS Code の設定から変更できます。
 

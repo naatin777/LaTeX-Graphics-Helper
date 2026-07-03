@@ -28,7 +28,7 @@ It provides PDF splitting and cropping, conversion between PDF, image, SVG, Merm
 ### LaTeX Code Generation
 
 - **Insert from PDF**: Drag and drop a PDF file into a LaTeX document to automatically insert the corresponding LaTeX code.
-- **Insert from Image**: Paste an image from the clipboard into LaTeX to automatically insert the LaTeX code and save the image file.
+- **Insert from Image**: Paste a clipboard image into a LaTeX document, choose whether to save it as PDF or as an image, edit the output path, and insert the corresponding LaTeX code.
 
 ## Installation
 
@@ -67,9 +67,27 @@ You can install this extension in one of the following ways:
 
 ## Configuration
 
-- **`latex-graphics-helper.pasteClipboardImageAs`**: How clipboard images are pasted into LaTeX. `ask` (default) shows a picker for PDF vs image; `pdf` or `image` skips the picker.
-- **`latex-graphics-helper.execPath.drawio`**: Path to Draw.io Desktop. If empty, the OS default command is used.
-- **`latex-graphics-helper.execPath.ghostscript`**: Path to Ghostscript. If empty, the OS default command is used.
-- **`latex-graphics-helper.execPath.rsvgConvert`**: Path to `rsvg-convert`.
-- **`latex-graphics-helper.convertToPdf.svg.engine`**: SVG to PDF backend. Choose `puppeteer` or `rsvg-convert`.
-- **Output channel**: Open **View → Output → LaTeX Graphics Helper** to see command execution, batch progress, and errors logged by the extension.
+Main settings:
+
+| Setting                                                    | Default                        | Description                                                                                                                       |
+| ---------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| `latex-graphics-helper.outputPath.clipboardImage`          | `${fileDirname}/${dateNow}`    | Default output path shown when pasting a clipboard image. It can be edited during paste, and the extension is added automatically |
+| `latex-graphics-helper.figure.placementOptions`            | `[H]` etc.                     | Candidate placement options for the `figure` environment                                                                          |
+| `latex-graphics-helper.figure.alignmentOptions`            | `\centering` etc.              | Candidate alignment commands inside `figure`                                                                                      |
+| `latex-graphics-helper.figure.graphicsOptions`             | `[width=1.0\linewidth]` etc.   | Candidate options for `includegraphics`                                                                                           |
+| `latex-graphics-helper.subfigure.verticalAlignmentOptions` | `[t]` etc.                     | Candidate vertical alignment options for `minipage` snippets generated from multiple dropped PDFs                                 |
+| `latex-graphics-helper.subfigure.widthOptions`             | `{0.45\linewidth}` etc.        | Candidate width options for `minipage` snippets generated from multiple dropped PDFs                                              |
+| `latex-graphics-helper.subfigure.spacingOptions`           | `\hspace{0.01\linewidth}` etc. | Candidate spacing options between figures generated from multiple dropped PDFs                                                    |
+| `latex-graphics-helper.execPath.drawio`                    | empty string                   | Path to Draw.io Desktop. If empty, the OS default command is used                                                                 |
+| `latex-graphics-helper.execPath.ghostscript`               | empty string                   | Path to Ghostscript. If empty, the OS default command is used                                                                     |
+| `latex-graphics-helper.execPath.pdftocairo`                | `pdftocairo`                   | Path to the `pdftocairo` executable                                                                                               |
+| `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | Path to the `rsvg-convert` executable                                                                                             |
+| `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVG to PDF backend. Choose `puppeteer` or `rsvg-convert`                                                                          |
+| `latex-graphics-helper.convertToWebp.effort`               | `4`                            | Encoding effort for WebP output                                                                                                   |
+| `latex-graphics-helper.convertToAvif.effort`               | `4`                            | Encoding effort for AVIF output                                                                                                   |
+
+Output paths and LaTeX snippet candidates can also be changed from VS Code settings.
+
+## Output Panel
+
+Open **View → Output → LaTeX Graphics Helper** to see command execution logs, batch progress, and external tool errors.
