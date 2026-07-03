@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -54,3 +54,12 @@ Todo
 ## 確認方法
 
 - 破壊的変更と移行先がADRまたはspecに記録されていることを確認する
+
+## 実施内容
+
+- `docs/specs/v1-migration-from-v051.md`を追加した
+- v0.5.1で公開されていた旧command IDのv1.0.0移行先を記録した
+- `execPath.pdfcrop` / 旧Puppeteer設定の移行先または廃止理由を記録した
+- README / CHANGELOG / migration noteへ書く内容を記録した
+- 旧command IDの互換aliasをv1.0.0では実装しないことを明記した
+- 既存の`docs/specs/output-format-conversion.md`と`docs/adr/0009-use-output-format-conversion-commands.md`に残っていた「aliasを残してよい」方針を、v1.0.0向けの決定と矛盾しない形へ更新した

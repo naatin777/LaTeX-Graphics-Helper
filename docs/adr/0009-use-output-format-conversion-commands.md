@@ -27,13 +27,18 @@ Accepted
 
 既存の入力形式・出力形式ペア別コマンドは、公開UIから外す。
 
-移行直後は、旧command IDを非公開aliasとして残してよい。
+当初は移行直後に旧command IDを非公開aliasとして残してよいとしていた。
+
+その後、v1.0.0では破壊的変更として旧command IDの互換aliasを実装しない方針に変更した。
+
+詳細な移行表は`docs/specs/v1-migration-from-v051.md`に記録する。
 
 ## Consequences
 
 - context menuの項目数を減らせる
 - 異なる入力形式を同じ出力形式へまとめて変換できる
 - command実行時に、選択された全ファイルが対象出力形式へ変換可能か検証する必要がある
+- 旧command IDをkeybindingsやtasksで直接呼んでいるユーザーは、新command IDへ移行する必要がある
 - 出力パス設定は、段階移行中は既存の変換ペア別設定を維持する
 - Safe Mode、Undo、Progress、Cancellationは、1回の出力形式基準コマンド実行を1つの変換バッチとして扱う
 - 全形式同時実装は避け、まず`PDFに変換`から段階的に移行する

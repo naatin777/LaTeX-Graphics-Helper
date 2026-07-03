@@ -245,11 +245,15 @@ editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`
 - `latex-graphics-helper.convertSvgToPdf`
 - `latex-graphics-helper.convertPdfToPng`
 
-ただし、移行直後は互換用の非公開aliasとして残してよい。
+当初は移行直後に互換用の非公開aliasを残してよいとしていたが、v1.0.0では旧command IDの互換aliasを実装しない。
 
-- `contributes.commands`とcontext menuからは外す
-- extension内部では旧command IDを登録し、新commandへ委譲してよい
-- aliasを残す期間は、実装タスクで明記する
+理由:
+
+- v1.0.0は破壊的変更を許容できる区切りとして扱う
+- 旧command IDを残すと、公開UIから見えない入口のテスト・説明・保守が必要になる
+- 変換コマンドを出力形式基準へ統一する目的が弱くなる
+
+詳細な移行表は`docs/specs/v1-migration-from-v051.md`に記録する。
 
 ## Context menu
 
