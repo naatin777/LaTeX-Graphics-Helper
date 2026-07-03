@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -33,3 +33,11 @@ Todo
 ## 確認方法
 
 - `CI=true pnpm run test -- --grep "outputPath"`
+
+## 実装内容
+
+- `outputPath.convertToPdf` が `outputPath.convertPngToPdf` より優先されるテストを追加した
+- `outputPath.convertToPdf` が空文字、空白のみ、未設定の場合に `outputPath.convertPngToPdf` へfallbackするテストを追加した
+- `outputPath.convertToPng` が `outputPath.convertPdfToPng` より優先され、`${page}` を展開するテストを追加した
+- `outputPath.convertToSvg` が `outputPath.convertPdfToSvg` より優先され、`${page}` を展開するテストを追加した
+- 実装変更は行っていないため、優先テストは0091実装まで失敗する想定

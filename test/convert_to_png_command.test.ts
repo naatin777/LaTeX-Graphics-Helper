@@ -30,6 +30,7 @@ import sinon from "sinon";
 import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+import { withWorkspaceSettings } from "./helpers/workspace_settings.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
@@ -152,6 +153,40 @@ suite("PNGに変換コマンド", () => {
 
       await assertReadablePng(firstOutputPath);
       await assertReadablePng(secondOutputPath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("outputPath.convertToPngが設定されている場合はペア別設定より優先してpageを展開する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.pdf");
+      const firstOutputPath = path.join(temporaryDirectory, "to-png-source-1.png");
+      const secondOutputPath = path.join(temporaryDirectory, "to-png-source-2.png");
+      await writeTwoPagePdf(sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          "latex-graphics-helper.outputPath.convertToPng":
+            "${fileDirname}/to-png-${fileBasenameNoExtension}-${page}.png",
+          "latex-graphics-helper.outputPath.convertPdfToPng":
+            "${fileDirname}/pair-${fileBasenameNoExtension}-${page}.png",
+        },
+        async () => {
+          const commandExecution = vscode.commands.executeCommand(
+            CONVERT_TO_PNG_COMMAND,
+            vscode.Uri.file(sourcePath),
+          );
+          await runCommandAndClearNotificationsUntilDone(commandExecution);
+        },
+      );
+
+      await assertReadablePng(firstOutputPath);
+      await assertReadablePng(secondOutputPath);
+      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source-1.png"));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source-2.png"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

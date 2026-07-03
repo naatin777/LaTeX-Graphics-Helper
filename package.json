@@ -380,6 +380,36 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
           "description": "%config.outputPath.splitPdf%"
         },
+        "latex-graphics-helper.outputPath.convertToPdf": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToPdf%"
+        },
+        "latex-graphics-helper.outputPath.convertToPng": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToPng%"
+        },
+        "latex-graphics-helper.outputPath.convertToJpeg": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToJpeg%"
+        },
+        "latex-graphics-helper.outputPath.convertToWebp": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToWebp%"
+        },
+        "latex-graphics-helper.outputPath.convertToAvif": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToAvif%"
+        },
+        "latex-graphics-helper.outputPath.convertToSvg": {
+          "type": "string",
+          "default": "",
+          "description": "%config.outputPath.convertToSvg%"
+        },
         "latex-graphics-helper.cropPdf.marginOptions": {
           "type": "array",
           "items": {
