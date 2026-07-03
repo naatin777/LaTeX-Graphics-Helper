@@ -94,7 +94,11 @@ async function provideDropEdit(
 
 function snippetValue(edit: vscode.DocumentDropEdit): string {
   assert.ok(edit.insertText instanceof vscode.SnippetString);
-  return edit.insertText.value;
+  return normalizeSnippetValue(edit.insertText.value);
+}
+
+function normalizeSnippetValue(value: string): string {
+  return value.replace(/\\\\/g, "\\").replace(/\\([{}])/g, "$1");
 }
 
 async function writePdf(uri: vscode.Uri): Promise<void> {
@@ -111,6 +115,7 @@ async function createTemporaryWorkspaceDirectory(prefix: string): Promise<string
 
 function testAppConfig() {
   return {
+    outputPathClipboardImage: "${fileDirname}/${dateNow}",
     figurePlacementOptions: ["[H]"],
     figureAlignmentOptions: ["\\centering"],
     figureGraphicsOptions: ["[width=0.8\\linewidth]"],

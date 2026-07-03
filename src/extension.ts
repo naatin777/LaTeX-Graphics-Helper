@@ -18,6 +18,10 @@ import {
   undoLastConversion,
   UNDO_LAST_CONVERSION_COMMAND,
 } from "./commands/undo_last_conversion.js";
+import { LatexDropEditProvider } from "./edit_provider/latex_drop_edit_provider.js";
+import { LatexPasteEditProvider } from "./edit_provider/latex_paste_edit_provider.js";
+
+const latexDocumentSelector: vscode.DocumentSelector = [{ language: "latex" }, { language: "tex" }];
 
 export function activate(context: vscode.ExtensionContext) {
   initializeSafeMode(context);
@@ -51,6 +55,21 @@ export function activate(context: vscode.ExtensionContext) {
       (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToSvgCommand(uri, uris),
     ),
     vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
+    vscode.languages.registerDocumentDropEditProvider(
+      latexDocumentSelector,
+      new LatexDropEditProvider(),
+      {
+        dropMimeTypes: ["text/uri-list"],
+      },
+    ),
+    vscode.languages.registerDocumentPasteEditProvider(
+      latexDocumentSelector,
+      new LatexPasteEditProvider(),
+      {
+        providedPasteEditKinds: [vscode.DocumentDropOrPasteEditKind.Empty],
+        pasteMimeTypes: ["image/png", "image/jpeg"],
+      },
+    ),
   );
 }
 

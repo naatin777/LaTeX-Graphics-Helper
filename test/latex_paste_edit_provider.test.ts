@@ -26,6 +26,9 @@ suite("LaTeXクリップボード画像挿入", () => {
         detail: "画像をfigure環境に配置",
         description: "(標準)",
       });
+      const showInputBox = sandbox
+        .stub(vscode.window, "showInputBox")
+        .resolves(path.join(directory, "edited"));
 
       const document = await vscode.workspace.openTextDocument(documentUri);
       const provider = new LatexPasteEditProvider();
@@ -46,12 +49,15 @@ suite("LaTeXクリップボード画像挿入", () => {
 
         assert.ok(edits);
         assert.strictEqual(edits.length, 1);
-        assert.ok(edits[0].insertText instanceof vscode.SnippetString);
-        assert.ok(
-          edits[0].insertText.value.includes("\\includegraphics[width=0.8\\linewidth]{pasted.png}"),
-        );
-        assert.ok(edits[0].insertText.value.includes("\\caption{${1:pasted}}"));
-        assert.ok(await readFile(path.join(directory, "pasted.png")));
+        const edit = edits[0];
+        assert.ok(edit);
+        assert.ok(showInputBox.calledOnce);
+        assert.strictEqual(showInputBox.firstCall.args[0]?.value, path.join(directory, "pasted"));
+        assert.ok(edit.insertText instanceof vscode.SnippetString);
+        const snippet = normalizeSnippetValue(edit.insertText.value);
+        assert.ok(snippet.includes("\\includegraphics[width=0.8\\linewidth]{edited.png}"));
+        assert.ok(snippet.includes("\\caption{${1:edited}}"));
+        assert.ok(await readFile(path.join(directory, "edited.png")));
       } finally {
         tokenSource.dispose();
       }
@@ -76,6 +82,7 @@ suite("LaTeXクリップボード画像挿入", () => {
         detail: "PDFをfigure環境に配置",
         description: "(標準)",
       });
+      sandbox.stub(vscode.window, "showInputBox").resolves(path.join(directory, "pasted"));
 
       const document = await vscode.workspace.openTextDocument(documentUri);
       const provider = new LatexPasteEditProvider();
@@ -96,10 +103,11 @@ suite("LaTeXクリップボード画像挿入", () => {
 
         assert.ok(edits);
         assert.strictEqual(edits.length, 1);
-        assert.ok(edits[0].insertText instanceof vscode.SnippetString);
-        assert.ok(
-          edits[0].insertText.value.includes("\\includegraphics[width=0.8\\linewidth]{pasted.pdf}"),
-        );
+        const edit = edits[0];
+        assert.ok(edit);
+        assert.ok(edit.insertText instanceof vscode.SnippetString);
+        const snippet = normalizeSnippetValue(edit.insertText.value);
+        assert.ok(snippet.includes("\\includegraphics[width=0.8\\linewidth]{pasted.pdf}"));
         const pdf = await PDFDocument.load(await readFile(path.join(directory, "pasted.pdf")));
         assert.strictEqual(pdf.getPageCount(), 1);
       } finally {
@@ -123,10 +131,7 @@ function pngDataTransfer(): vscode.DataTransfer {
         asFile() {
           return {
             async data() {
-              return Buffer.from(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l0ud5AAAAABJRU5ErkJggg==",
-                "base64",
-              );
+              return readFile(path.join(process.cwd(), "test/fixtures/test.png"));
             },
           };
         },
@@ -144,4 +149,8 @@ function testAppConfig() {
     subfigureWidthOptions: ["{0.45\\linewidth}"],
     subfigureSpacingOptions: ["\\hfill"],
   };
+}
+
+function normalizeSnippetValue(value: string): string {
+  return value.replace(/\\\\/g, "\\").replace(/\\([{}])/g, "$1");
 }
