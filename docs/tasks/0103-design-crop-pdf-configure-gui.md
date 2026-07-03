@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -55,3 +55,14 @@ Todo
 ## 確認方法
 
 - 仕様の未決事項が残っていないことを確認する
+
+## 実施内容
+
+- `docs/specs/crop-pdf-configure.md` を追加した
+- 初期実装は単一PDFだけを対象にする方針にした
+- 1つのbboxを全ページまたは選択ページへ適用する方針にした
+- ページごとに異なるcrop範囲、複数PDF同時処理、margin指定は初期実装の対象外にした
+- Host / Webview間のmessage protocolを決めた
+- 出力先は `latex-graphics-helper.outputPath.cropPdf` を使う方針にした
+- Safe Mode / Undo / progress / cancellation の扱いを決めた
+- `local/refactor-ddd-architecture` から参考にする内容と採用しない内容を記録した
