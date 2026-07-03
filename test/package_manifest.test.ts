@@ -23,6 +23,7 @@ const LEGACY_TO_PDF_COMMANDS = [
 ] as const;
 
 interface PackageJson {
+  activationEvents?: string[];
   contributes: {
     commands: { command: string; title: string }[];
     configuration: {
@@ -287,6 +288,83 @@ suite("package.jsonの変換メニュー定義", () => {
       minimum: 0,
       maximum: 9,
       description: "%config.convertToAvif.effort%",
+    });
+  });
+
+  test("LaTeX文書でdrag and drop / clipboard paste用に拡張機能を起動する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+
+    assert.ok(packageJson.activationEvents?.includes("onLanguage:latex"));
+  });
+
+  test("LaTeX挿入用の出力先とsnippet候補設定を公開する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const properties = packageJson.contributes.configuration.properties;
+
+    assert.deepStrictEqual(properties["latex-graphics-helper.outputPath.clipboardImage"], {
+      type: "string",
+      default: "${fileDirname}/${dateNow}",
+      description: "%config.outputPath.clipboardImage%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.figure.placementOptions"], {
+      type: "array",
+      default: [
+        "[H]",
+        "[h]",
+        "[t]",
+        "[b]",
+        "[p]",
+        "[ht]",
+        "[hb]",
+        "[hp]",
+        "[tb]",
+        "[tp]",
+        "[bp]",
+        "[htb]",
+        "[htp]",
+        "[hbp]",
+        "[tbp]",
+        "[htbp]",
+      ],
+      description: "%config.figure.placementOptions%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.figure.alignmentOptions"], {
+      type: "array",
+      default: ["\\centering", "\\raggedright", "\\raggedleft"],
+      description: "%config.figure.alignmentOptions%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.figure.graphicsOptions"], {
+      type: "array",
+      default: [
+        "[width=1.0\\linewidth]",
+        "[width=0.9\\linewidth]",
+        "[width=0.8\\linewidth]",
+        "[width=0.7\\linewidth]",
+        "[width=0.6\\linewidth]",
+        "[width=0.5\\linewidth]",
+      ],
+      description: "%config.figure.graphicsOptions%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.verticalAlignmentOptions"], {
+      type: "array",
+      default: ["[t]", "[c]", "[b]"],
+      description: "%config.subfigure.verticalAlignmentOptions%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.widthOptions"], {
+      type: "array",
+      default: ["{0.45\\linewidth}", "{0.35\\linewidth}", "{0.25\\linewidth}", "{0.15\\linewidth}"],
+      description: "%config.subfigure.widthOptions%",
+    });
+    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.spacingOptions"], {
+      type: "array",
+      default: [
+        "\\hspace{0.01\\linewidth}",
+        "\\hspace{0.02\\linewidth}",
+        "\\hspace{0.03\\linewidth}",
+        "\\hspace{0.04\\linewidth}",
+        "\\hspace{0.05\\linewidth}",
+      ],
+      description: "%config.subfigure.spacingOptions%",
     });
   });
 });

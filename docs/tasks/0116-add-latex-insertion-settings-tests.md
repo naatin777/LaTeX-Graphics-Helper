@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -43,3 +43,9 @@ Todo
 
 - `pnpm run check:test`
 - 必要なら `CI=true pnpm run test:vscode`
+
+## 確認結果
+
+- `CI=true pnpm run check:test`
+  - 期待通り失敗
+  - 理由: `src/edit_provider/latex_drop_edit_provider.js` と `src/edit_provider/latex_paste_edit_provider.js` が未実装
