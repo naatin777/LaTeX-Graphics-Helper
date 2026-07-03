@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -18,6 +18,14 @@ Todo
 - 旧 `latex-graphics-helper.mergePdf` command IDは追加しない
 - 出力反映が既存のSafe Mode / Undo方針から外れていない
 - 追加済みテストが成功する
+
+## 実装メモ
+
+- 出力先は `vscode.window.showSaveDialog` で選択する。
+- `outputPath.mergePdf` はまだ導入しない。
+- 選択されたPDFの全ページを選択順に1つのPDFへ結合する。
+- 旧 `latex-graphics-helper.mergePdf` command IDは追加していない。
+- Save Dialogでユーザーが出力先を明示選択するため、今回の基本実装ではSafe Mode / Undo / cancellationは扱わない。必要になったら別タスクで固定する。
 
 ## 変更可能なファイル
 

@@ -118,6 +118,7 @@
 - [0102: PDF manual GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
 - [0112: v0.5.1公開機能との差分を整理する](0112-track-v051-public-feature-parity.md)
 - [0113: 現行PDF結合コマンドの基本動作テストを追加する](0113-add-basic-merge-pdf-command-tests.md)
+- [0114: 現行PDF結合コマンドの基本動作を実装する](0114-restore-basic-merge-pdf-command.md)
 - [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
 - [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)
 
@@ -138,5 +139,4 @@
 - [0109: mergePdf GUIの仕様を決める](0109-design-merge-pdf-gui.md)
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
-- [0114: 現行PDF結合コマンドの基本動作を実装する](0114-restore-basic-merge-pdf-command.md)
 - [0115: v0.5.1からの破壊的変更を文書化する](0115-decide-v051-legacy-compatibility.md)

@@ -12,6 +12,10 @@ import {
   CONVERT_TO_PDF_COMMAND,
   CONVERT_PNG_TO_PDF_COMMAND,
 } from "./commands/convert_png_to_pdf.js";
+import {
+  mergePdfSelectedPagesCommand,
+  MERGE_PDF_SELECTED_PAGES_COMMAND,
+} from "./commands/merge_pdf.js";
 import { initializeSafeMode } from "./commands/safe_mode.js";
 import { splitPdfAllPagesCommand } from "./commands/split_pdf_all_pages.js";
 import {
@@ -31,6 +35,10 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "latex-graphics-helper.splitPdf.allPages",
       splitPdfAllPagesCommand,
+    ),
+    vscode.commands.registerCommand(
+      MERGE_PDF_SELECTED_PAGES_COMMAND,
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => mergePdfSelectedPagesCommand(uri, uris),
     ),
     vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, undoLastConversion),
     vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
