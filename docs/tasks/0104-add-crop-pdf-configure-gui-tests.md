@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -42,3 +42,24 @@ Todo
 - `pnpm run check:test`
 - `pnpm run test:playwright`
 - 必要なら `CI=true pnpm run test:vscode`
+
+## 固定した範囲
+
+- Webviewがconfigure用の `init` payloadを受け取ってPDFの最初のページを表示すること
+- WebviewがApply時に `apply` messageを送ること
+- `apply` messageが `cropBox` と `target: { type: "all" }` を含むこと
+- Host側の入口として `latex-graphics-helper.cropPdf.configure` commandが登録されること
+- 旧 `latex-graphics-helper.cropPdf.manual` commandを登録しないこと
+
+## この段階で固定しない範囲
+
+- 選択ページcropの詳細UI
+- Host側で `apply` messageを受けた後の実変換処理
+- Safe Mode / Undo / cancellation の実処理
+- Webviewの見た目
+
+## 実施内容
+
+- `test/extension.test.ts` に `cropPdf.configure` command登録の失敗テストを追加した
+- `test/playwright/webview-pdf-rendering.spec.ts` にconfigure init payloadとapply messageの失敗テストを追加した
+- 実装未完了により追加テストが失敗することを確認した
