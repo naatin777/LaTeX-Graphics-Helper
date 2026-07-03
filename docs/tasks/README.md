@@ -14,6 +14,8 @@
 - タスクの目的を途中で増やさない
 - 完了条件を満たしたら `Status` を `Done` にする
 - 残った作業は別のタスクとして作成する
+- 完了済みタスクをバックログ台帳として再利用しない
+- 同じ問題が再発した場合も、完了済みタスクを追記せず新しいタスクを作る
 - 仕様に関係する場合は `docs/specs/` をリンクする
 - 設計判断に関係する場合は `docs/adr/` をリンクする
 
@@ -111,7 +113,30 @@
 - [0091: 出力形式基準outputPath設定を実装する](0091-implement-output-format-output-path-settings.md)
 - [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
 - [0093: GitHub Actionsの重複表示を減らす](0093-consolidate-ci-workflows.md)
+- [0094: 未実装・保留事項を個別タスクへ分割する](0094-split-backlog-into-actionable-tasks.md)
+- [0102: PDF manual GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
+- [0112: v0.5.1公開機能との差分を整理する](0112-track-v051-public-feature-parity.md)
 
 ## Todo Tasks
 
-なし
+- [0095: READMEとtest matrixを最新実装に同期する](0095-sync-readme-and-test-matrix-with-current-implementation.md)
+- [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
+- [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
+- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)
+- [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md)
+- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
+- [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md)
+- [0103: cropPdf.manual GUIの仕様を決める](0103-design-crop-pdf-manual-gui.md)
+- [0104: cropPdf.manual GUIの失敗テストを追加する](0104-add-crop-pdf-manual-gui-tests.md)
+- [0105: cropPdf.manual GUIを実装する](0105-implement-crop-pdf-manual-gui.md)
+- [0106: splitPdf.manual GUIの仕様を決める](0106-design-split-pdf-manual-gui.md)
+- [0107: splitPdf.manual GUIの失敗テストを追加する](0107-add-split-pdf-manual-gui-tests.md)
+- [0108: splitPdf.manual GUIを実装する](0108-implement-split-pdf-manual-gui.md)
+- [0109: mergePdf GUIの仕様を決める](0109-design-merge-pdf-gui.md)
+- [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
+- [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
+- [0113: 現行PDF結合コマンドの基本動作テストを追加する](0113-add-basic-merge-pdf-command-tests.md)
+- [0114: 現行PDF結合コマンドの基本動作を実装する](0114-restore-basic-merge-pdf-command.md)
+- [0115: v0.5.1からの破壊的変更を文書化する](0115-decide-v051-legacy-compatibility.md)
+- [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
+- [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)

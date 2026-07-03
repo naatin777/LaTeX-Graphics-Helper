@@ -1,0 +1,52 @@
+# タスク: cropPdf.manual GUIを実装する
+
+## Status
+
+Todo
+
+## 目的
+
+追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.cropPdf.manual` を実装する。
+
+## 完了条件
+
+- `cropPdf.manual` commandが `src/extension.ts` に登録されている
+- Explorerの `PDFをトリミング > manual` からWebviewを開ける
+- WebviewでPDFを表示できる
+- ユーザーが指定したcrop範囲をHostへ送れる
+- Host側でcrop範囲を使ってPDFを出力できる
+- 出力反映が既存のSafe Mode / Undo方針から外れていない
+- 追加済みテストが成功する
+
+## 変更可能なファイル
+
+- `src/commands/`
+- `src/operations/`
+- `src/presentation/webview/`
+- `webview/apps/crop_pdf/`
+- `package.json`
+- `package.nls.ja.json`
+- `package.nls.json`
+- `test/`
+- `test/playwright/`
+- `docs/tasks/0105-implement-crop-pdf-manual-gui.md`
+
+## 対象外
+
+- split GUI
+- merge GUI
+- localブランチの大規模リファクタ移植
+- crop UIの高度な作り込み
+- dependency追加
+
+## 関連
+
+- [0103: cropPdf.manual GUIの仕様を決める](0103-design-crop-pdf-manual-gui.md)
+- [0104: cropPdf.manual GUIの失敗テストを追加する](0104-add-crop-pdf-manual-gui-tests.md)
+
+## 確認方法
+
+- `pnpm run check`
+- `pnpm run check:test`
+- `pnpm run test:playwright`
+- `CI=true pnpm run test:vscode`
