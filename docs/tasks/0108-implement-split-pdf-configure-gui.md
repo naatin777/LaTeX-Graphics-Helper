@@ -1,4 +1,4 @@
-# タスク: splitPdf.manual GUIを実装する
+# タスク: splitPdf.configure GUIを実装する
 
 ## Status
 
@@ -6,12 +6,12 @@ Todo
 
 ## 目的
 
-追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.splitPdf.manual` を実装する。
+追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.splitPdf.configure` を実装する。
 
 ## 完了条件
 
-- `splitPdf.manual` commandが `src/extension.ts` に登録されている
-- Explorerの `PDFを分割 > manual` からWebviewを開ける
+- `splitPdf.configure` commandが `src/extension.ts` に登録されている
+- ExplorerのPDF分割サブメニューからWebviewを開ける
 - WebviewでPDFページを選択できる
 - 選択ページに基づいてPDFを出力できる
 - 出力反映が既存のSafe Mode / Undo方針から外れていない
@@ -28,7 +28,7 @@ Todo
 - `package.nls.json`
 - `test/`
 - `test/playwright/`
-- `docs/tasks/0108-implement-split-pdf-manual-gui.md`
+- `docs/tasks/0108-implement-split-pdf-configure-gui.md`
 
 ## 対象外
 
@@ -39,8 +39,8 @@ Todo
 
 ## 関連
 
-- [0106: splitPdf.manual GUIの仕様を決める](0106-design-split-pdf-manual-gui.md)
-- [0107: splitPdf.manual GUIの失敗テストを追加する](0107-add-split-pdf-manual-gui-tests.md)
+- [0106: splitPdf.configure GUIの仕様を決める](0106-design-split-pdf-configure-gui.md)
+- [0107: splitPdf.configure GUIの失敗テストを追加する](0107-add-split-pdf-configure-gui-tests.md)
 
 ## 確認方法
 

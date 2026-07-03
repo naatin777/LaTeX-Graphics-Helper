@@ -92,4 +92,4 @@ Webviewは使用しない。
 
 ## 今後の拡張
 
-- ページを選択するmanual split
+- ページを選択するconfigure split

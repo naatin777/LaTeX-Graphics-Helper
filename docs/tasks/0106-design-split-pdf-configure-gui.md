@@ -1,4 +1,4 @@
-# タスク: splitPdf.manual GUIの仕様を決める
+# タスク: splitPdf.configure GUIの仕様を決める
 
 ## Status
 
@@ -6,7 +6,9 @@ Todo
 
 ## 目的
 
-`latex-graphics-helper.splitPdf.manual` で、PDFのページをユーザーが選択して分割出力するGUI仕様を決める。
+`latex-graphics-helper.splitPdf.configure` で、PDFのページをユーザーが選択して分割出力するGUI仕様を決める。
+
+`manual` という名前は使わない。
 
 ## 完了条件
 
@@ -27,7 +29,7 @@ Todo
 ## 変更可能なファイル
 
 - `docs/specs/`
-- `docs/tasks/0106-design-split-pdf-manual-gui.md`
+- `docs/tasks/0106-design-split-pdf-configure-gui.md`
 - 必要なら `docs/adr/`
 - 必要なら `docs/tasks/README.md`
 
@@ -40,8 +42,9 @@ Todo
 
 ## 関連
 
-- [0102: PDF manual GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
+- [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
 - [split-pdf-all-pages.md](../specs/split-pdf-all-pages.md)
+- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
 
 ## 確認方法
 

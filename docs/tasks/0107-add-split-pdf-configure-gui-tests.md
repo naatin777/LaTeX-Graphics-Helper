@@ -1,4 +1,4 @@
-# タスク: splitPdf.manual GUIの失敗テストを追加する
+# タスク: splitPdf.configure GUIの失敗テストを追加する
 
 ## Status
 
@@ -6,7 +6,7 @@ Todo
 
 ## 目的
 
-`splitPdf.manual` の実装前に、ページ選択GUIとHost連携の主要な振る舞いを失敗テストとして固定する。
+`splitPdf.configure` の実装前に、ページ選択GUIとHost連携の主要な振る舞いを失敗テストとして固定する。
 
 ## 完了条件
 
@@ -21,7 +21,7 @@ Todo
 - `test/`
 - `test/playwright/`
 - `webview/apps/`
-- `docs/tasks/0107-add-split-pdf-manual-gui-tests.md`
+- `docs/tasks/0107-add-split-pdf-configure-gui-tests.md`
 
 ## 対象外
 
@@ -31,7 +31,7 @@ Todo
 
 ## 関連
 
-- [0106: splitPdf.manual GUIの仕様を決める](0106-design-split-pdf-manual-gui.md)
+- [0106: splitPdf.configure GUIの仕様を決める](0106-design-split-pdf-configure-gui.md)
 
 ## 確認方法
 

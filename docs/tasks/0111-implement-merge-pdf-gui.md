@@ -6,7 +6,7 @@ Todo
 
 ## 目的
 
-追加済みの失敗テストを通す最小範囲で、PDF結合GUIを実装する。
+追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.mergePdf.configure` のPDF結合GUIを実装する。
 
 ## 完了条件
 

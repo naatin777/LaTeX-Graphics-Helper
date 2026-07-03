@@ -6,11 +6,15 @@ Todo
 
 ## 目的
 
-`latex-graphics-helper.mergePdf.selectedPages` と `latex-graphics-helper.mergePdf.manual` の役割を整理し、PDF結合GUIの仕様を決める。
+`latex-graphics-helper.mergePdf.selectedFiles` と `latex-graphics-helper.mergePdf.configure` の役割を整理し、PDF結合GUIの仕様を決める。
+
+`manual` という名前は使わない。
+
+現行実装に `mergePdf.selectedPages` が残っている場合、PDF結合quick系で選ぶ対象はページではなくファイルなので、後続タスクで `mergePdf.selectedFiles` へ寄せる。
 
 ## 完了条件
 
-- `mergePdf.selectedPages` と `mergePdf.manual` の違いを決める
+- `mergePdf.selectedFiles` と `mergePdf.configure` の違いを決める
 - まず復元すべき最小機能を決める
   - v0.5.1相当の選択PDF結合
   - ページ単位の選択結合
@@ -41,8 +45,9 @@ Todo
 
 ## 関連
 
-- [0102: PDF manual GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
+- [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
 - [0006: WebviewにPDFの最初のページを表示する](0006-render-first-pdf-page-in-webviews.md)
+- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
 
 ## 確認方法
 

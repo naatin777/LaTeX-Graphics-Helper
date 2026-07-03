@@ -1,4 +1,4 @@
-# タスク: PDF manual GUI機能の未実装範囲を整理する
+# タスク: PDF configure GUI機能の未実装範囲を整理する
 
 ## Status
 
@@ -6,20 +6,22 @@ Done
 
 ## 目的
 
-PDF crop / split / merge のmanual GUI機能について、現在の未実装範囲とlocalブランチに残っている参考実装を整理する。
+PDF crop / split / merge のconfigure GUI機能について、現在の未実装範囲とlocalブランチに残っている参考実装を整理する。
+
+当初は `manual` と呼んでいたが、後続方針ではWebview GUIで細かく指定する操作を `configure` と呼ぶ。
 
 ## 調査結果
 
 現行 `package.json` には以下のコマンドが定義されている。
 
-- `latex-graphics-helper.cropPdf.manual`
-- `latex-graphics-helper.splitPdf.manual`
-- `latex-graphics-helper.mergePdf.selectedPages`
-- `latex-graphics-helper.mergePdf.manual`
+- `latex-graphics-helper.cropPdf.configure`
+- `latex-graphics-helper.splitPdf.configure`
+- `latex-graphics-helper.mergePdf.selectedFiles`
+- `latex-graphics-helper.mergePdf.configure`
 
-ただし、現行 `src/extension.ts` ではこれらのmanual GUI系コマンドは登録されていない。
+ただし、このタスク作成時点の `src/extension.ts` ではこれらのconfigure GUI系コマンドは登録されていない。
 
-現行の `webview/apps/crop_pdf` と `webview/apps/merge_pdf` は、PDFの最初のページ表示を検証するための基礎実装であり、実際のmanual操作は未完成。
+現行の `webview/apps/crop_pdf` と `webview/apps/merge_pdf` は、PDFの最初のページ表示を検証するための基礎実装であり、実際のconfigure操作は未完成。
 
 `local/refactor-ddd-architecture` には custom crop GUI の実装断片がある。
 
@@ -35,11 +37,11 @@ PDF crop / split / merge のmanual GUI機能について、現在の未実装範
 
 ただし、`local/refactor-ddd-architecture` は大規模リファクタと混ざっているため、そのまま移植しない。
 
-`local/vscode-services-refactor` はEffect / service layerの大規模リファクタであり、PDF manual GUI機能の直接の参考にはしない。
+`local/vscode-services-refactor` はEffect / service layerの大規模リファクタであり、PDF configure GUI機能の直接の参考にはしない。
 
 ## 完了条件
 
-- PDF manual GUI系コマンドの未実装範囲が明記されている
+- PDF configure GUI系コマンドの未実装範囲が明記されている
 - localブランチの参考にしてよい点が明記されている
 - localブランチをそのまま採用しない理由が明記されている
 - 個別タスクへ分割されている

@@ -15,18 +15,18 @@
 
 ## command IDの移行
 
-| v0.5.1 command ID                          | v1.0.0で使うcommand ID                         | 備考                                                                                                   |
-| ------------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `latex-graphics-helper.cropPdf`            | `latex-graphics-helper.cropPdf.auto`           | 自動crop。手動cropは `latex-graphics-helper.cropPdf.manual` として別入口にする。                       |
-| `latex-graphics-helper.splitPdf`           | `latex-graphics-helper.splitPdf.allPages`      | 全ページsplit。手動splitは `latex-graphics-helper.splitPdf.manual` として別入口にする。                |
-| `latex-graphics-helper.mergePdf`           | `latex-graphics-helper.mergePdf.selectedPages` | 選択PDFを結合する基本機能。GUI付きmergeは `latex-graphics-helper.mergePdf.manual` として別入口にする。 |
-| `latex-graphics-helper.convertDrawioToPdf` | `latex-graphics-helper.convertToPdf`           | Draw.io入力をPDF出力形式コマンドへ統合する。                                                           |
-| `latex-graphics-helper.convertPdfToPng`    | `latex-graphics-helper.convertToPng`           | PDF入力をPNG出力形式コマンドへ統合する。                                                               |
-| `latex-graphics-helper.convertPdfToJpeg`   | `latex-graphics-helper.convertToJpeg`          | PDF入力をJPEG出力形式コマンドへ統合する。                                                              |
-| `latex-graphics-helper.convertPdfToSvg`    | `latex-graphics-helper.convertToSvg`           | PDF入力をSVG出力形式コマンドへ統合する。                                                               |
-| `latex-graphics-helper.convertPngToPdf`    | `latex-graphics-helper.convertToPdf`           | PNG入力をPDF出力形式コマンドへ統合する。                                                               |
-| `latex-graphics-helper.convertJpegToPdf`   | `latex-graphics-helper.convertToPdf`           | JPEG入力をPDF出力形式コマンドへ統合する。                                                              |
-| `latex-graphics-helper.convertSvgToPdf`    | `latex-graphics-helper.convertToPdf`           | SVG入力をPDF出力形式コマンドへ統合する。                                                               |
+| v0.5.1 command ID                          | v1.0.0で使うcommand ID                         | 備考                                                                                                                             |
+| ------------------------------------------ | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `latex-graphics-helper.cropPdf`            | `latex-graphics-helper.cropPdf.auto`           | quick系の自動crop。Webview GUIで細かく指定するcropは `latex-graphics-helper.cropPdf.configure` として別入口にする。              |
+| `latex-graphics-helper.splitPdf`           | `latex-graphics-helper.splitPdf.allPages`      | quick系の全ページsplit。Webview GUIでページを選択するsplitは `latex-graphics-helper.splitPdf.configure` として別入口にする。     |
+| `latex-graphics-helper.mergePdf`           | `latex-graphics-helper.mergePdf.selectedFiles` | quick系の選択PDF結合。Webview GUIで順序やページを指定するmergeは `latex-graphics-helper.mergePdf.configure` として別入口にする。 |
+| `latex-graphics-helper.convertDrawioToPdf` | `latex-graphics-helper.convertToPdf`           | Draw.io入力をPDF出力形式コマンドへ統合する。                                                                                     |
+| `latex-graphics-helper.convertPdfToPng`    | `latex-graphics-helper.convertToPng`           | PDF入力をPNG出力形式コマンドへ統合する。                                                                                         |
+| `latex-graphics-helper.convertPdfToJpeg`   | `latex-graphics-helper.convertToJpeg`          | PDF入力をJPEG出力形式コマンドへ統合する。                                                                                        |
+| `latex-graphics-helper.convertPdfToSvg`    | `latex-graphics-helper.convertToSvg`           | PDF入力をSVG出力形式コマンドへ統合する。                                                                                         |
+| `latex-graphics-helper.convertPngToPdf`    | `latex-graphics-helper.convertToPdf`           | PNG入力をPDF出力形式コマンドへ統合する。                                                                                         |
+| `latex-graphics-helper.convertJpegToPdf`   | `latex-graphics-helper.convertToPdf`           | JPEG入力をPDF出力形式コマンドへ統合する。                                                                                        |
+| `latex-graphics-helper.convertSvgToPdf`    | `latex-graphics-helper.convertToPdf`           | SVG入力をPDF出力形式コマンドへ統合する。                                                                                         |
 
 ## 旧command IDの互換alias
 
@@ -115,7 +115,7 @@ CHANGELOGでは、`BREAKING CHANGE`として以下を明記する。
 
 - 旧command IDの互換aliasを提供しない
 - 変換コマンドを出力形式基準へ統合した
-- PDF操作コマンドはサブメニュー化し、`cropPdf.auto` / `splitPdf.allPages` / `mergePdf.selectedPages`などの具体的なcommand IDへ移行した
+- PDF操作コマンドはサブメニュー化し、quick系は`cropPdf.auto` / `splitPdf.allPages` / `mergePdf.selectedFiles`、Webview GUI系は`cropPdf.configure` / `splitPdf.configure` / `mergePdf.configure`などの具体的なcommand IDへ移行した
 - `execPath.pdfcrop`を廃止し、`execPath.ghostscript`へ移行した
 - 共通Puppeteer設定を廃止し、用途別Puppeteer設定へ移行した
 

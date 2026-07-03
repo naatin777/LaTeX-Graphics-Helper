@@ -47,7 +47,8 @@ PDF操作については以下の状態。
 - `mergePdf`
   - v0.5.1相当の基本結合コマンドが現行 `src/extension.ts` に登録されていない
   - 旧command IDは復元しない
-  - manual GUIとは別に、現行の `mergePdf.selectedPages` または `mergePdf.manual` の最小機能として基本結合を実装する必要がある
+  - 当初は `mergePdf.selectedPages` または `mergePdf.manual` として整理していた
+  - 後続方針では、基本結合は `mergePdf.selectedFiles`、Webview GUIは `mergePdf.configure` へ寄せる
 
 `v0.5.1` では、LaTeX文書上で以下の挿入機能が提供されていた。
 

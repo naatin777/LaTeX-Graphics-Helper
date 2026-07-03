@@ -1,4 +1,4 @@
-# タスク: cropPdf.manual GUIを実装する
+# タスク: cropPdf.configure GUIを実装する
 
 ## Status
 
@@ -6,12 +6,12 @@ Todo
 
 ## 目的
 
-追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.cropPdf.manual` を実装する。
+追加済みの失敗テストを通す最小範囲で、`latex-graphics-helper.cropPdf.configure` を実装する。
 
 ## 完了条件
 
-- `cropPdf.manual` commandが `src/extension.ts` に登録されている
-- Explorerの `PDFをトリミング > manual` からWebviewを開ける
+- `cropPdf.configure` commandが `src/extension.ts` に登録されている
+- ExplorerのPDF切り抜きサブメニューからWebviewを開ける
 - WebviewでPDFを表示できる
 - ユーザーが指定したcrop範囲をHostへ送れる
 - Host側でcrop範囲を使ってPDFを出力できる
@@ -29,7 +29,7 @@ Todo
 - `package.nls.json`
 - `test/`
 - `test/playwright/`
-- `docs/tasks/0105-implement-crop-pdf-manual-gui.md`
+- `docs/tasks/0105-implement-crop-pdf-configure-gui.md`
 
 ## 対象外
 
@@ -41,8 +41,8 @@ Todo
 
 ## 関連
 
-- [0103: cropPdf.manual GUIの仕様を決める](0103-design-crop-pdf-manual-gui.md)
-- [0104: cropPdf.manual GUIの失敗テストを追加する](0104-add-crop-pdf-manual-gui-tests.md)
+- [0103: cropPdf.configure GUIの仕様を決める](0103-design-crop-pdf-configure-gui.md)
+- [0104: cropPdf.configure GUIの失敗テストを追加する](0104-add-crop-pdf-configure-gui-tests.md)
 
 ## 確認方法
 

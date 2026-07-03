@@ -6,7 +6,7 @@ Todo
 
 ## 目的
 
-`mergePdf.selectedPages` または `mergePdf.manual` の実装前に、PDF結合GUIとHost連携の主要な振る舞いを失敗テストとして固定する。
+`mergePdf.configure` の実装前に、PDF結合GUIとHost連携の主要な振る舞いを失敗テストとして固定する。
 
 ## 完了条件
 
