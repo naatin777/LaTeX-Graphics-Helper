@@ -197,6 +197,46 @@ test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
     ]);
 });
 
+test("crop_pdf keeps the preview canvas-only without text or annotation layers", async ({
+  page,
+}) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  await expect(page.locator("canvas[data-pdf-page]")).toHaveCount(2);
+  await expect(page.locator(".textLayer")).toHaveCount(0);
+  await expect(page.locator(".annotationLayer")).toHaveCount(0);
+  await expect(page.locator('span[role="presentation"]')).toHaveCount(0);
+  await expect
+    .poll(() =>
+      page.locator(".pdf-preview__pages").evaluate((element) =>
+        [...element.children].map((child) => ({
+          tagName: child.tagName,
+          page: child.getAttribute("data-pdf-page"),
+        })),
+      ),
+    )
+    .toEqual([
+      { tagName: "CANVAS", page: "1" },
+      { tagName: "CANVAS", page: "2" },
+    ]);
+});
+
 test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {
   await Promise.all([
     readFile(join(webviewRoot, "crop_pdf", "standard_fonts", "LiberationSans-Regular.ttf")),
