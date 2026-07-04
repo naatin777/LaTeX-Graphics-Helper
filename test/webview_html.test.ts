@@ -23,6 +23,7 @@ suite("Webview HTML生成", () => {
     });
 
     assert.match(html, /connect-src vscode-resource:/);
+    assert.match(html, /script-src 'nonce-[^']+' vscode-resource:/);
     assert.match(html, /worker-src vscode-resource: blob:/);
   });
 });

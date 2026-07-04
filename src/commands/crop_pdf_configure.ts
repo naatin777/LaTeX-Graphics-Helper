@@ -43,6 +43,7 @@ export async function cropPdfConfigureCommand(
     type: "init",
     payload: {
       pdfSrc: "",
+      workerSrc: "",
       fileName: path.basename(inputUri.fsPath),
       pageCount: pdf.getPageCount(),
       initialPage: 1,
@@ -71,6 +72,11 @@ export async function cropPdfConfigureCommand(
     appName: "crop_pdf",
   });
   initMessage.payload.pdfSrc = panel.webview.asWebviewUri(inputUri).toString();
+  initMessage.payload.workerSrc = panel.webview
+    .asWebviewUri(
+      vscode.Uri.joinPath(context.extensionUri, "media", "webview", "crop_pdf", "pdf.worker.mjs"),
+    )
+    .toString();
 
   panel.webview.onDidReceiveMessage((message: unknown) => {
     if (!isCropConfigureMessage(message)) {

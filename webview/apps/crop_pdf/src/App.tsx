@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, onMount } from "solid-js";
 
-import { renderFirstPdfPage } from "../../../shared/pdf/render_first_page";
+import { renderPdfPages } from "../../../shared/pdf/render_first_page";
 
 import type { ExtensionToWebviewMessage, WebviewToExtensionMessage } from "./messages";
 import { vscode } from "./vscode";
@@ -10,12 +10,13 @@ export function App() {
   const [pageCount, setPageCount] = createSignal(1);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [pageSize, setPageSize] = createSignal({ width: 0, height: 0 });
-  let pdfCanvas: HTMLCanvasElement | undefined;
+  const [renderError, setRenderError] = createSignal("");
+  let pdfPages: HTMLDivElement | undefined;
   let renderPromise: Promise<void> | undefined;
 
   onMount(() => {
     const handleMessage = (event: MessageEvent<ExtensionToWebviewMessage>) => {
-      if (event.data.type !== "init" || !pdfCanvas) {
+      if (event.data.type !== "init" || !pdfPages) {
         return;
       }
 
@@ -26,7 +27,15 @@ export function App() {
         width: event.data.payload.width ?? 0,
         height: event.data.payload.height ?? 0,
       });
-      renderPromise = renderFirstPdfPage(event.data.payload.pdfSrc, pdfCanvas);
+      setRenderError("");
+      renderPromise = renderPdfPages(
+        event.data.payload.pdfSrc,
+        pdfPages,
+        event.data.payload.workerSrc ? { workerSrc: event.data.payload.workerSrc } : {},
+      ).catch((error: unknown) => {
+        setRenderError(error instanceof Error ? error.message : String(error));
+        throw error;
+      });
     };
 
     window.addEventListener("message", handleMessage);
@@ -37,6 +46,7 @@ export function App() {
   const applyCrop = async () => {
     await renderPromise;
     const size = pageSize();
+    const firstPageCanvas = pdfPages?.querySelector<HTMLCanvasElement>('canvas[data-pdf-page="1"]');
 
     const message: WebviewToExtensionMessage = {
       type: "apply",
@@ -44,8 +54,8 @@ export function App() {
         cropBox: {
           left: 0,
           bottom: 0,
-          right: size.width || pdfCanvas?.width || 0,
-          top: size.height || pdfCanvas?.height || 0,
+          right: size.width || firstPageCanvas?.width || 0,
+          top: size.height || firstPageCanvas?.height || 0,
         },
         target: {
           type: "all",
@@ -75,7 +85,12 @@ export function App() {
       </header>
 
       <section class="pdf-preview">
-        <canvas ref={(element) => (pdfCanvas = element)} data-pdf-page="1" />
+        <div ref={(element) => (pdfPages = element)} class="pdf-preview__pages" />
+        {renderError() ? (
+          <p class="pdf-preview__error" role="alert">
+            PDFを表示できませんでした: {renderError()}
+          </p>
+        ) : undefined}
       </section>
 
       <section class="panel">

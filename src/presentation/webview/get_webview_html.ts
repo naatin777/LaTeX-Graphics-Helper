@@ -32,7 +32,7 @@ export function getWebviewHtml(params: {
         font-src ${webview.cspSource};
         style-src ${webview.cspSource};
         worker-src ${webview.cspSource} blob:;
-        script-src 'nonce-${nonce}';
+        script-src 'nonce-${nonce}' ${webview.cspSource};
       "
     >
 

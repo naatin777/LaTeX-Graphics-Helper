@@ -159,6 +159,76 @@ test("crop_pdf accepts configure init payload and renders the first PDF page", a
     .toBe(true);
 });
 
+test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const pages = page.locator("canvas[data-pdf-page]");
+  await expect(pages).toHaveCount(2);
+
+  await expect
+    .poll(() =>
+      pages.evaluateAll((elements) =>
+        elements.map((element) => ({
+          page: element.getAttribute("data-pdf-page"),
+          width: Number(element.getAttribute("width")),
+          height: Number(element.getAttribute("height")),
+        })),
+      ),
+    )
+    .toEqual([
+      { page: "1", width: 320, height: 180 },
+      { page: "2", width: 200, height: 120 },
+    ]);
+});
+
+test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertComputed", async ({
+  page,
+}) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    delete (Map.prototype as Map<unknown, unknown> & { getOrInsertComputed?: unknown })
+      .getOrInsertComputed;
+
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const canvas = page.locator('canvas[data-pdf-page="1"]');
+
+  await expect(canvas).toBeVisible();
+  await expect
+    .poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0))
+    .toBe(true);
+});
+
 test("crop_pdf sends apply message with cropBox and all-pages target", async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
@@ -237,6 +307,15 @@ async function createTestPdf(): Promise<Uint8Array> {
     width: 160,
     height: 90,
     color: rgb(1, 1, 0),
+  });
+
+  const secondPage = document.addPage([200, 120]);
+  secondPage.drawRectangle({
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 120,
+    color: rgb(0.5, 0, 1),
   });
 
   return document.save();

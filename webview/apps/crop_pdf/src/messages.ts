@@ -25,6 +25,7 @@ export type ExtensionToWebviewMessage =
       type: "init";
       payload: {
         pdfSrc: string;
+        workerSrc?: string;
         fileName: string;
         pageCount: number;
         initialPage: number;
