@@ -102,18 +102,22 @@ function installMapGetOrInsertComputed(): void {
 
 async function renderPageToCanvas(page: PDFPageProxy, canvas: HTMLCanvasElement): Promise<void> {
   const viewport = page.getViewport({ scale: 1 });
+  const outputScale = Math.max(1, globalThis.devicePixelRatio || 1);
   const context = canvas.getContext("2d");
 
   if (!context) {
     throw new Error("Could not create a 2D context for the PDF canvas.");
   }
 
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+  canvas.width = Math.floor(viewport.width * outputScale);
+  canvas.height = Math.floor(viewport.height * outputScale);
+  canvas.style.width = `${viewport.width}px`;
+  canvas.style.height = `${viewport.height}px`;
 
   await page.render({
     canvas,
     canvasContext: context,
+    ...(outputScale === 1 ? {} : { transform: [outputScale, 0, 0, outputScale, 0, 0] }),
     viewport,
   }).promise;
 }
