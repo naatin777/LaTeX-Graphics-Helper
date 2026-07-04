@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -50,3 +50,17 @@ Todo
 - `pnpm run check:test`
 - `pnpm run test:playwright`
 - `CI=true pnpm run test:vscode`
+
+## 実施内容
+
+- `cropPdf.configure` の `apply` messageをHost側で受け取り、PDF出力処理を開始するようにした
+- cropBoxをPDFポイントのbboxとして検証し、対象ページのMediaBox/CropBoxへ反映する処理を追加した
+- 作業ファイルを `.latex-graphics-helper/crop-pdf-configure/` 配下に残すようにした
+- 出力反映を既存のSafe Mode / Undo処理へ接続した
+- Webview起動直後のmessage取りこぼしを避けるため、Webviewから `ready` を送ってからHostが `init` を返す流れにした
+
+## 確認結果
+
+- `CI=true pnpm run check:all`
+- `CI=true pnpm run test:playwright -- -g "crop_pdf"`
+- `CI=true pnpm run test -- --grep "configure cropコマンド|PDF自動crop処理|変換結果の反映処理"`

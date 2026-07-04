@@ -25,6 +25,7 @@ export function App() {
     };
 
     window.addEventListener("message", handleMessage);
+    vscode.postMessage({ type: "ready" });
     onCleanup(() => window.removeEventListener("message", handleMessage));
   });
 

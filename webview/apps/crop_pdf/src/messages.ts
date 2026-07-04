@@ -1,5 +1,8 @@
 export type WebviewToExtensionMessage =
   | {
+      type: "ready";
+    }
+  | {
       type: "apply";
       payload: {
         cropBox: {
