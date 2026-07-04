@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -64,7 +65,7 @@ async function createConfiguredCropOutput(
   options: CropPdfConfigureOptions,
 ): Promise<PreparedConversionOutput> {
   const { job, signal } = options;
-  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
   const workDirectory = path.join(
     job.workspacePath,
     ".latex-graphics-helper",

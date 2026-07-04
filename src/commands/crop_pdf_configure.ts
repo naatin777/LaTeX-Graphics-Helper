@@ -35,6 +35,8 @@ export async function cropPdfConfigureCommand(
   await assertExistingPathInWorkspace(inputUri.fsPath, workspaceFolder.uri.fsPath);
 
   const pdf = await PDFDocument.load(await readFile(inputUri.fsPath));
+  const firstPage = pdf.getPages()[0];
+  const firstPageMediaBox = firstPage?.getMediaBox();
   const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
   const outputTemplate = configuration.get<string>("outputPath.cropPdf", DEFAULT_OUTPUT_PATH);
   const initMessage = {
@@ -44,6 +46,8 @@ export async function cropPdfConfigureCommand(
       fileName: path.basename(inputUri.fsPath),
       pageCount: pdf.getPageCount(),
       initialPage: 1,
+      width: firstPageMediaBox?.width ?? 0,
+      height: firstPageMediaBox?.height ?? 0,
     },
   };
   const panel = vscode.window.createWebviewPanel(
@@ -156,9 +160,8 @@ async function applyConfiguredCrop(params: {
     }
 
     const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
     panel.dispose();
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
     if (selectedAction === undoAction) {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
@@ -222,9 +225,46 @@ function isCropConfigureMessage(
     return false;
   }
 
-  return "cropBox" in payload && "target" in payload;
+  if (!("cropBox" in payload) || !("target" in payload)) {
+    return false;
+  }
+
+  return isCropBox(payload.cropBox) && isCropTarget(payload.target);
 }
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
+}
+
+function isCropBox(value: unknown): value is CropBox {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  return (
+    "left" in value &&
+    typeof value.left === "number" &&
+    "bottom" in value &&
+    typeof value.bottom === "number" &&
+    "right" in value &&
+    typeof value.right === "number" &&
+    "top" in value &&
+    typeof value.top === "number"
+  );
+}
+
+function isCropTarget(value: unknown): value is CropTarget {
+  if (typeof value !== "object" || value === null || !("type" in value)) {
+    return false;
+  }
+
+  if (value.type === "all") {
+    return true;
+  }
+
+  if (value.type !== "selected" || !("pages" in value) || !Array.isArray(value.pages)) {
+    return false;
+  }
+
+  return value.pages.every((page) => typeof page === "number");
 }

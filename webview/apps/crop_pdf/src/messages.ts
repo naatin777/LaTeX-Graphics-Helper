@@ -28,6 +28,8 @@ export type ExtensionToWebviewMessage =
         fileName: string;
         pageCount: number;
         initialPage: number;
+        width?: number;
+        height?: number;
       };
     }
   | {
