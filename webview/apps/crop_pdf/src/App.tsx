@@ -98,7 +98,13 @@ export function App() {
   });
 
   const applyCrop = async () => {
-    await renderPromise;
+    try {
+      await renderPromise;
+    } catch {
+      setInputError("PDF preview must render before applying.");
+      return;
+    }
+
     const parsedCropBox = parseCropBox(cropBox());
     const target = parseTarget(targetType(), selectedPages(), pageCount());
 
@@ -271,6 +277,12 @@ function parseCropBox(value: { left: string; bottom: string; right: string; top:
   right: number;
   top: number;
 }> {
+  for (const [key, stringValue] of Object.entries(value)) {
+    if (stringValue.trim().length === 0) {
+      return { ok: false, message: `${key} must be a number.` };
+    }
+  }
+
   const cropBox = {
     left: Number(value.left),
     bottom: Number(value.bottom),
@@ -300,18 +312,25 @@ function parseTarget(
     return { ok: true, value: { type: "all" } };
   }
 
-  const pages = selectedPages
+  const pageValues = selectedPages
     .split(/[,\s]+/)
     .map((value) => value.trim())
-    .filter((value) => value.length > 0)
-    .map(Number);
+    .filter((value) => value.length > 0);
 
-  if (pages.length === 0) {
+  if (pageValues.length === 0) {
     return { ok: false, message: "At least one page must be selected." };
   }
 
+  const pages = pageValues.map(Number);
+
+  for (let index = 0; index < pages.length; index += 1) {
+    if (!Number.isInteger(pages[index])) {
+      return { ok: false, message: `Page must be a whole number: ${pageValues[index]}` };
+    }
+  }
+
   for (const page of pages) {
-    if (!Number.isInteger(page) || page < 1 || page > pageCount) {
+    if (page < 1 || page > pageCount) {
       return { ok: false, message: `Selected page is out of range: ${page}` };
     }
   }

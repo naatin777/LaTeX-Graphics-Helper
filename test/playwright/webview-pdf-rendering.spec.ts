@@ -400,6 +400,53 @@ test("crop_pdf sends user configured cropBox and selected pages", async ({ page 
     });
 });
 
+test("crop_pdf rejects empty crop input and non-numeric selected pages", async ({ page }) => {
+  await installVsCodeMessageRecorder(page);
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
+  await page.getByLabel("Left").fill("");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("alert")).toHaveText("left must be a number.");
+
+  await page.getByLabel("Left").fill("0");
+  await page.getByLabel("Selected pages").check();
+  await page.getByRole("textbox", { name: "Pages" }).fill("abc");
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Page must be a whole number: abc");
+
+  const hasApplyMessage = await page.evaluate(() => {
+    const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
+
+    return messages?.some((message) => {
+      return (
+        typeof message === "object" &&
+        message !== null &&
+        "type" in message &&
+        message.type === "apply"
+      );
+    });
+  });
+
+  expect(hasApplyMessage).toBe(false);
+});
+
 test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertComputed", async ({
   page,
 }) => {
