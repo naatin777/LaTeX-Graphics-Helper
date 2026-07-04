@@ -11,9 +11,14 @@ export type WebviewToExtensionMessage =
           right: number;
           top: number;
         };
-        target: {
-          type: "all";
-        };
+        target:
+          | {
+              type: "all";
+            }
+          | {
+              type: "selected";
+              pages: number[];
+            };
       };
     }
   | {

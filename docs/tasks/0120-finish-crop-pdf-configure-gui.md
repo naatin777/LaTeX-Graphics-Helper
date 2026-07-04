@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -49,3 +49,24 @@ Todo
 - `pnpm run check`
 - `CI=true pnpm run test:playwright -- -g "crop_pdf"`
 - `CI=true pnpm run test -- --grep "configure cropコマンド|Webview HTML生成"`
+
+## 実施内容
+
+- PDF.js canvas描画を `devicePixelRatio` 対応にし、表示サイズを変えずにcanvas内部解像度だけ上げた
+- crop範囲をPDFポイント単位の数値入力で指定できるようにした
+- 対象ページを `All pages` / `Selected pages` で切り替えられるようにした
+- `Selected pages` ではカンマまたは空白区切りでページ番号を入力できるようにした
+- Apply時にWebviewからHostへ、ユーザーが入力した `cropBox` と `target` を送るようにした
+- PDF読み込み後の初期cropBox補完が、ユーザー入力済みの値を上書きしないようにした
+
+## UI方針
+
+- 初期GUIではドラッグ範囲選択ではなく、数値入力を正本にする
+- 理由は、PDFポイント座標との対応が明確で、Host側の検証・Playwrightテストと揃えやすいため
+- ドラッグ範囲選択は、必要になった時点で別タスク化する
+- PNG preview生成は使わない。画質改善はPDF.js canvasのrender scale / `devicePixelRatio` 対応で行う
+
+## 確認結果
+
+- `CI=true pnpm run check:all`
+- `CI=true pnpm run test:playwright -- -g "crop_pdf"`
