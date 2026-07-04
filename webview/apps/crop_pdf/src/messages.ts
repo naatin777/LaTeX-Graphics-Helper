@@ -1,5 +1,8 @@
 export type WebviewToExtensionMessage =
   | {
+      type: "ready";
+    }
+  | {
       type: "apply";
       payload: {
         cropBox: {
@@ -22,9 +25,15 @@ export type ExtensionToWebviewMessage =
       type: "init";
       payload: {
         pdfSrc: string;
+        workerSrc?: string;
+        cMapUrl?: string;
+        standardFontDataUrl?: string;
+        wasmUrl?: string;
         fileName: string;
         pageCount: number;
         initialPage: number;
+        width?: number;
+        height?: number;
       };
     }
   | {

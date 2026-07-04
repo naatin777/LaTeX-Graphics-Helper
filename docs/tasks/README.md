@@ -125,6 +125,7 @@
 - [0118: mergePdf quick系command IDをselectedFilesへ寄せる](0118-rename-merge-pdf-selected-files-command.md)
 - [0103: cropPdf.configure GUIの仕様を決める](0103-design-crop-pdf-configure-gui.md)
 - [0104: cropPdf.configure GUIの失敗テストを追加する](0104-add-crop-pdf-configure-gui-tests.md)
+- [0105: cropPdf.configure GUIを実装する](0105-implement-crop-pdf-configure-gui.md)
 
 ## Todo Tasks
 
@@ -134,7 +135,6 @@
 - [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md)
 - [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
 - [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md)
-- [0105: cropPdf.configure GUIを実装する](0105-implement-crop-pdf-configure-gui.md)
 - [0106: splitPdf.configure GUIの仕様を決める](0106-design-split-pdf-configure-gui.md)
 - [0107: splitPdf.configure GUIの失敗テストを追加する](0107-add-split-pdf-configure-gui-tests.md)
 - [0108: splitPdf.configure GUIを実装する](0108-implement-split-pdf-configure-gui.md)
@@ -142,3 +142,4 @@
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
+- [0120: cropPdf.configure GUIを実操作できる状態へ仕上げる](0120-finish-crop-pdf-configure-gui.md)

@@ -27,10 +27,12 @@ export function getWebviewHtml(params: {
       http-equiv="Content-Security-Policy"
       content="
         default-src 'none';
+        connect-src ${webview.cspSource} data: blob:;
         img-src ${webview.cspSource} data: blob:;
-        font-src ${webview.cspSource};
-        style-src ${webview.cspSource};
-        script-src 'nonce-${nonce}';
+        font-src ${webview.cspSource} data: blob:;
+        style-src ${webview.cspSource} 'unsafe-inline';
+        worker-src ${webview.cspSource} blob:;
+        script-src 'nonce-${nonce}' ${webview.cspSource};
       "
     >
 

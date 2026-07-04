@@ -46,10 +46,20 @@ textarea {
   overflow: auto;
 }
 
+.pdf-preview__pages {
+  display: grid;
+  gap: 12px;
+}
+
 .pdf-preview canvas {
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+.pdf-preview__error {
+  margin: 8px 0 0;
+  color: var(--vscode-errorForeground);
 }
 
 .panel {
