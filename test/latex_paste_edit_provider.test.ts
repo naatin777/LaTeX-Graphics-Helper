@@ -3,12 +3,16 @@
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { PDFDocument } from "pdf-lib";
 import { createSandbox } from "sinon";
 import * as vscode from "vscode";
 
 import { LatexPasteEditProvider } from "../src/edit_provider/latex_paste_edit_provider.js";
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const fixtureDirectory = path.join(testDirectory, "..", "..", "test", "fixtures");
 
 suite("LaTeXクリップボード画像挿入", () => {
   test("clipboard画像を画像ファイルとして保存しfigure snippetを作る", async () => {
@@ -131,7 +135,7 @@ function pngDataTransfer(): vscode.DataTransfer {
         asFile() {
           return {
             async data() {
-              return readFile(path.join(process.cwd(), "test/fixtures/test.png"));
+              return readFile(path.join(fixtureDirectory, "test.png"));
             },
           };
         },

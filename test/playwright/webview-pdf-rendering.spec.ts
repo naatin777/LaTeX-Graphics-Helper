@@ -132,6 +132,80 @@ for (const appName of ["crop_pdf", "merge_pdf"]) {
   });
 }
 
+test("crop_pdf accepts configure init payload and renders the first PDF page", async ({ page }) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const canvas = page.locator('canvas[data-pdf-page="1"]');
+
+  await expect(canvas).toBeVisible();
+  await expect
+    .poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0))
+    .toBe(true);
+});
+
+test("crop_pdf sends apply message with cropBox and all-pages target", async ({ page }) => {
+  await installVsCodeMessageRecorder(page);
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  await page.getByRole("button", { name: "Apply" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
+          .__vscodeMessages;
+
+        return messages?.at(-1);
+      }),
+    )
+    .toEqual({
+      type: "apply",
+      payload: {
+        cropBox: {
+          left: 0,
+          bottom: 0,
+          right: 320,
+          top: 180,
+        },
+        target: {
+          type: "all",
+        },
+      },
+    });
+});
+
 async function createTestPdf(): Promise<Uint8Array> {
   const document = await PDFDocument.create();
   const page = document.addPage([320, 180]);
@@ -194,4 +268,32 @@ function contentType(filePath: string): string {
     default:
       return "application/octet-stream";
   }
+}
+
+async function installVsCodeMessageRecorder(page: {
+  addInitScript(script: () => void): Promise<unknown>;
+}): Promise<void> {
+  await page.addInitScript(() => {
+    const messages: unknown[] = [];
+
+    Object.defineProperty(globalThis, "__vscodeMessages", {
+      value: messages,
+      configurable: true,
+    });
+
+    Object.defineProperty(globalThis, "acquireVsCodeApi", {
+      value: () => ({
+        postMessage(message: unknown) {
+          messages.push(message);
+        },
+        getState() {
+          return undefined;
+        },
+        setState() {
+          // noop
+        },
+      }),
+      configurable: true,
+    });
+  });
 }

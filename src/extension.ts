@@ -2,6 +2,10 @@ import * as vscode from "vscode";
 
 import { convertToAvifCommand, CONVERT_TO_AVIF_COMMAND } from "./commands/convert_to_avif.js";
 import { cropPdfAuto } from "./commands/crop_pdf_auto.js";
+import {
+  cropPdfConfigureCommand,
+  CROP_PDF_CONFIGURE_COMMAND,
+} from "./commands/crop_pdf_configure.js";
 import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from "./commands/convert_to_jpeg.js";
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from "./commands/convert_to_png.js";
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from "./commands/convert_to_svg.js";
@@ -32,6 +36,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("latex-graphics-helper.cropPdf.auto", cropPdfAuto),
+    vscode.commands.registerCommand(
+      CROP_PDF_CONFIGURE_COMMAND,
+      (uri?: vscode.Uri, uris?: vscode.Uri[]) => cropPdfConfigureCommand(context, uri, uris),
+    ),
     vscode.commands.registerCommand(
       "latex-graphics-helper.splitPdf.allPages",
       splitPdfAllPagesCommand,

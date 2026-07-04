@@ -33,6 +33,13 @@ suite("拡張機能の基本動作", () => {
     assert.ok(commands.includes("latex-graphics-helper.cropPdf.auto"));
   });
 
+  test("configure cropコマンドが登録されている", async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes("latex-graphics-helper.cropPdf.configure"));
+    assert.ok(!commands.includes("latex-graphics-helper.cropPdf.manual"));
+  });
+
   test("全ページ分割コマンドが登録されている", async () => {
     const commands = await vscode.commands.getCommands(true);
 

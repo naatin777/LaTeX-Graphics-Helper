@@ -4,15 +4,16 @@ export function getWebviewHtml(params: {
   webview: vscode.Webview;
   extensionUri: vscode.Uri;
   title: string;
+  appName: string;
 }): string {
-  const { webview, extensionUri, title } = params;
+  const { webview, extensionUri, title, appName } = params;
 
   const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "webview", "dist", "assets", "main.js"),
+    vscode.Uri.joinPath(extensionUri, "media", "webview", appName, "index.js"),
   );
 
   const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "webview", "dist", "assets", "style.css"),
+    vscode.Uri.joinPath(extensionUri, "media", "webview", appName, "index.css"),
   );
 
   const nonce = getNonce();

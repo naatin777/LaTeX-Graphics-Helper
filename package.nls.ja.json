@@ -92,7 +92,7 @@
   "command.cropPdf.auto": "自動クロップ",
   "command.undoLastConversion": "直前の変換を取り消す",
   "command.toggleSafeMode": "Safe Modeを切り替える",
-  "command.cropPdf.manual": "手動クロップ",
+  "command.cropPdf.configure": "範囲を指定してクロップ",
 
   "submenu.splitPdf": "PDFを分割",
   "command.splitPdf.allPages": "全ページを分割",

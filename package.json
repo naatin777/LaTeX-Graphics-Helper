@@ -105,8 +105,8 @@
         "category": "LaTeX Graphics Helper"
       },
       {
-        "command": "latex-graphics-helper.cropPdf.manual",
-        "title": "%command.cropPdf.manual%",
+        "command": "latex-graphics-helper.cropPdf.configure",
+        "title": "%command.cropPdf.configure%",
         "category": "LaTeX Graphics Helper"
       },
       {
@@ -190,7 +190,7 @@
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.cropPdf.enabled"
         },
         {
-          "command": "latex-graphics-helper.cropPdf.manual",
+          "command": "latex-graphics-helper.cropPdf.configure",
           "group": "latex-graphics-helper.cropPdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.cropPdf.enabled"
         }
@@ -254,6 +254,10 @@
       "commandPalette": [
         {
           "command": "latex-graphics-helper.cropPdf.auto",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.cropPdf.configure",
           "when": "false"
         }
       ]
