@@ -421,11 +421,16 @@ test("crop_pdf rejects empty crop input and non-numeric selected pages", async (
   }, `${baseUrl}/fixture.pdf`);
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
+  await expect(page.getByLabel("Right")).toHaveValue("320");
+  await expect(page.getByLabel("Top")).toHaveValue("180");
   await page.getByLabel("Left").fill("");
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page.getByRole("alert")).toHaveText("left must be a number.");
 
   await page.getByLabel("Left").fill("0");
+  await page.getByLabel("Bottom").fill("0");
+  await page.getByLabel("Right").fill("320");
+  await page.getByLabel("Top").fill("180");
   await page.getByLabel("Selected pages").check();
   await page.getByRole("textbox", { name: "Pages" }).fill("abc");
   await page.getByRole("button", { name: "Apply" }).click();
