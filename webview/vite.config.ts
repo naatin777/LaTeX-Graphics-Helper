@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { cpSync, copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -23,7 +23,7 @@ export function defineWebviewConfig(config: WebviewBuildConfig): UserConfig {
     base: "",
     plugins: [
       solid(),
-      config.copyPdfWorker !== false ? copyPdfJsWorkerPlugin(outDir) : undefined,
+      config.copyPdfWorker !== false ? copyPdfJsAssetsPlugin(outDir) : undefined,
     ].filter((plugin): plugin is Plugin => plugin !== undefined),
 
     resolve: {
@@ -65,9 +65,9 @@ function isCssAsset(names: readonly string[], originalFileNames: readonly string
   return [...names, ...originalFileNames].some((fileName) => fileName.endsWith(".css"));
 }
 
-function copyPdfJsWorkerPlugin(outDir: string): Plugin {
+function copyPdfJsAssetsPlugin(outDir: string): Plugin {
   return {
-    name: "copy-pdfjs-worker",
+    name: "copy-pdfjs-assets",
     apply: "build",
     closeBundle() {
       const workerSource = resolve(
@@ -86,6 +86,17 @@ function copyPdfJsWorkerPlugin(outDir: string): Plugin {
 
       mkdirSync(dirname(workerTarget), { recursive: true });
       copyFileSync(workerSource, workerTarget);
+
+      for (const directoryName of ["cmaps", "standard_fonts", "wasm"]) {
+        const source = resolve(projectRoot, "node_modules", "pdfjs-dist", directoryName);
+        const target = resolve(outDir, directoryName);
+
+        if (!existsSync(source)) {
+          throw new Error(`PDF.js asset directory not found: ${source}`);
+        }
+
+        cpSync(source, target, { recursive: true });
+      }
     },
   };
 }

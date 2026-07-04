@@ -8,7 +8,7 @@ let pdfjsPromise: Promise<PdfJs> | undefined;
 export async function renderFirstPdfPage(
   pdfSrc: string,
   canvas: HTMLCanvasElement,
-  options: { workerSrc?: string } = {},
+  options: PdfRenderOptions = {},
 ): Promise<void> {
   const pdfjs = await loadPdfJs();
 
@@ -16,7 +16,7 @@ export async function renderFirstPdfPage(
     pdfjs.GlobalWorkerOptions.workerSrc = options.workerSrc;
   }
 
-  const document = await pdfjs.getDocument({ url: pdfSrc }).promise;
+  const document = await pdfjs.getDocument(createDocumentOptions(pdfSrc, options)).promise;
   const page = await document.getPage(1);
   await renderPageToCanvas(page, canvas);
 }
@@ -24,7 +24,7 @@ export async function renderFirstPdfPage(
 export async function renderPdfPages(
   pdfSrc: string,
   container: HTMLElement,
-  options: { workerSrc?: string } = {},
+  options: PdfRenderOptions = {},
 ): Promise<void> {
   const pdfjs = await loadPdfJs();
 
@@ -32,7 +32,7 @@ export async function renderPdfPages(
     pdfjs.GlobalWorkerOptions.workerSrc = options.workerSrc;
   }
 
-  const document = await pdfjs.getDocument({ url: pdfSrc }).promise;
+  const document = await pdfjs.getDocument(createDocumentOptions(pdfSrc, options)).promise;
   container.replaceChildren();
 
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
@@ -53,6 +53,27 @@ async function loadPdfJs(): Promise<PdfJs> {
   });
 
   return pdfjsPromise;
+}
+
+interface PdfRenderOptions {
+  workerSrc?: string;
+  cMapUrl?: string;
+  standardFontDataUrl?: string;
+  wasmUrl?: string;
+}
+
+function createDocumentOptions(
+  pdfSrc: string,
+  options: PdfRenderOptions,
+): Parameters<PdfJs["getDocument"]>[0] {
+  return {
+    url: pdfSrc,
+    cMapPacked: true,
+    useWorkerFetch: false,
+    ...(options.cMapUrl ? { cMapUrl: options.cMapUrl } : {}),
+    ...(options.standardFontDataUrl ? { standardFontDataUrl: options.standardFontDataUrl } : {}),
+    ...(options.wasmUrl ? { wasmUrl: options.wasmUrl } : {}),
+  };
 }
 
 function installMapGetOrInsertComputed(): void {

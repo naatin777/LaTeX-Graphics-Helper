@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { extname, isAbsolute, join, normalize, relative } from "node:path";
 
 import { expect, test } from "@playwright/test";
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const projectRoot = process.cwd();
 const webviewRoot = join(projectRoot, "media", "webview");
@@ -197,6 +197,68 @@ test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
     ]);
 });
 
+test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {
+  await Promise.all([
+    readFile(join(webviewRoot, "crop_pdf", "standard_fonts", "LiberationSans-Regular.ttf")),
+    readFile(join(webviewRoot, "crop_pdf", "cmaps", "Adobe-Japan1-UCS2.bcmap")),
+    readFile(join(webviewRoot, "crop_pdf", "wasm", "openjpeg.wasm")),
+  ]);
+});
+
+test("crop_pdf renders a text PDF with PDF.js auxiliary asset URLs", async ({ page }) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate(
+    ({ pdfSrc, assetBaseUrl }) => {
+      (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            type: "init",
+            payload: {
+              pdfSrc,
+              fileName: "fixture.pdf",
+              pageCount: 2,
+              initialPage: 1,
+              cMapUrl: `${assetBaseUrl}/crop_pdf/cmaps/`,
+              standardFontDataUrl: `${assetBaseUrl}/crop_pdf/standard_fonts/`,
+              wasmUrl: `${assetBaseUrl}/crop_pdf/wasm/`,
+            },
+          },
+        }),
+      );
+    },
+    { pdfSrc: `${baseUrl}/fixture.pdf`, assetBaseUrl: baseUrl },
+  );
+
+  await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('canvas[data-pdf-page="1"]').evaluate((element) => {
+        const context = element.getContext("2d");
+
+        if (!context) {
+          throw new Error("PDF canvas does not have a 2D rendering context.");
+        }
+
+        const image = context.getImageData(0, 0, element.width, element.height).data;
+
+        for (let index = 0; index < image.length; index += 4) {
+          const red = image[index] ?? 0;
+          const green = image[index + 1] ?? 0;
+          const blue = image[index + 2] ?? 0;
+          const alpha = image[index + 3] ?? 0;
+
+          if (alpha === 255 && red < 16 && green < 16 && blue < 16) {
+            return true;
+          }
+        }
+
+        return false;
+      }),
+    )
+    .toBe(true);
+});
+
 test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertComputed", async ({
   page,
 }) => {
@@ -279,6 +341,7 @@ test("crop_pdf sends apply message with cropBox and all-pages target", async ({ 
 async function createTestPdf(): Promise<Uint8Array> {
   const document = await PDFDocument.create();
   const page = document.addPage([320, 180]);
+  const font = await document.embedFont(StandardFonts.Helvetica);
 
   page.drawRectangle({
     x: 0,
@@ -307,6 +370,13 @@ async function createTestPdf(): Promise<Uint8Array> {
     width: 160,
     height: 90,
     color: rgb(1, 1, 0),
+  });
+  page.drawText("LaTeX Graphics Helper", {
+    x: 24,
+    y: 78,
+    size: 24,
+    font,
+    color: rgb(0, 0, 0),
   });
 
   const secondPage = document.addPage([200, 120]);

@@ -28,11 +28,14 @@ export function App() {
         height: event.data.payload.height ?? 0,
       });
       setRenderError("");
-      renderPromise = renderPdfPages(
-        event.data.payload.pdfSrc,
-        pdfPages,
-        event.data.payload.workerSrc ? { workerSrc: event.data.payload.workerSrc } : {},
-      ).catch((error: unknown) => {
+      renderPromise = renderPdfPages(event.data.payload.pdfSrc, pdfPages, {
+        ...(event.data.payload.workerSrc ? { workerSrc: event.data.payload.workerSrc } : {}),
+        ...(event.data.payload.cMapUrl ? { cMapUrl: event.data.payload.cMapUrl } : {}),
+        ...(event.data.payload.standardFontDataUrl
+          ? { standardFontDataUrl: event.data.payload.standardFontDataUrl }
+          : {}),
+        ...(event.data.payload.wasmUrl ? { wasmUrl: event.data.payload.wasmUrl } : {}),
+      }).catch((error: unknown) => {
         setRenderError(error instanceof Error ? error.message : String(error));
         throw error;
       });

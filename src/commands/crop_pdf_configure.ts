@@ -44,6 +44,9 @@ export async function cropPdfConfigureCommand(
     payload: {
       pdfSrc: "",
       workerSrc: "",
+      cMapUrl: "",
+      standardFontDataUrl: "",
+      wasmUrl: "",
       fileName: path.basename(inputUri.fsPath),
       pageCount: pdf.getPageCount(),
       initialPage: 1,
@@ -77,6 +80,13 @@ export async function cropPdfConfigureCommand(
       vscode.Uri.joinPath(context.extensionUri, "media", "webview", "crop_pdf", "pdf.worker.mjs"),
     )
     .toString();
+  initMessage.payload.cMapUrl = toWebviewDirectoryUri(panel.webview, context.extensionUri, "cmaps");
+  initMessage.payload.standardFontDataUrl = toWebviewDirectoryUri(
+    panel.webview,
+    context.extensionUri,
+    "standard_fonts",
+  );
+  initMessage.payload.wasmUrl = toWebviewDirectoryUri(panel.webview, context.extensionUri, "wasm");
 
   panel.webview.onDidReceiveMessage((message: unknown) => {
     if (!isCropConfigureMessage(message)) {
@@ -109,6 +119,18 @@ export async function cropPdfConfigureCommand(
       isApplying = false;
     });
   });
+}
+
+function toWebviewDirectoryUri(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+  directoryName: string,
+): string {
+  const uri = webview.asWebviewUri(
+    vscode.Uri.joinPath(extensionUri, "media", "webview", "crop_pdf", directoryName),
+  );
+
+  return `${uri.toString()}/`;
 }
 
 async function applyConfiguredCrop(params: {

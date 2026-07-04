@@ -26,6 +26,9 @@ export type ExtensionToWebviewMessage =
       payload: {
         pdfSrc: string;
         workerSrc?: string;
+        cMapUrl?: string;
+        standardFontDataUrl?: string;
+        wasmUrl?: string;
         fileName: string;
         pageCount: number;
         initialPage: number;
