@@ -145,11 +145,20 @@ export function App() {
   };
 
   const zoomOut = () => {
-    setPreviewZoom((value) => Math.max(0.5, value - 0.25));
+    setPreviewZoom((value) => clampPreviewZoom(value - 0.25));
   };
 
   const zoomIn = () => {
-    setPreviewZoom((value) => Math.min(2, value + 0.25));
+    setPreviewZoom((value) => clampPreviewZoom(value + 0.25));
+  };
+
+  const zoomWithWheel = (event: WheelEvent) => {
+    if (!event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
+    event.preventDefault();
+    setPreviewZoom((value) => clampPreviewZoom(value + (event.deltaY < 0 ? 0.1 : -0.1)));
   };
 
   return (
@@ -165,7 +174,7 @@ export function App() {
       </header>
 
       <div class="workspace">
-        <section aria-label="PDF preview" class="pdf-preview">
+        <section aria-label="PDF preview" class="pdf-preview" onWheel={zoomWithWheel}>
           <div class="pdf-preview__toolbar">
             <div>
               <h2>Preview</h2>
@@ -411,4 +420,8 @@ function applyPreviewZoom(container: HTMLDivElement | undefined, zoom: number): 
     canvas.style.width = `${width * zoom}px`;
     canvas.style.height = `${height * zoom}px`;
   }
+}
+
+function clampPreviewZoom(value: number): number {
+  return Math.min(4, Math.max(0.25, Math.round(value * 100) / 100));
 }

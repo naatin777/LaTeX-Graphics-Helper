@@ -369,6 +369,119 @@ test("crop_pdf zooms preview display size without changing PDF point crop values
     });
 });
 
+test("crop_pdf zooms with modified wheel events and clamps the zoom range", async ({ page }) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const preview = page.getByRole("region", { name: "PDF preview" });
+  const firstPage = page.locator('canvas[data-pdf-page="1"]');
+  await expect(firstPage).toBeVisible();
+
+  await preview.dispatchEvent("wheel", {
+    deltaY: -100,
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+  await expect(page.getByText("110%")).toBeVisible();
+  await expect(firstPage).toHaveCSS("width", "352px");
+
+  for (let index = 0; index < 60; index += 1) {
+    await preview.dispatchEvent("wheel", {
+      deltaY: -100,
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+  }
+
+  await expect(page.getByText("400%")).toBeVisible();
+  await expect(firstPage).toHaveCSS("width", "1280px");
+
+  for (let index = 0; index < 80; index += 1) {
+    await preview.dispatchEvent("wheel", {
+      deltaY: 100,
+      metaKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+  }
+
+  await expect(page.getByText("25%")).toBeVisible();
+  await expect(firstPage).toHaveCSS("width", "80px");
+});
+
+test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 360 });
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const preview = page.getByRole("region", { name: "PDF preview" });
+  await expect(page.locator('canvas[data-pdf-page="2"]')).toBeVisible();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const root = document.querySelector<HTMLElement>("#root");
+        const previewElement = document.querySelector<HTMLElement>(".pdf-preview");
+        const panel = document.querySelector<HTMLElement>(".panel");
+
+        return {
+          bodyOverflow: getComputedStyle(document.body).overflow,
+          rootOverflow: root ? getComputedStyle(root).overflow : "",
+          previewOverflow: previewElement ? getComputedStyle(previewElement).overflow : "",
+          panelOverflow: panel ? getComputedStyle(panel).overflow : "",
+          previewCanScroll:
+            previewElement !== null && previewElement.scrollHeight > previewElement.clientHeight,
+        };
+      }),
+    )
+    .toEqual({
+      bodyOverflow: "hidden",
+      rootOverflow: "hidden",
+      previewOverflow: "auto",
+      panelOverflow: "visible",
+      previewCanScroll: true,
+    });
+
+  await preview.evaluate((element) => {
+    element.scrollTop = 40;
+  });
+  await expect.poll(() => preview.evaluate((element) => element.scrollTop)).toBe(40);
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollTop)).toBe(0);
+  await expect.poll(() => page.evaluate(() => document.body.scrollTop)).toBe(0);
+});
+
 test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {
   await Promise.all([
     readFile(join(webviewRoot, "crop_pdf", "standard_fonts", "LiberationSans-Regular.ttf")),
