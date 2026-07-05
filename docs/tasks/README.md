@@ -127,6 +127,7 @@
 - [0104: cropPdf.configure GUIの失敗テストを追加する](0104-add-crop-pdf-configure-gui-tests.md)
 - [0105: cropPdf.configure GUIを実装する](0105-implement-crop-pdf-configure-gui.md)
 - [0120: cropPdf.configure GUIを実操作できる状態へ仕上げる](0120-finish-crop-pdf-configure-gui.md)
+- [0121: cropPdf.configure GUIのレイアウトを左右分割へ改善する](0121-improve-crop-pdf-configure-layout.md)
 
 ## Todo Tasks
 

@@ -274,13 +274,99 @@ test("crop_pdf keeps the preview canvas-only without text or annotation layers",
         [...element.children].map((child) => ({
           tagName: child.tagName,
           page: child.getAttribute("data-pdf-page"),
+          canvasCount: child.querySelectorAll("canvas").length,
+          footer: child.querySelector(".pdf-page__footer")?.textContent?.trim(),
         })),
       ),
     )
     .toEqual([
-      { tagName: "CANVAS", page: "1" },
-      { tagName: "CANVAS", page: "2" },
+      { tagName: "FIGURE", page: "1", canvasCount: 1, footer: "Page 1 / 2" },
+      { tagName: "FIGURE", page: "2", canvasCount: 1, footer: "Page 2 / 2" },
     ]);
+});
+
+test("crop_pdf uses a two-column layout with preview zoom controls", async ({ page }) => {
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  await expect(page.getByRole("region", { name: "PDF preview" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Crop settings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Zoom in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Zoom out" })).toBeVisible();
+  await expect(page.getByText("100%")).toBeVisible();
+  await expect(page.locator(".pdf-page__footer").first()).toHaveText("Page 1 / 2");
+});
+
+test("crop_pdf zooms preview display size without changing PDF point crop values", async ({
+  page,
+}) => {
+  await installVsCodeMessageRecorder(page);
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const firstPage = page.locator('canvas[data-pdf-page="1"]');
+  await expect(firstPage).toBeVisible();
+  await expect(firstPage).toHaveCSS("width", "320px");
+
+  await page.getByRole("button", { name: "Zoom in" }).click();
+  await expect(page.getByText("125%")).toBeVisible();
+  await expect(firstPage).toHaveCSS("width", "400px");
+
+  await page.getByRole("button", { name: "Apply" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
+          .__vscodeMessages;
+
+        return messages?.at(-1);
+      }),
+    )
+    .toEqual({
+      type: "apply",
+      payload: {
+        cropBox: {
+          left: 0,
+          bottom: 0,
+          right: 320,
+          top: 180,
+        },
+        target: {
+          type: "all",
+        },
+      },
+    });
 });
 
 test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {

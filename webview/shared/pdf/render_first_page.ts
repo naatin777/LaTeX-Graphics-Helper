@@ -36,9 +36,21 @@ export async function renderPdfPages(
   container.replaceChildren();
 
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const pageFrame = container.ownerDocument.createElement("figure");
+    pageFrame.className = "pdf-page";
+    pageFrame.dataset.pdfPage = pageNumber.toString();
+
     const canvas = container.ownerDocument.createElement("canvas");
     canvas.dataset.pdfPage = pageNumber.toString();
-    container.append(canvas);
+    canvas.className = "pdf-page__canvas";
+    pageFrame.append(canvas);
+
+    const footer = container.ownerDocument.createElement("figcaption");
+    footer.className = "pdf-page__footer";
+    footer.textContent = `Page ${pageNumber} / ${document.numPages}`;
+    pageFrame.append(footer);
+
+    container.append(pageFrame);
 
     const page = await document.getPage(pageNumber);
     await renderPageToCanvas(page, canvas);
@@ -111,6 +123,8 @@ async function renderPageToCanvas(page: PDFPageProxy, canvas: HTMLCanvasElement)
 
   canvas.width = Math.floor(viewport.width * outputScale);
   canvas.height = Math.floor(viewport.height * outputScale);
+  canvas.dataset.pdfWidth = viewport.width.toString();
+  canvas.dataset.pdfHeight = viewport.height.toString();
   canvas.style.width = `${viewport.width}px`;
   canvas.style.height = `${viewport.height}px`;
 
