@@ -2,7 +2,7 @@ import { createServer, type Server } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, isAbsolute, join, normalize, relative } from "node:path";
 
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
 const projectRoot = process.cwd();
@@ -426,6 +426,85 @@ test("crop_pdf zooms with modified wheel events and clamps the zoom range", asyn
   await expect(firstPage).toHaveCSS("width", "80px");
 });
 
+test("crop_pdf keeps the PDF point under the pointer while zooming", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 520 });
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "fixture.pdf",
+            pageCount: 2,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/fixture.pdf`);
+
+  const preview = page.getByRole("region", { name: "PDF preview" });
+  const firstPage = page.locator('canvas[data-pdf-page="1"]');
+  await expect(firstPage).toBeVisible();
+
+  for (let index = 0; index < 4; index += 1) {
+    await page.getByRole("button", { name: "Zoom in" }).click();
+  }
+  await expect(page.getByText("200%")).toBeVisible();
+
+  await preview.evaluate((element) => {
+    element.scrollLeft = 100;
+    element.scrollTop = 80;
+  });
+
+  const pointer = await firstPage.evaluate((canvas) => {
+    const canvasBounds = canvas.getBoundingClientRect();
+    const previewBounds = canvas.closest(".pdf-preview")?.getBoundingClientRect();
+
+    if (!previewBounds) {
+      throw new Error("PDF preview bounds are unavailable.");
+    }
+
+    return {
+      clientX:
+        (Math.max(canvasBounds.left, previewBounds.left) +
+          Math.min(canvasBounds.right, previewBounds.right)) /
+        2,
+      clientY:
+        (Math.max(canvasBounds.top, previewBounds.top) +
+          Math.min(canvasBounds.bottom, previewBounds.bottom)) /
+        2,
+    };
+  });
+
+  const pointBeforeZoom = await pdfPointAtViewportPosition(firstPage, pointer);
+
+  await firstPage.dispatchEvent("wheel", {
+    clientX: pointer.clientX,
+    clientY: pointer.clientY,
+    deltaY: -100,
+    ctrlKey: true,
+    bubbles: true,
+    cancelable: true,
+  });
+
+  await expect(page.getByText("210%")).toBeVisible();
+  await expect
+    .poll(async () => {
+      const pointAfterZoom = await pdfPointAtViewportPosition(firstPage, pointer);
+
+      return Math.max(
+        Math.abs(pointAfterZoom.x - pointBeforeZoom.x),
+        Math.abs(pointAfterZoom.y - pointBeforeZoom.y),
+      );
+    })
+    .toBeLessThan(0.001);
+  await expect(preview).toBeVisible();
+});
+
 test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 360 });
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
@@ -729,6 +808,20 @@ test("crop_pdf sends apply message with cropBox and all-pages target", async ({ 
       },
     });
 });
+
+async function pdfPointAtViewportPosition(
+  canvas: Locator,
+  pointer: { clientX: number; clientY: number },
+): Promise<{ x: number; y: number }> {
+  return canvas.evaluate((element, position) => {
+    const bounds = element.getBoundingClientRect();
+
+    return {
+      x: (position.clientX - bounds.left) / bounds.width,
+      y: (position.clientY - bounds.top) / bounds.height,
+    };
+  }, pointer);
+}
 
 async function createTestPdf(): Promise<Uint8Array> {
   const document = await PDFDocument.create();
