@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
+- なし
 
 ## Rules
 
@@ -139,6 +139,7 @@
 - [0136: crop Applyの動的fixtureテストを固定fixtureへ置き換える](0136-replace-crop-apply-generated-fixture-test.md)
 - [0137: Gemini Code Assistのレビュー手順を削除する](0137-remove-gemini-code-assist-review-workflow.md)
 - [0138: crop fixtureテストで設定済みpdftocairoを使う](0138-use-configured-pdftocairo-in-crop-fixture-tests.md)
+- [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
 
 ## Todo Tasks
 

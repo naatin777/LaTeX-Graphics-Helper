@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -41,3 +41,8 @@ crop画像比較テストで、Unicode入力パスの検証を維持しながら
 - `CI=true pnpm run check:all`
 - `CI=true pnpm run test:vscode`
 - PR #308のWindows VS Codeテスト
+
+## 確認結果
+
+- Windows CIで固定fixtureの全ページcrop・選択ページcrop・Unicode outputPathテストが成功した
+- 同じrunで発生したMermaidからWebPへのPuppeteer `EBUSY`は、失敗jobの再実行では再現せずWindows VS Codeテスト全体が成功した
