@@ -51,6 +51,8 @@
 - EPSはGhostscriptで一度PDFへ変換すると既存pipelineを再利用しやすい。
 - EPSはprogramとして実行されるPostScript系入力なので、通常画像より厳しいsecurityとresource制限が必要になる。
 - JP2やJPEG XLはAPIの存在だけで採用せず、sharp prebuilt binaryの3 OS実体確認後に判断する。
+- 追加形式は1形式ずつ評価し、GitHub Actionsの3 OSで安定しない場合は実装を中止または保留する。
+- CI成功のためにplatform別の機能差を隠さず、supported形式は3 OS共通の範囲を基本にする。
 
 ## 未確認事項
 
