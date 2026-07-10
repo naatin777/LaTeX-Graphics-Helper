@@ -146,3 +146,4 @@
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
+- [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
