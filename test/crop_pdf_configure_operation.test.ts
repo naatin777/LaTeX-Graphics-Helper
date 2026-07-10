@@ -55,6 +55,7 @@ suite("PDF configure crop処理", () => {
 
   test("固定fixtureの全ページを同じboxでcropし、描画内容の位置を維持する", async () => {
     const workspacePath = await createTemporaryWorkspace(temporaryDirectories);
+    const renderDirectory = await createTemporaryRenderDirectory(temporaryDirectories);
     const sourcePath = await copyFixtureToWorkspace(
       workspacePath,
       cropConfigureFixture.fileName,
@@ -88,19 +89,20 @@ suite("PDF configure crop処理", () => {
       outputPath,
       pageNumber: 1,
       cropBox,
-      temporaryDirectory: workspacePath,
+      temporaryDirectory: renderDirectory,
     });
     await assertRenderedCropMatchesSource({
       sourcePath,
       outputPath,
       pageNumber: 2,
       cropBox,
-      temporaryDirectory: workspacePath,
+      temporaryDirectory: renderDirectory,
     });
   });
 
   test("選択ページだけをcropし、未選択ページと元fixtureを変更しない", async () => {
     const workspacePath = await createTemporaryWorkspace(temporaryDirectories);
+    const renderDirectory = await createTemporaryRenderDirectory(temporaryDirectories);
     const sourcePath = await copyFixtureToWorkspace(
       workspacePath,
       cropConfigureFixture.fileName,
@@ -146,14 +148,14 @@ suite("PDF configure crop処理", () => {
       outputPath,
       pageNumber: 1,
       cropBox,
-      temporaryDirectory: workspacePath,
+      temporaryDirectory: renderDirectory,
     });
     await assertRenderedPagesSimilar({
       expectedPdfPath: sourcePath,
       expectedPageNumber: 2,
       actualPdfPath: outputPath,
       actualPageNumber: 2,
-      temporaryDirectory: workspacePath,
+      temporaryDirectory: renderDirectory,
       prefix: "unselected-page",
     });
 
@@ -279,6 +281,12 @@ async function createTemporaryWorkspace(temporaryDirectories: string[]): Promise
   const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh crop 作業🌹-"));
   temporaryDirectories.push(workspacePath);
   return workspacePath;
+}
+
+async function createTemporaryRenderDirectory(temporaryDirectories: string[]): Promise<string> {
+  const renderDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-render-"));
+  temporaryDirectories.push(renderDirectory);
+  return renderDirectory;
 }
 
 async function copyFixtureToWorkspace(

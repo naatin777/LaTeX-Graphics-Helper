@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- なし
+- [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
 
 ## Rules
 
