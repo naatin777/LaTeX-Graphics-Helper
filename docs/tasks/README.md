@@ -138,6 +138,7 @@
 - [0135: 固定fixtureによる既存テスト置換方針を明記する](0135-clarify-fixed-fixture-test-replacement-policy.md)
 - [0136: crop Applyの動的fixtureテストを固定fixtureへ置き換える](0136-replace-crop-apply-generated-fixture-test.md)
 - [0137: Gemini Code Assistのレビュー手順を削除する](0137-remove-gemini-code-assist-review-workflow.md)
+- [0138: crop fixtureテストで設定済みpdftocairoを使う](0138-use-configured-pdftocairo-in-crop-fixture-tests.md)
 
 ## Todo Tasks
 

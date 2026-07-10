@@ -21,6 +21,7 @@ import { promisify } from "node:util";
 
 import { PDFDocument, type PDFPage } from "pdf-lib";
 import sharp from "sharp";
+import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../src/config/resolve_output_path.js";
 import { cropPdfWithConfiguredBox, type CropBox } from "../src/operations/crop_pdf_configure.js";
@@ -377,7 +378,11 @@ async function renderPdfPage(
   pageNumber: number,
   outputPrefix: string,
 ): Promise<string> {
-  await execFileAsync("pdftocairo", [
+  const pdftocairoPath = vscode.workspace
+    .getConfiguration("latex-graphics-helper")
+    .get<string>("execPath.pdftocairo", "pdftocairo");
+
+  await execFileAsync(pdftocairoPath, [
     "-png",
     "-singlefile",
     "-f",
