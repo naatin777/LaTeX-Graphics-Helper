@@ -1,4 +1,4 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
 import { renderPdfPages } from "../../../shared/pdf/render_first_page";
 
@@ -21,11 +21,8 @@ export function App() {
   const [renderError, setRenderError] = createSignal("");
   const [inputError, setInputError] = createSignal("");
   let pdfPages: HTMLDivElement | undefined;
+  let pdfPreview: HTMLElement | undefined;
   let renderPromise: Promise<void> | undefined;
-
-  createEffect(() => {
-    applyPreviewZoom(pdfPages, previewZoom());
-  });
 
   onMount(() => {
     const handleMessage = (event: MessageEvent<ExtensionToWebviewMessage>) => {
@@ -144,12 +141,31 @@ export function App() {
     vscode.postMessage(message);
   };
 
+  const updatePreviewZoom = (
+    value: number,
+    anchorTarget?: EventTarget | null,
+    clientX?: number,
+    clientY?: number,
+  ) => {
+    const nextZoom = clampPreviewZoom(value);
+
+    if (nextZoom === previewZoom()) {
+      return;
+    }
+
+    const anchor = capturePreviewZoomAnchor(pdfPreview, anchorTarget, clientX, clientY);
+
+    setPreviewZoom(nextZoom);
+    applyPreviewZoom(pdfPages, nextZoom);
+    restorePreviewZoomAnchor(pdfPreview, anchor);
+  };
+
   const zoomOut = () => {
-    setPreviewZoom((value) => clampPreviewZoom(value - 0.25));
+    updatePreviewZoom(previewZoom() - 0.25);
   };
 
   const zoomIn = () => {
-    setPreviewZoom((value) => clampPreviewZoom(value + 0.25));
+    updatePreviewZoom(previewZoom() + 0.25);
   };
 
   const zoomWithWheel = (event: WheelEvent) => {
@@ -158,7 +174,12 @@ export function App() {
     }
 
     event.preventDefault();
-    setPreviewZoom((value) => clampPreviewZoom(value + (event.deltaY < 0 ? 0.1 : -0.1)));
+    updatePreviewZoom(
+      previewZoom() + (event.deltaY < 0 ? 0.1 : -0.1),
+      event.target,
+      event.clientX,
+      event.clientY,
+    );
   };
 
   return (
@@ -174,7 +195,12 @@ export function App() {
       </header>
 
       <div class="workspace">
-        <section aria-label="PDF preview" class="pdf-preview" onWheel={zoomWithWheel}>
+        <section
+          ref={(element) => (pdfPreview = element)}
+          aria-label="PDF preview"
+          class="pdf-preview"
+          onWheel={zoomWithWheel}
+        >
           <div class="pdf-preview__toolbar">
             <div>
               <h2>Preview</h2>
@@ -420,6 +446,73 @@ function applyPreviewZoom(container: HTMLDivElement | undefined, zoom: number): 
     canvas.style.width = `${width * zoom}px`;
     canvas.style.height = `${height * zoom}px`;
   }
+}
+
+interface PreviewZoomAnchor {
+  canvas: HTMLCanvasElement;
+  clientX: number;
+  clientY: number;
+  xRatio: number;
+  yRatio: number;
+}
+
+function capturePreviewZoomAnchor(
+  preview: HTMLElement | undefined,
+  target?: EventTarget | null,
+  clientX?: number,
+  clientY?: number,
+): PreviewZoomAnchor | undefined {
+  if (!preview) {
+    return undefined;
+  }
+
+  const previewBounds = preview.getBoundingClientRect();
+  const anchorClientX = clientX ?? previewBounds.left + preview.clientWidth / 2;
+  const anchorClientY = clientY ?? previewBounds.top + preview.clientHeight / 2;
+  const targetElement = target instanceof Element ? target : undefined;
+  const targetCanvas = targetElement?.closest<HTMLCanvasElement>("canvas[data-pdf-page]");
+  const canvas =
+    targetCanvas ??
+    [...preview.querySelectorAll<HTMLCanvasElement>("canvas[data-pdf-page]")].find((candidate) => {
+      const bounds = candidate.getBoundingClientRect();
+
+      return (
+        anchorClientX >= bounds.left &&
+        anchorClientX <= bounds.right &&
+        anchorClientY >= bounds.top &&
+        anchorClientY <= bounds.bottom
+      );
+    });
+
+  if (!canvas) {
+    return undefined;
+  }
+
+  const canvasBounds = canvas.getBoundingClientRect();
+
+  return {
+    canvas,
+    clientX: anchorClientX,
+    clientY: anchorClientY,
+    xRatio: (anchorClientX - canvasBounds.left) / canvasBounds.width,
+    yRatio: (anchorClientY - canvasBounds.top) / canvasBounds.height,
+  };
+}
+
+function restorePreviewZoomAnchor(
+  preview: HTMLElement | undefined,
+  anchor: PreviewZoomAnchor | undefined,
+): void {
+  if (!preview || !anchor || !anchor.canvas.isConnected) {
+    return;
+  }
+
+  const canvasBounds = anchor.canvas.getBoundingClientRect();
+  const nextClientX = canvasBounds.left + canvasBounds.width * anchor.xRatio;
+  const nextClientY = canvasBounds.top + canvasBounds.height * anchor.yRatio;
+
+  preview.scrollLeft += nextClientX - anchor.clientX;
+  preview.scrollTop += nextClientY - anchor.clientY;
 }
 
 function clampPreviewZoom(value: number): number {

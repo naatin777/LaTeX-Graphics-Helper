@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0124: cropPdf.configureのズーム操作の一貫性を改善する](0124-fix-crop-pdf-zoom-inconsistency.md)
+なし。
 
 ## Rules
 
