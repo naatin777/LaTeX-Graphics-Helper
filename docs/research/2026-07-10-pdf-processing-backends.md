@@ -52,6 +52,10 @@
 - PDFのrenderingやtext extraction、高水準のpage content編集は行わない。
 - Apache-2.0 licenseである。
 - VS Code拡張から使う場合は、外部binaryとして要求するかOS別binaryを配布するかの判断が必要になる。
+- `qpdf --check`はfile構造、暗号化、linearization、stream dataのencodingを検査する。
+- `qpdf --check`のexit codeは、cleanが`0`、errorが`2`、warningのみが`3`である。
+- qpdf公式documentationも、検出できない問題やstream content内のerrorがあり得ると明記しているため、`--check`だけで完全性を保証できない。
+- recoverableな状態はwarningとして扱われる。検査時に回復できても、回復結果を暗黙に後続処理へ使うべきかは別途判断が必要になる。
 
 ### TeX Wiki
 
@@ -74,6 +78,8 @@
 - 大きなPDFでのmemory使用量と処理時間
 - browser bundle sizeとVS Code extension package sizeへの影響
 - qpdfのOS別導入方法とbinary配布条件
+- qpdfのwarningを処理停止、確認付き続行、または許可設定のどれで扱うか
+- qpdf検査に加えて全ページ描画検査を必須にする操作
 - 各projectのrelease cadence、security対応、長期保守性
 - TeX Wikiの指定ページから追加すべき候補
 
@@ -88,4 +94,5 @@
 ## 関連
 
 - `docs/tasks/0127-evaluate-pdf-processing-backends.md`
+- `docs/tasks/0128-design-pdf-input-preflight.md`
 - `docs/test-policy.md`
