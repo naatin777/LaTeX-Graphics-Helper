@@ -148,3 +148,4 @@
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
 - [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
 - [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
+- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
