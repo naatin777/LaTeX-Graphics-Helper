@@ -107,6 +107,98 @@ base64埋め込みを使ってよい例:
 
 base64埋め込みを使う場合は、コメントまたはタスクに理由を書く。
 
+### 複雑な実fixtureを正本にする
+
+主要な変換・PDF操作の正常系では、テスト内で単純なPDFや画像を毎回生成するだけでなく、`test/fixtures/`へ固定した実fixtureを正本として使う。
+
+- fixtureはテスト中に直接変更しない
+- workspace操作を伴うテストでは、fixtureを一時workspaceへコピーしてからcommandを実行する
+- テストごとに一時workspaceを分離し、出力やSafe Modeの状態を他のテストへ残さない
+- fixtureには用途が分かる名前を付け、作成元、ライセンス、意図した特徴を近くのREADMEへ記録する
+- 個人情報、機密情報、不要に大きなファイルをfixtureへ含めない
+- fixtureの見た目や内容を変更した場合は、その変更理由と影響する期待値を確認する
+
+プログラム生成fixtureは廃止しない。座標や色を厳密に制御した小さな単体テストには適している。一方、主要な正常系、複雑なfont・vector・rasterの混在、実ファイル読み込み、OS差の検出には固定fixtureを優先する。
+
+fixtureが未提供の段階では、AIが代替fixtureを勝手に正本化しない。必要なページ構成、画像形式、文字、数式、透明度、目印などを先に整理し、ユーザーへfixture提供を依頼する。
+
+### fixtureに含めたい特徴
+
+PDF操作用fixtureは、少なくとも次を見分けられる内容にする。
+
+- 複数ページ
+- 日本語とLatin文字
+- 数式または細いvector線
+- raster画像
+- ページ端に近い位置の目印
+- 上下左右を判別できる非対称な配置
+- 必要ならページごとに異なるsizeまたはorientation
+
+画像変換用fixtureは、対象機能に応じて次を含める。
+
+- 上下左右を判別できる目印
+- 細い線と小さい文字
+- gradientまたは写真に近い連続色
+- PNGでは透明領域と半透明領域
+- JPEG/WebP/AVIFでは圧縮差を観察できるdetail
+
+## 変換結果の内容検証
+
+ファイルが開けること、page count、width、heightだけでは内容の位置ずれを検出できない。重要な変換では、必要な強さに応じて次の順で検証する。
+
+1. 出力を対象形式として読み込める
+2. page count、width、height、orientationが期待どおりである
+3. 非空領域のbounding box、四隅の目印、主要領域の色などが期待位置にある
+4. 位置ずれのriskが高い処理では、PDFを一定条件でrasterizeし、期待画像と実出力画像を比較する
+
+PDF cropでは、同じ入力PDFを同じ解像度でrasterizeし、crop boxから作った期待領域と、出力PDFをrasterizeした画像を比較する。PDF binaryそのものはmetadataやobject順で変わり得るため、binary完全一致を正常系の基準にしない。
+
+画像比較では、完全一致だけに依存しない。外部rendererやOSによるanti-alias差があり得る場合は、次を組み合わせる。
+
+- widthとheight
+- 非透明・非背景領域のbounding box
+- 主要な目印の座標
+- pixel差分率または平均差分
+
+許容値は「テストを通すため」に広げず、fixtureとrendererを固定した上で実測して決める。差分発生時に確認できるよう、期待画像、実画像、差分画像をCI artifactとして残す。
+
+## WebviewとVS Code integration testの役割
+
+runnerを1つにすること自体を目的にしない。同じfixtureと検証helperを共有しながら、次の役割分担を維持する。
+
+### Playwright
+
+- Webview単体のDOMと入力操作
+- PDF.js canvasが描画されたこと
+- zoom、scroll、crop box入力などの画面内操作
+- WebviewからHostへ送るmessage
+- UI layoutのscreenshot regression
+
+### vscode-test
+
+- command登録と`vscode.commands.executeCommand`
+- settings、workspace、globalState
+- Safe Mode、notification、progress、cancellation
+- Host側のfile operationと実際の出力ファイル
+- 外部tool path設定とerror handling
+
+### Playwright Electron
+
+Playwright Electronは実VS Code windowとWebviewを一続きで操作できる可能性がある。ただし、2026-07-10時点でPlaywright公式はElectron対応をexperimentalとしている。
+
+全面移行は行わず、まず`cropPdf.configure`で次の1フローを通すspikeを別タスクにする。
+
+1. fixture PDFを一時workspaceへコピーする
+2. ExplorerまたはcommandからCrop PDF Configureを開く
+3. WebviewでPDFを読み込めていることを確認する
+4. crop boxを入力してApplyする
+5. 実際の`pdfcrop`出力をrasterizeして内容を比較する
+6. 必要ならWebview screenshotを保存する
+
+このspikeが3 OSで安定し、selector保守と実行時間を許容できる場合だけ対象を増やす。詳細は`docs/research/2026-07-10-playwright-electron-vscode-webview-testing.md`を参照する。
+
+Playwright screenshotはUI regression向けであり、変換結果の内容比較を代替しない。基準画像はOSやbrowser versionで差が出るため、環境を固定するかOS別に管理する。
+
 ## 禁止するテスト
 
 - 実装の都合だけを固定するテスト
