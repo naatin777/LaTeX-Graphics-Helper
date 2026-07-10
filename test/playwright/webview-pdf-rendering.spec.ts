@@ -526,25 +526,22 @@ test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ 
   }, `${baseUrl}/fixture.pdf`);
 
   const preview = page.getByRole("region", { name: "PDF preview" });
+  const documentElement = page.locator("html");
+  const root = page.locator("#root");
+  const body = page.locator("body");
+  const panel = page.locator(".panel");
   await expect(page.locator('canvas[data-pdf-page="2"]')).toBeVisible();
 
   await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const root = document.querySelector<HTMLElement>("#root");
-        const previewElement = document.querySelector<HTMLElement>(".pdf-preview");
-        const panel = document.querySelector<HTMLElement>(".panel");
-
-        return {
-          bodyOverflow: getComputedStyle(document.body).overflow,
-          rootOverflow: root ? getComputedStyle(root).overflow : "",
-          previewOverflow: previewElement ? getComputedStyle(previewElement).overflow : "",
-          panelOverflow: panel ? getComputedStyle(panel).overflow : "",
-          previewCanScroll:
-            previewElement !== null && previewElement.scrollHeight > previewElement.clientHeight,
-        };
-      }),
-    )
+    .poll(async () => ({
+      bodyOverflow: await overflowValue(body),
+      rootOverflow: await overflowValue(root),
+      previewOverflow: await overflowValue(preview),
+      panelOverflow: await overflowValue(panel),
+      previewCanScroll: await preview.evaluate(
+        (element) => element.scrollHeight > element.clientHeight,
+      ),
+    }))
     .toEqual({
       bodyOverflow: "hidden",
       rootOverflow: "hidden",
@@ -557,8 +554,8 @@ test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ 
     element.scrollTop = 40;
   });
   await expect.poll(() => preview.evaluate((element) => element.scrollTop)).toBe(40);
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollTop)).toBe(0);
-  await expect.poll(() => page.evaluate(() => document.body.scrollTop)).toBe(0);
+  await expect.poll(() => documentElement.evaluate((element) => element.scrollTop)).toBe(0);
+  await expect.poll(() => body.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
 test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {
@@ -821,6 +818,12 @@ async function pdfPointAtViewportPosition(
       y: (position.clientY - bounds.top) / bounds.height,
     };
   }, pointer);
+}
+
+async function overflowValue(element: Locator): Promise<string> {
+  return element.evaluate(
+    (target) => target.ownerDocument.defaultView?.getComputedStyle(target).overflow ?? "",
+  );
 }
 
 async function createTestPdf(): Promise<Uint8Array> {
