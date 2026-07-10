@@ -6,7 +6,7 @@
 
 ## Current Task
 
-なし。
+- [0123: cropPdf.configureの操作テストを追加する](0123-add-crop-pdf-configure-operation-tests.md)
 
 ## Rules
 
