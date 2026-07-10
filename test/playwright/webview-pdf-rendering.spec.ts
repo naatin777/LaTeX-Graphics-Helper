@@ -5,15 +5,28 @@ import { extname, isAbsolute, join, normalize, relative } from "node:path";
 import { expect, test, type Locator } from "@playwright/test";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 
+import { cropConfigureFixture } from "../helpers/crop_configure_fixture.js";
+
 const projectRoot = process.cwd();
 const webviewRoot = join(projectRoot, "media", "webview");
 
 let server: Server;
 let baseUrl: string;
 let pdfBytes: Uint8Array;
+let cropOperationPdfBytes: Buffer;
 
 test.beforeAll(async () => {
   pdfBytes = await createTestPdf();
+  cropOperationPdfBytes = await readFile(
+    join(
+      projectRoot,
+      "test",
+      "fixtures",
+      "pdf-operations",
+      "user-files",
+      cropConfigureFixture.fileName,
+    ),
+  );
 
   server = createServer(async (request, response) => {
     const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
@@ -24,6 +37,15 @@ test.beforeAll(async () => {
         "Content-Length": pdfBytes.byteLength,
       });
       response.end(pdfBytes);
+      return;
+    }
+
+    if (requestUrl.pathname === "/crop-operation-fixture.pdf") {
+      response.writeHead(200, {
+        "Content-Type": "application/pdf",
+        "Content-Length": cropOperationPdfBytes.byteLength,
+      });
+      response.end(cropOperationPdfBytes);
       return;
     }
 
@@ -620,33 +642,39 @@ test("crop_pdf renders a text PDF with PDF.js auxiliary asset URLs", async ({ pa
     .toBe(true);
 });
 
-test("crop_pdf sends user configured cropBox and selected pages", async ({ page }) => {
+test("crop_pdfが固定fixtureのcrop範囲と選択ページを送信する", async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
-  await page.evaluate((pdfSrc) => {
-    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
-        data: {
-          type: "init",
-          payload: {
-            pdfSrc,
-            fileName: "fixture.pdf",
-            pageCount: 2,
-            initialPage: 1,
+  await page.evaluate(
+    ({ pdfSrc, fileName }) => {
+      (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            type: "init",
+            payload: {
+              pdfSrc,
+              fileName,
+              pageCount: 2,
+              initialPage: 1,
+            },
           },
-        },
-      }),
-    );
-  }, `${baseUrl}/fixture.pdf`);
+        }),
+      );
+    },
+    {
+      pdfSrc: `${baseUrl}/crop-operation-fixture.pdf`,
+      fileName: cropConfigureFixture.fileName,
+    },
+  );
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
-  await page.getByLabel("Left").fill("10");
-  await page.getByLabel("Bottom").fill("20");
-  await page.getByLabel("Right").fill("300");
-  await page.getByLabel("Top").fill("170");
+  await page.getByLabel("Left").fill(cropConfigureFixture.cropBox.left.toString());
+  await page.getByLabel("Bottom").fill(cropConfigureFixture.cropBox.bottom.toString());
+  await page.getByLabel("Right").fill(cropConfigureFixture.cropBox.right.toString());
+  await page.getByLabel("Top").fill(cropConfigureFixture.cropBox.top.toString());
   await page.getByLabel("Selected pages").check();
-  await page.getByRole("textbox", { name: "Pages" }).fill("2");
+  await page.getByRole("textbox", { name: "Pages" }).fill("1");
   await page.getByRole("button", { name: "Apply" }).click();
 
   await expect
@@ -661,18 +689,54 @@ test("crop_pdf sends user configured cropBox and selected pages", async ({ page 
     .toEqual({
       type: "apply",
       payload: {
-        cropBox: {
-          left: 10,
-          bottom: 20,
-          right: 300,
-          top: 170,
-        },
+        cropBox: cropConfigureFixture.cropBox,
         target: {
           type: "selected",
-          pages: [2],
+          pages: [1],
         },
       },
     });
+});
+
+test("crop_pdfが固定fixtureの操作をキャンセルする", async ({ page }) => {
+  await installVsCodeMessageRecorder(page);
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate(
+    ({ pdfSrc, fileName }) => {
+      (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            type: "init",
+            payload: {
+              pdfSrc,
+              fileName,
+              pageCount: 2,
+              initialPage: 1,
+            },
+          },
+        }),
+      );
+    },
+    {
+      pdfSrc: `${baseUrl}/crop-operation-fixture.pdf`,
+      fileName: cropConfigureFixture.fileName,
+    },
+  );
+
+  await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
+  await page.getByRole("button", { name: "Cancel" }).click();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
+          .__vscodeMessages;
+
+        return messages?.at(-1);
+      }),
+    )
+    .toEqual({ type: "cancel" });
 });
 
 test("crop_pdf rejects empty crop input and non-numeric selected pages", async ({ page }) => {
@@ -759,26 +823,33 @@ test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertCom
     .toBe(true);
 });
 
-test("crop_pdf sends apply message with cropBox and all-pages target", async ({ page }) => {
+test("crop_pdfが固定fixtureの全ページcropを送信する", async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
-  await page.evaluate((pdfSrc) => {
-    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
-        data: {
-          type: "init",
-          payload: {
-            pdfSrc,
-            fileName: "fixture.pdf",
-            pageCount: 2,
-            initialPage: 1,
+  await page.evaluate(
+    ({ pdfSrc, fileName }) => {
+      (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            type: "init",
+            payload: {
+              pdfSrc,
+              fileName,
+              pageCount: 2,
+              initialPage: 1,
+            },
           },
-        },
-      }),
-    );
-  }, `${baseUrl}/fixture.pdf`);
+        }),
+      );
+    },
+    {
+      pdfSrc: `${baseUrl}/crop-operation-fixture.pdf`,
+      fileName: cropConfigureFixture.fileName,
+    },
+  );
 
+  await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
   await page.getByRole("button", { name: "Apply" }).click();
 
   await expect
@@ -793,12 +864,7 @@ test("crop_pdf sends apply message with cropBox and all-pages target", async ({ 
     .toEqual({
       type: "apply",
       payload: {
-        cropBox: {
-          left: 0,
-          bottom: 0,
-          right: 320,
-          top: 180,
-        },
+        cropBox: cropConfigureFixture.fullPageBox,
         target: {
           type: "all",
         },

@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -22,6 +22,9 @@ WebviewとHostは別のrunnerで検証するが、crop boxとfixtureを共有し
 - 出力PDFを`pdftocairo`でrasterizeし、crop後の内容位置が期待領域からずれていないことを検証する
 - PDFのpage count、MediaBox、CropBoxも検証する
 - テストはfixture正本を変更しない
+- 先頭空白、日本語、絵文字、通常空白を含むファイル名を正規化せず扱う
+- 複数のoutputPathテンプレートを実際のcrop出力まで検証する
+- `${workspaceFolder}`、`${workspaceFolderBasename}`、`${file}`、`${relativeFile}`、`${relativeFileDirname}`、`${fileBasename}`、`${fileBasenameNoExtension}`、`${fileExtname}`、`${dateNow}`を含むpathを検証する
 
 ## 変更可能なファイル
 
