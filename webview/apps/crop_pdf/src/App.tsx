@@ -8,7 +8,6 @@ import { vscode } from "./vscode";
 export function App() {
   const [fileName, setFileName] = createSignal("");
   const [pageCount, setPageCount] = createSignal(1);
-  const [currentPage, setCurrentPage] = createSignal(1);
   const [pageSize, setPageSize] = createSignal({ width: 0, height: 0 });
   const [cropBox, setCropBox] = createSignal({
     left: "0",
@@ -18,9 +17,11 @@ export function App() {
   });
   const [targetType, setTargetType] = createSignal<"all" | "selected">("all");
   const [selectedPages, setSelectedPages] = createSignal("1");
+  const [previewZoom, setPreviewZoom] = createSignal(1);
   const [renderError, setRenderError] = createSignal("");
   const [inputError, setInputError] = createSignal("");
   let pdfPages: HTMLDivElement | undefined;
+  let pdfPreview: HTMLElement | undefined;
   let renderPromise: Promise<void> | undefined;
 
   onMount(() => {
@@ -36,7 +37,6 @@ export function App() {
 
       setFileName(event.data.payload.fileName ?? "");
       setPageCount(totalPages);
-      setCurrentPage(initialPage);
       setPageSize({
         width: pageWidth,
         height: pageHeight,
@@ -64,6 +64,8 @@ export function App() {
           throw error;
         })
         .then(() => {
+          applyPreviewZoom(pdfPages, previewZoom());
+
           const size = getPreviewPageSize(pdfPages);
 
           if (
@@ -139,132 +141,201 @@ export function App() {
     vscode.postMessage(message);
   };
 
+  const updatePreviewZoom = (
+    value: number,
+    anchorTarget?: EventTarget | null,
+    clientX?: number,
+    clientY?: number,
+  ) => {
+    const nextZoom = clampPreviewZoom(value);
+
+    if (nextZoom === previewZoom()) {
+      return;
+    }
+
+    const anchor = capturePreviewZoomAnchor(pdfPreview, anchorTarget, clientX, clientY);
+
+    setPreviewZoom(nextZoom);
+    applyPreviewZoom(pdfPages, nextZoom);
+    restorePreviewZoomAnchor(pdfPreview, anchor);
+  };
+
+  const zoomOut = () => {
+    updatePreviewZoom(previewZoom() - 0.25);
+  };
+
+  const zoomIn = () => {
+    updatePreviewZoom(previewZoom() + 0.25);
+  };
+
+  const zoomWithWheel = (event: WheelEvent) => {
+    if (!event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
+    event.preventDefault();
+    updatePreviewZoom(
+      previewZoom() + (event.deltaY < 0 ? 0.1 : -0.1),
+      event.target,
+      event.clientX,
+      event.clientY,
+    );
+  };
+
   return (
     <main class="app">
       <header class="app__header">
-        <h1>Custom Crop</h1>
-        <p>PDF のトリミング範囲を調整します。</p>
-        <p>
-          {fileName()} {currentPage()} / {pageCount()} pages
+        <div>
+          <h1>Custom Crop</h1>
+          <p>PDF のトリミング範囲を調整します。</p>
+        </div>
+        <p class="app__meta">
+          {fileName()} · {pageCount()} pages
         </p>
       </header>
 
-      <section class="pdf-preview">
-        <div ref={(element) => (pdfPages = element)} class="pdf-preview__pages" />
-        {renderError() ? (
-          <p class="pdf-preview__error" role="alert">
-            PDFを表示できませんでした: {renderError()}
-          </p>
-        ) : undefined}
-      </section>
+      <div class="workspace">
+        <section
+          ref={(element) => (pdfPreview = element)}
+          aria-label="PDF preview"
+          class="pdf-preview"
+          onWheel={zoomWithWheel}
+        >
+          <div class="pdf-preview__toolbar">
+            <div>
+              <h2>Preview</h2>
+              <p>ズームしてもcrop値はPDFポイントのままです。</p>
+            </div>
+            <div class="zoom" aria-label="Preview zoom">
+              <button class="button" type="button" aria-label="Zoom out" onClick={zoomOut}>
+                −
+              </button>
+              <span class="zoom__value">{Math.round(previewZoom() * 100)}%</span>
+              <button class="button" type="button" aria-label="Zoom in" onClick={zoomIn}>
+                +
+              </button>
+            </div>
+          </div>
+          <div ref={(element) => (pdfPages = element)} class="pdf-preview__pages" />
+          {renderError() ? (
+            <p class="pdf-preview__error" role="alert">
+              PDFを表示できませんでした: {renderError()}
+            </p>
+          ) : undefined}
+        </section>
 
-      <section class="panel">
-        <div class="panel__group">
-          <h2>Crop box</h2>
-          <p>PDFポイント単位で残す範囲を指定します。</p>
+        <section aria-label="Crop settings" class="panel">
+          <div class="panel__group">
+            <h2>Crop box</h2>
+            <p>PDFポイント単位で残す範囲を指定します。</p>
 
-          <div class="crop-grid">
-            <label class="field">
-              <span class="field__label">Left</span>
-              <input
-                class="input"
-                inputmode="decimal"
-                type="number"
-                value={cropBox().left}
-                onInput={(event) => setCropBox({ ...cropBox(), left: event.currentTarget.value })}
-              />
-            </label>
+            <div class="crop-grid">
+              <label class="field">
+                <span class="field__label">Left</span>
+                <input
+                  class="input"
+                  inputmode="decimal"
+                  type="number"
+                  value={cropBox().left}
+                  onInput={(event) => setCropBox({ ...cropBox(), left: event.currentTarget.value })}
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Bottom</span>
-              <input
-                class="input"
-                inputmode="decimal"
-                type="number"
-                value={cropBox().bottom}
-                onInput={(event) => setCropBox({ ...cropBox(), bottom: event.currentTarget.value })}
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Bottom</span>
+                <input
+                  class="input"
+                  inputmode="decimal"
+                  type="number"
+                  value={cropBox().bottom}
+                  onInput={(event) =>
+                    setCropBox({ ...cropBox(), bottom: event.currentTarget.value })
+                  }
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Right</span>
-              <input
-                class="input"
-                inputmode="decimal"
-                type="number"
-                value={cropBox().right}
-                onInput={(event) => setCropBox({ ...cropBox(), right: event.currentTarget.value })}
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Right</span>
+                <input
+                  class="input"
+                  inputmode="decimal"
+                  type="number"
+                  value={cropBox().right}
+                  onInput={(event) =>
+                    setCropBox({ ...cropBox(), right: event.currentTarget.value })
+                  }
+                />
+              </label>
 
-            <label class="field">
-              <span class="field__label">Top</span>
-              <input
-                class="input"
-                inputmode="decimal"
-                type="number"
-                value={cropBox().top}
-                onInput={(event) => setCropBox({ ...cropBox(), top: event.currentTarget.value })}
-              />
-            </label>
+              <label class="field">
+                <span class="field__label">Top</span>
+                <input
+                  class="input"
+                  inputmode="decimal"
+                  type="number"
+                  value={cropBox().top}
+                  onInput={(event) => setCropBox({ ...cropBox(), top: event.currentTarget.value })}
+                />
+              </label>
+            </div>
+
+            <p class="panel__hint">
+              Current page size: {pageSize().width} × {pageSize().height} pt
+            </p>
           </div>
 
-          <p class="panel__hint">
-            Current page size: {pageSize().width} × {pageSize().height} pt
-          </p>
-        </div>
+          <fieldset class="target">
+            <legend>Target pages</legend>
 
-        <fieldset class="target">
-          <legend>Target pages</legend>
+            <label class="target__option">
+              <input
+                checked={targetType() === "all"}
+                name="target"
+                type="radio"
+                onChange={() => setTargetType("all")}
+              />
+              All pages
+            </label>
 
-          <label class="target__option">
-            <input
-              checked={targetType() === "all"}
-              name="target"
-              type="radio"
-              onChange={() => setTargetType("all")}
-            />
-            All pages
-          </label>
+            <label class="target__option">
+              <input
+                checked={targetType() === "selected"}
+                name="target"
+                type="radio"
+                onChange={() => setTargetType("selected")}
+              />
+              Selected pages
+            </label>
 
-          <label class="target__option">
-            <input
-              checked={targetType() === "selected"}
-              name="target"
-              type="radio"
-              onChange={() => setTargetType("selected")}
-            />
-            Selected pages
-          </label>
+            <label class="field">
+              <span class="field__label">Pages</span>
+              <input
+                class="input"
+                disabled={targetType() !== "selected"}
+                placeholder="例: 1, 3, 5"
+                type="text"
+                value={selectedPages()}
+                onInput={(event) => setSelectedPages(event.currentTarget.value)}
+              />
+            </label>
+          </fieldset>
 
-          <label class="field">
-            <span class="field__label">Pages</span>
-            <input
-              class="input"
-              disabled={targetType() !== "selected"}
-              placeholder="例: 1, 3, 5"
-              type="text"
-              value={selectedPages()}
-              onInput={(event) => setSelectedPages(event.currentTarget.value)}
-            />
-          </label>
-        </fieldset>
+          {inputError() ? (
+            <p class="panel__error" role="alert">
+              {inputError()}
+            </p>
+          ) : undefined}
 
-        {inputError() ? (
-          <p class="panel__error" role="alert">
-            {inputError()}
-          </p>
-        ) : undefined}
-
-        <div class="actions">
-          <button class="button button--primary" type="button" onClick={applyCrop}>
-            Apply
-          </button>
-          <button class="button" type="button" onClick={cancel}>
-            Cancel
-          </button>
-        </div>
-      </section>
+          <div class="actions">
+            <button class="button button--primary" type="button" onClick={applyCrop}>
+              Apply
+            </button>
+            <button class="button" type="button" onClick={cancel}>
+              Cancel
+            </button>
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
@@ -348,11 +419,102 @@ function getPreviewPageSize(container: HTMLDivElement | undefined): {
     return { width: 0, height: 0 };
   }
 
-  const width = Number.parseFloat(firstPageCanvas.style.width);
-  const height = Number.parseFloat(firstPageCanvas.style.height);
+  const width = Number(firstPageCanvas.dataset.pdfWidth);
+  const height = Number(firstPageCanvas.dataset.pdfHeight);
 
   return {
     width: Number.isFinite(width) ? width : firstPageCanvas.width,
     height: Number.isFinite(height) ? height : firstPageCanvas.height,
   };
+}
+
+function applyPreviewZoom(container: HTMLDivElement | undefined, zoom: number): void {
+  const canvases = container?.querySelectorAll<HTMLCanvasElement>("canvas[data-pdf-page]");
+
+  if (!canvases) {
+    return;
+  }
+
+  for (const canvas of canvases) {
+    const width = Number(canvas.dataset.pdfWidth);
+    const height = Number(canvas.dataset.pdfHeight);
+
+    if (!Number.isFinite(width) || !Number.isFinite(height)) {
+      continue;
+    }
+
+    canvas.style.width = `${width * zoom}px`;
+    canvas.style.height = `${height * zoom}px`;
+  }
+}
+
+interface PreviewZoomAnchor {
+  canvas: HTMLCanvasElement;
+  clientX: number;
+  clientY: number;
+  xRatio: number;
+  yRatio: number;
+}
+
+function capturePreviewZoomAnchor(
+  preview: HTMLElement | undefined,
+  target?: EventTarget | null,
+  clientX?: number,
+  clientY?: number,
+): PreviewZoomAnchor | undefined {
+  if (!preview) {
+    return undefined;
+  }
+
+  const previewBounds = preview.getBoundingClientRect();
+  const anchorClientX = clientX ?? previewBounds.left + preview.clientWidth / 2;
+  const anchorClientY = clientY ?? previewBounds.top + preview.clientHeight / 2;
+  const targetElement = target instanceof Element ? target : undefined;
+  const targetCanvas = targetElement?.closest<HTMLCanvasElement>("canvas[data-pdf-page]");
+  const canvas =
+    targetCanvas ??
+    [...preview.querySelectorAll<HTMLCanvasElement>("canvas[data-pdf-page]")].find((candidate) => {
+      const bounds = candidate.getBoundingClientRect();
+
+      return (
+        anchorClientX >= bounds.left &&
+        anchorClientX <= bounds.right &&
+        anchorClientY >= bounds.top &&
+        anchorClientY <= bounds.bottom
+      );
+    });
+
+  if (!canvas) {
+    return undefined;
+  }
+
+  const canvasBounds = canvas.getBoundingClientRect();
+
+  return {
+    canvas,
+    clientX: anchorClientX,
+    clientY: anchorClientY,
+    xRatio: (anchorClientX - canvasBounds.left) / canvasBounds.width,
+    yRatio: (anchorClientY - canvasBounds.top) / canvasBounds.height,
+  };
+}
+
+function restorePreviewZoomAnchor(
+  preview: HTMLElement | undefined,
+  anchor: PreviewZoomAnchor | undefined,
+): void {
+  if (!preview || !anchor || !anchor.canvas.isConnected) {
+    return;
+  }
+
+  const canvasBounds = anchor.canvas.getBoundingClientRect();
+  const nextClientX = canvasBounds.left + canvasBounds.width * anchor.xRatio;
+  const nextClientY = canvasBounds.top + canvasBounds.height * anchor.yRatio;
+
+  preview.scrollLeft += nextClientX - anchor.clientX;
+  preview.scrollTop += nextClientY - anchor.clientY;
+}
+
+function clampPreviewZoom(value: number): number {
+  return Math.min(4, Math.max(0.25, Math.round(value * 100) / 100));
 }

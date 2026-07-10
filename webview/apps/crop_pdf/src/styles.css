@@ -2,6 +2,13 @@
   color-scheme: light dark;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -22,12 +29,20 @@ textarea {
 }
 
 .app {
-  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   padding: 16px;
 }
 
 .app__header {
-  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .app__header h1 {
@@ -41,31 +56,109 @@ textarea {
   color: var(--vscode-descriptionForeground);
 }
 
+.app__meta {
+  flex: 0 0 auto;
+  max-width: 40%;
+  text-align: right;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: 16px;
+  min-height: 0;
+}
+
 .pdf-preview {
-  margin-bottom: 16px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
   overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-editor-background);
+}
+
+.pdf-preview__toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-sideBar-background);
+}
+
+.pdf-preview__toolbar h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.pdf-preview__toolbar p {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
 }
 
 .pdf-preview__pages {
   display: grid;
-  gap: 12px;
+  gap: 16px;
+  justify-items: center;
+  min-width: min-content;
+  padding: 16px;
+}
+
+.pdf-page {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  width: max-content;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
 }
 
 .pdf-preview canvas {
   display: block;
-  max-width: 100%;
   height: auto;
+  background: white;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 20%);
+}
+
+.pdf-page__footer {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
 }
 
 .pdf-preview__error {
   margin: 8px 0 0;
+  padding: 0 16px 16px;
   color: var(--vscode-errorForeground);
+}
+
+.zoom {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.zoom__value {
+  min-width: 4ch;
+  text-align: center;
 }
 
 .panel {
   display: grid;
+  align-content: start;
   gap: 16px;
-  max-width: 520px;
+  min-width: 0;
+  max-height: 100%;
   padding: 16px;
   border: 1px solid var(--vscode-panel-border);
   border-radius: 6px;
@@ -180,6 +273,25 @@ textarea {
 
 /* VS Code が body に付与するテーマ種別クラスも必要なら使える */
 body.vscode-high-contrast .panel,
-body.vscode-high-contrast-light .panel {
+body.vscode-high-contrast-light .panel,
+body.vscode-high-contrast .pdf-preview,
+body.vscode-high-contrast-light .pdf-preview,
+body.vscode-high-contrast .pdf-page,
+body.vscode-high-contrast-light .pdf-page {
   border-width: 2px;
+}
+
+@media (max-width: 820px) {
+  .app__header {
+    display: grid;
+  }
+
+  .app__meta {
+    max-width: none;
+    text-align: left;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
 }
