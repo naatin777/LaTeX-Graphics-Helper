@@ -65,27 +65,23 @@ suite("AVIFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_AVIF_COMMAND));
   });
 
-  test("PNG、JPEG、WebP、SVG、PDF、Mermaidを1つのbatchでAVIFへ変換する", async () => {
+  test("PNG、JPEG、WebP、SVG、PDFを1つのbatchでAVIFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const jpegPath = path.join(temporaryDirectory, "source-jpeg.jpeg");
       const webpPath = path.join(temporaryDirectory, "source-webp.webp");
       const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(jpegPath, "jpeg"),
         writeImageFixture(webpPath, "webp"),
         writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [mmdPath, mermaidPath, pngPath, jpegPath, webpPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, jpegPath, webpPath, svgPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_AVIF_COMMAND,
@@ -95,7 +91,7 @@ suite("AVIFに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [mmdPath, mermaidPath, pngPath, jpegPath, webpPath, svgPath].map((sourcePath) =>
+        [pngPath, jpegPath, webpPath, svgPath].map((sourcePath) =>
           assertReadableAvif(replaceExtension(sourcePath, ".avif")),
         ),
       );
@@ -104,6 +100,11 @@ suite("AVIFに変換コマンド", () => {
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test(".mmdと.mermaidを順番に読み取り可能なAVIFへ変換する", async () => {
+    await assertMermaidFileConvertsToAvif("source.mmd");
+    await assertMermaidFileConvertsToAvif("source.mermaid");
   });
 
   test("AVIFからAVIFへは変換しない", async () => {
@@ -121,6 +122,25 @@ suite("AVIFに変換コマンド", () => {
     }
   });
 });
+
+async function assertMermaidFileConvertsToAvif(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_AVIF_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadableAvif(replaceExtension(sourcePath, ".avif"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];

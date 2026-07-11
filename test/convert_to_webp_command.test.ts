@@ -65,27 +65,23 @@ suite("WebPに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_WEBP_COMMAND));
   });
 
-  test("PNG、JPEG、AVIF、SVG、PDF、Mermaidを1つのbatchでWebPへ変換する", async () => {
+  test("PNG、JPEG、AVIF、SVG、PDFを1つのbatchでWebPへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const jpegPath = path.join(temporaryDirectory, "source-jpeg.jpeg");
       const avifPath = path.join(temporaryDirectory, "source-avif.avif");
       const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(jpegPath, "jpeg"),
         writeImageFixture(avifPath, "avif"),
         writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [mmdPath, mermaidPath, pngPath, jpegPath, avifPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, jpegPath, avifPath, svgPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_WEBP_COMMAND,
@@ -95,7 +91,7 @@ suite("WebPに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [mmdPath, mermaidPath, pngPath, jpegPath, avifPath, svgPath].map((sourcePath) =>
+        [pngPath, jpegPath, avifPath, svgPath].map((sourcePath) =>
           assertReadableWebp(replaceExtension(sourcePath, ".webp")),
         ),
       );
@@ -104,6 +100,11 @@ suite("WebPに変換コマンド", () => {
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test(".mmdと.mermaidを順番に読み取り可能なWebPへ変換する", async () => {
+    await assertMermaidFileConvertsToWebp("source.mmd");
+    await assertMermaidFileConvertsToWebp("source.mermaid");
   });
 
   test("WebPからWebPへは変換しない", async () => {
@@ -121,6 +122,25 @@ suite("WebPに変換コマンド", () => {
     }
   });
 });
+
+async function assertMermaidFileConvertsToWebp(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_WEBP_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadableWebp(replaceExtension(sourcePath, ".webp"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];

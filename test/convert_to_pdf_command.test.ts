@@ -95,12 +95,10 @@ suite("PDFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_PDF_COMMAND));
   });
 
-  test("PNG、JPEG、WebP、AVIF、SVG、Mermaidを1つのbatchでPDFへ変換する", async () => {
+  test("PNG、JPEG、WebP、AVIF、SVGを1つのbatchでPDFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const imagePaths = await Promise.all(
         imageVariants.map(async (variant) => {
@@ -114,12 +112,10 @@ suite("PDFに変換コマンド", () => {
       );
       const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
         copyFile(fixturePngPath, pngPath),
         writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
       ]);
-      const sourcePaths = [mmdPath, mermaidPath, pngPath, ...imagePaths, svgPath];
+      const sourcePaths = [pngPath, ...imagePaths, svgPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PDF_COMMAND,
@@ -128,8 +124,6 @@ suite("PDFに変換コマンド", () => {
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertReadablePdfWithAtLeastOnePage(replaceExtension(mmdPath, ".pdf"));
-      await assertReadablePdfWithAtLeastOnePage(replaceExtension(mermaidPath, ".pdf"));
       await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, ".pdf"), pngPath);
       await Promise.all(
         imagePaths.map((sourcePath) =>
@@ -148,6 +142,11 @@ suite("PDFに変換コマンド", () => {
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test(".mmdと.mermaidを順番に読み取り可能なPDFへ変換する", async () => {
+    await assertMermaidFileConvertsToPdf("source.mmd");
+    await assertMermaidFileConvertsToPdf("source.mermaid");
   });
 
   test("outputPath.convertToPdfが設定されている場合はペア別設定より優先する", async () => {
@@ -287,6 +286,25 @@ suite("PDFに変換コマンド", () => {
     }
   });
 });
+
+async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_PDF_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadablePdfWithAtLeastOnePage(replaceExtension(sourcePath, ".pdf"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function assertConvertToPdfOutputPathFallsBackToPairSetting(
   convertToPdfTemplate: string | undefined,

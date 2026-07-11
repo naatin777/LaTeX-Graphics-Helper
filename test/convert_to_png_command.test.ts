@@ -78,12 +78,10 @@ suite("PNGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_PNG_COMMAND));
   });
 
-  test("JPEG、WebP、AVIF、SVG、PDF、Mermaidを1つのbatchでPNGへ変換する", async () => {
+  test("JPEG、WebP、AVIF、SVG、PDFを1つのbatchでPNGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const imagePaths = await Promise.all(
         imageVariants.map(async (variant) => {
           const sourcePath = path.join(
@@ -97,12 +95,10 @@ suite("PNGに変換コマンド", () => {
       const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
         writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [mmdPath, mermaidPath, ...imagePaths, svgPath, pdfPath];
+      const sourcePaths = [...imagePaths, svgPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PNG_COMMAND,
@@ -112,7 +108,7 @@ suite("PNGに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [mmdPath, mermaidPath, ...imagePaths, svgPath].map((sourcePath) =>
+        [...imagePaths, svgPath].map((sourcePath) =>
           assertReadablePng(replaceExtension(sourcePath, ".png")),
         ),
       );
@@ -121,6 +117,11 @@ suite("PNGに変換コマンド", () => {
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test(".mmdと.mermaidを順番に読み取り可能なPNGへ変換する", async () => {
+    await assertMermaidFileConvertsToPng("source.mmd");
+    await assertMermaidFileConvertsToPng("source.mermaid");
   });
 
   test("outputPath.convertToPngが設定されている場合はペア別設定より優先してpageを展開する", async () => {
@@ -172,6 +173,25 @@ suite("PNGに変換コマンド", () => {
     }
   });
 });
+
+async function assertMermaidFileConvertsToPng(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_PNG_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadablePng(replaceExtension(sourcePath, ".png"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function writeMermaidFixture(filePath: string): Promise<void> {
   await writeFile(

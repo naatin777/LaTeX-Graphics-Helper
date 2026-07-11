@@ -53,34 +53,29 @@ suite("SVGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_SVG_COMMAND));
   });
 
-  test("PDFとMermaidを1つのbatchでSVGへ変換する", async () => {
+  test("PDFをページごとのSVGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
-      await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
-        writeTwoPagePdf(pdfPath),
-      ]);
-      const sourcePaths = [mmdPath, mermaidPath, pdfPath];
+      await writeTwoPagePdf(pdfPath);
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_SVG_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
-        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+        vscode.Uri.file(pdfPath),
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertGeneratedMermaidSvg(replaceExtension(mmdPath, ".svg"));
-      await assertGeneratedMermaidSvg(replaceExtension(mermaidPath, ".svg"));
       await assertGeneratedSvg(path.join(temporaryDirectory, "source-document-1.svg"));
       await assertGeneratedSvg(path.join(temporaryDirectory, "source-document-2.svg"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test(".mmdと.mermaidを順番にSVGへ変換する", async () => {
+    await assertMermaidFileConvertsToSvg("source.mmd");
+    await assertMermaidFileConvertsToSvg("source.mermaid");
   });
 
   test("outputPath.convertToSvgが設定されている場合はペア別設定より優先してpageを展開する", async () => {
@@ -117,6 +112,25 @@ suite("SVGに変換コマンド", () => {
     }
   });
 });
+
+async function assertMermaidFileConvertsToSvg(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_SVG_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertGeneratedMermaidSvg(replaceExtension(sourcePath, ".svg"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function writeMermaidFixture(filePath: string): Promise<void> {
   await writeFile(

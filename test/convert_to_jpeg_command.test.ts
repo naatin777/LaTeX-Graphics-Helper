@@ -56,27 +56,23 @@ suite("JPEGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_JPEG_COMMAND));
   });
 
-  test("PNG、WebP、AVIF、SVG、PDF、Mermaidを1つのbatchでJPEGへ変換する", async () => {
+  test("PNG、WebP、AVIF、SVG、PDFを1つのbatchでJPEGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
-      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const webpPath = path.join(temporaryDirectory, "source-webp.webp");
       const avifPath = path.join(temporaryDirectory, "source-avif.avif");
       const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
-        writeMermaidFixture(mmdPath),
-        writeMermaidFixture(mermaidPath),
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(webpPath, "webp"),
         writeImageFixture(avifPath, "avif"),
         writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [mmdPath, mermaidPath, pngPath, webpPath, avifPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, webpPath, avifPath, svgPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_JPEG_COMMAND,
@@ -86,7 +82,7 @@ suite("JPEGに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [mmdPath, mermaidPath, pngPath, webpPath, avifPath, svgPath].map((sourcePath) =>
+        [pngPath, webpPath, avifPath, svgPath].map((sourcePath) =>
           assertReadableJpeg(replaceExtension(sourcePath, ".jpeg")),
         ),
       );
@@ -96,7 +92,31 @@ suite("JPEGに変換コマンド", () => {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
+
+  test(".mmdと.mermaidを順番に読み取り可能なJPEGへ変換する", async () => {
+    await assertMermaidFileConvertsToJpeg("source.mmd");
+    await assertMermaidFileConvertsToJpeg("source.mermaid");
+  });
 });
+
+async function assertMermaidFileConvertsToJpeg(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_JPEG_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadableJpeg(replaceExtension(sourcePath, ".jpeg"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
