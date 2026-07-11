@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0141: 外部コマンドのOS別path互換性を実測する](0141-audit-external-tool-path-compatibility.md)
+- なし
 
 ## Rules
 
@@ -141,6 +141,7 @@
 - [0138: crop fixtureテストで設定済みpdftocairoを使う](0138-use-configured-pdftocairo-in-crop-fixture-tests.md)
 - [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
 - [0140: GitHub Actionsの3 OSへqpdfを導入する](0140-install-qpdf-in-ci.md)
+- [0141: 外部コマンドのOS別path互換性を実測する](0141-audit-external-tool-path-compatibility.md)
 
 ## Todo Tasks
 
@@ -162,3 +163,9 @@
 - [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
 - [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
 - [0142: 外部コマンド用ASCII stagingの仕様を決める](0142-design-ascii-staging-for-external-tools.md)
+- [0143: Windows Ghostscript用ASCII stagingの失敗テストを追加する](0143-add-windows-ghostscript-ascii-staging-tests.md)
+- [0144: Windows Ghostscript用ASCII stagingを実装する](0144-implement-windows-ghostscript-ascii-staging.md)
+- [0145: Windows pdftocairo出力用ASCII stagingの失敗テストを追加する](0145-add-windows-pdftocairo-ascii-staging-tests.md)
+- [0146: Windows pdftocairo出力用ASCII stagingを実装する](0146-implement-windows-pdftocairo-ascii-staging.md)
+- [0147: Windows rsvg-convert用ASCII stagingの失敗テストを追加する](0147-add-windows-rsvg-ascii-staging-tests.md)
+- [0148: Windows rsvg-convert用ASCII stagingを実装する](0148-implement-windows-rsvg-ascii-staging.md)
