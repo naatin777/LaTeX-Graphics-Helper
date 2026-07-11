@@ -51,6 +51,7 @@ suite("PDF自動crop処理", () => {
       ghostscriptPath: "gs",
       runId: "run",
       runGhostscript,
+      platform: "linux",
     });
 
     assert.strictEqual(calls.length, 1);
