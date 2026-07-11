@@ -95,7 +95,7 @@ suite("PDFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_PDF_COMMAND));
   });
 
-  test("PNG、JPEG、WebP、AVIF、SVGを1つのbatchでPDFへ変換する", async () => {
+  test("PNG、JPEG、WebP、AVIFを1つのbatchでPDFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -110,12 +110,8 @@ suite("PDFに変換コマンド", () => {
           return sourcePath;
         }),
       );
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
-      await Promise.all([
-        copyFile(fixturePngPath, pngPath),
-        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
-      ]);
-      const sourcePaths = [pngPath, ...imagePaths, svgPath];
+      await copyFile(fixturePngPath, pngPath);
+      const sourcePaths = [pngPath, ...imagePaths];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PDF_COMMAND,
@@ -134,8 +130,26 @@ suite("PDFに変換コマンド", () => {
           ),
         ),
       );
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
       await assertPdfPageSize(
-        replaceExtension(svgPath, ".pdf"),
+        replaceExtension(sourcePath, ".pdf"),
         generatedSvgWidth,
         generatedSvgHeight,
       );

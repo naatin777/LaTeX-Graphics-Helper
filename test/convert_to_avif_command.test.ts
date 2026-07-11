@@ -65,23 +65,21 @@ suite("AVIFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_AVIF_COMMAND));
   });
 
-  test("PNG、JPEG、WebP、SVG、PDFを1つのbatchでAVIFへ変換する", async () => {
+  test("PNG、JPEG、WebP、PDFを1つのbatchでAVIFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const jpegPath = path.join(temporaryDirectory, "source-jpeg.jpeg");
       const webpPath = path.join(temporaryDirectory, "source-webp.webp");
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(jpegPath, "jpeg"),
         writeImageFixture(webpPath, "webp"),
-        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [pngPath, jpegPath, webpPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, jpegPath, webpPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_AVIF_COMMAND,
@@ -91,12 +89,31 @@ suite("AVIFに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [pngPath, jpegPath, webpPath, svgPath].map((sourcePath) =>
+        [pngPath, jpegPath, webpPath].map((sourcePath) =>
           assertReadableAvif(replaceExtension(sourcePath, ".avif")),
         ),
       );
       await assertReadableAvif(path.join(temporaryDirectory, "source-document-1.avif"));
       await assertReadableAvif(path.join(temporaryDirectory, "source-document-2.avif"));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("SVGを読み取り可能なAVIFへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_AVIF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertReadableAvif(replaceExtension(sourcePath, ".avif"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

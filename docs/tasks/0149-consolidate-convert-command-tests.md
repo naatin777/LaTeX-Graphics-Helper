@@ -29,18 +29,18 @@ Done
 
 ### 対象suite
 
-- test数: 60件から45件
+- test数: 60件から50件
 - Mocha: 14秒から13秒（約7%短縮）
-- wall clock: 17.10秒から15.62秒（1.48秒、約9%短縮）
+- wall clock: 17.10秒から15.34秒（1.76秒、約10%短縮）
 
-削除した15件は入力形式の検証を削ったものではない。6つの出力commandごとに画像・PDF入力をbatchへまとめ、各入力の出力fileを個別に読み取って検証している。
+削除した10件は入力形式の検証を削ったものではない。6つの出力commandごとにbrowserを使わない画像・PDF入力をbatchへまとめ、各入力の出力fileを個別に読み取って検証している。
 
-`.mmd`と`.mermaid`は元どおり別test caseにする。両方を同じbatchへ含める試行では、Mermaid CLIが使うbrowser processが同時起動し、GitHub ActionsのMocha時間がLinuxで25秒から16秒へ短縮した一方、macOSで28秒から48秒、Windowsで40秒から57秒へ悪化した。1つのtest内で順番に実行する試行もLinux 24秒、macOS 44秒、Windows 56秒となり、test case間で外部processのlifecycleを分離する元の構成より遅かった。そのため、軽量な画像・PDF入力だけをbatch化する。
+SVG、`.mmd`、`.mermaid`は元どおり別test caseにする。Mermaidを同じbatchへ含める試行では、browser processが同時起動し、GitHub ActionsのMocha時間がLinuxで25秒から16秒へ短縮した一方、macOSで28秒から48秒、Windowsで40秒から57秒へ悪化した。Mermaidだけを1つのtest内で順番に実行する試行もLinux 24秒、macOS 44秒、Windows 56秒となった。さらにSVGをbatchに残した試行もLinux 54秒、macOS 40秒、Windows 52秒だった。SVG変換もbrowserを使うため、browserを使う入力はtest case間でprocess lifecycleを分離し、Sharp / Poppler / pdf-lib系の入力だけをbatch化する。
 
 ### VS Code統合テスト全体
 
-- test数: 165件から150件
-- Mocha: 15秒から13秒（約13%短縮）
+- test数: 165件から155件
+- Mocha: 15秒から14秒（約7%短縮）
 
 設定、非対応入力、同一形式拒否、大文字拡張子、PDF複数ページ、同一形式の複数選択は独立テストとして維持した。
 

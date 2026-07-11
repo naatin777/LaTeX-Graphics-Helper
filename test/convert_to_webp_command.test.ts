@@ -65,23 +65,21 @@ suite("WebPに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_WEBP_COMMAND));
   });
 
-  test("PNG、JPEG、AVIF、SVG、PDFを1つのbatchでWebPへ変換する", async () => {
+  test("PNG、JPEG、AVIF、PDFを1つのbatchでWebPへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const jpegPath = path.join(temporaryDirectory, "source-jpeg.jpeg");
       const avifPath = path.join(temporaryDirectory, "source-avif.avif");
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(jpegPath, "jpeg"),
         writeImageFixture(avifPath, "avif"),
-        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [pngPath, jpegPath, avifPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, jpegPath, avifPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_WEBP_COMMAND,
@@ -91,12 +89,31 @@ suite("WebPに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [pngPath, jpegPath, avifPath, svgPath].map((sourcePath) =>
+        [pngPath, jpegPath, avifPath].map((sourcePath) =>
           assertReadableWebp(replaceExtension(sourcePath, ".webp")),
         ),
       );
       await assertReadableWebp(path.join(temporaryDirectory, "source-document-1.webp"));
       await assertReadableWebp(path.join(temporaryDirectory, "source-document-2.webp"));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("SVGを読み取り可能なWebPへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_WEBP_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertReadableWebp(replaceExtension(sourcePath, ".webp"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

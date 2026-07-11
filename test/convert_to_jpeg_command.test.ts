@@ -56,23 +56,21 @@ suite("JPEGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_JPEG_COMMAND));
   });
 
-  test("PNG、WebP、AVIF、SVG、PDFを1つのbatchでJPEGへ変換する", async () => {
+  test("PNG、WebP、AVIF、PDFを1つのbatchでJPEGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const pngPath = path.join(temporaryDirectory, "source-png.png");
       const webpPath = path.join(temporaryDirectory, "source-webp.webp");
       const avifPath = path.join(temporaryDirectory, "source-avif.avif");
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
       await Promise.all([
         copyFile(fixturePngPath, pngPath),
         writeImageFixture(webpPath, "webp"),
         writeImageFixture(avifPath, "avif"),
-        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
         writeTwoPagePdf(pdfPath),
       ]);
-      const sourcePaths = [pngPath, webpPath, avifPath, svgPath, pdfPath];
+      const sourcePaths = [pngPath, webpPath, avifPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_JPEG_COMMAND,
@@ -82,12 +80,31 @@ suite("JPEGに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [pngPath, webpPath, avifPath, svgPath].map((sourcePath) =>
+        [pngPath, webpPath, avifPath].map((sourcePath) =>
           assertReadableJpeg(replaceExtension(sourcePath, ".jpeg")),
         ),
       );
       await assertReadableJpeg(path.join(temporaryDirectory, "source-document-1.jpeg"));
       await assertReadableJpeg(path.join(temporaryDirectory, "source-document-2.jpeg"));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("SVGを読み取り可能なJPEGへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_JPEG_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertReadableJpeg(replaceExtension(sourcePath, ".jpeg"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

@@ -78,7 +78,7 @@ suite("PNGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_PNG_COMMAND));
   });
 
-  test("JPEG、WebP、AVIF、SVG、PDFを1つのbatchでPNGへ変換する", async () => {
+  test("JPEG、WebP、AVIF、PDFを1つのbatchでPNGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -92,13 +92,9 @@ suite("PNGに変換コマンド", () => {
           return sourcePath;
         }),
       );
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
       const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
-      await Promise.all([
-        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
-        writeTwoPagePdf(pdfPath),
-      ]);
-      const sourcePaths = [...imagePaths, svgPath, pdfPath];
+      await writeTwoPagePdf(pdfPath);
+      const sourcePaths = [...imagePaths, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PNG_COMMAND,
@@ -108,12 +104,29 @@ suite("PNGに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        [...imagePaths, svgPath].map((sourcePath) =>
-          assertReadablePng(replaceExtension(sourcePath, ".png")),
-        ),
+        imagePaths.map((sourcePath) => assertReadablePng(replaceExtension(sourcePath, ".png"))),
       );
       await assertReadablePng(path.join(temporaryDirectory, "source-document-1.png"));
       await assertReadablePng(path.join(temporaryDirectory, "source-document-2.png"));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test("SVGを読み取り可能なPNGへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PNG_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertReadablePng(replaceExtension(sourcePath, ".png"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
