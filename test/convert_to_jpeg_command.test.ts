@@ -37,17 +37,6 @@ const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
 const generatedSvgWidth = 31;
 const generatedSvgHeight = 19;
 
-const imageVariants = [
-  {
-    basename: "source-webp",
-    extension: "webp",
-  },
-  {
-    basename: "source-avif",
-    extension: "avif",
-  },
-] as const;
-
 suite("JPEGに変換コマンド", () => {
   let sandbox: sinon.SinonSandbox;
 
@@ -67,40 +56,21 @@ suite("JPEGに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_JPEG_COMMAND));
   });
 
-  test("PNGを読み取り可能なJPEGへ変換する", async () => {
+  test("PNG、WebP、AVIF、PDFを1つのbatchでJPEGへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const sourcePath = path.join(temporaryDirectory, "source.png");
-      const outputPath = path.join(temporaryDirectory, "source.jpeg");
-      await copyFile(fixturePngPath, sourcePath);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_JPEG_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertReadableJpeg(outputPath);
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
-  });
-
-  test("WebP、AVIFを読み取り可能なJPEGへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePaths = await Promise.all(
-        imageVariants.map(async (variant) => {
-          const sourcePath = path.join(
-            temporaryDirectory,
-            `${variant.basename}.${variant.extension}`,
-          );
-          await writeImageFixture(sourcePath, variant.extension);
-          return sourcePath;
-        }),
-      );
+      const pngPath = path.join(temporaryDirectory, "source-png.png");
+      const webpPath = path.join(temporaryDirectory, "source-webp.webp");
+      const avifPath = path.join(temporaryDirectory, "source-avif.avif");
+      const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
+      await Promise.all([
+        copyFile(fixturePngPath, pngPath),
+        writeImageFixture(webpPath, "webp"),
+        writeImageFixture(avifPath, "avif"),
+        writeTwoPagePdf(pdfPath),
+      ]);
+      const sourcePaths = [pngPath, webpPath, avifPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_JPEG_COMMAND,
@@ -110,8 +80,12 @@ suite("JPEGに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        sourcePaths.map((sourcePath) => assertReadableJpeg(replaceExtension(sourcePath, ".jpeg"))),
+        [pngPath, webpPath, avifPath].map((sourcePath) =>
+          assertReadableJpeg(replaceExtension(sourcePath, ".jpeg")),
+        ),
       );
+      await assertReadableJpeg(path.join(temporaryDirectory, "source-document-1.jpeg"));
+      await assertReadableJpeg(path.join(temporaryDirectory, "source-document-2.jpeg"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
@@ -122,7 +96,6 @@ suite("JPEGに変換コマンド", () => {
 
     try {
       const sourcePath = path.join(temporaryDirectory, "source.svg");
-      const outputPath = path.join(temporaryDirectory, "source.jpeg");
       await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
 
       const commandExecution = vscode.commands.executeCommand(
@@ -131,29 +104,7 @@ suite("JPEGに変換コマンド", () => {
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertReadableJpeg(outputPath);
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
-  });
-
-  test("PDFをページごとの読み取り可能なJPEGへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePath = path.join(temporaryDirectory, "source.pdf");
-      const firstOutputPath = path.join(temporaryDirectory, "source-1.jpeg");
-      const secondOutputPath = path.join(temporaryDirectory, "source-2.jpeg");
-      await writeTwoPagePdf(sourcePath);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_JPEG_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertReadableJpeg(firstOutputPath);
-      await assertReadableJpeg(secondOutputPath);
+      await assertReadableJpeg(replaceExtension(sourcePath, ".jpeg"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
@@ -167,6 +118,25 @@ suite("JPEGに変換コマンド", () => {
     await assertMermaidFileConvertsToJpeg("source.mermaid");
   });
 });
+
+async function assertMermaidFileConvertsToJpeg(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_JPEG_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadableJpeg(replaceExtension(sourcePath, ".jpeg"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
 
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -188,27 +158,11 @@ async function removeTemporaryDirectory(directoryPath: string): Promise<void> {
   });
 }
 
-async function assertMermaidFileConvertsToJpeg(fileName: string): Promise<void> {
-  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-  try {
-    const sourcePath = path.join(temporaryDirectory, fileName);
-    const outputPath = replaceExtension(sourcePath, ".jpeg");
-    await writeFile(
-      sourcePath,
-      ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
-    );
-
-    const commandExecution = vscode.commands.executeCommand(
-      CONVERT_TO_JPEG_COMMAND,
-      vscode.Uri.file(sourcePath),
-    );
-    await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-    await assertReadableJpeg(outputPath);
-  } finally {
-    await removeTemporaryDirectory(temporaryDirectory);
-  }
+async function writeMermaidFixture(filePath: string): Promise<void> {
+  await writeFile(
+    filePath,
+    ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
+  );
 }
 
 async function writeTestSvg(filePath: string, width: number, height: number): Promise<void> {

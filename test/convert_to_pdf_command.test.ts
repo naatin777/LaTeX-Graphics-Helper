@@ -7,7 +7,7 @@
 // - AVIFをPDFに変換できること
 // - SVGをPDFに変換できること
 // - MermaidをPDFに変換できること
-// - PNGとSVGを1回のコマンドでPDFへ変換できること
+// - PNG、JPEG、WebP、AVIF、SVG、Mermaidを1回のコマンドでPDFへ変換できること
 // - 複数PNGを1回のコマンドでPDFへ変換できること
 // - 非対応入力が含まれる場合、変換全体を開始しないこと
 // - 入力形式と出力形式が同じ場合、変換全体を開始しないこと
@@ -95,20 +95,75 @@ suite("PDFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_PDF_COMMAND));
   });
 
-  test("PNGを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
+  test("PNG、JPEG、WebP、AVIFを1つのbatchでPDFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const sourcePath = path.join(temporaryDirectory, "source.png");
-      const outputPath = path.join(temporaryDirectory, "source.pdf");
-      await copyFile(fixturePngPath, sourcePath);
+      const pngPath = path.join(temporaryDirectory, "source-png.png");
+      const imagePaths = await Promise.all(
+        imageVariants.map(async (variant) => {
+          const sourcePath = path.join(
+            temporaryDirectory,
+            `${variant.basename}.${variant.extension}`,
+          );
+          await writeTestImage(sourcePath, variant.imageBase64);
+          return sourcePath;
+        }),
+      );
+      await copyFile(fixturePngPath, pngPath);
+      const sourcePaths = [pngPath, ...imagePaths];
 
-      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePaths[0]!),
+        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
+      await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, ".pdf"), pngPath);
+      await Promise.all(
+        imagePaths.map((sourcePath) =>
+          assertPdfPageSize(
+            replaceExtension(sourcePath, ".pdf"),
+            generatedImageWidth,
+            generatedImageHeight,
+          ),
+        ),
+      );
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
+  });
+
+  test("SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する", async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PDF_COMMAND,
+        vscode.Uri.file(sourcePath),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await assertPdfPageSize(
+        replaceExtension(sourcePath, ".pdf"),
+        generatedSvgWidth,
+        generatedSvgHeight,
+      );
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test(".mmdファイルを読み取り可能なPDFへ変換する", async () => {
+    await assertMermaidFileConvertsToPdf("source.mmd");
+  });
+
+  test(".mermaidファイルを読み取り可能なPDFへ変換する", async () => {
+    await assertMermaidFileConvertsToPdf("source.mermaid");
   });
 
   test("outputPath.convertToPdfが設定されている場合はペア別設定より優先する", async () => {
@@ -150,42 +205,6 @@ suite("PDFに変換コマンド", () => {
     await assertConvertToPdfOutputPathFallsBackToPairSetting(undefined);
   });
 
-  test("JPEGとWebPを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
-    await assertImageVariantsConvertToPdf(jpegAndWebpVariants);
-  });
-
-  test("AVIFを画像pixelサイズと同じpointサイズの1ページPDFへ変換する", async () => {
-    await assertImageVariantsConvertToPdf([avifVariant]);
-  });
-
-  test("SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePath = path.join(temporaryDirectory, "source.svg");
-      const outputPath = path.join(temporaryDirectory, "source.pdf");
-      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertPdfPageSize(outputPath, generatedSvgWidth, generatedSvgHeight);
-    } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
-    }
-  });
-
-  test(".mmdファイルを読み取り可能なPDFへ変換する", async () => {
-    await assertMermaidFileConvertsToPdf("source.mmd");
-  });
-
-  test(".mermaidファイルを読み取り可能なPDFへ変換する", async () => {
-    await assertMermaidFileConvertsToPdf("source.mermaid");
-  });
-
   test("大文字拡張子のファイルを変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
@@ -219,33 +238,6 @@ suite("PDFに変換コマンド", () => {
       logicalSourcePathForOutputTemplate(path.join("workspace", "image.png")),
       path.join("workspace", "image.png"),
     );
-  });
-
-  test("PNGとSVGを1つのバッチとして変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const pngPath = path.join(temporaryDirectory, "source-png.png");
-      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
-      await copyFile(fixturePngPath, pngPath);
-      await writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(pngPath),
-        [vscode.Uri.file(pngPath), vscode.Uri.file(svgPath)],
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, ".pdf"), pngPath);
-      await assertPdfPageSize(
-        replaceExtension(svgPath, ".pdf"),
-        generatedSvgWidth,
-        generatedSvgHeight,
-      );
-    } finally {
-      await rm(temporaryDirectory, { recursive: true, force: true });
-    }
   });
 
   test("複数PNGを1つのバッチとして変換する", async () => {
@@ -312,6 +304,25 @@ suite("PDFに変換コマンド", () => {
   });
 });
 
+async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
+  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+  try {
+    const sourcePath = path.join(temporaryDirectory, fileName);
+    await writeMermaidFixture(sourcePath);
+
+    const commandExecution = vscode.commands.executeCommand(
+      CONVERT_TO_PDF_COMMAND,
+      vscode.Uri.file(sourcePath),
+    );
+    await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+    await assertReadablePdfWithAtLeastOnePage(replaceExtension(sourcePath, ".pdf"));
+  } finally {
+    await removeTemporaryDirectory(temporaryDirectory);
+  }
+}
+
 async function assertConvertToPdfOutputPathFallsBackToPairSetting(
   convertToPdfTemplate: string | undefined,
 ): Promise<void> {
@@ -334,66 +345,6 @@ async function assertConvertToPdfOutputPathFallsBackToPairSetting(
     );
 
     await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
-  } finally {
-    await removeTemporaryDirectory(temporaryDirectory);
-  }
-}
-
-async function assertImageVariantsConvertToPdf(
-  variants: readonly (typeof imageVariants)[number][],
-): Promise<void> {
-  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-  try {
-    const sourcePaths = await Promise.all(
-      variants.map(async (variant) => {
-        const sourcePath = path.join(
-          temporaryDirectory,
-          `${variant.basename}.${variant.extension}`,
-        );
-        await writeTestImage(sourcePath, variant.imageBase64);
-        return sourcePath;
-      }),
-    );
-
-    await vscode.commands.executeCommand(
-      CONVERT_TO_PDF_COMMAND,
-      vscode.Uri.file(sourcePaths[0]!),
-      sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
-    );
-
-    await Promise.all(
-      sourcePaths.map((sourcePath) =>
-        assertPdfPageSize(
-          replaceExtension(sourcePath, ".pdf"),
-          generatedImageWidth,
-          generatedImageHeight,
-        ),
-      ),
-    );
-  } finally {
-    await removeTemporaryDirectory(temporaryDirectory);
-  }
-}
-
-async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
-  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-  try {
-    const sourcePath = path.join(temporaryDirectory, fileName);
-    const outputPath = replaceExtension(sourcePath, ".pdf");
-    await writeFile(
-      sourcePath,
-      ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
-    );
-
-    const commandExecution = vscode.commands.executeCommand(
-      CONVERT_TO_PDF_COMMAND,
-      vscode.Uri.file(sourcePath),
-    );
-    await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-    await assertReadablePdfWithAtLeastOnePage(outputPath);
   } finally {
     await removeTemporaryDirectory(temporaryDirectory);
   }
@@ -429,6 +380,13 @@ async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string)
 
 async function writeTestImage(filePath: string, imageBase64: string): Promise<void> {
   await writeFile(filePath, Buffer.from(imageBase64, "base64"));
+}
+
+async function writeMermaidFixture(filePath: string): Promise<void> {
+  await writeFile(
+    filePath,
+    ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
+  );
 }
 
 async function writeTestSvg(filePath: string, width: number, height: number): Promise<void> {
