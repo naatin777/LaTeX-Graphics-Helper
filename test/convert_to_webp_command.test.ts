@@ -102,8 +102,11 @@ suite("WebPに変換コマンド", () => {
     }
   });
 
-  test(".mmdと.mermaidを順番に読み取り可能なWebPへ変換する", async () => {
+  test(".mmdファイルを読み取り可能なWebPへ変換する", async () => {
     await assertMermaidFileConvertsToWebp("source.mmd");
+  });
+
+  test(".mermaidファイルを読み取り可能なWebPへ変換する", async () => {
     await assertMermaidFileConvertsToWebp("source.mermaid");
   });
 

@@ -73,8 +73,11 @@ suite("SVGに変換コマンド", () => {
     }
   });
 
-  test(".mmdと.mermaidを順番にSVGへ変換する", async () => {
+  test(".mmdファイルをSVGへ変換する", async () => {
     await assertMermaidFileConvertsToSvg("source.mmd");
+  });
+
+  test(".mermaidファイルをSVGへ変換する", async () => {
     await assertMermaidFileConvertsToSvg("source.mermaid");
   });
 

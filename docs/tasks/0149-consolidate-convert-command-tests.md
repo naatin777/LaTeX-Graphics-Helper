@@ -29,17 +29,17 @@ Done
 
 ### 対象suite
 
-- test数: 60件から39件
+- test数: 60件から45件
 - Mocha: 14秒から13秒（約7%短縮）
-- wall clock: 17.10秒から15.45秒（1.65秒、約10%短縮）
+- wall clock: 17.10秒から15.62秒（1.48秒、約9%短縮）
 
-削除した21件は入力形式の検証を削ったものではない。6つの出力commandごとに画像・PDF入力をbatchへまとめ、各入力の出力fileを個別に読み取って検証している。
+削除した15件は入力形式の検証を削ったものではない。6つの出力commandごとに画像・PDF入力をbatchへまとめ、各入力の出力fileを個別に読み取って検証している。
 
-`.mmd`と`.mermaid`は1つのtest内で順番に変換する。両方を同じbatchへ含める試行では、Mermaid CLIが使うbrowser processが同時起動し、GitHub ActionsのMocha時間がmacOSで28秒から48秒、Windowsで40秒から57秒へ悪化したためである。Linuxでは25秒から16秒へ短縮したが、3 OSで安定して速くなる構成を優先した。
+`.mmd`と`.mermaid`は元どおり別test caseにする。両方を同じbatchへ含める試行では、Mermaid CLIが使うbrowser processが同時起動し、GitHub ActionsのMocha時間がLinuxで25秒から16秒へ短縮した一方、macOSで28秒から48秒、Windowsで40秒から57秒へ悪化した。1つのtest内で順番に実行する試行もLinux 24秒、macOS 44秒、Windows 56秒となり、test case間で外部processのlifecycleを分離する元の構成より遅かった。そのため、軽量な画像・PDF入力だけをbatch化する。
 
 ### VS Code統合テスト全体
 
-- test数: 165件から144件
+- test数: 165件から150件
 - Mocha: 15秒から13秒（約13%短縮）
 
 設定、非対応入力、同一形式拒否、大文字拡張子、PDF複数ページ、同一形式の複数選択は独立テストとして維持した。

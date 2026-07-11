@@ -144,8 +144,11 @@ suite("PDFに変換コマンド", () => {
     }
   });
 
-  test(".mmdと.mermaidを順番に読み取り可能なPDFへ変換する", async () => {
+  test(".mmdファイルを読み取り可能なPDFへ変換する", async () => {
     await assertMermaidFileConvertsToPdf("source.mmd");
+  });
+
+  test(".mermaidファイルを読み取り可能なPDFへ変換する", async () => {
     await assertMermaidFileConvertsToPdf("source.mermaid");
   });
 

@@ -102,8 +102,11 @@ suite("AVIFに変換コマンド", () => {
     }
   });
 
-  test(".mmdと.mermaidを順番に読み取り可能なAVIFへ変換する", async () => {
+  test(".mmdファイルを読み取り可能なAVIFへ変換する", async () => {
     await assertMermaidFileConvertsToAvif("source.mmd");
+  });
+
+  test(".mermaidファイルを読み取り可能なAVIFへ変換する", async () => {
     await assertMermaidFileConvertsToAvif("source.mermaid");
   });
 

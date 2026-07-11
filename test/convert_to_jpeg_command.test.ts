@@ -93,8 +93,11 @@ suite("JPEGに変換コマンド", () => {
     }
   });
 
-  test(".mmdと.mermaidを順番に読み取り可能なJPEGへ変換する", async () => {
+  test(".mmdファイルを読み取り可能なJPEGへ変換する", async () => {
     await assertMermaidFileConvertsToJpeg("source.mmd");
+  });
+
+  test(".mermaidファイルを読み取り可能なJPEGへ変換する", async () => {
     await assertMermaidFileConvertsToJpeg("source.mermaid");
   });
 });
