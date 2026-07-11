@@ -6,6 +6,7 @@ sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
 	ghostscript \
 	poppler-utils \
+	qpdf \
 	librsvg2-bin \
 	xvfb
 
