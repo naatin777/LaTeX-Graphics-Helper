@@ -40,17 +40,6 @@ const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
 const generatedSvgWidth = 31;
 const generatedSvgHeight = 19;
 
-const imageVariants = [
-  {
-    basename: "source-jpeg",
-    extension: "jpeg",
-  },
-  {
-    basename: "source-webp",
-    extension: "webp",
-  },
-] as const;
-
 suite("AVIFに変換コマンド", () => {
   let sandbox: sinon.SinonSandbox;
 
@@ -76,40 +65,27 @@ suite("AVIFに変換コマンド", () => {
     assert.ok(commands.includes(CONVERT_TO_AVIF_COMMAND));
   });
 
-  test("PNGを読み取り可能なAVIFへ変換する", async () => {
+  test("PNG、JPEG、WebP、SVG、PDF、Mermaidを1つのbatchでAVIFへ変換する", async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const sourcePath = path.join(temporaryDirectory, "source.png");
-      const outputPath = path.join(temporaryDirectory, "source.avif");
-      await copyFile(fixturePngPath, sourcePath);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_AVIF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertReadableAvif(outputPath);
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
-  });
-
-  test("JPEG、WebPを読み取り可能なAVIFへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePaths = await Promise.all(
-        imageVariants.map(async (variant) => {
-          const sourcePath = path.join(
-            temporaryDirectory,
-            `${variant.basename}.${variant.extension}`,
-          );
-          await writeImageFixture(sourcePath, variant.extension);
-          return sourcePath;
-        }),
-      );
+      const mmdPath = path.join(temporaryDirectory, "diagram-mmd.mmd");
+      const mermaidPath = path.join(temporaryDirectory, "diagram-mermaid.mermaid");
+      const pngPath = path.join(temporaryDirectory, "source-png.png");
+      const jpegPath = path.join(temporaryDirectory, "source-jpeg.jpeg");
+      const webpPath = path.join(temporaryDirectory, "source-webp.webp");
+      const svgPath = path.join(temporaryDirectory, "source-svg.svg");
+      const pdfPath = path.join(temporaryDirectory, "source-document.pdf");
+      await Promise.all([
+        writeMermaidFixture(mmdPath),
+        writeMermaidFixture(mermaidPath),
+        copyFile(fixturePngPath, pngPath),
+        writeImageFixture(jpegPath, "jpeg"),
+        writeImageFixture(webpPath, "webp"),
+        writeTestSvg(svgPath, generatedSvgWidth, generatedSvgHeight),
+        writeTwoPagePdf(pdfPath),
+      ]);
+      const sourcePaths = [mmdPath, mermaidPath, pngPath, jpegPath, webpPath, svgPath, pdfPath];
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_AVIF_COMMAND,
@@ -119,61 +95,15 @@ suite("AVIFに変換コマンド", () => {
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
       await Promise.all(
-        sourcePaths.map((sourcePath) => assertReadableAvif(replaceExtension(sourcePath, ".avif"))),
+        [mmdPath, mermaidPath, pngPath, jpegPath, webpPath, svgPath].map((sourcePath) =>
+          assertReadableAvif(replaceExtension(sourcePath, ".avif")),
+        ),
       );
+      await assertReadableAvif(path.join(temporaryDirectory, "source-document-1.avif"));
+      await assertReadableAvif(path.join(temporaryDirectory, "source-document-2.avif"));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
-  });
-
-  test("SVGを読み取り可能なAVIFへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePath = path.join(temporaryDirectory, "source.svg");
-      const outputPath = path.join(temporaryDirectory, "source.avif");
-      await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_AVIF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertReadableAvif(outputPath);
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
-  });
-
-  test("PDFをページごとの読み取り可能なAVIFへ変換する", async () => {
-    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-    try {
-      const sourcePath = path.join(temporaryDirectory, "source.pdf");
-      const firstOutputPath = path.join(temporaryDirectory, "source-1.avif");
-      const secondOutputPath = path.join(temporaryDirectory, "source-2.avif");
-      await writeTwoPagePdf(sourcePath);
-
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_AVIF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-      await assertReadableAvif(firstOutputPath);
-      await assertReadableAvif(secondOutputPath);
-    } finally {
-      await removeTemporaryDirectory(temporaryDirectory);
-    }
-  });
-
-  test(".mmdファイルを読み取り可能なAVIFへ変換する", async () => {
-    await assertMermaidFileConvertsToAvif("source.mmd");
-  });
-
-  test(".mermaidファイルを読み取り可能なAVIFへ変換する", async () => {
-    await assertMermaidFileConvertsToAvif("source.mermaid");
   });
 
   test("AVIFからAVIFへは変換しない", async () => {
@@ -212,27 +142,11 @@ async function removeTemporaryDirectory(directoryPath: string): Promise<void> {
   });
 }
 
-async function assertMermaidFileConvertsToAvif(fileName: string): Promise<void> {
-  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-  try {
-    const sourcePath = path.join(temporaryDirectory, fileName);
-    const outputPath = replaceExtension(sourcePath, ".avif");
-    await writeFile(
-      sourcePath,
-      ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
-    );
-
-    const commandExecution = vscode.commands.executeCommand(
-      CONVERT_TO_AVIF_COMMAND,
-      vscode.Uri.file(sourcePath),
-    );
-    await runCommandAndClearNotificationsUntilDone(commandExecution);
-
-    await assertReadableAvif(outputPath);
-  } finally {
-    await removeTemporaryDirectory(temporaryDirectory);
-  }
+async function writeMermaidFixture(filePath: string): Promise<void> {
+  await writeFile(
+    filePath,
+    ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
+  );
 }
 
 async function writeTestSvg(filePath: string, width: number, height: number): Promise<void> {

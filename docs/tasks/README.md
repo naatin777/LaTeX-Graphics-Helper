@@ -145,6 +145,7 @@
 - [0142: 外部コマンド用ASCII stagingの仕様を決める](0142-design-ascii-staging-for-external-tools.md)
 - [0143: Windows Ghostscript用ASCII scratchの失敗テストを追加する](0143-add-windows-ghostscript-ascii-staging-tests.md)
 - [0144: Windows Ghostscript用ASCII scratchを実装する](0144-implement-windows-ghostscript-ascii-staging.md)
+- [0149: convert command正常系を複数形式batchへ統合する](0149-consolidate-convert-command-tests.md)
 
 ## Todo Tasks
 
