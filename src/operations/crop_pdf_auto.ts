@@ -16,6 +16,14 @@ import {
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import {
+  createAsciiInputScratch,
+  defaultWindowsScratchBaseCandidates,
+  removeSuccessfulScratch,
+  validateAsciiScratchInput,
+  type AsciiScratch,
+  type LineOutputChannel,
+} from "./external_tool_ascii_scratch.js";
 
 const execFileAsync = promisify(execFile);
 const CONVERSION_CONCURRENCY = 2;
@@ -44,10 +52,10 @@ export interface CropPdfOptions {
   runId?: string;
   runGhostscript?: RunGhostscript;
   signal?: AbortSignal;
-  outputChannel?: {
-    appendLine: (message: string) => void;
-  };
+  outputChannel?: LineOutputChannel;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  platform?: NodeJS.Platform;
+  scratchBaseCandidates?: readonly string[];
 }
 
 interface Box {
@@ -71,6 +79,9 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
+  const platform = options.platform ?? process.platform;
+  const scratchBaseCandidates =
+    options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const converted = await Promise.all(
     options.jobs.map((job, index) =>
@@ -84,6 +95,8 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
           ghostscriptPath: options.ghostscriptPath,
           runId,
           runGhostscript,
+          platform,
+          scratchBaseCandidates,
           signal: options.signal,
           ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
         });
@@ -107,13 +120,23 @@ async function convertPdf(params: {
   ghostscriptPath: string;
   runId: string;
   runGhostscript: RunGhostscript;
+  platform: NodeJS.Platform;
+  scratchBaseCandidates: readonly string[];
   signal: AbortSignal | undefined;
-  outputChannel?: {
-    appendLine: (message: string) => void;
-  };
+  outputChannel?: LineOutputChannel;
 }): Promise<PreparedConversionOutput> {
-  const { job, index, margin, ghostscriptPath, runId, runGhostscript, signal, outputChannel } =
-    params;
+  const {
+    job,
+    index,
+    margin,
+    ghostscriptPath,
+    runId,
+    runGhostscript,
+    platform,
+    scratchBaseCandidates,
+    signal,
+    outputChannel,
+  } = params;
   signal?.throwIfAborted();
   const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
   const workDirectory = path.join(
@@ -134,45 +157,76 @@ async function convertPdf(params: {
   signal?.throwIfAborted();
   await copyFile(job.sourcePath, copiedSourcePath);
 
-  await assertExistingPathInWorkspace(copiedSourcePath, job.workspacePath);
-  signal?.throwIfAborted();
-  const boundingBoxes = await readBoundingBoxes(
-    ghostscriptPath,
-    copiedSourcePath,
-    runGhostscript,
-    signal,
-    outputChannel,
-  );
-  signal?.throwIfAborted();
-  const document = await PDFDocument.load(await readFile(copiedSourcePath));
-  signal?.throwIfAborted();
-  const pages = document.getPages();
+  let scratch: AsciiScratch | undefined;
 
-  if (boundingBoxes.length !== pages.length || pages.length === 0) {
-    throw new Error(`Could not determine all PDF page bounds: ${job.sourcePath}`);
-  }
-
-  for (const [pageIndex, page] of pages.entries()) {
+  try {
+    await assertExistingPathInWorkspace(copiedSourcePath, job.workspacePath);
     signal?.throwIfAborted();
-    const boundingBox = boundingBoxes[pageIndex];
+    let ghostscriptInputPath = copiedSourcePath;
 
-    if (!boundingBox) {
-      throw new Error(`Missing page bounds for page ${pageIndex + 1}: ${job.sourcePath}`);
+    if (platform === "win32") {
+      scratch = await createAsciiInputScratch({
+        baseCandidates: scratchBaseCandidates,
+        inputFileName: "input.pdf",
+        ...(signal !== undefined && { signal }),
+        ...(outputChannel !== undefined && { outputChannel }),
+      });
+      signal?.throwIfAborted();
+      await copyFile(copiedSourcePath, scratch.inputPath);
+      signal?.throwIfAborted();
+      await validateAsciiScratchInput(scratch);
+      ghostscriptInputPath = scratch.inputPath;
+      outputChannel?.appendLine(`[scratch] logical input: ${job.sourcePath}`);
+      outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
     }
 
-    setPageBounds(page, boundingBox, margin);
+    const boundingBoxes = await readBoundingBoxes(
+      ghostscriptPath,
+      ghostscriptInputPath,
+      runGhostscript,
+      signal,
+      outputChannel,
+    );
+    signal?.throwIfAborted();
+    const document = await PDFDocument.load(await readFile(copiedSourcePath));
+    signal?.throwIfAborted();
+    const pages = document.getPages();
+
+    if (boundingBoxes.length !== pages.length || pages.length === 0) {
+      throw new Error(`Could not determine all PDF page bounds: ${job.sourcePath}`);
+    }
+
+    for (const [pageIndex, page] of pages.entries()) {
+      signal?.throwIfAborted();
+      const boundingBox = boundingBoxes[pageIndex];
+
+      if (!boundingBox) {
+        throw new Error(`Missing page bounds for page ${pageIndex + 1}: ${job.sourcePath}`);
+      }
+
+      setPageBounds(page, boundingBox, margin);
+    }
+
+    await assertWritablePathInWorkspace(stagedOutputPath, job.workspacePath);
+    signal?.throwIfAborted();
+    await writeFile(stagedOutputPath, await document.save());
+    signal?.throwIfAborted();
+
+    if (scratch) {
+      await removeSuccessfulScratch(scratch, outputChannel);
+    }
+
+    return {
+      stagedOutputPath,
+      outputPath: job.outputPath,
+      workspacePath: job.workspacePath,
+    };
+  } catch (error) {
+    if (scratch) {
+      outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
+    }
+    throw error;
   }
-
-  await assertWritablePathInWorkspace(stagedOutputPath, job.workspacePath);
-  signal?.throwIfAborted();
-  await writeFile(stagedOutputPath, await document.save());
-  signal?.throwIfAborted();
-
-  return {
-    stagedOutputPath,
-    outputPath: job.outputPath,
-    workspacePath: job.workspacePath,
-  };
 }
 
 async function readBoundingBoxes(
@@ -180,9 +234,7 @@ async function readBoundingBoxes(
   sourcePath: string,
   runGhostscript: RunGhostscript,
   signal?: AbortSignal,
-  outputChannel?: {
-    appendLine: (message: string) => void;
-  },
+  outputChannel?: LineOutputChannel,
 ): Promise<Box[]> {
   try {
     const result = await runGhostscript(

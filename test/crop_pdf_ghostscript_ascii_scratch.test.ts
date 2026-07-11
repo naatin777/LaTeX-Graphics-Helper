@@ -16,7 +16,7 @@
 
 import assert from "node:assert/strict";
 import { constants } from "node:fs";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, realpath, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -199,7 +199,13 @@ async function prepareFixedFixtureWorkspace(): Promise<FixedFixtureWorkspace> {
   ]);
   await copyFile(fixturePath, sourcePath);
 
-  return { testRootPath, workspacePath, scratchBasePath, sourcePath, outputPath };
+  return {
+    testRootPath,
+    workspacePath,
+    scratchBasePath: await realpath(scratchBasePath),
+    sourcePath,
+    outputPath,
+  };
 }
 
 function requiredToolInputPath(args: string[]): string {
