@@ -6,7 +6,7 @@
 
 ## Current Task
 
-なし。
+- なし
 
 ## Rules
 
@@ -129,7 +129,17 @@
 - [0120: cropPdf.configure GUIを実操作できる状態へ仕上げる](0120-finish-crop-pdf-configure-gui.md)
 - [0121: cropPdf.configure GUIのレイアウトを左右分割へ改善する](0121-improve-crop-pdf-configure-layout.md)
 - [0122: cropPdf.configureのズーム操作とスクロール範囲を改善する](0122-improve-crop-pdf-zoom-and-scroll.md)
+- [0123: cropPdf.configureの操作テストを追加する](0123-add-crop-pdf-configure-operation-tests.md)
 - [0126: 実fixtureと画像比較を使うテスト方針を決める](0126-design-real-fixture-and-visual-testing.md)
+- [0130: 複雑なUnicodeファイル名のcrop出力テストを追加する](0130-add-complex-unicode-output-path-tests.md)
+- [0131: outputPathのOS禁止名検証を設計する](0131-design-output-path-os-name-validation.md)
+- [0132: outputPathのOS禁止名失敗テストを追加する](0132-add-output-path-os-name-validation-tests.md)
+- [0133: outputPathのOS禁止名検証を実装する](0133-implement-output-path-os-name-validation.md)
+- [0135: 固定fixtureによる既存テスト置換方針を明記する](0135-clarify-fixed-fixture-test-replacement-policy.md)
+- [0136: crop Applyの動的fixtureテストを固定fixtureへ置き換える](0136-replace-crop-apply-generated-fixture-test.md)
+- [0137: Gemini Code Assistのレビュー手順を削除する](0137-remove-gemini-code-assist-review-workflow.md)
+- [0138: crop fixtureテストで設定済みpdftocairoを使う](0138-use-configured-pdftocairo-in-crop-fixture-tests.md)
+- [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
 
 ## Todo Tasks
 
@@ -146,3 +156,7 @@
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
+- [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
+- [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
+- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
+- [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
