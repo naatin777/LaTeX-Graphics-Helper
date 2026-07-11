@@ -1,11 +1,21 @@
 import { execFile } from "node:child_process";
-import { copyFile, mkdir, rm, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 const MIXED_NAME = "日本語 العربية हिन्दी é 🌹　ＡＢＣ space";
+const CHARACTER_COMPONENTS = [
+  ["japanese", "日本語"],
+  ["arabic", "العربية"],
+  ["hindi", "हिन्दी"],
+  ["combining-mark", "é"],
+  ["emoji", "🌹"],
+  ["fullwidth-characters", "ＡＢＣ"],
+  ["ascii-space", "ascii space"],
+  ["ideographic-space", "全角　空白"],
+];
 const TIMEOUT_MS = 180_000;
 
 const options = parseOptions(process.argv.slice(2));
@@ -187,6 +197,22 @@ const pathCases = [
     outputDirectoryName: `${MIXED_NAME} output`,
     outputBaseName: `${MIXED_NAME} result`,
   },
+  ...CHARACTER_COMPONENTS.flatMap(([id, component]) => [
+    {
+      id: `character-${id}-input-file`,
+      inputDirectoryName: "input-ascii",
+      inputBaseName: component,
+      outputDirectoryName: "output-ascii",
+      outputBaseName: "result",
+    },
+    {
+      id: `character-${id}-output-file`,
+      inputDirectoryName: "input-ascii",
+      inputBaseName: "source",
+      outputDirectoryName: "output-ascii",
+      outputBaseName: component,
+    },
+  ]),
 ];
 
 await rm(workDirectory, { recursive: true, force: true });
@@ -273,6 +299,7 @@ async function probeCase(tool, pathCase, separatorMode) {
   const result = await execute(invocation.executable, invocation.args, TIMEOUT_MS);
   const durationMs = Math.round(performance.now() - startedAt);
   const output = await outputState(outputPath);
+  const observedOutputs = await listDirectory(outputDirectoryPath);
 
   return {
     id: pathCase.id,
@@ -284,6 +311,7 @@ async function probeCase(tool, pathCase, separatorMode) {
     stderr: truncate(result.stderr),
     durationMs,
     output,
+    observedOutputs,
   };
 }
 
@@ -323,6 +351,11 @@ async function outputState(outputPath) {
     }
     throw error;
   }
+}
+
+async function listDirectory(directoryPath) {
+  const entries = await readdir(directoryPath, { withFileTypes: true });
+  return entries.map((entry) => ({ name: entry.name, type: entry.isFile() ? "file" : "other" }));
 }
 
 function commandPath(value, separatorMode) {
@@ -374,15 +407,19 @@ function renderMarkdown(result) {
 
     lines.push(
       "",
-      "| Case | Separator | Result | Exit | Seconds | Output bytes | Error |",
-      "| --- | --- | --- | ---: | ---: | ---: | --- |",
+      "| Case | Separator | Result | Exit | Seconds | Output bytes | Observed outputs | Error |",
+      "| --- | --- | --- | ---: | ---: | ---: | --- | --- |",
     );
     for (const entry of tool.cases) {
       const error = (entry.error || entry.stderr || "")
         .replaceAll("|", "\\|")
         .replaceAll("\n", " ");
+      const observedOutputs = entry.observedOutputs
+        .map((observed) => observed.name)
+        .join(", ")
+        .replaceAll("|", "\\|");
       lines.push(
-        `| ${entry.id} | ${entry.separatorMode} | ${entry.status} | ${entry.exitCode ?? "-"} | ${(entry.durationMs / 1_000).toFixed(1)} | ${entry.output.size} | ${truncate(error, 240)} |`,
+        `| ${entry.id} | ${entry.separatorMode} | ${entry.status} | ${entry.exitCode ?? "-"} | ${(entry.durationMs / 1_000).toFixed(1)} | ${entry.output.size} | ${truncate(observedOutputs, 120)} | ${truncate(error, 240)} |`,
       );
     }
   }
