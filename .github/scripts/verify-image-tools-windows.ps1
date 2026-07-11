@@ -9,11 +9,15 @@ $gs = $settings.'latex-graphics-helper.execPath.ghostscript'
 $pdftocairo = $settings.'latex-graphics-helper.execPath.pdftocairo'
 $rsvgConvert = $settings.'latex-graphics-helper.execPath.rsvgConvert'
 $chrome = $settings.'latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath'
+$qpdfRoot = Join-Path $env:RUNNER_TEMP 'qpdf'
+$qpdf = Get-ChildItem -Path $qpdfRoot -Recurse -Filter qpdf.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 
 if (-not (Test-Path $gs)) { throw "missing Ghostscript: $gs" }
 if (-not (Test-Path $pdftocairo)) { throw "missing pdftocairo: $pdftocairo" }
 if (-not (Test-Path $rsvgConvert)) { throw "missing rsvg-convert: $rsvgConvert" }
 if (-not (Test-Path $chrome)) { throw "missing Chrome from settings.json: $chrome" }
+if (-not $qpdf) { throw "missing qpdf.exe under $qpdfRoot" }
+$qpdfPath = $qpdf.FullName
 
 Write-Host "Ghostscript: $gs"
 & $gs --version | Out-Host
@@ -27,6 +31,10 @@ Write-Host "rsvg-convert: $rsvgConvert"
 Write-Host "Chrome from settings.json: $chrome"
 $chromeVersion = (Get-Item $chrome).VersionInfo.ProductVersion
 Write-Host "Chrome file version: $chromeVersion"
+
+Write-Host "qpdf: $qpdfPath"
+& $qpdfPath --version | Out-Host
+if ($LASTEXITCODE -ne 0) { throw "qpdf failed with exit code $LASTEXITCODE" }
 
 $workDir = Join-Path $env:RUNNER_TEMP "lgh-tool-smoke-$([guid]::NewGuid())"
 New-Item -ItemType Directory -Force -Path $workDir | Out-Null
