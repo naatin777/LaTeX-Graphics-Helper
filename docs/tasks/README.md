@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- なし
+- [0141: 外部コマンドのOS別path互換性を実測する](0141-audit-external-tool-path-compatibility.md)
 
 ## Rules
 
@@ -161,5 +161,4 @@
 - [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
 - [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
 - [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
-- [0141: 外部コマンドのOS別path互換性を実測する](0141-audit-external-tool-path-compatibility.md)
 - [0142: 外部コマンド用ASCII stagingの仕様を決める](0142-design-ascii-staging-for-external-tools.md)
