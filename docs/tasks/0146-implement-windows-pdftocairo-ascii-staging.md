@@ -41,4 +41,4 @@ Done
 - `CI=true pnpm run check:all`: 成功
 - `CI=true ./node_modules/.bin/vscode-test --grep "Windows pdftocairo ASCII scratch"`: 7件成功
 - `CI=true pnpm run test:vscode`: 162件成功
-- Windows GitHub Actions: PR作成後に確認する
+- Windows GitHub Actions: `vscode-test (Windows)`、`playwright (Windows)`ともに成功
