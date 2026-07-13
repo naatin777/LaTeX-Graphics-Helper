@@ -7,4 +7,5 @@ playwright-report/
 test-results/
 media/
 .latex-graphics-helper/
+.codex/rules/
 *.vsix
