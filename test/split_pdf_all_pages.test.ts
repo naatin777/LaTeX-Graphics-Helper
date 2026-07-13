@@ -3,6 +3,7 @@
 // Test target:
 // - 1件以上のPDFを1ページごとに分割し、全成功後に出力すること
 // - 既存出力、出力重複、キャンセル時に出力を反映しないこと
+// - 固定fixtureの各分割ページが元PDFの対応ページと同じ描画内容であること
 //
 // Mocked:
 // - なし。pdf-libと実ファイルを使用する
@@ -10,74 +11,122 @@
 // Not tested:
 // - VS CodeのwithProgress UI
 // - commandからのURI選択
-// - PDF描画内容の見た目
 
 import assert from "node:assert/strict";
-import { access, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { PDFDocument } from "pdf-lib";
 
 import { splitPdfAllPages } from "../src/operations/split_pdf_all_pages.js";
+import { assertRenderedPdfPagesSimilar } from "./helpers/pdf_visual_assertions.js";
+
+const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
+const fixtureDirectory = path.resolve(
+  compiledTestDirectory,
+  "..",
+  "..",
+  "test",
+  "fixtures",
+  "pdf-operations",
+  "user-files",
+);
 
 suite("PDF全ページ分割", () => {
   test("すべてのページを1始まりのページ番号で分割し、作業ファイルを残す", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePath = path.join(workspacePath, "source.pdf");
+    const sourcePath = path.join(workspacePath, "q a.pdf");
     const outputDirectory = path.join(workspacePath, "source");
-    await writePdf(sourcePath, 3);
+    await copyFile(fixturePath("q a.pdf"), sourcePath);
 
-    await splitPdfAllPages({
-      jobs: [
-        {
-          sourcePath,
-          workspacePath,
-          outputPathForPage: (page: number) => path.join(outputDirectory, `${page}.pdf`),
-        },
-      ],
-      runId: "run",
-    });
+    try {
+      await splitPdfAllPages({
+        jobs: [
+          {
+            sourcePath,
+            workspacePath,
+            outputPathForPage: (page: number) => path.join(outputDirectory, `${page}.pdf`),
+          },
+        ],
+        runId: "run",
+      });
 
-    for (const page of [1, 2, 3]) {
-      const output = await PDFDocument.load(
-        await readFile(path.join(outputDirectory, `${page}.pdf`)),
+      const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
+      for (let page = 1; page <= sourceDocument.getPageCount(); page += 1) {
+        const outputPath = path.join(outputDirectory, `${page}.pdf`);
+        const output = await PDFDocument.load(await readFile(outputPath));
+        assert.strictEqual(output.getPageCount(), 1);
+        await assertRenderedPdfPagesSimilar({
+          expectedPdfPath: sourcePath,
+          expectedPageNumber: page,
+          actualPdfPath: outputPath,
+          actualPageNumber: 1,
+          renderDirectory: path.join(workspacePath, "rendered"),
+          renderPrefix: `split-single-${page}`,
+        });
+      }
+
+      const stagingDirectory = path.join(
+        workspacePath,
+        ".latex-graphics-helper",
+        "split-pdf",
+        "run",
+        "1-q_a",
       );
-      assert.strictEqual(output.getPageCount(), 1);
+      await assert.doesNotReject(access(path.join(stagingDirectory, "q a.pdf")));
+      await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "1.pdf")));
+      await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "2.pdf")));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
     }
-
-    const stagingDirectory = path.join(
-      workspacePath,
-      ".latex-graphics-helper",
-      "split-pdf",
-      "run",
-      "1-source",
-    );
-    await assert.doesNotReject(access(path.join(stagingDirectory, "source.pdf")));
-    await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "1.pdf")));
-    await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "2.pdf")));
-    await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "3.pdf")));
   });
 
   test("複数PDFはすべての入力が成功してから出力する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const firstSourcePath = path.join(workspacePath, "first.pdf");
-    const secondSourcePath = path.join(workspacePath, "second.pdf");
-    await writePdf(firstSourcePath, 2);
-    await writePdf(secondSourcePath, 1);
+    const sourcePaths = ["q a.pdf", " 薔薇🌹.pdf"].map((fileName) =>
+      path.join(workspacePath, fileName),
+    );
 
-    await splitPdfAllPages({
-      jobs: [firstSourcePath, secondSourcePath].map((sourcePath) => ({
-        sourcePath,
-        workspacePath,
-        outputPathForPage: (page: number) =>
-          path.join(workspacePath, path.basename(sourcePath, ".pdf"), `${page}.pdf`),
-      })),
-    });
+    try {
+      await Promise.all(
+        sourcePaths.map((sourcePath) =>
+          copyFile(fixturePath(path.basename(sourcePath)), sourcePath),
+        ),
+      );
 
-    await assert.doesNotReject(access(path.join(workspacePath, "first", "1.pdf")));
-    await assert.doesNotReject(access(path.join(workspacePath, "first", "2.pdf")));
-    await assert.doesNotReject(access(path.join(workspacePath, "second", "1.pdf")));
+      await splitPdfAllPages({
+        jobs: sourcePaths.map((sourcePath) => ({
+          sourcePath,
+          workspacePath,
+          outputPathForPage: (page: number) =>
+            path.join(workspacePath, path.basename(sourcePath, ".pdf"), `${page}.pdf`),
+        })),
+      });
+
+      for (const [sourceIndex, sourcePath] of sourcePaths.entries()) {
+        const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
+        for (let page = 1; page <= sourceDocument.getPageCount(); page += 1) {
+          const outputPath = path.join(
+            workspacePath,
+            path.basename(sourcePath, ".pdf"),
+            `${page}.pdf`,
+          );
+          await assert.doesNotReject(access(outputPath));
+          await assertRenderedPdfPagesSimilar({
+            expectedPdfPath: sourcePath,
+            expectedPageNumber: page,
+            actualPdfPath: outputPath,
+            actualPageNumber: 1,
+            renderDirectory: path.join(workspacePath, "rendered"),
+            renderPrefix: `split-multiple-${sourceIndex + 1}-${page}`,
+          });
+        }
+      }
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
   });
 
   test("出力先が既に存在する場合は何も作成しない", async () => {
@@ -162,4 +211,8 @@ async function writePdf(filePath: string, pageCount: number): Promise<void> {
   }
 
   await writeFile(filePath, await document.save());
+}
+
+function fixturePath(fileName: string): string {
+  return path.join(fixtureDirectory, fileName);
 }

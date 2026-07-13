@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
-import { access, copyFile, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +9,7 @@ import { PDFDocument } from "pdf-lib";
 import { createSandbox } from "sinon";
 import * as vscode from "vscode";
 
+import { assertRenderedPdfPagesSimilar } from "./helpers/pdf_visual_assertions.js";
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
 
 const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
@@ -46,9 +47,11 @@ suite("PDF結合コマンド", () => {
       const firstPdfPath = path.join(temporaryDirectory, "q a.pdf");
       const secondPdfPath = path.join(temporaryDirectory, " 薔薇🌹.pdf");
       const outputPath = path.join(temporaryDirectory, "merged.pdf");
+      const renderDirectory = path.join(temporaryDirectory, "rendered");
 
       await copyFile(firstFixturePath, firstPdfPath);
       await copyFile(secondFixturePath, secondPdfPath);
+      await mkdir(renderDirectory);
 
       sandbox.stub(vscode.window, "showSaveDialog").resolves(vscode.Uri.file(outputPath));
       sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
@@ -75,6 +78,26 @@ suite("PDF結合コマンド", () => {
         expectedPageSizes,
       );
       assert.ok((await stat(outputPath)).size > 0);
+
+      let outputPageNumber = 1;
+      for (const [sourceIndex, sourcePath] of [firstPdfPath, secondPdfPath].entries()) {
+        const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
+        for (
+          let sourcePageNumber = 1;
+          sourcePageNumber <= sourceDocument.getPageCount();
+          sourcePageNumber += 1
+        ) {
+          await assertRenderedPdfPagesSimilar({
+            expectedPdfPath: sourcePath,
+            expectedPageNumber: sourcePageNumber,
+            actualPdfPath: outputPath,
+            actualPageNumber: outputPageNumber,
+            renderDirectory,
+            renderPrefix: `merge-${sourceIndex + 1}-${sourcePageNumber}`,
+          });
+          outputPageNumber += 1;
+        }
+      }
     } finally {
       sandbox.restore();
       await rm(temporaryDirectory, { recursive: true, force: true });
