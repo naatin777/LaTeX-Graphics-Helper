@@ -119,6 +119,7 @@
 - [0112: v0.5.1公開機能との差分を整理する](0112-track-v051-public-feature-parity.md)
 - [0113: 現行PDF結合コマンドの基本動作テストを追加する](0113-add-basic-merge-pdf-command-tests.md)
 - [0114: 現行PDF結合コマンドの基本動作を実装する](0114-restore-basic-merge-pdf-command.md)
+- [0125: mergePdfの操作テストを追加する](0125-add-merge-pdf-operation-tests.md)
 - [0115: v0.5.1からの破壊的変更を文書化する](0115-decide-v051-legacy-compatibility.md)
 - [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
 - [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)
