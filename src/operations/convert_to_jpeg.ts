@@ -19,6 +19,10 @@ import {
 } from "./commit_conversion_outputs.js";
 import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
 import type { RunPdfToPng } from "./convert_to_png.js";
+import {
+  runPdftocairoWithAsciiScratch,
+  type PdfToolScratchOptions,
+} from "./run_pdftocairo_with_ascii_scratch.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
@@ -43,7 +47,7 @@ export interface DrawioToJpegOptions {
   runDrawio?: RunDrawio;
 }
 
-export interface ConvertToJpegFilesOptions {
+export interface ConvertToJpegFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToJpegJob[];
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
@@ -75,6 +79,7 @@ export async function convertToJpegFiles(
           options.mermaid,
           options.drawio,
           options.runPdfToPng,
+          options,
           options.signal,
         ),
       ),
@@ -98,6 +103,7 @@ async function stageJpegConversion(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToJpegOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -118,6 +124,7 @@ async function stageJpegConversion(
     mermaid,
     drawio,
     runPdfToPng,
+    scratchOptions,
     signal,
   );
   signal?.throwIfAborted();
@@ -137,6 +144,7 @@ async function writeSourceAsJpeg(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToJpegOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
@@ -149,6 +157,7 @@ async function writeSourceAsJpeg(
       pdftocairoPath,
       drawio,
       runPdfToPng,
+      scratchOptions,
       signal,
     );
     return;
@@ -163,6 +172,7 @@ async function writeSourceAsJpeg(
       pdftocairoPath,
       job.page,
       runPdfToPng,
+      scratchOptions,
       signal,
     );
     return;
@@ -190,6 +200,7 @@ async function writeDrawioAsJpeg(
   pdftocairoPath: string,
   drawio: DrawioToJpegOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -211,6 +222,7 @@ async function writeDrawioAsJpeg(
     pdftocairoPath,
     job.page ?? 1,
     runPdfToPng,
+    scratchOptions,
     signal,
   );
 }
@@ -223,6 +235,7 @@ async function writePdfPageAsJpeg(
   pdftocairoPath: string,
   page = 1,
   runPdfToPng?: RunPdfToPng,
+  scratchOptions: PdfToolScratchOptions = {},
   signal?: AbortSignal,
 ): Promise<void> {
   const pngPath = path.join(stageDirectory, "source.png");
@@ -231,20 +244,39 @@ async function writePdfPageAsJpeg(
   await mkdir(path.dirname(pngPath), { recursive: true });
   signal?.throwIfAborted();
 
-  if (runPdfToPng) {
-    await runPdfToPng(sourcePath, pngPath, page, signal);
-  } else {
-    const outputPrefix = pngPath.slice(0, -path.extname(pngPath).length);
-    await execFileAsync(
-      pdftocairoPath,
-      ["-png", "-singlefile", "-f", String(page), "-l", String(page), sourcePath, outputPrefix],
-      {
-        encoding: "utf8",
-        maxBuffer: 10 * 1024 * 1024,
-        signal,
-      },
-    );
-  }
+  await runPdftocairoWithAsciiScratch({
+    sourcePath,
+    outputPath: pngPath,
+    scratchOutputFileName: "output.png",
+    scratch: scratchOptions,
+    ...(signal !== undefined && { signal }),
+    run: async (toolSourcePath, toolOutputPath) => {
+      if (runPdfToPng) {
+        await runPdfToPng(toolSourcePath, toolOutputPath, page, signal);
+        return;
+      }
+
+      const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
+      await execFileAsync(
+        pdftocairoPath,
+        [
+          "-png",
+          "-singlefile",
+          "-f",
+          String(page),
+          "-l",
+          String(page),
+          toolSourcePath,
+          outputPrefix,
+        ],
+        {
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+          signal,
+        },
+      );
+    },
+  });
 
   await writeImageAsJpeg(pngPath, outputPath, workspacePath, signal);
 }

@@ -11,6 +11,10 @@ export interface AsciiScratch {
   inputPath: string;
 }
 
+export interface AsciiInputOutputScratch extends AsciiScratch {
+  outputPath: string;
+}
+
 export function defaultWindowsScratchBaseCandidates(): string[] {
   const candidates = [os.tmpdir()];
   const systemRoot = process.env.SystemRoot;
@@ -27,6 +31,7 @@ export async function createAsciiInputScratch(options: {
   inputFileName: string;
   signal?: AbortSignal;
   outputChannel?: LineOutputChannel;
+  toolName?: string;
 }): Promise<AsciiScratch> {
   assertAsciiFileName(options.inputFileName);
 
@@ -59,10 +64,31 @@ export async function createAsciiInputScratch(options: {
     }
   }
 
-  throw new Error("Could not create an ASCII temporary directory for Ghostscript.");
+  throw new Error(
+    `Could not create an ASCII temporary directory for ${options.toolName ?? "Ghostscript"}.`,
+  );
 }
 
-export async function validateAsciiScratchInput(scratch: AsciiScratch): Promise<void> {
+export async function createAsciiInputOutputScratch(options: {
+  baseCandidates: readonly string[];
+  inputFileName: string;
+  outputFileName: string;
+  signal?: AbortSignal;
+  outputChannel?: LineOutputChannel;
+  toolName?: string;
+}): Promise<AsciiInputOutputScratch> {
+  assertAsciiFileName(options.outputFileName);
+  const scratch = await createAsciiInputScratch(options);
+  const outputPath = path.join(scratch.rootPath, options.outputFileName);
+  assertAsciiAbsolutePath(outputPath);
+
+  return { ...scratch, outputPath };
+}
+
+export async function validateAsciiScratchInput(
+  scratch: AsciiScratch,
+  toolName = "Ghostscript",
+): Promise<void> {
   const [rootStats, inputStats, realRootPath, realInputPath] = await Promise.all([
     lstat(scratch.rootPath),
     lstat(scratch.inputPath),
@@ -71,16 +97,37 @@ export async function validateAsciiScratchInput(scratch: AsciiScratch): Promise<
   ]);
 
   if (!rootStats.isDirectory() || rootStats.isSymbolicLink()) {
-    throw new Error("Ghostscript scratch root is not a regular directory.");
+    throw new Error(`${toolName} scratch root is not a regular directory.`);
   }
 
   if (!inputStats.isFile() || inputStats.isSymbolicLink() || inputStats.size === 0) {
-    throw new Error("Ghostscript scratch input is not a non-empty regular file.");
+    throw new Error(`${toolName} scratch input is not a non-empty regular file.`);
   }
 
   assertAsciiAbsolutePath(scratch.rootPath);
   assertAsciiAbsolutePath(scratch.inputPath);
   assertContained(realInputPath, realRootPath);
+}
+
+export async function validateAsciiScratchOutput(scratch: AsciiInputOutputScratch): Promise<void> {
+  const [rootStats, outputStats, realRootPath, realOutputPath] = await Promise.all([
+    lstat(scratch.rootPath),
+    lstat(scratch.outputPath),
+    realpath(scratch.rootPath),
+    realpath(scratch.outputPath),
+  ]);
+
+  if (!rootStats.isDirectory() || rootStats.isSymbolicLink()) {
+    throw new Error("External tool scratch root is not a regular directory.");
+  }
+
+  if (!outputStats.isFile() || outputStats.isSymbolicLink() || outputStats.size === 0) {
+    throw new Error("External tool scratch output is not a non-empty regular file.");
+  }
+
+  assertAsciiAbsolutePath(scratch.rootPath);
+  assertAsciiAbsolutePath(scratch.outputPath);
+  assertContained(realOutputPath, realRootPath);
 }
 
 export async function removeSuccessfulScratch(

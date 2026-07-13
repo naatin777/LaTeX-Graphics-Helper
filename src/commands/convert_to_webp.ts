@@ -65,6 +65,7 @@ export async function convertToWebpCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
             mermaid,
             drawio,
             webp,
+            platform: process.platform,
             signal,
             resolveOutputConflicts,
           });
