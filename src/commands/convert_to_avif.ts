@@ -65,6 +65,7 @@ export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
             mermaid,
             drawio,
             avif,
+            platform: process.platform,
             signal,
             resolveOutputConflicts,
           });

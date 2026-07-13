@@ -61,6 +61,7 @@ export async function convertToJpegCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
             pdftocairoPath,
             mermaid,
             drawio,
+            platform: process.platform,
             signal,
             resolveOutputConflicts,
           });

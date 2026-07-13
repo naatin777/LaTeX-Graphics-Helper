@@ -17,6 +17,10 @@ import {
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
 import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
+import {
+  runPdftocairoWithAsciiScratch,
+  type PdfToolScratchOptions,
+} from "./run_pdftocairo_with_ascii_scratch.js";
 
 export type { MermaidPuppeteerOptions };
 
@@ -49,7 +53,7 @@ export type RunPdfToSvg = (
   signal?: AbortSignal,
 ) => Promise<void>;
 
-export interface ConvertToSvgFilesOptions {
+export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToSvgJob[];
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
@@ -81,6 +85,7 @@ export async function convertToSvgFiles(
           options.mermaid,
           options.drawio,
           options.runPdfToSvg,
+          options,
           options.signal,
         ),
       ),
@@ -104,6 +109,7 @@ async function stageSvgConversion(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -123,6 +129,7 @@ async function stageSvgConversion(
     mermaid,
     drawio,
     runPdfToSvg,
+    scratchOptions,
     signal,
   );
   signal?.throwIfAborted();
@@ -141,6 +148,7 @@ async function writeSourceAsSvg(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
@@ -158,6 +166,7 @@ async function writeSourceAsSvg(
       pdftocairoPath,
       job.page,
       runPdfToSvg,
+      scratchOptions,
       signal,
     );
     return;
@@ -200,6 +209,7 @@ async function writePdfPageAsSvg(
   pdftocairoPath: string,
   page = 1,
   runPdfToSvg?: RunPdfToSvg,
+  scratchOptions: PdfToolScratchOptions = {},
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -208,20 +218,29 @@ async function writePdfPageAsSvg(
   signal?.throwIfAborted();
 
   try {
-    if (runPdfToSvg) {
-      await runPdfToSvg(sourcePath, outputPath, page, signal);
-      return;
-    }
+    await runPdftocairoWithAsciiScratch({
+      sourcePath,
+      outputPath,
+      scratchOutputFileName: "output.svg",
+      scratch: scratchOptions,
+      ...(signal !== undefined && { signal }),
+      run: async (toolSourcePath, toolOutputPath) => {
+        if (runPdfToSvg) {
+          await runPdfToSvg(toolSourcePath, toolOutputPath, page, signal);
+          return;
+        }
 
-    await execFileAsync(
-      pdftocairoPath,
-      ["-svg", "-f", String(page), "-l", String(page), sourcePath, outputPath],
-      {
-        encoding: "utf8",
-        maxBuffer: 10 * 1024 * 1024,
-        signal,
+        await execFileAsync(
+          pdftocairoPath,
+          ["-svg", "-f", String(page), "-l", String(page), toolSourcePath, toolOutputPath],
+          {
+            encoding: "utf8",
+            maxBuffer: 10 * 1024 * 1024,
+            signal,
+          },
+        );
       },
-    );
+    });
   } catch (error) {
     if (isAbortError(error)) {
       throw error;

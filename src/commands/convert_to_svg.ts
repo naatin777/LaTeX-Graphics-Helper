@@ -60,6 +60,7 @@ export async function convertToSvgCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
             pdftocairoPath,
             mermaid: puppeteer,
             drawio,
+            platform: process.platform,
             signal,
             resolveOutputConflicts,
           });

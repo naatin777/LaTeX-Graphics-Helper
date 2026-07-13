@@ -18,6 +18,10 @@ import {
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
 import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
+import {
+  runPdftocairoWithAsciiScratch,
+  type PdfToolScratchOptions,
+} from "./run_pdftocairo_with_ascii_scratch.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
@@ -49,7 +53,7 @@ export type RunPdfToPng = (
   signal?: AbortSignal,
 ) => Promise<void>;
 
-export interface ConvertToPngFilesOptions {
+export interface ConvertToPngFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToPngJob[];
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
@@ -81,6 +85,7 @@ export async function convertToPngFiles(
           options.mermaid,
           options.drawio,
           options.runPdfToPng,
+          options,
           options.signal,
         ),
       ),
@@ -104,6 +109,7 @@ async function stagePngConversion(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToPngOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -124,6 +130,7 @@ async function stagePngConversion(
     mermaid,
     drawio,
     runPdfToPng,
+    scratchOptions,
     signal,
   );
   signal?.throwIfAborted();
@@ -143,6 +150,7 @@ async function writeSourceAsPng(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToPngOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
@@ -155,6 +163,7 @@ async function writeSourceAsPng(
       pdftocairoPath,
       drawio,
       runPdfToPng,
+      scratchOptions,
       signal,
     );
     return;
@@ -168,6 +177,7 @@ async function writeSourceAsPng(
       pdftocairoPath,
       job.page,
       runPdfToPng,
+      scratchOptions,
       signal,
     );
     return;
@@ -188,6 +198,7 @@ async function writeDrawioAsPng(
   pdftocairoPath: string,
   drawio: DrawioToPngOptions,
   runPdfToPng: RunPdfToPng | undefined,
+  scratchOptions: PdfToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -208,6 +219,7 @@ async function writeDrawioAsPng(
     pdftocairoPath,
     job.page ?? 1,
     runPdfToPng,
+    scratchOptions,
     signal,
   );
 }
@@ -219,6 +231,7 @@ async function writePdfPageAsPng(
   pdftocairoPath: string,
   page = 1,
   runPdfToPng?: RunPdfToPng,
+  scratchOptions: PdfToolScratchOptions = {},
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -226,21 +239,39 @@ async function writePdfPageAsPng(
   await mkdir(path.dirname(outputPath), { recursive: true });
   signal?.throwIfAborted();
 
-  if (runPdfToPng) {
-    await runPdfToPng(sourcePath, outputPath, page, signal);
-    return;
-  }
+  await runPdftocairoWithAsciiScratch({
+    sourcePath,
+    outputPath,
+    scratchOutputFileName: "output.png",
+    scratch: scratchOptions,
+    ...(signal !== undefined && { signal }),
+    run: async (toolSourcePath, toolOutputPath) => {
+      if (runPdfToPng) {
+        await runPdfToPng(toolSourcePath, toolOutputPath, page, signal);
+        return;
+      }
 
-  const outputPrefix = outputPath.slice(0, -path.extname(outputPath).length);
-  await execFileAsync(
-    pdftocairoPath,
-    ["-png", "-singlefile", "-f", String(page), "-l", String(page), sourcePath, outputPrefix],
-    {
-      encoding: "utf8",
-      maxBuffer: 10 * 1024 * 1024,
-      signal,
+      const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
+      await execFileAsync(
+        pdftocairoPath,
+        [
+          "-png",
+          "-singlefile",
+          "-f",
+          String(page),
+          "-l",
+          String(page),
+          toolSourcePath,
+          outputPrefix,
+        ],
+        {
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+          signal,
+        },
+      );
     },
-  );
+  });
 }
 
 async function writeMermaidAsPng(
