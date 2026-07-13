@@ -145,6 +145,7 @@
 - [0142: 外部コマンド用ASCII stagingの仕様を決める](0142-design-ascii-staging-for-external-tools.md)
 - [0143: Windows Ghostscript用ASCII scratchの失敗テストを追加する](0143-add-windows-ghostscript-ascii-staging-tests.md)
 - [0144: Windows Ghostscript用ASCII scratchを実装する](0144-implement-windows-ghostscript-ascii-staging.md)
+- [0145: Windows pdftocairo出力用ASCII stagingの失敗テストを追加する](0145-add-windows-pdftocairo-ascii-staging-tests.md)
 - [0149: convert command正常系を複数形式batchへ統合する](0149-consolidate-convert-command-tests.md)
 
 ## Todo Tasks
@@ -166,7 +167,6 @@
 - [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
 - [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
 - [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
-- [0145: Windows pdftocairo出力用ASCII stagingの失敗テストを追加する](0145-add-windows-pdftocairo-ascii-staging-tests.md)
 - [0146: Windows pdftocairo出力用ASCII stagingを実装する](0146-implement-windows-pdftocairo-ascii-staging.md)
 - [0147: Windows rsvg-convert用ASCII stagingの失敗テストを追加する](0147-add-windows-rsvg-ascii-staging-tests.md)
 - [0148: Windows rsvg-convert用ASCII stagingを実装する](0148-implement-windows-rsvg-ascii-staging.md)
