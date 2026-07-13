@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -35,3 +35,13 @@ Todo
 - `CI=true pnpm run check:all`
 - `CI=true pnpm run test:vscode`
 - Windows GitHub Actions
+
+## 確認結果
+
+- Windows時はUnicodeの論理入力・出力pathを`input.svg`・`output.pdf`へstagingしてrsvg-convertへ渡すようにした
+- rsvg-convertのexit codeだけでなく、期待出力が非0 byteの通常fileであることを確認するようにした
+- 成功時はscratch出力を論理出力へcopyしてscratchを削除し、失敗時は診断用scratchを保持する
+- rsvg-convert runnerを注入可能にし、Puppeteer engineの経路は変更していない
+- `CI=true pnpm run check:all` は既存warningのみで成功した
+- `CI=true pnpm run test` は165 passingで成功した
+- `.vscode-test.mjs`経由の対象テストは3 passingで成功した
