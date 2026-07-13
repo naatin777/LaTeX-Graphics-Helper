@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- なし
+- [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
 
 ## Rules
 
