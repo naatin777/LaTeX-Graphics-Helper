@@ -19,6 +19,11 @@ import {
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import {
+  runRsvgConvertWithAsciiScratch,
+  type RsvgToolScratchOptions,
+  type RunRsvgConvert,
+} from "./run_rsvg_convert_with_ascii_scratch.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
@@ -39,6 +44,7 @@ export interface SvgToPdfOptions {
   rsvgConvertPath: string;
   puppeteerBrowserChannel: ChromeReleaseChannel;
   puppeteerExecutablePath?: string;
+  runRsvgConvert?: RunRsvgConvert;
 }
 
 export interface MermaidPuppeteerOptions {
@@ -75,6 +81,8 @@ export interface ConvertPngToPdfFilesOptions {
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
   drawio?: DrawioToPdfOptions;
+  platform?: NodeJS.Platform;
+  scratchBaseCandidates?: readonly string[];
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -98,6 +106,13 @@ export async function convertPngToPdfFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const platform = options.platform ?? process.platform;
+  const scratchOptions: RsvgToolScratchOptions = {
+    platform,
+    ...(options.scratchBaseCandidates !== undefined && {
+      scratchBaseCandidates: options.scratchBaseCandidates,
+    }),
+  };
   const limit = pLimit(CONVERSION_CONCURRENCY);
   const stagedOutputs = await Promise.all(
     options.jobs.map((job, index) =>
@@ -110,6 +125,7 @@ export async function convertPngToPdfFiles(
           options.svgToPdf,
           options.mermaid,
           options.drawio,
+          scratchOptions,
         ),
       ),
     ),
@@ -132,6 +148,7 @@ async function stagePngConversion(
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
+  scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -151,6 +168,7 @@ async function stagePngConversion(
     svgToPdf,
     mermaid,
     drawio,
+    scratchOptions,
   );
   signal?.throwIfAborted();
 
@@ -169,6 +187,7 @@ async function writeImageAsPdf(
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
+  scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
 
@@ -183,7 +202,7 @@ async function writeImageAsPdf(
   }
 
   if (extension === SVG_EXTENSION) {
-    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf);
+    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf, scratchOptions);
     return;
   }
 
@@ -315,6 +334,7 @@ async function writeSvgAsPdf(
   workspacePath: string,
   signal?: AbortSignal,
   svgToPdf?: SvgToPdfOptions,
+  scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<void> {
   const options = svgToPdf ?? {
     engine: "puppeteer",
@@ -329,7 +349,7 @@ async function writeSvgAsPdf(
   signal?.throwIfAborted();
 
   if (options.engine === "rsvg-convert") {
-    await writeSvgAsPdfWithRsvgConvert(sourcePath, outputPath, options.rsvgConvertPath, signal);
+    await writeSvgAsPdfWithRsvgConvert(sourcePath, outputPath, options, scratchOptions, signal);
   } else {
     await writeSvgAsPdfWithPuppeteer(sourcePath, outputPath, size, options, signal);
   }
@@ -352,10 +372,26 @@ async function readSvgSize(sourcePath: string): Promise<{ width: number; height:
 async function writeSvgAsPdfWithRsvgConvert(
   sourcePath: string,
   outputPath: string,
-  rsvgConvertPath: string,
+  options: SvgToPdfOptions,
+  scratchOptions: RsvgToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(rsvgConvertPath, ["--format=pdf", "--output", outputPath, sourcePath], {
+  await runRsvgConvertWithAsciiScratch({
+    executable: options.rsvgConvertPath,
+    sourcePath,
+    outputPath,
+    run: options.runRsvgConvert ?? executeRsvgConvert,
+    scratch: scratchOptions,
+    ...(signal !== undefined && { signal }),
+  });
+}
+
+async function executeRsvgConvert(
+  executable: string,
+  args: string[],
+  signal?: AbortSignal,
+): Promise<void> {
+  await execFileAsync(executable, args, {
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     signal,
