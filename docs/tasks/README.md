@@ -157,23 +157,46 @@
 - [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
 - [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
 - [0155: VS Code WebviewでPDF.jsを安定して読み込む](0155-stabilize-pdfjs-loading-in-vscode-webview.md)
+- [0156: AI開発ハーネスの最小構成を設計する](0156-design-ai-development-harness.md)
 
 ## Todo Tasks
 
-- [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
-- [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
-- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)
-- [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md)
-- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
+### AI開発ハーネスとCI
+
+- [0157: next/v1のbranch・PR運用をRuleSyncへ記録する](0157-document-next-v1-branch-workflow.md)
+- [0163: RuleSync生成物の同期をCIで検証する](0163-verify-rulesync-generated-files-in-ci.md)
+- [0164: Stop hookのdirty worktree方針を決める](0164-design-safe-stop-fix-hook.md)
+- [0158: RuleSync ruleを責務別に分割する](0158-split-rulesync-rules-by-responsibility.md)
+- [0159: task実行とLuna委譲を行うskillを設計する](0159-design-ai-task-routing-skill.md)
+- [0160: worktreeを使う並列作業の運用を設計する](0160-design-worktree-parallel-workflow.md)
+- [0161: 変更影響に応じたCI scopeを設計する](0161-design-change-based-ci-scope.md)
+
+### リリース準備
+
+- [0162: パッケージ済みVSIXのオフライン・3 OS動作を調査する](0162-audit-offline-vsix-cross-platform.md)
 - [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md)
+
+### PDF GUI
+
 - [0106: splitPdf.configure GUIの仕様を決める](0106-design-split-pdf-configure-gui.md)
 - [0107: splitPdf.configure GUIの失敗テストを追加する](0107-add-split-pdf-configure-gui-tests.md)
 - [0108: splitPdf.configure GUIを実装する](0108-implement-split-pdf-configure-gui.md)
 - [0109: mergePdf GUIの仕様を決める](0109-design-merge-pdf-gui.md)
 - [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
 - [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
+
+### 変換・出力仕様
+
+- [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
+- [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
+- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)
+- [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md)
+- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
 - [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
+- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
+
+### 信頼性と内部処理
+
 - [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
 - [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
-- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
 - [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
