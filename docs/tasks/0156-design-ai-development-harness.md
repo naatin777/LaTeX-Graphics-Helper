@@ -89,3 +89,4 @@ RuleSync、AI向けルール、skills、hooks、Lunaへの作業委譲、worktre
 - Current Taskを1つに保つ並列作業とworktreeの条件を決めた
 - `next/v1`運用、RuleSync分割、task skill、worktree、選択的CI、offline VSIX確認を独立した後続タスクへ分けた
 - Lunaの監査で見つかったRuleSync生成物のCI同期確認とStop hookのdirty worktree方針を、rule分割とは別の後続タスクへ分けた
+- Software Change Harnessの考え方を、全タスクへ長い手順を強制しないrisk比例型の変更原則としてADR-0014と0159へ要約した
