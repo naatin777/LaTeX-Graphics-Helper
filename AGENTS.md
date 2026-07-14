@@ -80,6 +80,14 @@
 - LaTeX code generation
 - PDF / image conversion logic
 
+## CI環境変数の使い分け
+
+- ローカルの通常確認では`CI=true`を付けない。
+- `pnpm run check:all`、`pnpm run test`、`pnpm run test:vscode`は通常の環境変数で実行する。
+- PlaywrightのCI専用挙動（retry、`forbidOnly`、GitHub reporter）を手元で再現するときだけ`CI=true pnpm run test:playwright`を使う。
+- GitHub ActionsではGitHubが設定する`CI`環境変数を利用し、workflowや通常の確認commandで`CI=true`を重複指定しない。
+- CI依存の失敗を調査するときは、`CI=true`を付ける理由と対象commandをタスクまたは作業メモへ記録する。
+
 ## コメント方針
 
 - コメントアウトしたコードを残さない。
