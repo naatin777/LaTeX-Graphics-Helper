@@ -8,6 +8,7 @@ import { PDFDocument } from "pdf-lib";
 import sharp from "sharp";
 
 import { cropConfigureFixture } from "../../helpers/crop_configure_fixture.js";
+import { captureCropPdfScreenshot } from "./helpers/crop_pdf_screenshot.js";
 
 const projectRoot = process.cwd();
 const vscodeVersion = "1.128.0";
@@ -178,7 +179,17 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
       .getByRole("spinbutton", { name: "Top", exact: true })
       .fill(cropConfigureFixture.cropBox.top.toString());
     await expect(settings.getByRole("radio", { name: "All pages", exact: true })).toBeChecked();
-    const darkScreenshot = await captureWebviewScreenshot(vscodeWindow, body);
+    await expect
+      .poll(async () => {
+        const whitePixelRatios = await captureCanvasWhitePixelRatios(canvases);
+        return whitePixelRatios.every((ratio) => ratio >= 0.2);
+      })
+      .toBe(true);
+    const darkScreenshot = await captureCropPdfScreenshot(vscodeWindow, body);
+    await testInfo.attach("crop-pdf-configure-dark", {
+      body: darkScreenshot,
+      contentType: "image/png",
+    });
 
     if (process.platform === "linux") {
       expect(darkScreenshot).toMatchSnapshot("crop-pdf-configure-dark.png", {
@@ -201,7 +212,14 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
         },
       )
       .toBe(true);
-    const lightScreenshot = await captureWebviewScreenshot(vscodeWindow, body);
+    const lightScreenshot = await captureCropPdfScreenshot(vscodeWindow, body, {
+      canvases,
+      snapshotPrefix: join(temporaryRoot, "crop-pdf-light"),
+    });
+    await testInfo.attach("crop-pdf-configure-light", {
+      body: lightScreenshot,
+      contentType: "image/png",
+    });
 
     if (process.platform === "linux") {
       expect(lightScreenshot).toMatchSnapshot("crop-pdf-configure-light.png", {
@@ -347,7 +365,10 @@ async function captureCanvasWhitePixelRatios(canvases: Locator): Promise<number[
   return Promise.all(
     dataUrls.map(async (dataUrl) => {
       const image = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
-      const { data, info } = await sharp(image).raw().toBuffer({ resolveWithObject: true });
+      const { data, info } = await sharp(image)
+        .flatten({ background: "#ffffff" })
+        .raw()
+        .toBuffer({ resolveWithObject: true });
       let whitePixelCount = 0;
 
       for (let offset = 0; offset < data.length; offset += info.channels) {
@@ -363,20 +384,6 @@ async function captureCanvasWhitePixelRatios(canvases: Locator): Promise<number[
       return whitePixelCount / (info.width * info.height);
     }),
   );
-}
-
-async function captureWebviewScreenshot(page: Page, body: Locator): Promise<Buffer> {
-  const bodyBounds = await body.boundingBox();
-
-  if (!bodyBounds) {
-    throw new Error("Crop PDF Configure webview body has no visible bounds.");
-  }
-
-  return page.screenshot({
-    animations: "disabled",
-    caret: "hide",
-    clip: bodyBounds,
-  });
 }
 
 async function waitForWebviewTheme(
