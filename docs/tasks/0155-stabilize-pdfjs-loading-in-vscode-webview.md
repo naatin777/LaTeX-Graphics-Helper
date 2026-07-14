@@ -2,7 +2,7 @@
 
 ## Status
 
-Done
+In Progress
 
 ## 目的
 
@@ -64,12 +64,12 @@ Done
 - `find media/webview -path '*/chunks/pdf-*.js' -print`
 - `git diff --check`
 
-## 実施結果
+## 中間結果
 
 - `pdfjs-dist`を初期bundleへ含め、dynamic import用chunkが生成されないことを確認した
 - Crop PDF / Merge PDFを含むbrowser Playwright test 18件が成功した
 - Electron E2Eを3回実行し、失敗時screenshotでは3回ともPDFの全2ページが描画された
-- Electron E2Eは外側のWebview frameからcanvasを検索して0件になるため、test自体は失敗している
-- frame取得とDark / Light snapshotの修正は0154へ戻して扱う
+- その後の再実行でPDF previewが空になる状態が再発したため、安定化は未完了である
+- 外側のWebview frameからcanvasを検索して0件になるtest側の問題は0154で扱う
 - `pnpm run check:all`と`git diff --check`が成功した
 - dependencyとlockfileは変更していない
