@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- なし
+- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
 
 ## Rules
 
