@@ -159,12 +159,12 @@
 - [0155: VS Code WebviewでPDF.jsを安定して読み込む](0155-stabilize-pdfjs-loading-in-vscode-webview.md)
 - [0156: AI開発ハーネスの最小構成を設計する](0156-design-ai-development-harness.md)
 - [0165: ADRの役割を定義し既存ADRを監査する](0165-define-adr-scope-and-audit.md)
+- [0166: ADR-0001からStop hookの運用詳細を分離する](0166-separate-stop-hook-details-from-adr-0001.md)
 
 ## Todo Tasks
 
 ### ADR運用
 
-- [0166: ADR-0001からStop hookの運用詳細を分離する](0166-separate-stop-hook-details-from-adr-0001.md)
 - [0167: ADR-0011からPR・commit templateを分離する](0167-separate-templates-from-language-adr.md)
 - [0168: ADR-0013からElectron testの実行詳細を分離する](0168-separate-electron-test-details-from-adr-0013.md)
 
