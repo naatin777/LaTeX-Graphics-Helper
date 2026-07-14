@@ -73,6 +73,8 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
 
     const vscodeWindow = await electronApp.firstWindow();
     window = vscodeWindow;
+    await expect(vscodeWindow.getByText("Safe Mode: ON", { exact: true })).toBeVisible();
+
     const explorer = vscodeWindow.getByRole("tree", { name: "Files Explorer" });
     await expect(explorer).toBeVisible();
 

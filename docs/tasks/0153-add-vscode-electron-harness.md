@@ -72,6 +72,7 @@ Done
 - macOSでVS CodeのIPC socket path上限を超えないよう、Unix系の一時rootを短い`/tmp`配下にした
 - `user-data`、`shared-data`、`extensions`をテストごとに分離し、個人のVS Code storageへ書き込まないようにした
 - macOSのnative menuをPlaywrightから操作できるよう、隔離したテスト用設定だけ`window.menuStyle: custom`にした
+- 拡張機能固有のSafe Mode status barが表示されるまで待ち、拡張機能の読込前にExplorer menuを開かないようにした
 - UI操作に固定sleepを使わず、menu itemの表示・focusと対象Webviewの成立条件を待つようにした
 - 成功時・失敗時ともElectron applicationを閉じ、残存processを停止して一時rootを削除する後始末を追加した
 - Linuxの既存VS Code test後に`test:playwright:electron`を実行するCI stepを追加した
