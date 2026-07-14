@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -72,3 +72,111 @@ Todo
 - skillに含める手順と含めない判断事項を見直す
 - 公式情報源、確認日、未確認事項がresearch noteに記録されていることを確認する
 - `git diff --check`
+
+## 実施結果
+
+- 現行の公式Codex manualを確認し、skill配置、呼び出し方法、AGENTS.md、hooks、rules、subagentの責務境界をresearch noteへ記録した
+- このprojectのtask実行workflowは、repository共有skillとして `.agents/skills/lgh-task-runner` に置く方針にした
+- skillはinstruction-onlyから開始し、script、hook、RuleSync rule、個人Codex設定はこのskillへ含めない方針にした
+- AGENTS.md / RuleSync ruleには常に守る短い制約だけを置き、skillには必要時に読む反復手順を置く方針にした
+- Luna `xhigh` への委譲は、読み取り中心の調査、CI/log分析、test gap確認、独立した小さいpatchに限定する方針にした
+- Codex本体は、仕様、security、Git / PR、最終統合、ユーザー確認が必要な判断を保持する方針にした
+- branch作成はtask実行時の通常手順に含めるが、commit、push、PR作成は現在のtaskまたはユーザーが明示している場合だけ行う方針にした
+- boundary-heavy変更では、入力、出力、throw、秘匿、fallback、失敗時保証を名前付き境界として確認する方針にした
+- 「コードはHow、testはWhat、commit / PR / ADRはWhy、commentはWhy not」は、projectの日本語docs方針とConventional Commit方針に合わせて、skillでは役割分担として短く扱う方針にした
+- skill実装は別タスク [0171: task実行とLuna委譲を行うskillを実装する](0171-implement-ai-task-routing-skill.md) に分けた
+
+## 設計決定
+
+### 配置
+
+task実行skillはrepository共有にする。配置候補は `.agents/skills/lgh-task-runner`。
+
+理由は、このworkflowがこのrepositoryの `docs/tasks/`、ADR、RuleSync rule、branch運用、確認commandに依存するため。個人skillへ置くと、他のAIや別環境で同じ作業手順を共有しにくい。
+
+一方、model既定値、承認頻度、使用量節約の個人方針はrepositoryへ固定しない。Luna `xhigh` は「利用できる場合に委譲先として選ぶ」扱いに留める。
+
+### skillに含めること
+
+- Current Taskまたは指定taskを確認する手順
+- `PROJECT_STATE.md`、`docs/tasks/README.md`、対象task、関連ADR / specs / researchを読む順番
+- task種別ごとの最小確認command
+- Lunaへ委譲する条件と、委譲しない条件
+- Luna promptの必須要素
+  - 目的
+  - ownership
+  - 変更禁止範囲
+  - 期待する出力
+  - 最終判断者がCodex本体であること
+- boundary-heavy変更時の確認項目
+- handoff / 完了報告 / PR本文へ残す最小情報
+
+### skillに含めないこと
+
+- application固有の仕様判断
+- taskごとの変更内容そのもの
+- hookの実装詳細
+- rulesのallow list
+- CI workflowの具体実装
+- 個人Codex設定
+- worktree運用の詳細
+- 長いreview checklistを全taskへ強制すること
+
+### Lunaへ委譲する条件
+
+委譲してよい作業:
+
+- repository内の読み取り専用調査
+- docs、ADR、taskの整合性レビュー
+- CI logやtest failureの原因候補整理
+- test gap、boundary漏れ、patch-chain臭の指摘
+- ownershipが明確で、他fileと衝突しない小さいpatch
+
+Lunaの出力は命令ではなく提案として扱う。Codex本体が根拠、差分、未確認事項を確認してから採用する。
+
+委譲しない作業:
+
+- 仕様、security、public API、依存追加、構成変更の最終判断
+- Git操作、push、PR作成、review comment対応の最終判断
+- ユーザー確認が必要な判断
+- 同じfileを複数agentが編集する作業
+- destructive commandや外部公開を伴う作業
+- task目的を増やす作業
+
+### risk別workflow
+
+小さいdocs変更:
+
+- 対象taskと関連文書だけ読む
+- `git diff --check` を確認する
+- PR本文は変更範囲と未確認事項を短く書く
+
+通常の実装変更:
+
+- task、関連ADR / specs、該当code、該当testを読む
+- 変更前に失敗testまたは既存testの確認方法を決める
+- `pnpm run check` と必要なtestを実行する
+
+境界、security、互換性、外部CLI、Webview、path、undo、安全性に関わる変更:
+
+- 名前付き境界を作るか確認する
+- 入力、出力、throw、秘匿、fallback、失敗時保証を明示する
+- malformed / hostile input testは `unknown` や外部messageなど必要な境界に限定する
+- Lunaへ読み取りreviewを委譲してもよい
+
+### Git操作の範囲
+
+- branch作成: clean worktree、起点branch、task IDを確認してから行う
+- commit: taskの変更範囲、`git diff --check`、必要な確認結果を確認し、ユーザーまたはtaskが求める場合だけ行う
+- push: `next/v1`へ直接pushせず、作業branchだけをpushする
+- PR: baseを `next/v1` にし、PR titleは英語のConventional Commit形式にする
+- PR review commentへの返信、resolve、review submitはskillの自動手順に含めない
+
+### 情報の残し方
+
+- production code: How
+- test: What
+- commit / PR / ADR: Why
+- code comment: Why not
+
+ただし、この役割分担は絶対ルールではなく、読者が必要な情報を最小の場所で得るための指針とする。docs/tasksとADRは日本語、commit messageとPR titleはConventional Commit / 英語方針に従う。
