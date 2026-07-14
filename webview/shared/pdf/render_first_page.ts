@@ -1,9 +1,16 @@
-import type * as PdfJsModule from "pdfjs-dist";
+// PDF.js reads this Map method while its module is evaluated, so the polyfill must run first.
+// oxlint-disable-next-line import/no-unassigned-import
+import "./install_map_get_or_insert_computed";
+
+// Vite turns this worker query into an asset URL even though the source module has no default export.
+// oxlint-disable-next-line import/default
+import pdfJsWorkerUrl from "./pdfjs_worker?worker&url";
+import * as pdfjsModule from "pdfjs-dist";
 import type { PDFPageProxy } from "pdfjs-dist";
 
-type PdfJs = typeof PdfJsModule;
+type PdfJs = typeof pdfjsModule;
 
-let pdfjsPromise: Promise<PdfJs> | undefined;
+let pdfJsWorkerPromise: Promise<Worker> | undefined;
 
 export async function renderFirstPdfPage(
   pdfSrc: string,
@@ -58,13 +65,22 @@ export async function renderPdfPages(
 }
 
 async function loadPdfJs(): Promise<PdfJs> {
-  installMapGetOrInsertComputed();
-  pdfjsPromise ??= import("pdfjs-dist").then((pdfjs) => {
-    pdfjs.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
-    return pdfjs;
+  pdfjsModule.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
+  pdfjsModule.GlobalWorkerOptions.workerPort ??= await loadPdfJsWorker();
+  return pdfjsModule;
+}
+
+async function loadPdfJsWorker(): Promise<Worker> {
+  pdfJsWorkerPromise ??= fetch(pdfJsWorkerUrl).then(async (response) => {
+    if (!response.ok) {
+      throw new Error(`Could not load the PDF.js worker: ${response.status}.`);
+    }
+
+    const workerBlobUrl = URL.createObjectURL(await response.blob());
+    return new Worker(workerBlobUrl, { type: "module" });
   });
 
-  return pdfjsPromise;
+  return pdfJsWorkerPromise;
 }
 
 interface PdfRenderOptions {
@@ -86,30 +102,6 @@ function createDocumentOptions(
     ...(options.standardFontDataUrl ? { standardFontDataUrl: options.standardFontDataUrl } : {}),
     ...(options.wasmUrl ? { wasmUrl: options.wasmUrl } : {}),
   };
-}
-
-function installMapGetOrInsertComputed(): void {
-  const mapPrototype = Map.prototype as Map<unknown, unknown> & {
-    getOrInsertComputed?: (key: unknown, callback: (key: unknown) => unknown) => unknown;
-  };
-
-  if (mapPrototype.getOrInsertComputed) {
-    return;
-  }
-
-  Object.defineProperty(mapPrototype, "getOrInsertComputed", {
-    configurable: true,
-    writable: true,
-    value(this: Map<unknown, unknown>, key: unknown, callback: (key: unknown) => unknown) {
-      if (this.has(key)) {
-        return this.get(key);
-      }
-
-      const value = callback(key);
-      this.set(key, value);
-      return value;
-    },
-  });
 }
 
 async function renderPageToCanvas(page: PDFPageProxy, canvas: HTMLCanvasElement): Promise<void> {

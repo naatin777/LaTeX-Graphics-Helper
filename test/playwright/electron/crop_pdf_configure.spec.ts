@@ -1,9 +1,23 @@
-import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { expect, test, type Frame, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { downloadAndUnzipVSCode } from "@vscode/test-electron";
+import { PDFDocument } from "pdf-lib";
+
+import { cropConfigureFixture } from "../../helpers/crop_configure_fixture.js";
+import { captureCropPdfScreenshot } from "./helpers/crop_pdf_screenshot.js";
+import {
+  expectPdfCanvasesReadable,
+  openCropPdfConfigure,
+  waitForWebviewTheme,
+} from "./helpers/crop_pdf_webview.js";
+import {
+  attachElectronDiagnostics,
+  disposeElectronTest,
+  writeVscodeUserSettings,
+} from "./helpers/vscode_electron_test.js";
 
 const projectRoot = process.cwd();
 const vscodeVersion = "1.128.0";
@@ -14,10 +28,18 @@ const sourceFixture = join(
   "fixtures",
   "pdf-operations",
   "user-files",
-  "q a.pdf",
+  cropConfigureFixture.fileName,
 );
+const initialTheme = "Default Dark Modern";
+const alternateTheme = "Default Light Modern";
+const expectedCropBox = {
+  x: cropConfigureFixture.cropBox.left,
+  y: cropConfigureFixture.cropBox.bottom,
+  width: cropConfigureFixture.cropBox.right - cropConfigureFixture.cropBox.left,
+  height: cropConfigureFixture.cropBox.top - cropConfigureFixture.cropBox.bottom,
+};
 
-test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", async ({
+test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", async ({
   playwright,
 }, testInfo) => {
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
@@ -27,11 +49,15 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
   const workspacePath = join(temporaryRoot, "workspace");
   const userDataDir = join(temporaryRoot, "user-data");
   const userSettingsDir = join(userDataDir, "User");
+  const userSettingsPath = join(userSettingsDir, "settings.json");
   const sharedDataDir = join(temporaryRoot, "shared-data");
   const extensionsDir = join(temporaryRoot, "extensions");
+  const inputPath = join(workspacePath, cropConfigureFixture.fileName);
+  const outputPath = join(workspacePath, "q a-crop.pdf");
   let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
   let window: Page | undefined;
   const consoleMessages: string[] = [];
+  const sourceFixtureBytes = await readFile(sourceFixture);
 
   try {
     await Promise.all([
@@ -40,11 +66,8 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
       mkdir(sharedDataDir),
       mkdir(extensionsDir),
     ]);
-    await writeFile(
-      join(userSettingsDir, "settings.json"),
-      JSON.stringify({ "window.menuStyle": "custom" }),
-    );
-    await cp(sourceFixture, join(workspacePath, "q a.pdf"));
+    await writeVscodeUserSettings(userSettingsPath, initialTheme);
+    await cp(sourceFixture, inputPath);
 
     const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
 
@@ -73,110 +96,135 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
 
     const vscodeWindow = await electronApp.firstWindow();
     window = vscodeWindow;
-    await expect(vscodeWindow.getByText("Safe Mode: ON", { exact: true })).toBeVisible();
-
-    const explorer = vscodeWindow.getByRole("tree", { name: "Files Explorer" });
-    await expect(explorer).toBeVisible();
-
-    const pdfEntry = explorer.getByRole("treeitem", { name: "q a.pdf" });
-    await expect(pdfEntry).toBeVisible();
-    await pdfEntry.click();
-    await expect(pdfEntry).toHaveAttribute("aria-selected", "true");
-    await pdfEntry.press("Shift+F10");
-
-    const cropPdfMenu = vscodeWindow.getByRole("menuitem", { name: "Crop PDF" });
-    await expect(cropPdfMenu).toBeVisible();
-    await cropPdfMenu.click();
-
-    const configureMenu = vscodeWindow.getByRole("menuitem", { name: "Configure crop" });
-    await expect(configureMenu).toBeVisible();
-    await configureMenu.hover();
-    await expect(configureMenu).toBeFocused();
-    await vscodeWindow.keyboard.press("Enter");
-
-    let webviewFrame: Frame | undefined;
-    await expect
-      .poll(
-        async () => {
-          for (const frame of vscodeWindow.frames()) {
-            const heading = frame.getByRole("heading", { name: "Custom Crop", exact: true });
-            if ((await heading.count()) > 0) {
-              webviewFrame = frame;
-              return true;
-            }
-          }
-
-          return false;
-        },
-        {
-          message: "Crop PDF Configure webview was not created.",
-        },
-      )
-      .toBe(true);
-
-    if (!webviewFrame) {
-      throw new Error("Crop PDF Configure webview was not found after it was created.");
-    }
+    await vscodeWindow.setViewportSize({ width: 1280, height: 900 });
+    const {
+      body,
+      canvases,
+      frame: webviewFrame,
+      preview,
+      settings,
+    } = await openCropPdfConfigure(vscodeWindow, cropConfigureFixture.fileName);
 
     await expect(
       webviewFrame.getByRole("heading", { name: "Custom Crop", exact: true }),
     ).toBeVisible();
-  } catch (error) {
-    const windowTitle = window
-      ? await window.title().catch(() => "<unavailable>")
-      : "<unavailable>";
-    const windowText = window
-      ? await window
-          .locator("body")
-          .innerText()
-          .catch(() => "<unavailable>")
-      : "<window unavailable>";
-    const frameDiagnostics = window
-      ? await Promise.all(
-          window.frames().map(async (frame, index) => {
-            const bodyText = await frame
-              .locator("body")
-              .innerText()
-              .catch(() => "<unavailable>");
+    await expect(
+      webviewFrame.getByText(`${cropConfigureFixture.fileName} · 2 pages`, { exact: true }),
+    ).toBeVisible();
 
-            return `frame[${index}] url: ${frame.url()}\n${bodyText.slice(0, 6000)}`;
+    await expect(preview).toBeVisible();
+    await expect(settings).toBeVisible();
+    await expect(canvases).toHaveCount(2);
+    await expect
+      .poll(() =>
+        canvases.evaluateAll((elements) =>
+          elements.every((canvas) => {
+            const bounds = canvas.getBoundingClientRect();
+            return canvas.width > 0 && canvas.height > 0 && bounds.width > 0 && bounds.height > 0;
           }),
-        )
-      : ["<window unavailable>"];
-    const errorMessage =
-      error instanceof Error
-        ? `${error.name}: ${error.message}\n${error.stack ?? ""}`
-        : String(error);
-    const diagnostics = [
-      `error:\n${errorMessage}`,
-      `temporaryRoot: ${temporaryRoot}`,
-      `workspacePath: ${workspacePath}`,
-      `userDataDir: ${userDataDir}`,
-      `sharedDataDir: ${sharedDataDir}`,
-      `extensionsDir: ${extensionsDir}`,
-      `windowTitle: ${windowTitle}`,
-      `windowUrl: ${window?.url() ?? "<unavailable>"}`,
-      `windowText:\n${windowText.slice(0, 12000)}`,
-      `frames:\n${frameDiagnostics.join("\n\n")}`,
-      `electronConsole:\n${consoleMessages.join("\n") || "<empty>"}`,
-    ].join("\n\n");
+        ),
+      )
+      .toBe(true);
+    await expect(webviewFrame.locator(".pdf-page__footer")).toHaveText([
+      "Page 1 / 2",
+      "Page 2 / 2",
+    ]);
+    await expect(webviewFrame.getByText(/PDFを表示できませんでした:/)).toHaveCount(0);
 
-    await testInfo.attach("vscode-electron-diagnostic", {
-      body: Buffer.from(diagnostics),
-      contentType: "text/plain",
+    const darkTheme = await waitForWebviewTheme(body, "vscode-dark");
+
+    await settings
+      .getByRole("spinbutton", { name: "Left", exact: true })
+      .fill(cropConfigureFixture.cropBox.left.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Bottom", exact: true })
+      .fill(cropConfigureFixture.cropBox.bottom.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Right", exact: true })
+      .fill(cropConfigureFixture.cropBox.right.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Top", exact: true })
+      .fill(cropConfigureFixture.cropBox.top.toString());
+    await expect(settings.getByRole("radio", { name: "All pages", exact: true })).toBeChecked();
+    await expectPdfCanvasesReadable(canvases);
+    const darkScreenshot = await captureCropPdfScreenshot(vscodeWindow, body);
+    await testInfo.attach("crop-pdf-configure-dark", {
+      body: darkScreenshot,
+      contentType: "image/png",
+    });
+
+    if (process.platform === "linux") {
+      expect(darkScreenshot).toMatchSnapshot("crop-pdf-configure-dark.png", {
+        maxDiffPixelRatio: 0.005,
+      });
+    }
+
+    await writeVscodeUserSettings(userSettingsPath, alternateTheme);
+    const lightTheme = await waitForWebviewTheme(body, "vscode-light");
+    expect(lightTheme.bodyBackground).not.toBe(darkTheme.bodyBackground);
+    expect(lightTheme.bodyForeground).not.toBe(darkTheme.bodyForeground);
+    await expectPdfCanvasesReadable(
+      canvases,
+      "PDF canvas rendering became unreadable after switching the VS Code theme.",
+    );
+    const lightScreenshot = await captureCropPdfScreenshot(vscodeWindow, body, {
+      canvases,
+      snapshotPrefix: join(temporaryRoot, "crop-pdf-light"),
+    });
+    await testInfo.attach("crop-pdf-configure-light", {
+      body: lightScreenshot,
+      contentType: "image/png",
+    });
+
+    if (process.platform === "linux") {
+      expect(lightScreenshot).toMatchSnapshot("crop-pdf-configure-light.png", {
+        maxDiffPixelRatio: 0.005,
+      });
+    }
+
+    await settings.getByRole("button", { name: "Apply", exact: true }).click();
+
+    await expect
+      .poll(async () => {
+        try {
+          const outputDocument = await PDFDocument.load(await readFile(outputPath));
+          return outputDocument.getPageCount();
+        } catch {
+          return 0;
+        }
+      })
+      .toBe(2);
+
+    const outputDocument = await PDFDocument.load(await readFile(outputPath));
+    expect(outputDocument.getPageCount()).toBe(2);
+
+    for (const page of outputDocument.getPages()) {
+      expect(page.getMediaBox()).toEqual(expectedCropBox);
+      expect(page.getCropBox()).toEqual(expectedCropBox);
+    }
+
+    expect(await readFile(sourceFixture)).toEqual(sourceFixtureBytes);
+    expect(await readFile(inputPath)).toEqual(sourceFixtureBytes);
+
+    const successNotification = vscodeWindow.getByText("Cropped 1 PDF file(s).", {
+      exact: true,
+    });
+    await expect(successNotification).toBeVisible();
+    await vscodeWindow.keyboard.press("Escape");
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir,
+      sharedDataDir,
+      temporaryRoot,
+      testInfo,
+      userDataDir,
+      window,
+      workspacePath,
     });
     throw error;
   } finally {
-    try {
-      if (electronApp) {
-        const electronProcess = electronApp.process();
-        await electronApp.close();
-        if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
-          electronProcess.kill();
-        }
-      }
-    } finally {
-      await rm(temporaryRoot, { recursive: true, force: true });
-    }
+    await disposeElectronTest(electronApp, temporaryRoot);
   }
 });
