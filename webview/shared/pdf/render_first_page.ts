@@ -1,9 +1,11 @@
-import type * as PdfJsModule from "pdfjs-dist";
+// PDF.js reads this Map method while its module is evaluated, so the polyfill must run first.
+// oxlint-disable-next-line import/no-unassigned-import
+import "./install_map_get_or_insert_computed";
+
+import * as pdfjsModule from "pdfjs-dist";
 import type { PDFPageProxy } from "pdfjs-dist";
 
-type PdfJs = typeof PdfJsModule;
-
-let pdfjsPromise: Promise<PdfJs> | undefined;
+type PdfJs = typeof pdfjsModule;
 
 export async function renderFirstPdfPage(
   pdfSrc: string,
@@ -58,13 +60,8 @@ export async function renderPdfPages(
 }
 
 async function loadPdfJs(): Promise<PdfJs> {
-  installMapGetOrInsertComputed();
-  pdfjsPromise ??= import("pdfjs-dist").then((pdfjs) => {
-    pdfjs.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
-    return pdfjs;
-  });
-
-  return pdfjsPromise;
+  pdfjsModule.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
+  return pdfjsModule;
 }
 
 interface PdfRenderOptions {
@@ -86,30 +83,6 @@ function createDocumentOptions(
     ...(options.standardFontDataUrl ? { standardFontDataUrl: options.standardFontDataUrl } : {}),
     ...(options.wasmUrl ? { wasmUrl: options.wasmUrl } : {}),
   };
-}
-
-function installMapGetOrInsertComputed(): void {
-  const mapPrototype = Map.prototype as Map<unknown, unknown> & {
-    getOrInsertComputed?: (key: unknown, callback: (key: unknown) => unknown) => unknown;
-  };
-
-  if (mapPrototype.getOrInsertComputed) {
-    return;
-  }
-
-  Object.defineProperty(mapPrototype, "getOrInsertComputed", {
-    configurable: true,
-    writable: true,
-    value(this: Map<unknown, unknown>, key: unknown, callback: (key: unknown) => unknown) {
-      if (this.has(key)) {
-        return this.get(key);
-      }
-
-      const value = callback(key);
-      this.set(key, value);
-      return value;
-    },
-  });
 }
 
 async function renderPageToCanvas(page: PDFPageProxy, canvas: HTMLCanvasElement): Promise<void> {
