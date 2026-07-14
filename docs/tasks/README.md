@@ -152,6 +152,7 @@
 - [0148: Windows rsvg-convert用ASCII stagingを実装する](0148-implement-windows-rsvg-ascii-staging.md)
 - [0149: convert command正常系を複数形式batchへ統合する](0149-consolidate-convert-command-tests.md)
 - [0151: CI環境変数のローカル・CI運用を整理する](0151-document-ci-env-policy.md)
+- [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
 
 ## Todo Tasks
 
