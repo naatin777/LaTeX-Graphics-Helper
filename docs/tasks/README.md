@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
+- [0155: VS Code WebviewでPDF.jsを安定して読み込む](0155-stabilize-pdfjs-loading-in-vscode-webview.md)
 
 ## Rules
 
@@ -158,6 +158,7 @@
 
 ## Todo Tasks
 
+- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
 - [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
 - [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
 - [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)

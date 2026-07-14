@@ -2,7 +2,9 @@
 
 ## Status
 
-In Progress
+Todo
+
+0155でPDF.jsのWebview読込を安定させてから再開する。
 
 ## 目的
 
@@ -60,6 +62,8 @@ VS Code、Explorer、Webview、PDF.js、Hostとのmessage、`pdf-lib`によるAp
 - 初期許容値は`maxDiffPixelRatio: 0.005`とする
 - macOS / Windowsではgolden比較を行わない
 - 初回はLinux CIが出力した画像をartifactから取得し、内容を確認してsnapshotへ追加する
+- 正常なDark / Light画像は`test/playwright/electron/crop_pdf_configure.spec.ts-snapshots/`へコミットする
+- PR本文ではコミット済みのDark / Light snapshotを横並びで表示する
 - 失敗時はVS Code window全体のscreenshot、trace、診断情報を`test-results/`へ残す
 - screenshotはUI regressionに使い、出力PDFの正しさはPDFのpage count / MediaBox / CropBoxで別に確認する
 
