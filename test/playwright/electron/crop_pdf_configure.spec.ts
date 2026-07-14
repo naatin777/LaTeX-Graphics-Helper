@@ -1,9 +1,12 @@
-import { cp, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { expect, test, type Frame, type Page } from "@playwright/test";
+import { expect, test, type Frame, type Locator, type Page } from "@playwright/test";
 import { downloadAndUnzipVSCode } from "@vscode/test-electron";
+import { PDFDocument } from "pdf-lib";
+
+import { cropConfigureFixture } from "../../helpers/crop_configure_fixture.js";
 
 const projectRoot = process.cwd();
 const vscodeVersion = "1.128.0";
@@ -14,10 +17,18 @@ const sourceFixture = join(
   "fixtures",
   "pdf-operations",
   "user-files",
-  "q a.pdf",
+  cropConfigureFixture.fileName,
 );
+const initialTheme = "Default Dark Modern";
+const alternateTheme = "Default Light Modern";
+const expectedCropBox = {
+  x: cropConfigureFixture.cropBox.left,
+  y: cropConfigureFixture.cropBox.bottom,
+  width: cropConfigureFixture.cropBox.right - cropConfigureFixture.cropBox.left,
+  height: cropConfigureFixture.cropBox.top - cropConfigureFixture.cropBox.bottom,
+};
 
-test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", async ({
+test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", async ({
   playwright,
 }, testInfo) => {
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
@@ -27,11 +38,15 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
   const workspacePath = join(temporaryRoot, "workspace");
   const userDataDir = join(temporaryRoot, "user-data");
   const userSettingsDir = join(userDataDir, "User");
+  const userSettingsPath = join(userSettingsDir, "settings.json");
   const sharedDataDir = join(temporaryRoot, "shared-data");
   const extensionsDir = join(temporaryRoot, "extensions");
+  const inputPath = join(workspacePath, cropConfigureFixture.fileName);
+  const outputPath = join(workspacePath, "q a-crop.pdf");
   let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
   let window: Page | undefined;
   const consoleMessages: string[] = [];
+  const sourceFixtureBytes = await readFile(sourceFixture);
 
   try {
     await Promise.all([
@@ -40,11 +55,8 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
       mkdir(sharedDataDir),
       mkdir(extensionsDir),
     ]);
-    await writeFile(
-      join(userSettingsDir, "settings.json"),
-      JSON.stringify({ "window.menuStyle": "custom" }),
-    );
-    await cp(sourceFixture, join(workspacePath, "q a.pdf"));
+    await writeUserSettings(userSettingsPath, initialTheme);
+    await cp(sourceFixture, inputPath);
 
     const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
 
@@ -73,12 +85,13 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
 
     const vscodeWindow = await electronApp.firstWindow();
     window = vscodeWindow;
+    await vscodeWindow.setViewportSize({ width: 1280, height: 900 });
     await expect(vscodeWindow.getByText("Safe Mode: ON", { exact: true })).toBeVisible();
 
     const explorer = vscodeWindow.getByRole("tree", { name: "Files Explorer" });
     await expect(explorer).toBeVisible();
 
-    const pdfEntry = explorer.getByRole("treeitem", { name: "q a.pdf" });
+    const pdfEntry = explorer.getByRole("treeitem", { name: cropConfigureFixture.fileName });
     await expect(pdfEntry).toBeVisible();
     await pdfEntry.click();
     await expect(pdfEntry).toHaveAttribute("aria-selected", "true");
@@ -99,7 +112,7 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
       .poll(
         async () => {
           for (const frame of vscodeWindow.frames()) {
-            const heading = frame.getByRole("heading", { name: "Custom Crop", exact: true });
+            const heading = frame.locator("h1").filter({ hasText: /^Custom Crop$/ });
             if ((await heading.count()) > 0) {
               webviewFrame = frame;
               return true;
@@ -121,7 +134,116 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
     await expect(
       webviewFrame.getByRole("heading", { name: "Custom Crop", exact: true }),
     ).toBeVisible();
+    await expect(
+      webviewFrame.getByText(`${cropConfigureFixture.fileName} · 2 pages`, { exact: true }),
+    ).toBeVisible();
+
+    const preview = webviewFrame.getByRole("region", { name: "PDF preview" });
+    const settings = webviewFrame.getByRole("region", { name: "Crop settings" });
+    const canvases = webviewFrame.locator("canvas[data-pdf-page]");
+
+    await expect(preview).toBeVisible();
+    await expect(settings).toBeVisible();
+    await expect(canvases).toHaveCount(2);
+    await expect
+      .poll(() =>
+        canvases.evaluateAll((elements) =>
+          elements.every((canvas) => {
+            const bounds = canvas.getBoundingClientRect();
+            return canvas.width > 0 && canvas.height > 0 && bounds.width > 0 && bounds.height > 0;
+          }),
+        ),
+      )
+      .toBe(true);
+    await expect(webviewFrame.locator(".pdf-page__footer")).toHaveText([
+      "Page 1 / 2",
+      "Page 2 / 2",
+    ]);
+    await expect(webviewFrame.getByText(/PDFを表示できませんでした:/)).toHaveCount(0);
+
+    const body = webviewFrame.locator("body");
+    const darkTheme = await waitForWebviewTheme(body, "vscode-dark");
+
+    await settings
+      .getByRole("spinbutton", { name: "Left", exact: true })
+      .fill(cropConfigureFixture.cropBox.left.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Bottom", exact: true })
+      .fill(cropConfigureFixture.cropBox.bottom.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Right", exact: true })
+      .fill(cropConfigureFixture.cropBox.right.toString());
+    await settings
+      .getByRole("spinbutton", { name: "Top", exact: true })
+      .fill(cropConfigureFixture.cropBox.top.toString());
+    await expect(settings.getByRole("radio", { name: "All pages", exact: true })).toBeChecked();
+
+    if (process.platform === "linux") {
+      await expect(body).toHaveScreenshot("crop-pdf-configure-dark.png", {
+        animations: "disabled",
+        caret: "hide",
+        maxDiffPixelRatio: 0.005,
+      });
+    }
+
+    await writeUserSettings(userSettingsPath, alternateTheme);
+    const lightTheme = await waitForWebviewTheme(body, "vscode-light");
+    expect(lightTheme.bodyBackground).not.toBe(darkTheme.bodyBackground);
+    expect(lightTheme.bodyForeground).not.toBe(darkTheme.bodyForeground);
+
+    if (process.platform === "linux") {
+      await expect(body).toHaveScreenshot("crop-pdf-configure-light.png", {
+        animations: "disabled",
+        caret: "hide",
+        maxDiffPixelRatio: 0.005,
+      });
+    }
+
+    await settings.getByRole("button", { name: "Apply", exact: true }).click();
+
+    await expect
+      .poll(async () => {
+        try {
+          const outputDocument = await PDFDocument.load(await readFile(outputPath));
+          return outputDocument.getPageCount();
+        } catch {
+          return 0;
+        }
+      })
+      .toBe(2);
+
+    const outputDocument = await PDFDocument.load(await readFile(outputPath));
+    expect(outputDocument.getPageCount()).toBe(2);
+
+    for (const page of outputDocument.getPages()) {
+      expect(page.getMediaBox()).toEqual(expectedCropBox);
+      expect(page.getCropBox()).toEqual(expectedCropBox);
+    }
+
+    expect(await readFile(sourceFixture)).toEqual(sourceFixtureBytes);
+    expect(await readFile(inputPath)).toEqual(sourceFixtureBytes);
+
+    const successNotification = vscodeWindow.getByText("Cropped 1 PDF file(s).", {
+      exact: true,
+    });
+    await expect(successNotification).toBeVisible();
+    await vscodeWindow.keyboard.press("Escape");
   } catch (error) {
+    const windowScreenshotPath = testInfo.outputPath("vscode-window.png");
+    const hasWindowScreenshot = window
+      ? await window
+          .screenshot({ path: windowScreenshotPath })
+          .then(() => true)
+          .catch(() => false)
+      : false;
+
+    if (hasWindowScreenshot) {
+      await testInfo.attach("vscode-window", {
+        path: windowScreenshotPath,
+        contentType: "image/png",
+      });
+    }
+
     const windowTitle = window
       ? await window.title().catch(() => "<unavailable>")
       : "<unavailable>";
@@ -160,9 +282,12 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
       `frames:\n${frameDiagnostics.join("\n\n")}`,
       `electronConsole:\n${consoleMessages.join("\n") || "<empty>"}`,
     ].join("\n\n");
+    const diagnosticsPath = testInfo.outputPath("vscode-electron-diagnostic.txt");
+
+    await writeFile(diagnosticsPath, diagnostics);
 
     await testInfo.attach("vscode-electron-diagnostic", {
-      body: Buffer.from(diagnostics),
+      path: diagnosticsPath,
       contentType: "text/plain",
     });
     throw error;
@@ -180,3 +305,104 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
     }
   }
 });
+
+async function writeUserSettings(settingsPath: string, colorTheme: string): Promise<void> {
+  await writeFile(
+    settingsPath,
+    JSON.stringify(
+      {
+        "window.menuStyle": "custom",
+        "window.zoomLevel": 0,
+        "workbench.colorTheme": colorTheme,
+        "workbench.secondarySideBar.defaultVisibility": "hidden",
+      },
+      undefined,
+      2,
+    ),
+  );
+}
+
+interface WebviewThemeState {
+  bodyBackground: string;
+  bodyForeground: string;
+}
+
+async function waitForWebviewTheme(
+  body: Locator,
+  themeClass: "vscode-dark" | "vscode-light",
+): Promise<WebviewThemeState> {
+  await expect(body).toHaveClass(new RegExp(`(^|\\s)${themeClass}(\\s|$)`));
+  await expect
+    .poll(() =>
+      body.evaluate((element) => {
+        const browser = globalThis as unknown as {
+          document: {
+            documentElement: typeof element;
+            querySelector: (selector: string) => typeof element | null;
+          };
+          getComputedStyle: (target: typeof element) => {
+            color: string;
+            backgroundColor: string;
+            getPropertyValue: (name: string) => string;
+          };
+        };
+        const rootStyle = browser.getComputedStyle(browser.document.documentElement);
+        const panel = browser.document.querySelector(".panel");
+        const input = browser.document.querySelector(".input");
+        const primaryButton = browser.document.querySelector(".button--primary");
+
+        if (!panel || !input || !primaryButton) {
+          return false;
+        }
+
+        const requiredVariables = [
+          "--vscode-foreground",
+          "--vscode-editor-background",
+          "--vscode-descriptionForeground",
+          "--vscode-sideBar-background",
+          "--vscode-input-foreground",
+          "--vscode-input-background",
+          "--vscode-button-foreground",
+          "--vscode-button-background",
+          "--vscode-button-secondaryForeground",
+          "--vscode-button-secondaryBackground",
+        ];
+        const computedStyles = [
+          browser.getComputedStyle(element),
+          browser.getComputedStyle(panel),
+          browser.getComputedStyle(input),
+          browser.getComputedStyle(primaryButton),
+        ];
+
+        return (
+          requiredVariables.every(
+            (variableName) => rootStyle.getPropertyValue(variableName).trim().length > 0,
+          ) &&
+          computedStyles.every(
+            (style) =>
+              style.color.length > 0 &&
+              style.color !== "transparent" &&
+              style.color !== "rgba(0, 0, 0, 0)" &&
+              style.backgroundColor.length > 0 &&
+              style.backgroundColor !== "transparent" &&
+              style.backgroundColor !== "rgba(0, 0, 0, 0)",
+          )
+        );
+      }),
+    )
+    .toBe(true);
+
+  return body.evaluate((element) => {
+    const browser = globalThis as unknown as {
+      getComputedStyle: (target: typeof element) => {
+        color: string;
+        backgroundColor: string;
+      };
+    };
+    const style = browser.getComputedStyle(element);
+    return {
+      bodyBackground: style.backgroundColor,
+      bodyForeground: style.color,
+    };
+  });
+}
