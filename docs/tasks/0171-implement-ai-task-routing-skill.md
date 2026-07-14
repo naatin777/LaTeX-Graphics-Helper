@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -47,3 +47,18 @@ Todo
 - skill-creatorの `quick_validate.py` でskill構造を検証する
 - skillのdescriptionが過剰に長くないことを確認する
 - `git diff --check`
+
+## 実施結果
+
+- repository共有skillとして `.agents/skills/lgh-task-runner/SKILL.md` を追加した
+- `agents/openai.yaml` を追加し、明示呼び出し用のdefault promptと暗黙呼び出し許可を設定した
+- skillはinstruction-onlyとし、script、references、assetsは追加しなかった
+- AGENTS.md / RuleSync ruleと同じ長い手順は複製せず、task開始、scope境界、risk triage、Luna委譲、verification、Git / PR、handoffに限定した
+- Codex本体が仕様、security、Git / PR、最終統合判断を保持することを明記した
+- boundary-heavy変更で確認する契約項目を明記した
+- `quick_validate.py` は実行したが、実行環境に `PyYAML` がなく `ModuleNotFoundError: No module named 'yaml'` で失敗した。project dependencyは追加せず、frontmatterと `agents/openai.yaml` は手動確認した
+
+## 未確認事項
+
+- 実際の新規Codex taskで、このrepository-local skillが期待どおり暗黙呼び出しされるか
+- `quick_validate.py` をPyYAMLがある環境で再実行した結果
