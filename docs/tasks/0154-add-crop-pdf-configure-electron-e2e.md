@@ -2,9 +2,7 @@
 
 ## Status
 
-Todo
-
-0155でPDF.jsのWebview読込を安定させてから再開する。
+In Progress
 
 ## 目的
 

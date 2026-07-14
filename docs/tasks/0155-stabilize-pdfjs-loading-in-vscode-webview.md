@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -22,6 +22,8 @@ In Progress
 
 - `Map.prototype.getOrInsertComputed`のpolyfillを`pdfjs-dist`のmodule評価より前に適用する
 - `pdfjs-dist`をWebviewの初期bundleへ静的に含め、実行時dynamic importを廃止する
+- ViteでPDF.js workerを別assetへbundleし、取得後にblob workerとして`workerPort`へ渡す
+- worker側にも`Map.prototype.getOrInsertComputed`のpolyfillを適用する
 - Crop PDFとMerge PDFが共有するPDF描画経路を維持する
 - 0154で追加済みのElectron E2Eの期待値は変更しない
 
@@ -41,6 +43,7 @@ In Progress
 - `docs/tasks/README.md`
 - `webview/shared/pdf/render_first_page.ts`
 - `webview/shared/pdf/install_map_get_or_insert_computed.ts`
+- `webview/shared/pdf/pdfjs_worker.ts`
 
 ## 対象外
 
@@ -64,12 +67,13 @@ In Progress
 - `find media/webview -path '*/chunks/pdf-*.js' -print`
 - `git diff --check`
 
-## 中間結果
+## 実施結果
 
 - `pdfjs-dist`を初期bundleへ含め、dynamic import用chunkが生成されないことを確認した
+- 静的bundle化だけでは空のpreviewが再発し、worker初期化の`ready` / `test`待ちが主原因と判断した
+- worker assetを先にfetchしてblob workerとして渡し、worker内にもMap polyfillを適用した
 - Crop PDF / Merge PDFを含むbrowser Playwright test 18件が成功した
-- Electron E2Eを3回実行し、失敗時screenshotでは3回ともPDFの全2ページが描画された
-- その後の再実行でPDF previewが空になる状態が再発したため、安定化は未完了である
-- 外側のWebview frameからcanvasを検索して0件になるtest側の問題は0154で扱う
+- Electron E2Eを3回連続実行し、PDF全2ページ、Dark / Light切替、Apply、出力PDF検証まで成功した
+- 初期bundleは約445KBを維持し、約1.17MBのworkerは別assetとして必要時に読み込む
 - `pnpm run check:all`と`git diff --check`が成功した
 - dependencyとlockfileは変更していない
