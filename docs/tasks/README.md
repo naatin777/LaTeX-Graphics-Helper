@@ -169,12 +169,12 @@
 - [0170: Stop hookへdirty worktree guardを実装する](0170-implement-safe-stop-hook-worktree-guard.md)
 - [0158: RuleSync ruleを責務別に分割する](0158-split-rulesync-rules-by-responsibility.md)
 - [0159: task実行とLuna委譲を行うskillを設計する](0159-design-ai-task-routing-skill.md)
+- [0171: task実行とLuna委譲を行うskillを実装する](0171-implement-ai-task-routing-skill.md)
 
 ## Todo Tasks
 
 ### AI開発ハーネスとCI
 
-- [0171: task実行とLuna委譲を行うskillを実装する](0171-implement-ai-task-routing-skill.md)
 - [0160: worktreeを使う並列作業の運用を設計する](0160-design-worktree-parallel-workflow.md)
 - [0161: 変更影響に応じたCI scopeを設計する](0161-design-change-based-ci-scope.md)
 
