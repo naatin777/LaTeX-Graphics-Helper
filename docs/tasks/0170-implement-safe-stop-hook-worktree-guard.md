@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -44,3 +44,15 @@ Todo
 - 0169で追加したStop hook testを実行する
 - `pnpm run check`
 - `git diff --check`
+
+## 確認結果
+
+- Git rootを確認できない場合は`pwd`へfallbackせず、警告と`{}`を出してexit 0でskipするようにした
+- staged、unstaged、未追跡fileを含むdirty状態をpath解析せずに判定し、task対象だけがdirtyでも`check:fix`を実行しないようにした
+- clean時だけlog directoryを作成し、既存の`pnpm run check:fix`を実行する順序にした
+- log directory作成または`check:fix`が失敗してもstdoutへJSONを出し、自動復元せずexit 1にした
+- `pnpm exec mocha --ui tdd out/test/stop_fix_hook.test.js --reporter spec`: 5件成功
+- `pnpm run test:vscode`: 174件成功。`.vscode-test.mjs`を使う標準runnerで確認した
+- `pnpm run check:all` 成功
+- `pnpm run rulesync:check` 成功
+- 0169で追加したテスト、RuleSync生成物、`check:fix`、application、CI、dependencyは変更していない
