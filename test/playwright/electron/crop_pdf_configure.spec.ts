@@ -338,15 +338,16 @@ interface WebviewThemeState {
 }
 
 async function captureCanvasWhitePixelRatios(canvases: Locator): Promise<number[]> {
-  const canvasCount = await canvases.count();
+  const dataUrls = await canvases.evaluateAll((elements) =>
+    elements.map((element) =>
+      (element as unknown as { toDataURL: (type: string) => string }).toDataURL("image/png"),
+    ),
+  );
 
   return Promise.all(
-    Array.from({ length: canvasCount }, async (_, index) => {
-      const screenshot = await canvases.nth(index).screenshot({
-        animations: "disabled",
-        caret: "hide",
-      });
-      const { data, info } = await sharp(screenshot).raw().toBuffer({ resolveWithObject: true });
+    dataUrls.map(async (dataUrl) => {
+      const image = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
+      const { data, info } = await sharp(image).raw().toBuffer({ resolveWithObject: true });
       let whitePixelCount = 0;
 
       for (let offset = 0; offset < data.length; offset += info.channels) {
