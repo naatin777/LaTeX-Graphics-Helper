@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -42,3 +42,22 @@ Todo
 - `pnpm run rulesync:check`
 - 正本だけを変更した一時差分で`rulesync:check`が失敗することを確認する
 - `git diff --check`
+
+## 実施結果
+
+| target         | rule生成物                        | hook生成物                                |
+| -------------- | --------------------------------- | ----------------------------------------- |
+| Codex CLI      | `AGENTS.md`                       | `.codex/hooks.json`、`.codex/config.toml` |
+| Claude Code    | `CLAUDE.md`                       | `.claude/settings.json`                   |
+| Cursor         | `.cursor/rules/overview.mdc`      | `.cursor/hooks.json`                      |
+| GitHub Copilot | `.github/copilot-instructions.md` | `.github/hooks/copilot-hooks.json`        |
+
+- すべての生成物がGit管理中であることを確認した
+- 既存の`Check` workflowでdependency install直後に`pnpm run rulesync:check`を実行するようにした
+- `Check` workflowはdocs-only判定に関係なくすべてのPRで動くため、RuleSyncだけを変更したPRでも同期を検証する
+- `rulesync.jsonc`の`delete`を`true`にし、RuleSyncが認識する孤立生成物を`rulesync:check`で失敗として扱うようにした
+- 正本だけへ一時markerを追加した状態で、4つのrule生成物を未更新として検出し、exit code 1になることを確認した
+- 一時的なCursorの孤立rule fileを、削除対象として検出し、exit code 1になることを確認した
+- 一時差分をすべて削除した後に`pnpm run rulesync:generate`と`pnpm run rulesync:check`が成功した
+- RuleSyncが認識しないpathや、設定からtarget自体を削除した後の未知の旧生成物までは自動検出の対象外とする
+- RuleSync rule、hook、application、test、dependency、新しいworkflow・job、docs-only判定、並列化は変更していない
