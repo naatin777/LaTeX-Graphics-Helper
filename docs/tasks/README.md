@@ -153,6 +153,7 @@
 - [0149: convert command正常系を複数形式batchへ統合する](0149-consolidate-convert-command-tests.md)
 - [0151: CI環境変数のローカル・CI運用を整理する](0151-document-ci-env-policy.md)
 - [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
+- [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
 
 ## Todo Tasks
 
