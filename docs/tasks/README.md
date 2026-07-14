@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- なし
+- [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
 
 ## Rules
 
