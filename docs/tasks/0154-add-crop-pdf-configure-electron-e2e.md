@@ -94,6 +94,7 @@ VS Code、Explorer、Webview、PDF.js、Hostとのmessage、`pdf-lib`によるAp
 - `docs/tasks/0154-add-crop-pdf-configure-electron-e2e.md`
 - `docs/tasks/README.md`
 - `test/playwright/electron/crop_pdf_configure.spec.ts`
+- `test/playwright/electron/helpers/`
 - `test/playwright/electron/crop_pdf_configure.spec.ts-snapshots/`
 - `test/helpers/crop_configure_fixture.ts`
 
