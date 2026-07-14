@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -41,3 +41,11 @@ ADR-0013を「Webview visual testの正本に実VS Code上のPlaywright Electron
 - ADR-0013から採用理由とtrade-offを確認できることを確認する
 - 詳細な実行条件の正本がtest policyまたはtaskにあることを確認する
 - `git diff --check`
+
+## 実施結果
+
+- ADR-0013に実VS Code上のPlaywright Electronをvisual testの正本とする判断、理由、trade-off、結果、見直し条件を残した
+- VS Code固定version、theme、fixture、golden、screenshot、待機条件、導入順、具体的なPDF検証をADRから削除した
+- 詳細の正本である`docs/test-policy.md`のPlaywright Electron節と0152・0153・0154へlinkした
+- Electron側の同等coverageが安定するまでbrowser testを維持する段階移行の判断は残した
+- test、snapshot、workflow、dependencyは変更していない
