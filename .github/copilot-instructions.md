@@ -119,6 +119,10 @@
 
 ## commit / PR 方針
 
+- 作業開始時は、リモートから最新の`next/v1`を取得し、その先端からtask branchを作成する。
+- `next/v1`へ直接commitまたはpushしない。
+- task branchから作成するPRのbaseは`next/v1`とする。
+- `next/v1`から`main`へのPRは、ユーザーから明示的に依頼されるまで作成しない。
 - commit messageはConventional Commitsを基本にする。
 - commit messageは `<type>(<scope>): <description>` または `<type>: <description>` の形にする。
 - descriptionは英語の小文字始まりにし、末尾にピリオドを付けない。

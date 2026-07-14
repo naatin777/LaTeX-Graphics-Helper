@@ -162,12 +162,12 @@
 - [0166: ADR-0001からStop hookの運用詳細を分離する](0166-separate-stop-hook-details-from-adr-0001.md)
 - [0167: ADR-0011からPR・commit templateを分離する](0167-separate-templates-from-language-adr.md)
 - [0168: ADR-0013からElectron testの実行詳細を分離する](0168-separate-electron-test-details-from-adr-0013.md)
+- [0157: next/v1のbranch・PR運用をRuleSyncへ記録する](0157-document-next-v1-branch-workflow.md)
 
 ## Todo Tasks
 
 ### AI開発ハーネスとCI
 
-- [0157: next/v1のbranch・PR運用をRuleSyncへ記録する](0157-document-next-v1-branch-workflow.md)
 - [0163: RuleSync生成物の同期をCIで検証する](0163-verify-rulesync-generated-files-in-ci.md)
 - [0164: Stop hookのdirty worktree方針を決める](0164-design-safe-stop-fix-hook.md)
 - [0158: RuleSync ruleを責務別に分割する](0158-split-rulesync-rules-by-responsibility.md)
