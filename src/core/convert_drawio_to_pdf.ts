@@ -53,7 +53,7 @@ export async function convertDrawioToPdf(
 
     await execFileInWorkspace(
         appConfig.execPathDrawio,
-        [conversionInputPath, '-o', temporaryPdfPath, '-xf', 'pdf', '-t', '-a'],
+        [conversionInputPath, '-o', temporaryPdfPath, '-xf', 'pdf', '-t', '-a', '--crop'],
         workspaceFolder,
     );
     await cropPdf(appConfig, temporaryPdfPath, temporaryPdfPath, workspaceFolder);
