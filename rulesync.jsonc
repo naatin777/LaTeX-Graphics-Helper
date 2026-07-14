@@ -3,7 +3,7 @@
   "targets": ["codexcli", "claudecode", "cursor", "copilot"],
   "features": ["rules", "hooks"],
   "outputRoots": ["."],
-  "delete": false,
+  "delete": true,
   "verbose": false,
   "silent": false,
   "global": false,
