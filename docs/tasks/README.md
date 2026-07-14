@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
+- なし
 
 ## Rules
 
@@ -154,6 +154,7 @@
 - [0151: CI環境変数のローカル・CI運用を整理する](0151-document-ci-env-policy.md)
 - [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
 - [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
+- [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
 
 ## Todo Tasks
 

@@ -81,3 +81,7 @@ jobs:
 
             - run: ${{ matrix.test_command }}
               shell: bash
+
+            - if: matrix.os == 'ubuntu-latest'
+              run: xvfb-run pnpm run test:playwright:electron
+              shell: bash
