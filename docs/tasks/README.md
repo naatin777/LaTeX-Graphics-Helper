@@ -164,12 +164,14 @@
 - [0168: ADR-0013からElectron testの実行詳細を分離する](0168-separate-electron-test-details-from-adr-0013.md)
 - [0157: next/v1のbranch・PR運用をRuleSyncへ記録する](0157-document-next-v1-branch-workflow.md)
 - [0163: RuleSync生成物の同期をCIで検証する](0163-verify-rulesync-generated-files-in-ci.md)
+- [0164: Stop hookのdirty worktree方針を決める](0164-design-safe-stop-fix-hook.md)
 
 ## Todo Tasks
 
 ### AI開発ハーネスとCI
 
-- [0164: Stop hookのdirty worktree方針を決める](0164-design-safe-stop-fix-hook.md)
+- [0169: Stop hookのdirty worktree安全テストを追加する](0169-add-safe-stop-hook-worktree-tests.md)
+- [0170: Stop hookへdirty worktree guardを実装する](0170-implement-safe-stop-hook-worktree-guard.md)
 - [0158: RuleSync ruleを責務別に分割する](0158-split-rulesync-rules-by-responsibility.md)
 - [0159: task実行とLuna委譲を行うskillを設計する](0159-design-ai-task-routing-skill.md)
 - [0160: worktreeを使う並列作業の運用を設計する](0160-design-worktree-parallel-workflow.md)
