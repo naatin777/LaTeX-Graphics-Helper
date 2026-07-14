@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.2
+
+- Use Draw.io's native `--crop` option during PDF export to prevent diagrams from being split across multiple A4 pages
+
 ## 0.5.1
 
 - Fix pdfcrop path handling on Windows
