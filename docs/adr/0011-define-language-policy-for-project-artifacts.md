@@ -10,9 +10,9 @@
 
 ## 背景
 
-ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし、READMEは `README.ja.md` を正本として `README.md` を英訳することを決めた。
+ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし、READMEは`README.ja.md`を正本として`README.md`を英訳することを決めた。
 
-一方で、PRタイトル、commit message、CHANGELOG、コード識別子、テスト名、VS Code表示文言などは、どちらの言語で書くべきかがまだ明確ではなかった。
+一方で、PRタイトル、commit message、CHANGELOG、コード識別子、テスト名、VS Code表示文言などは、どちらの言語で書くべきかが明確ではなかった。
 
 言語の判断が都度揺れると、AIに毎回説明する必要があり、公開向けの履歴や作業ドキュメントの品質も揺れやすい。
 
@@ -27,7 +27,7 @@ ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし
 | `docs/tasks/`                          | 日本語         | 作業管理を止めない                                  |
 | `docs/research/`                       | 日本語         | 調査結果を素早く再利用する                          |
 | `PROJECT_STATE.md`                     | 日本語         | メンテナ向けの現在地メモとして扱う                  |
-| `AGENTS.md`                            | 日本語         | AI向け作業ルールの正本として扱う                    |
+| `AGENTS.md`                            | 日本語         | AIが参照する作業ルールとして扱う                    |
 | `README.ja.md`                         | 日本語         | READMEの意味の正本として扱う                        |
 | `README.md`                            | 英語           | 公開向け入口として扱う                              |
 | `CHANGELOG.md`                         | 英語           | リリース履歴は公開向けに読める形にする              |
@@ -49,6 +49,10 @@ ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし
 | CI workflow名 / job名 / step名         | 英語           | GitHub Actions画面と外部向け履歴で読みやすくする    |
 | shell / PowerShell script内のログ      | 英語           | CIログとして外部から読みやすくする                  |
 
+PR bodyは英語を基本とするが、複雑な判断やメンテナ向けの補足には日本語を併記してよい。
+
+ADR-0002は、作業ドキュメントを日本語で管理する基本判断として維持する。このADRは、ADR-0002で未定義だった成果物の言語を補完する。READMEの正本と翻訳方針はADR-0002に従う。
+
 ## 理由
 
 - 正確さが必要な判断・仕様・作業管理は日本語の方が止まりにくい
@@ -60,133 +64,40 @@ ADR-0002で、仕様・ADR・タスク・作業メモは日本語を正本にし
 
 ### すべて日本語にする
 
-メリット:
-
-- メンテナが最も速く書ける
-
-デメリット:
-
-- GitHubの公開履歴、PR一覧、CHANGELOGが外部から読みにくい
-- コード識別子や設定名との一貫性が崩れる
+メンテナが最も速く書けるが、GitHubの公開履歴、PR一覧、CHANGELOGを外部から読みにくくし、コード識別子や設定名との一貫性も崩れるため採用しない。
 
 ### すべて英語にする
 
-メリット:
-
-- 外部コントリビューターや公開履歴から読みやすい
-
-デメリット:
-
-- 仕様や判断の記録が遅くなる
-- ADR-0002で避けた問題に戻る
+外部コントリビューターや公開履歴からは読みやすいが、仕様や判断の記録が遅くなり、ADR-0002で避けた問題に戻るため採用しない。
 
 ### README以外はすべて日本語にする
 
-メリット:
-
-- ADR-0002の運用が単純になる
-
-デメリット:
-
-- PR title、commit message、CHANGELOG、CIログなどの公開履歴まで日本語になり、外部ツールやGitHub上で扱いにくい
+ADR-0002の運用は単純になるが、PR title、commit message、CHANGELOG、CIログなどの公開履歴まで日本語になり、外部ツールやGitHub上で扱いにくいため採用しない。
 
 ## 結果・影響
 
-- AIや人がPR titleやcommit messageを書くときに迷いにくくなる
+- AIや人が成果物の言語を選ぶときに迷いにくくなる
 - 作業ドキュメントは引き続き日本語で素早く書ける
-- 英語にする対象が増えるが、短い公開履歴・UI文言に限定する
+- 英語にする対象が増えるが、公開履歴・コード・UI文言などに限定する
 - 既存の日本語テスト名は維持する
-
-## 運用ルール
-
-- ADR-0002は維持する。このADRは、ADR-0002で未定義だった成果物を補完する
-- 迷った場合は「作業判断の正確さが重要なら日本語」「公開履歴・コード・外部APIなら英語」を基準にする
-- PR titleとcommit messageは英語にする
-- PR bodyは英語を基本にする。ただし、複雑な判断やメンテナ向け補足は日本語を併記してよい
-- PR bodyは `.github/PULL_REQUEST_TEMPLATE.md` の見出しに沿って書く
-- commit messageは、Conventional Commitsを基本にする
-- commit messageの形式は `<type>(<scope>): <description>` または `<type>: <description>` にする
-- commit messageの例: `docs: document project language policy`, `fix(pdfcrop): normalize Windows paths`, `test(convert): add PNG output coverage`
-- 1つのcommitには1つの目的だけを含める。別目的の変更はcommitを分ける
-- issue bodyやreview commentは、正確な意思疎通を優先して日本語でもよい
-- READMEの意味が変わる場合は、先に `README.ja.md` を更新してから `README.md` へ反映する
-- `package.nls.json` と `package.nls.ja.json` は同じ意味になるように更新する
-- テスト名を英語へ戻さない。CIログ上の仕様把握を優先して日本語を使う
-
-## PRテンプレート
-
-PR bodyは以下の構成を基本にする。
-
-```markdown
-## Summary
-
-- What changed.
-- Why this change is needed.
-
-## Verification
-
-- Command or check that was run.
-- Manual check if needed.
-
-## Notes
-
-- Risks, follow-up tasks, or reviewer notes.
-```
-
-`Notes` に書くことがない場合は `- None.` と書く。
-
-## commit messageテンプレート
-
-commit messageはConventional Commitsを基本にする。
-
-```text
-<type>(<scope>): <description>
-```
-
-scopeが不要な場合は以下でもよい。
-
-```text
-<type>: <description>
-```
-
-ルール:
-
-- 英語で書く
-- descriptionの先頭は小文字にする
-- 末尾にピリオドを付けない
-- 原則として1行にする
-- `WIP`、`fix`、`update` だけのような内容が分からないmessageにしない
-- 破壊的変更がある場合は `!` またはbodyの `BREAKING CHANGE:` で明示する
-- scopeは短く、対象が分かる名前にする
-
-よく使うtype:
-
-- `feat`
-- `fix`
-- `docs`
-- `test`
-- `refactor`
-- `build`
-- `ci`
-- `chore`
-
-例:
-
-- `docs: document project language policy`
-- `fix(pdfcrop): normalize Windows paths`
-- `test(convert): add PNG output coverage`
-- `ci(tools): verify external converters through settings`
+- PRとcommitの具体的な形式は、ADRではなくプロジェクトルールとテンプレートで管理する
 
 ## 見直す条件
 
 - 日本語を読めないコントリビューターが継続的に参加するようになったとき
 - MarketplaceやGitHub Releasesで英語CHANGELOGだけでは不足すると分かったとき
 - テスト名の日本語が外部レビューの障害になったとき
+- 公開成果物と作業ドキュメントの境界を変更するとき
 
 ## 関連
 
-- `docs/adr/0002-use-japanese-as-source-for-docs.md`
-- `AGENTS.md`
-- `PROJECT_STATE.md`
-- `README.ja.md`
-- `README.md`
+- [ADRの運用方針](README.md)
+- [ADR-0001: AI向けruleの正本をRuleSyncで管理する](0001-use-agents-md-for-codex-rules.md)
+- [ADR-0002: 日本語を作業ドキュメントの正本にする](0002-use-japanese-as-source-for-docs.md)
+- [PR body template](../../.github/PULL_REQUEST_TEMPLATE.md)
+- [AI向けcommit・PRルール](../../.rulesync/rules/overview.md)
+- [0068: commit messageとPR bodyの定型を決める](../tasks/0068-standardize-commit-and-pr-format.md)
+- [0167: ADR-0011からPR・commit templateを分離する](../tasks/0167-separate-templates-from-language-adr.md)
+- [`PROJECT_STATE.md`](../../PROJECT_STATE.md)
+- [`README.ja.md`](../../README.ja.md)
+- [`README.md`](../../README.md)

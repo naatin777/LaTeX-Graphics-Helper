@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -39,3 +39,12 @@ ADR-0011を成果物ごとの言語方針へ絞り、PR bodyとConventional Comm
 - ADR-0011から各成果物の言語判断を確認できることを確認する
 - templateとcommit ruleの正本が1か所ずつであることを確認する
 - `git diff --check`
+
+## 実施結果
+
+- ADR-0011に成果物ごとの言語、判断理由、代替案、結果、見直し条件を残した
+- PR bodyの具体的な見出しと記載例を削除し、`.github/PULL_REQUEST_TEMPLATE.md`へlinkした
+- commit形式、type一覧、例、breaking changeなどの運用詳細をADRから削除し、現在の有効な基本ruleを持つ`.rulesync/rules/overview.md`へlinkした
+- ADRだけに存在した細則は新しい有効ruleへ昇格させず、ADRの対象外となる運用詳細として削除した
+- ADR-0002を維持し、READMEの正本と翻訳方針はADR-0002に従う関係を明記した
+- PR template、RuleSync、application、test、CIは変更していない
