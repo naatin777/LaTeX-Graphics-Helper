@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
+- なし
 
 ## Rules
 
@@ -155,6 +155,7 @@
 - [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
 - [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
 - [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
+- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
 - [0155: VS Code WebviewでPDF.jsを安定して読み込む](0155-stabilize-pdfjs-loading-in-vscode-webview.md)
 
 ## Todo Tasks

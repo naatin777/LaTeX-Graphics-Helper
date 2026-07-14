@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -122,3 +122,12 @@ VS Code、Explorer、Webview、PDF.js、Hostとのmessage、`pdf-lib`によるAp
 - `pnpm run test:playwright:electron`
 - `git diff --check`
 - PRのLinux CIでgoldenを生成・確認後、snapshotを追加して全CIを再確認する
+
+## 実施結果
+
+- 実VS CodeのExplorerからCrop PDF Configureを開き、固定fixtureの2ページ描画、Dark / Light切替、Apply、出力PDFを1本のE2Eテストで確認した
+- Linux CIで確認したDark / Light snapshotを追加した
+- PlaywrightがWebviewのcanvasを黒く取得する場合に備え、実Webviewでpdf.jsが描画したcanvas pixelを使ってLight snapshotを構成した
+- シナリオ、Webview操作・描画検証、失敗診断・後片付け、screenshot構成を別ファイルへ分割した
+- `pnpm run check:all`、`pnpm run test:playwright:electron`、`git diff --check`が成功した
+- GitHub ActionsのCheck、Playwright、VS Code testがLinux / macOS / Windowsですべて成功した
