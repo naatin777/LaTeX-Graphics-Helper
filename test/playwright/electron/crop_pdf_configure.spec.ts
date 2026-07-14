@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { expect, test, type Frame, type Locator, type Page } from "@playwright/test";
 import { downloadAndUnzipVSCode } from "@vscode/test-electron";
 import { PDFDocument } from "pdf-lib";
+import sharp from "sharp";
 
 import { cropConfigureFixture } from "../../helpers/crop_configure_fixture.js";
 
@@ -177,11 +178,10 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
       .getByRole("spinbutton", { name: "Top", exact: true })
       .fill(cropConfigureFixture.cropBox.top.toString());
     await expect(settings.getByRole("radio", { name: "All pages", exact: true })).toBeChecked();
+    const darkScreenshot = await captureWebviewScreenshot(vscodeWindow, body);
 
     if (process.platform === "linux") {
-      await expect(body).toHaveScreenshot("crop-pdf-configure-dark.png", {
-        animations: "disabled",
-        caret: "hide",
+      expect(darkScreenshot).toMatchSnapshot("crop-pdf-configure-dark.png", {
         maxDiffPixelRatio: 0.005,
       });
     }
@@ -190,11 +190,21 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
     const lightTheme = await waitForWebviewTheme(body, "vscode-light");
     expect(lightTheme.bodyBackground).not.toBe(darkTheme.bodyBackground);
     expect(lightTheme.bodyForeground).not.toBe(darkTheme.bodyForeground);
+    await expect
+      .poll(
+        async () => {
+          const whitePixelRatios = await captureCanvasWhitePixelRatios(canvases);
+          return whitePixelRatios.every((ratio) => ratio >= 0.2);
+        },
+        {
+          message: "PDF canvas rendering became unreadable after switching the VS Code theme.",
+        },
+      )
+      .toBe(true);
+    const lightScreenshot = await captureWebviewScreenshot(vscodeWindow, body);
 
     if (process.platform === "linux") {
-      await expect(body).toHaveScreenshot("crop-pdf-configure-light.png", {
-        animations: "disabled",
-        caret: "hide",
+      expect(lightScreenshot).toMatchSnapshot("crop-pdf-configure-light.png", {
         maxDiffPixelRatio: 0.005,
       });
     }
@@ -325,6 +335,47 @@ async function writeUserSettings(settingsPath: string, colorTheme: string): Prom
 interface WebviewThemeState {
   bodyBackground: string;
   bodyForeground: string;
+}
+
+async function captureCanvasWhitePixelRatios(canvases: Locator): Promise<number[]> {
+  const canvasCount = await canvases.count();
+
+  return Promise.all(
+    Array.from({ length: canvasCount }, async (_, index) => {
+      const screenshot = await canvases.nth(index).screenshot({
+        animations: "disabled",
+        caret: "hide",
+      });
+      const { data, info } = await sharp(screenshot).raw().toBuffer({ resolveWithObject: true });
+      let whitePixelCount = 0;
+
+      for (let offset = 0; offset < data.length; offset += info.channels) {
+        const red = data[offset] ?? 0;
+        const green = data[offset + 1] ?? 0;
+        const blue = data[offset + 2] ?? 0;
+
+        if (red >= 240 && green >= 240 && blue >= 240) {
+          whitePixelCount += 1;
+        }
+      }
+
+      return whitePixelCount / (info.width * info.height);
+    }),
+  );
+}
+
+async function captureWebviewScreenshot(page: Page, body: Locator): Promise<Buffer> {
+  const bodyBounds = await body.boundingBox();
+
+  if (!bodyBounds) {
+    throw new Error("Crop PDF Configure webview body has no visible bounds.");
+  }
+
+  return page.screenshot({
+    animations: "disabled",
+    caret: "hide",
+    clip: bodyBounds,
+  });
 }
 
 async function waitForWebviewTheme(
