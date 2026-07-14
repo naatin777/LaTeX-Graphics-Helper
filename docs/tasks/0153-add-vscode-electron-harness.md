@@ -67,7 +67,7 @@ Done
 
 - 既存の`@playwright/test`と`@vscode/test-electron`だけでVS Code 1.128.0を起動する`vscode-electron` projectを追加した
 - 従来のブラウザtestは`webview-browser` projectへ分け、`test:playwright`の対象を変更していない
-- 固定fixtureの`q a.pdf`を一時workspaceへコピーし、実Explorerの右クリックmenuからCrop PDF Configureを開くsmoke testを追加した
+- 固定fixtureの`q a.pdf`を一時workspaceへコピーし、実Explorerで対象を選択して`Shift+F10`からコンテキストmenuを開き、Crop PDF Configureへ到達するsmoke testを追加した
 - 関係のないWebview frameを成功扱いせず、Crop PDF Configure固有の`Custom Crop`見出しがあるframeへ到達したことを確認する
 - macOSでVS CodeのIPC socket path上限を超えないよう、Unix系の一時rootを短い`/tmp`配下にした
 - `user-data`、`shared-data`、`extensions`をテストごとに分離し、個人のVS Code storageへ書き込まないようにした
@@ -75,6 +75,7 @@ Done
 - UI操作に固定sleepを使わず、menu itemの表示・focusと対象Webviewの成立条件を待つようにした
 - 成功時・失敗時ともElectron applicationを閉じ、残存processを停止して一時rootを削除する後始末を追加した
 - Linuxの既存VS Code test後に`test:playwright:electron`を実行するCI stepを追加した
+- Linux CIで失敗した場合はPlaywrightのtraceと診断情報をartifactへ保存するようにした
 
 ローカルでは以下を確認した。
 

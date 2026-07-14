@@ -78,7 +78,9 @@ test("実VS CodeでExplorerからCrop PDF ConfigureのWebviewへ到達する", a
 
     const pdfEntry = explorer.getByRole("treeitem", { name: "q a.pdf" });
     await expect(pdfEntry).toBeVisible();
-    await pdfEntry.click({ button: "right" });
+    await pdfEntry.click();
+    await expect(pdfEntry).toHaveAttribute("aria-selected", "true");
+    await pdfEntry.press("Shift+F10");
 
     const cropPdfMenu = vscodeWindow.getByRole("menuitem", { name: "Crop PDF" });
     await expect(cropPdfMenu).toBeVisible();
