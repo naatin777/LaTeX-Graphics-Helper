@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -42,3 +42,13 @@ Todo
 - `pnpm run rulesync:generate`
 - `pnpm run rulesync:check`
 - `git diff --check`
+
+## 実施結果
+
+- 最新の`next/v1`からtask branchを作ることをRuleSyncの正本へ追加した
+- `next/v1`への直接commit・pushを禁止した
+- task branchのPRは`next/v1`をbaseにすることを明記した
+- `next/v1`から`main`へのPRはユーザーの明示依頼まで作成しないことを明記した
+- Conventional Commitsと英語PR titleの既存ruleは変更していない
+- RuleSyncから`AGENTS.md`、`CLAUDE.md`、Cursor、GitHub Copilotのrule fileを生成し、同期を確認した
+- rule分割、skill、hook、worktree、application、test、CIは変更していない
