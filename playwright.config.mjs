@@ -16,6 +16,17 @@ export default defineConfig({
     workers: 1,
     forbidOnly: !!process.env.CI,
     reporter: process.env.CI ? [['github'], ['list']] : 'list',
+    projects: [
+        {
+            name: 'webview-browser',
+            testMatch: '**/*.spec.ts',
+            testIgnore: '**/electron/**/*.spec.ts',
+        },
+        {
+            name: 'vscode-electron',
+            testMatch: '**/electron/**/*.spec.ts',
+        },
+    ],
     use: {
         trace: 'retain-on-failure',
     },
