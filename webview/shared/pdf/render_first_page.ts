@@ -2,10 +2,15 @@
 // oxlint-disable-next-line import/no-unassigned-import
 import "./install_map_get_or_insert_computed";
 
+// Vite turns this worker query into an asset URL even though the source module has no default export.
+// oxlint-disable-next-line import/default
+import pdfJsWorkerUrl from "./pdfjs_worker?worker&url";
 import * as pdfjsModule from "pdfjs-dist";
 import type { PDFPageProxy } from "pdfjs-dist";
 
 type PdfJs = typeof pdfjsModule;
+
+let pdfJsWorkerPromise: Promise<Worker> | undefined;
 
 export async function renderFirstPdfPage(
   pdfSrc: string,
@@ -61,7 +66,21 @@ export async function renderPdfPages(
 
 async function loadPdfJs(): Promise<PdfJs> {
   pdfjsModule.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
+  pdfjsModule.GlobalWorkerOptions.workerPort ??= await loadPdfJsWorker();
   return pdfjsModule;
+}
+
+async function loadPdfJsWorker(): Promise<Worker> {
+  pdfJsWorkerPromise ??= fetch(pdfJsWorkerUrl).then(async (response) => {
+    if (!response.ok) {
+      throw new Error(`Could not load the PDF.js worker: ${response.status}.`);
+    }
+
+    const workerBlobUrl = URL.createObjectURL(await response.blob());
+    return new Worker(workerBlobUrl, { type: "module" });
+  });
+
+  return pdfJsWorkerPromise;
 }
 
 interface PdfRenderOptions {
