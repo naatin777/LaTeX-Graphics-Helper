@@ -105,6 +105,8 @@ export async function convertToAvifFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
+        operationName: "convert-to-avif",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
     options.outputChannel,

@@ -105,6 +105,8 @@ export async function convertToWebpFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
+        operationName: "convert-to-webp",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
     options.outputChannel,

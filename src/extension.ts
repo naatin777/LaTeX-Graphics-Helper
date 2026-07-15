@@ -52,51 +52,125 @@ export const PUBLIC_COMMAND_IDS = [
 export const INTERNAL_COMMAND_IDS = [CONVERT_PNG_TO_PDF_COMMAND] as const;
 export const REGISTERED_COMMAND_IDS = [...PUBLIC_COMMAND_IDS, ...INTERNAL_COMMAND_IDS] as const;
 
+interface CommandRegistration {
+  id: string;
+  register: () => vscode.Disposable;
+}
+
+function commandRegistrations(
+  context: vscode.ExtensionContext,
+  outputChannel: vscode.OutputChannel,
+): CommandRegistration[] {
+  return [
+    {
+      id: CROP_PDF_AUTO_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CROP_PDF_AUTO_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => cropPdfAuto(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CROP_PDF_CONFIGURE_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CROP_PDF_CONFIGURE_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+            cropPdfConfigureCommand(context, uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: SPLIT_PDF_ALL_PAGES_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          SPLIT_PDF_ALL_PAGES_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+            splitPdfAllPagesCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: MERGE_PDF_SELECTED_FILES_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          MERGE_PDF_SELECTED_FILES_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+            mergePdfSelectedFilesCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: UNDO_LAST_CONVERSION_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, (expectedId?: string) =>
+          undoLastConversion(expectedId, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_PDF_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_PDF_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToPdfCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_PNG_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_PNG_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToPngCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_JPEG_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_JPEG_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToJpegCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_WEBP_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_WEBP_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToWebpCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_AVIF_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_AVIF_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToAvifCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_TO_SVG_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_TO_SVG_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToSvgCommand(uri, uris, outputChannel),
+        ),
+    },
+    {
+      id: CONVERT_PNG_TO_PDF_COMMAND,
+      register: () =>
+        vscode.commands.registerCommand(
+          CONVERT_PNG_TO_PDF_COMMAND,
+          (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
+            convertPngToPdfCommand(uri, uris, outputChannel),
+        ),
+    },
+  ];
+}
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   initializeSafeMode(context);
   const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
   context.subscriptions.push(outputChannel);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      CROP_PDF_AUTO_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => cropPdfAuto(uri, uris, outputChannel),
-    ),
-    vscode.commands.registerCommand(
-      CROP_PDF_CONFIGURE_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => cropPdfConfigureCommand(context, uri, uris),
-    ),
-    vscode.commands.registerCommand(SPLIT_PDF_ALL_PAGES_COMMAND, splitPdfAllPagesCommand),
-    vscode.commands.registerCommand(
-      MERGE_PDF_SELECTED_FILES_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) =>
-        mergePdfSelectedFilesCommand(uri, uris, outputChannel),
-    ),
-    vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, (expectedId?: string) =>
-      undoLastConversion(expectedId, outputChannel),
-    ),
-    vscode.commands.registerCommand(CONVERT_TO_PDF_COMMAND, convertToPdfCommand),
-    vscode.commands.registerCommand(
-      CONVERT_TO_PNG_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToPngCommand(uri, uris),
-    ),
-    vscode.commands.registerCommand(
-      CONVERT_TO_JPEG_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToJpegCommand(uri, uris),
-    ),
-    vscode.commands.registerCommand(
-      CONVERT_TO_WEBP_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToWebpCommand(uri, uris),
-    ),
-    vscode.commands.registerCommand(
-      CONVERT_TO_AVIF_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToAvifCommand(uri, uris),
-    ),
-    vscode.commands.registerCommand(
-      CONVERT_TO_SVG_COMMAND,
-      (uri?: vscode.Uri, uris?: vscode.Uri[]) => convertToSvgCommand(uri, uris),
-    ),
-    vscode.commands.registerCommand(CONVERT_PNG_TO_PDF_COMMAND, convertPngToPdfCommand),
+    ...commandRegistrations(context, outputChannel).map(({ register }) => register()),
     vscode.languages.registerDocumentDropEditProvider(
       latexDocumentSelector,
       new LatexDropEditProvider(),

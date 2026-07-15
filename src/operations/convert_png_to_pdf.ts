@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -61,13 +61,6 @@ export interface DrawioToPdfOptions {
 
 export type RunDrawio = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 
-export interface ConvertPngToPdfOptions {
-  sourcePath: string;
-  outputPath: string;
-  workspacePath: string;
-  signal?: AbortSignal;
-}
-
 export interface ConvertPngToPdfJob {
   sourcePath: string;
   outputPath: string;
@@ -86,18 +79,7 @@ export interface ConvertPngToPdfFilesOptions {
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
   outputChannel?: LineOutputChannel;
-}
-
-export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
-  const { sourcePath, outputPath, workspacePath, signal } = options;
-
-  signal?.throwIfAborted();
-  await assertExistingPathInWorkspace(sourcePath, workspacePath);
-  await assertWritablePathInWorkspace(outputPath, workspacePath);
-  await assertOutputDoesNotExist(outputPath);
-  signal?.throwIfAborted();
-
-  await writeImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+  operationName?: string;
 }
 
 export async function convertPngToPdfFiles(
@@ -146,7 +128,7 @@ export async function convertPngToPdfFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: "convert-png-to-pdf",
+        operationName: options.operationName ?? "convert-png-to-pdf",
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
@@ -562,20 +544,4 @@ function isSupportedSourcePath(sourcePath: string, supportedExtensionSet: Set<st
 function isEditableDrawioImagePath(sourcePath: string): boolean {
   const lowerSourcePath = sourcePath.toLowerCase();
   return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
-}
-
-async function assertOutputDoesNotExist(outputPath: string): Promise<void> {
-  try {
-    await access(outputPath);
-    throw new Error(`Output file already exists: ${outputPath}`);
-  } catch (error) {
-    if (isFileNotFoundError(error)) {
-      return;
-    }
-    throw error;
-  }
-}
-
-function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }

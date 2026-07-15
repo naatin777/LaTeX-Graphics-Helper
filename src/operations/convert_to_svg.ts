@@ -104,6 +104,8 @@ export async function convertToSvgFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
+        operationName: "convert-to-svg",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
     options.outputChannel,

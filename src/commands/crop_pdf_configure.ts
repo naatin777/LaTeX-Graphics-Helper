@@ -5,6 +5,7 @@ import { PDFDocument } from "pdf-lib";
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   cropPdfWithConfiguredBox,
   type CropBox,
@@ -24,6 +25,26 @@ export async function cropPdfConfigureCommand(
   context: vscode.ExtensionContext,
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
+  try {
+    await runCropPdfConfigureCommand(context, uri, uris, outputChannel);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel?.appendLine(`[crop-pdf-configure] failure: ${message}`);
+    if (isAbortError(error)) {
+      await vscode.window.showInformationMessage(userMessage("message.cropPdf.cancelled"));
+      return;
+    }
+    await vscode.window.showErrorMessage(userMessage("message.cropPdf.failed", message));
+  }
+}
+
+async function runCropPdfConfigureCommand(
+  context: vscode.ExtensionContext,
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
 ): Promise<void> {
   const inputUri = resolveSinglePdfUri(uri, uris);
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(inputUri);
@@ -115,6 +136,7 @@ export async function cropPdfConfigureCommand(
       cropBox: message.payload.cropBox,
       target: message.payload.target,
       panel,
+      ...(outputChannel !== undefined && { outputChannel }),
     }).finally(() => {
       isApplying = false;
     });
@@ -140,9 +162,11 @@ async function applyConfiguredCrop(params: {
   cropBox: CropBox;
   target: CropTarget;
   panel: vscode.WebviewPanel;
+  outputChannel?: LineOutputChannel;
 }): Promise<void> {
   try {
-    const { inputUri, workspaceFolder, outputTemplate, cropBox, target, panel } = params;
+    const { inputUri, workspaceFolder, outputTemplate, cropBox, target, panel, outputChannel } =
+      params;
     const sourcePath = inputUri.fsPath;
     const outputPath = resolveOutputPath(outputTemplate, {
       workspacePath: workspaceFolder.uri.fsPath,
@@ -169,6 +193,7 @@ async function applyConfiguredCrop(params: {
             },
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         }),
     );
@@ -177,7 +202,7 @@ async function applyConfiguredCrop(params: {
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       panel.dispose();
       const message = error instanceof Error ? error.message : String(error);
@@ -195,12 +220,13 @@ async function applyConfiguredCrop(params: {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    params.outputChannel?.appendLine(`[crop-pdf-configure] failure: ${message}`);
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(userMessage("message.cropPdf.cancelled"));
       return;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage("message.cropPdf.failed", message));
   }
 }

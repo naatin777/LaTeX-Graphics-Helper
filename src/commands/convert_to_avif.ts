@@ -6,6 +6,8 @@ import * as vscode from "vscode";
 
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import {
   convertToAvifFiles,
@@ -26,7 +28,11 @@ const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${pag
 const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.avif";
 const DEFAULT_AVIF_EFFORT = 4;
 
-export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToAvifCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -68,6 +74,7 @@ export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
             platform: process.platform,
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         });
       },
@@ -77,7 +84,7 @@ export async function convertToAvifCommand(uri?: vscode.Uri, uris?: vscode.Uri[]
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -130,6 +137,7 @@ async function createJobs(
   }
 
   if (extension === ".pdf") {
+    await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 

@@ -18,6 +18,7 @@ import {
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 
 export interface CropBox {
   left: number;
@@ -46,6 +47,7 @@ export interface CropPdfConfigureOptions {
   runId?: string;
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  outputChannel?: LineOutputChannel;
 }
 
 export async function cropPdfWithConfiguredBox(
@@ -73,9 +75,11 @@ export async function cropPdfWithConfiguredBox(
       ...(options.resolveOutputConflicts !== undefined && {
         resolveConflicts: options.resolveOutputConflicts,
       }),
+      operationName: "crop-pdf-configure",
+      ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     });
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts);
+    await cleanupConversionArtifacts(artifacts, options.outputChannel);
     throw error;
   }
 }

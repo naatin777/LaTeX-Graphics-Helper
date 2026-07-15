@@ -19,6 +19,7 @@ import path from "node:path";
 import {
   commitConversionOutputs,
   CommitRollbackError,
+  OperationCancelledError,
 } from "../src/operations/commit_conversion_outputs.js";
 
 suite("変換結果の反映処理", () => {
@@ -287,6 +288,13 @@ suite("変換結果の反映処理", () => {
 
     assert.strictEqual(await readFile(unrelatedPath, "utf8"), "keep");
     await rm(workspacePath, { recursive: true, force: true });
+  });
+
+  test("Safe Modeの取消はAbortErrorとして確認できる", () => {
+    const error = new OperationCancelledError("Do Not Overwrite");
+
+    assert.strictEqual(error.name, "AbortError");
+    assert.match(error.message, /Do Not Overwrite/);
   });
 });
 

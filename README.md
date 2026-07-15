@@ -93,6 +93,6 @@ Open **View → Output → LaTeX Graphics Helper** to see relevant command input
 
 ## Safe Mode and Undo
 
-Safe Mode is enabled by default and asks before an existing output is overwritten. Choose **Keep Both**, **Overwrite**, or **Cancel**. Undo is available for the latest completed conversion, merge, crop, split, or clipboard paste and only reverts outputs that have not changed since they were created. Undo is kept in memory and is not available after the extension restarts.
+Safe Mode is enabled by default and asks before an existing output is overwritten. Choose **Keep Both**, **Do Not Overwrite**, or **Overwrite**. Undo is available for the latest completed conversion, merge, crop, split, or clipboard paste and only reverts outputs that have not changed since they were created. Undo is kept in memory and is not available after the extension restarts.
 
 Normal staging files are removed after a conversion, cancellation, failure, or successful Undo. An overwrite backup is kept only while it is needed by the current Undo record. Staging is also cleared when the extension starts; diagnostic ASCII scratch files are managed separately and may be retained after an external-tool failure.

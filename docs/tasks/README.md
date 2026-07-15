@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0189: Safe Mode・command境界・Output Channelを統一する](0189-align-command-boundaries-and-output-channel.md)
+- [0190: 変換commandの共通境界を小さく整理する](0190-reduce-conversion-command-review-surface.md)
 
 ## Planned v1 Safety Path
 

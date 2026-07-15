@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
@@ -40,17 +41,27 @@ const PDF_IMAGE_EXTENSIONS = [
   ...EDITABLE_DRAWIO_IMAGE_EXTENSIONS,
 ] as const;
 
-export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertPngToPdfCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PNG_EXTENSIONS,
     titleKey: "message.progress.convertPngToPdf.title",
     successKey: "message.convertPngToPdf.success",
     failedKey: "message.convertPngToPdf.failed",
     cancelledKey: "message.convertPngToPdf.cancelled",
+    operationName: "convert-png-to-pdf",
+    ...(outputChannel !== undefined && { outputChannel }),
   });
 }
 
-export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToPdfCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PDF_IMAGE_EXTENSIONS,
     titleKey: "message.progress.convertToPdf.title",
@@ -58,6 +69,8 @@ export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
     failedKey: "message.convertToPdf.failed",
     cancelledKey: "message.convertToPdf.cancelled",
     outputFormatOutputPathKey: "outputPath.convertToPdf",
+    operationName: "convert-to-pdf",
+    ...(outputChannel !== undefined && { outputChannel }),
   });
 }
 
@@ -71,6 +84,8 @@ async function convertSelectedPngFilesToPdf(
     failedKey: "message.convertPngToPdf.failed" | "message.convertToPdf.failed";
     cancelledKey: "message.convertPngToPdf.cancelled" | "message.convertToPdf.cancelled";
     outputFormatOutputPathKey?: "outputPath.convertToPdf";
+    operationName: string;
+    outputChannel?: LineOutputChannel;
   },
 ): Promise<void> {
   try {
@@ -102,6 +117,7 @@ async function convertSelectedPngFilesToPdf(
           outputFormatOutputTemplate,
         ),
         logicalSourcePathForOutputTemplate(sourceUri.fsPath),
+        messages.supportedExtensions,
       ),
     );
     const outputs = await vscode.window.withProgress(
@@ -121,6 +137,8 @@ async function convertSelectedPngFilesToPdf(
             svgToPdf,
             mermaid,
             drawio,
+            operationName: messages.operationName,
+            ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
           });
         });
       },
@@ -130,7 +148,7 @@ async function convertSelectedPngFilesToPdf(
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, messages.outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -263,6 +281,7 @@ function createJob(
   sourceUri: vscode.Uri,
   outputTemplate: string,
   templateSourcePath: string,
+  supportedExtensions: readonly string[],
 ): ConvertPngToPdfJob {
   if (sourceUri.scheme !== "file") {
     throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
@@ -272,6 +291,11 @@ function createJob(
 
   if (!workspace) {
     throw new Error(`The image must be inside an open workspace: ${sourceUri.fsPath}`);
+  }
+
+  const lowerSourcePath = sourceUri.fsPath.toLowerCase();
+  if (!supportedExtensions.some((extension) => lowerSourcePath.endsWith(extension))) {
+    throw new Error(`Unsupported input format: ${sourceUri.fsPath}`);
   }
 
   return {

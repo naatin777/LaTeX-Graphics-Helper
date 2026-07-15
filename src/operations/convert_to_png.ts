@@ -104,6 +104,8 @@ export async function convertToPngFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
+        operationName: "convert-to-png",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
     options.outputChannel,

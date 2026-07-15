@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## Change Contract
 
@@ -36,14 +36,27 @@ VS Code command、operation、Safe Mode、Output Channel、workspace path、mani
 - `src/operations/*.ts`
 - `src/security/workspace_path.ts`
 - `package.json`
+- `package.nls.json`
+- `package.nls.ja.json`
 - `test/extension.test.ts`
 - `test/safe_mode*.test.ts`
 - `test/*command*.test.ts`
 - `test/workspace_path.test.ts`
 - `docs/specs/safe-mode.md`
 - `docs/specs/file-operation-security.md`
+- `README.md`
+- `README.ja.md`
+- `AGENTS.md`
+- `test/commit_conversion_outputs.test.ts`
+- `test/convert_png_to_pdf.test.ts`
 - `docs/tasks/0189-align-command-boundaries-and-output-channel.md`
+- `docs/tasks/0190-reduce-conversion-command-review-surface.md`
 - `docs/tasks/README.md`
+
+### Related
+
+- [Safe Mode仕様](../specs/safe-mode.md)
+- [ファイル操作security仕様](../specs/file-operation-security.md)
 
 ### Evidence matrix
 
@@ -78,5 +91,8 @@ VS Code command、operation、Safe Mode、Output Channel、workspace path、mani
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                                                                                                                              | Result | Notes                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------- |
+| `pnpm run check:all`                                                                                                                 | PASS   | runtime/test/Webview typechecks, RuleSync, task preflight, NLS |
+| `./node_modules/.bin/vscode-test --grep "変換結果の反映処理\|Safe Modeダイアログの判断\|PNGからPDFへの変換処理\|拡張機能の基本動作"` | PASS   | 28 tests                                                       |
+| `git diff --check`                                                                                                                   | PASS   | no whitespace errors                                           |

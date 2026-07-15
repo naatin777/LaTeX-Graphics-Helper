@@ -9,7 +9,7 @@
 - 初期値はON
 - 状態は`ExtensionContext.globalState`へ保存する
 - 状態はVS Codeプロファイル全体で共通とする
-- status barに`Safe Mode: ON`または`Safe Mode: OFF`を表示する
+- status barにNLSの`Safe Mode: ON`または`Safe Mode: OFF`を表示する
 - status barを選択するとON/OFFを切り替える
 
 ## Safe Mode ON

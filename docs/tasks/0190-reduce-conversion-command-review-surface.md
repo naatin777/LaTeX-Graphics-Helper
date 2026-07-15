@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+In Progress
 
 ## Change Contract
 
@@ -38,6 +38,10 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 - `docs/specs/output-format-conversion.md`
 - `docs/tasks/0190-reduce-conversion-command-review-surface.md`
 - `docs/tasks/README.md`
+
+### Related
+
+- [出力形式変換仕様](../specs/output-format-conversion.md)
 
 ### Evidence matrix
 

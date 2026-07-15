@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
@@ -111,6 +112,10 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): CropPdfJob {
   }
 
   const sourcePath = sourceUri.fsPath;
+
+  if (path.extname(sourcePath).toLowerCase() !== ".pdf") {
+    throw new Error(`Only PDF files can be cropped: ${sourcePath}`);
+  }
 
   return {
     sourcePath,

@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   convertToPngFiles,
   type ConvertToPngJob,
@@ -17,6 +18,7 @@ import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 
 export const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 
@@ -24,7 +26,11 @@ const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.png";
 const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.png";
 const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.png";
 
-export async function convertToPngCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToPngCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -64,6 +70,7 @@ export async function convertToPngCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
             platform: process.platform,
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         });
       },
@@ -73,7 +80,7 @@ export async function convertToPngCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -126,6 +133,7 @@ async function createJobs(
   }
 
   if (extension === ".pdf") {
+    await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 

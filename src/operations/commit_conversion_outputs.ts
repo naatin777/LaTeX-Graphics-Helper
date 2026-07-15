@@ -76,6 +76,13 @@ export class CommitRollbackError extends Error {
   }
 }
 
+export class OperationCancelledError extends Error {
+  constructor(message = "Operation was cancelled.") {
+    super(message);
+    this.name = "AbortError";
+  }
+}
+
 export async function commitConversionOutputs(
   outputs: PreparedConversionOutput[],
   options: CommitConversionOutputsOptions = {},
@@ -134,7 +141,7 @@ async function resolveDecision(
   const decision = await resolveConflicts(conflicts.map((item) => item.outputPath));
 
   if (decision === "cancel") {
-    throw new Error("Output conflict resolution was cancelled.");
+    throw new OperationCancelledError("Output conflict resolution was cancelled.");
   }
 
   return decision;

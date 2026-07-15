@@ -116,7 +116,7 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: "crop-pdf",
+        operationName: "crop-pdf-auto",
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
