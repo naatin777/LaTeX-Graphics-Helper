@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0185: commit/rollbackと大容量比較を安全にする](0185-harden-commit-rollback-and-file-comparison.md)
+- [0186: session-safeなstaging lifecycleを実装する](0186-define-session-safe-staging-lifecycle.md)
 
 ## Planned v1 Safety Path
 

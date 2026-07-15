@@ -53,24 +53,6 @@ export async function withStagingCleanup<T>(
   }
 }
 
-export async function cleanupStaleWorkspaceStaging(
-  workspacePaths: readonly string[],
-  outputChannel?: LineOutputChannel,
-): Promise<void> {
-  for (const workspacePath of new Set(workspacePaths.map((value) => path.resolve(value)))) {
-    const stagingRoot = path.join(workspacePath, ".latex-graphics-helper");
-
-    try {
-      await assertWritablePathInWorkspace(stagingRoot, workspacePath);
-      await rm(stagingRoot, { recursive: true, force: true });
-    } catch (error) {
-      outputChannel?.appendLine(
-        `[cleanup] failed for ${stagingRoot}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-  }
-}
-
 async function removeUnusedArtifactEntries(artifact: ConversionArtifactRoot): Promise<void> {
   const rootPath = path.resolve(artifact.rootPath);
   const preservePaths = (artifact.preservePaths ?? []).map((value) => path.resolve(value));

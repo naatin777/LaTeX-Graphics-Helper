@@ -31,7 +31,6 @@ import {
 } from "./commands/undo_last_conversion.js";
 import { LatexDropEditProvider } from "./edit_provider/latex_drop_edit_provider.js";
 import { LatexPasteEditProvider } from "./edit_provider/latex_paste_edit_provider.js";
-import { cleanupStaleWorkspaceStaging } from "./operations/cleanup_conversion_artifacts.js";
 
 const latexDocumentSelector: vscode.DocumentSelector = [{ language: "latex" }, { language: "tex" }];
 
@@ -57,10 +56,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   initializeSafeMode(context);
   const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
   context.subscriptions.push(outputChannel);
-  await cleanupStaleWorkspaceStaging(
-    (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
-    outputChannel,
-  );
 
   context.subscriptions.push(
     vscode.commands.registerCommand(

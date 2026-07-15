@@ -5,10 +5,7 @@ import { access, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises
 import os from "node:os";
 import path from "node:path";
 
-import {
-  cleanupConversionArtifacts,
-  cleanupStaleWorkspaceStaging,
-} from "../src/operations/cleanup_conversion_artifacts.js";
+import { cleanupConversionArtifacts } from "../src/operations/cleanup_conversion_artifacts.js";
 
 suite("変換artifactのライフサイクル", () => {
   test("Undo用backupを残してstaging結果と入力コピーを削除する", async () => {
@@ -74,22 +71,47 @@ suite("変換artifactのライフサイクル", () => {
     }
   });
 
-  test("拡張機能起動相当のcleanupで前回セッションのstagingを削除する", async () => {
+  test("operation cleanupは別session・未知directory・harness log・symlinkを削除しない", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-workspace-"));
-    const stalePath = path.join(
+    const currentRoot = path.join(workspacePath, ".latex-graphics-helper", "merge-pdf", "current");
+    const activePath = path.join(
       workspacePath,
       ".latex-graphics-helper",
       "merge-pdf",
-      "old",
+      "other-active",
       "result.pdf",
     );
+    const unknownPath = path.join(workspacePath, ".latex-graphics-helper", "unknown", "keep.txt");
+    const harnessLogPath = path.join(
+      workspacePath,
+      ".latex-graphics-helper",
+      "harness",
+      "stop.log",
+    );
+    const outsidePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-outside-"));
+    const outsideFile = path.join(outsidePath, "keep.txt");
+    const symlinkPath = path.join(workspacePath, ".latex-graphics-helper", "link");
 
     try {
-      await writeFixture(stalePath);
-      await cleanupStaleWorkspaceStaging([workspacePath]);
-      await assert.rejects(access(stalePath));
+      await writeFixture(path.join(currentRoot, "result.pdf"));
+      await writeFixture(activePath);
+      await writeFixture(unknownPath);
+      await writeFixture(harnessLogPath);
+      await writeFixture(outsideFile);
+      await mkdir(path.dirname(symlinkPath), { recursive: true });
+      await symlink(outsidePath, symlinkPath);
+
+      await cleanupConversionArtifacts([{ rootPath: currentRoot, workspacePath }]);
+
+      await assert.rejects(access(path.join(currentRoot, "result.pdf")));
+      await assert.doesNotReject(access(activePath));
+      await assert.doesNotReject(access(unknownPath));
+      await assert.doesNotReject(access(harnessLogPath));
+      await assert.doesNotReject(access(symlinkPath));
+      await assert.doesNotReject(access(outsideFile));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
+      await rm(outsidePath, { recursive: true, force: true });
     }
   });
 });

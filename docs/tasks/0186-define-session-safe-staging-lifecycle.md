@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## Change Contract
 
@@ -66,5 +66,8 @@ workspace staging、Undo backup、複数window、symlink、cleanup失敗。
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                | Result | Notes                                                                                     |
+| ---------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| `pnpm run check:all`   | PASS   | lint, format, runtime/test/Webview typecheck completed; pre-existing lint warnings remain |
+| `pnpm run test:vscode` | PASS   | 199 tests passed, including operation-scoped cleanup and symlink preservation             |
+| `git diff --check`     | PASS   | no whitespace errors                                                                      |

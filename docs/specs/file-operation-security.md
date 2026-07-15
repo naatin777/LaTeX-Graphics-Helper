@@ -80,3 +80,9 @@ OS一時scratchはworkspace境界とは別の専用境界として扱う。
 - rollbackが全件成功した場合だけ、commit errorを通常の失敗として返す。
 
 大きなPDF・画像の比較は、全内容を`readFile`で同時にメモリへ載せず、file size確認後にNode.js streamからSHA-256を計算する。
+
+## 起動時cleanup
+
+v1ではsession ownershipを証明できないため、拡張機能起動時に`.latex-graphics-helper`全体を削除しない。別windowのactive staging、Undo backup、未知のdirectory、harness log、symlink先を残す。
+
+通常のsuccess/failure/cancellation/Undoに伴うcleanupは、artifact lifecycleで明示された今回のoperation rootに限って実行する。crash後の残骸は次回起動時に自動削除しない。
