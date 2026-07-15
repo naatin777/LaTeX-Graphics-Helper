@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -40,3 +40,11 @@ GitHub Actionsの`Check` workflowで、`package.json`の標準静的チェック
 - `pnpm run rulesync:check`
 - GitHub ActionsのCheck workflow
 - `git diff --check`
+
+## 実施結果
+
+- `rulesync:check`は独立した生成物検証として維持した
+- `Check` workflowの個別`lint` / `typecheck`実行を`pnpm run check`へ置き換えた
+- `format` と `typecheck:webview`をPull RequestのCheckで実行する構成にした
+- `check:all`、VS Code integration test、Playwrightの実行条件は変更していない
+- Test workflowとの重複を増やしていない
