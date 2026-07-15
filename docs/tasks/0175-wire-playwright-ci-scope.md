@@ -91,3 +91,9 @@ PR #341のPlaywright run `29380819894`でfull scope経路を確認した。
 | workflow全体の経過 | Success |  2分23秒 |
 
 導入前のfull相当3件は2分19秒、2分26秒、2分20秒だった。今回の2分23秒はその範囲内であり、classifierと固定gate追加による明確な遅延は見られなかった。
+
+## docs-only検証PR
+
+このPRはこのタスクファイルだけを変更する。したがって、classifierが`docs` scopeと判定し、browser Playwright matrixをskipして固定`playwright-gate`だけをSuccessにする経路を実測する。
+
+実測結果を確認するまで、StatusはTodoのままにする。
