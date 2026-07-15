@@ -11,28 +11,26 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    ci_scope:
-        name: ci-scope
+    changes:
+        name: changes
         runs-on: ubuntu-latest
         outputs:
-            reason: ${{ steps.detect.outputs.reason }}
-            run_browser_playwright: ${{ steps.detect.outputs.run_browser_playwright }}
-            scope: ${{ steps.detect.outputs.scope }}
+            docs_only: ${{ steps.detect.outputs.docs_only }}
         steps:
             - uses: actions/checkout@v7
               with:
                   fetch-depth: 0
 
             - id: detect
-              run: node .github/scripts/detect-ci-scope.mjs
+              run: bash .github/scripts/detect-docs-only.sh
               shell: bash
               env:
                   EVENT_BEFORE: ${{ github.event.before }}
 
     playwright:
         name: playwright (${{ matrix.label }})
-        needs: ci_scope
-        if: needs.ci_scope.outputs.run_browser_playwright == 'true'
+        needs: changes
+        if: needs.changes.outputs.docs_only != 'true'
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
@@ -83,7 +81,7 @@ jobs:
     playwright_gate:
         name: playwright-gate
         needs:
-            - ci_scope
+            - changes
             - playwright
         if: always()
         runs-on: ubuntu-latest
@@ -91,38 +89,34 @@ jobs:
             - name: Summarize Playwright scope
               shell: bash
               env:
-                  CLASSIFIER_RESULT: ${{ needs.ci_scope.result }}
+                  CHANGES_RESULT: ${{ needs.changes.result }}
                   PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
-                  REASON: ${{ needs.ci_scope.outputs.reason }}
-                  RUN_BROWSER_PLAYWRIGHT: ${{ needs.ci_scope.outputs.run_browser_playwright }}
-                  SCOPE: ${{ needs.ci_scope.outputs.scope }}
+                  DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
               run: |
                   {
-                    echo '### Playwright CI scope'
-                    echo "- Scope: \`${SCOPE:-unavailable}\`"
-                    echo "- Reason: \`${REASON:-unavailable}\`"
-                    echo "- Browser Playwright required: \`${RUN_BROWSER_PLAYWRIGHT:-unavailable}\`"
-                    echo "- Classifier result: \`${CLASSIFIER_RESULT}\`"
+                    echo '### Playwright change scope'
+                    echo "- Docs only: \`${DOCS_ONLY:-unavailable}\`"
+                    echo "- Change detection result: \`${CHANGES_RESULT}\`"
                     echo "- Playwright result: \`${PLAYWRIGHT_RESULT}\`"
                   } >> "${GITHUB_STEP_SUMMARY}"
 
             - name: Verify Playwright result
               shell: bash
               env:
-                  CLASSIFIER_RESULT: ${{ needs.ci_scope.result }}
+                  CHANGES_RESULT: ${{ needs.changes.result }}
                   PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
-                  RUN_BROWSER_PLAYWRIGHT: ${{ needs.ci_scope.outputs.run_browser_playwright }}
+                  DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
               run: |
-                  if [[ "${CLASSIFIER_RESULT}" != 'success' ]]; then
-                    echo 'CI scope classifier did not succeed.' >&2
+                  if [[ "${CHANGES_RESULT}" != 'success' ]]; then
+                    echo 'Change detection did not succeed.' >&2
                     exit 1
                   fi
 
-                  case "${RUN_BROWSER_PLAYWRIGHT}" in
-                    true) expected_result='success' ;;
-                    false) expected_result='skipped' ;;
+                  case "${DOCS_ONLY}" in
+                    true) expected_result='skipped' ;;
+                    false) expected_result='success' ;;
                     *)
-                      echo 'CI scope classifier returned an invalid Playwright flag.' >&2
+                      echo 'Change detection returned an invalid docs_only flag.' >&2
                       exit 1
                       ;;
                   esac
