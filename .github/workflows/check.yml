@@ -33,8 +33,5 @@ jobs:
             - run: pnpm run rulesync:check
               shell: bash
 
-            - run: pnpm run lint
-              shell: bash
-
-            - run: pnpm run typecheck
+            - run: pnpm run check
               shell: bash
