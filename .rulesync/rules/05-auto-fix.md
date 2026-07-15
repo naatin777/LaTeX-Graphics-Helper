@@ -1,7 +1,8 @@
 ---
 targets: ["*"]
 description: "lint/format自動修正の方針"
-globs: ["**/*"]
+globs:
+  ["src/**/*", "webview/**/*", "test/**/*", "*.json", "*.jsonc", "*.ts", "*.mjs", "*.yml", "*.yaml"]
 ---
 
 ## 自動修正方針

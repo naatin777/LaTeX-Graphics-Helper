@@ -1,6 +1,7 @@
 ---
 description: コメント、言語、外部調査の方針
-applyTo: "**/*"
+applyTo: >-
+  docs/**/*,README.md,README.ja.md,PROJECT_STATE.md,package.nls.json,package.nls.ja.json
 ---
 
 ## コメント方針

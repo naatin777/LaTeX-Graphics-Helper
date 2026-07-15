@@ -1,6 +1,11 @@
 ---
 paths:
-  - "**/*"
+  - docs/**/*
+  - README.md
+  - README.ja.md
+  - PROJECT_STATE.md
+  - package.nls.json
+  - package.nls.ja.json
 ---
 
 ## コメント方針

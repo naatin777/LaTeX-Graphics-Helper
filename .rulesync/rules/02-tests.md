@@ -1,7 +1,16 @@
 ---
 targets: ["*"]
 description: "テストと検証の方針"
-globs: ["**/*"]
+globs:
+  [
+    "src/**/*",
+    "test/**/*",
+    "webview/**/*",
+    "tsconfig*.json",
+    "vitest.config.ts",
+    "webview/tsconfig*.json",
+    "webview/vitest.config.ts",
+  ]
 ---
 
 ## テスト方針

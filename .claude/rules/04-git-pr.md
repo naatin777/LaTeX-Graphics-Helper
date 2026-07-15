@@ -1,6 +1,12 @@
 ---
 paths:
-  - "**/*"
+  - .github/**/*
+  - scripts/**/*
+  - package.json
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - lefthook.yml
+  - .rulesync/**/*
 ---
 
 ## commit / PR 方針

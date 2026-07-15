@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0188: AIハーネスとStop hookを検証専用にする](0188-build-task-preflight-and-stop-harness.md)
+- [0189: Safe Mode・command境界・Output Channelを統一する](0189-align-command-boundaries-and-output-channel.md)
 
 ## Planned v1 Safety Path
 

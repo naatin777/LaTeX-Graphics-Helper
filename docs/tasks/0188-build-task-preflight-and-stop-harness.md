@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## Change Contract
 
@@ -33,13 +33,24 @@ RuleSync、task markdown、Git diff、Stop hook、cross-platform Node script。
 - `.rulesync/hooks/stop-fix.sh`
 - `scripts/validate-current-task.mjs`
 - `scripts/harness-stop.mjs`
+- `scripts/check-nls.mjs`
 - `package.json`
 - `test/stop_fix_hook.test.ts`
 - `test/validate_current_task.test.ts`
-- generated rule files under `AGENTS.md`, `.claude/`, `.cursor/`, `.github/`
+- `test/check_nls.test.ts`
+- `AGENTS.md`
+- `.codex/memories/**/*`
+- `.claude/**/*`
+- `.cursor/**/*`
+- `.github/**/*`
 - `docs/adr/0014-define-ai-development-harness.md`
 - `docs/tasks/0188-build-task-preflight-and-stop-harness.md`
+- `docs/tasks/0189-align-command-boundaries-and-output-channel.md`
 - `docs/tasks/README.md`
+
+### Related
+
+- [ADR-0014: AI開発ハーネスの責務を分離する](../adr/0014-define-ai-development-harness.md)
 
 ### Evidence matrix
 
@@ -71,5 +82,11 @@ RuleSync、task markdown、Git diff、Stop hook、cross-platform Node script。
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                                                                                             | Result | Notes                                              |
+| --------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| `pnpm run rulesync:generate`                                                                        | PASS   | 17 generated rules updated                         |
+| `pnpm run rulesync:check`                                                                           | PASS   | generated artifacts synchronized                   |
+| `pnpm run harness:check`                                                                            | PASS   | task preflight and NLS included                    |
+| `pnpm run check:all`                                                                                | PASS   | runtime/test/Webview typechecks and harness checks |
+| `./node_modules/.bin/vscode-test --grep "Stop hook\|Current Task preflight\|NLS consistency check"` | PASS   | 7 tests                                            |
+| `git diff --check`                                                                                  | PASS   | no whitespace errors                               |

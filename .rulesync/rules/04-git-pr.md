@@ -1,7 +1,16 @@
 ---
 targets: ["*"]
 description: "Git、PR、作業報告の方針"
-globs: ["**/*"]
+globs:
+  [
+    ".github/**/*",
+    "scripts/**/*",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "lefthook.yml",
+    ".rulesync/**/*",
+  ]
 ---
 
 ## commit / PR 方針

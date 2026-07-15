@@ -1,6 +1,7 @@
 ---
 description: テストと検証の方針
-applyTo: "**/*"
+applyTo: >-
+  src/**/*,test/**/*,webview/**/*,tsconfig*.json,vitest.config.ts,webview/tsconfig*.json,webview/vitest.config.ts
 ---
 
 ## テスト方針
