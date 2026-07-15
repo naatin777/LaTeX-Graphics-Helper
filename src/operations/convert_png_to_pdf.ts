@@ -13,12 +13,14 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 import {
   runRsvgConvertWithAsciiScratch,
   type RsvgToolScratchOptions,
@@ -83,6 +85,7 @@ export interface ConvertPngToPdfFilesOptions {
   drawio?: DrawioToPdfOptions;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
+  outputChannel?: LineOutputChannel;
 }
 
 export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
@@ -109,35 +112,46 @@ export async function convertPngToPdfFiles(
   const platform = options.platform ?? process.platform;
   const scratchOptions: RsvgToolScratchOptions = {
     platform,
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     ...(options.scratchBaseCandidates !== undefined && {
       scratchBaseCandidates: options.scratchBaseCandidates,
     }),
   };
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stagePngConversion(
-          job,
-          index,
-          runId,
-          options.signal,
-          options.svgToPdf,
-          options.mermaid,
-          options.drawio,
-          scratchOptions,
-        ),
-      ),
-    ),
-  );
+  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-png-to-pdf", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const stagedOutputs = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() =>
+            stagePngConversion(
+              job,
+              index,
+              runId,
+              options.signal,
+              options.svgToPdf,
+              options.mermaid,
+              options.drawio,
+              scratchOptions,
+            ),
+          ),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedOutputs, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+        operationName: "convert-png-to-pdf",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+      });
+    },
+    options.outputChannel,
+  );
 }
 
 async function stagePngConversion(
@@ -159,6 +173,12 @@ async function stagePngConversion(
     `${index + 1}`,
     "result.pdf",
   );
+  const stagingRootPath = path.join(
+    job.workspacePath,
+    ".latex-graphics-helper",
+    "convert-png-to-pdf",
+    runId,
+  );
 
   await writeImageAsPdf(
     job.sourcePath,
@@ -176,6 +196,7 @@ async function stagePngConversion(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath,
   };
 }
 

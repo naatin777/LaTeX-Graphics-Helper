@@ -8,6 +8,7 @@ import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_las
 import { userMessage } from "./user_messages.js";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
+export const SPLIT_PDF_ALL_PAGES_COMMAND = "latex-graphics-helper.splitPdf.allPages";
 
 export async function splitPdfAllPagesCommand(
   uri?: vscode.Uri,

@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import sinon from "sinon";
 import * as vscode from "vscode";
 
+import { INTERNAL_COMMAND_IDS, PUBLIC_COMMAND_IDS } from "../src/extension.js";
+
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 suite("拡張機能の基本動作", () => {
@@ -50,6 +52,18 @@ suite("拡張機能の基本動作", () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes("latex-graphics-helper.convertPngToPdf"));
+  });
+
+  test("manifestの公開commandと実際の登録commandが一致する", async () => {
+    const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
+    assert.ok(extension);
+    await extension.activate();
+
+    const registeredCommands = new Set(await vscode.commands.getCommands(true));
+
+    for (const commandId of [...PUBLIC_COMMAND_IDS, ...INTERNAL_COMMAND_IDS]) {
+      assert.ok(registeredCommands.has(commandId), `${commandId} is not registered`);
+    }
   });
 
   test("PNGからPDFへの変換コマンドを実行してファイル変換できる", async () => {

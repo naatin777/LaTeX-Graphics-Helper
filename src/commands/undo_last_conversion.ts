@@ -6,19 +6,43 @@ import {
   type ConversionUndoRecord,
   undoConversionOutputs,
 } from "../operations/undo_last_conversion.js";
+import {
+  cleanupConversionArtifacts,
+  type ConversionArtifactRoot,
+} from "../operations/cleanup_conversion_artifacts.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { userMessage } from "./user_messages.js";
 
 export const UNDO_LAST_CONVERSION_COMMAND = "latex-graphics-helper.undoLastConversion";
 
 let lastConversion: ConversionUndoRecord | undefined;
 
-export async function rememberLastConversion(outputs: ConversionOutput[]): Promise<string> {
-  const record = await createConversionUndoRecord(outputs);
+export async function rememberLastConversion(
+  outputs: ConversionOutput[],
+  outputChannel?: LineOutputChannel,
+): Promise<string> {
+  let record: ConversionUndoRecord;
+
+  try {
+    record = await createConversionUndoRecord(outputs);
+  } catch (error) {
+    await cleanupConversionArtifacts(toArtifactRoots(outputs), outputChannel);
+    throw error;
+  }
+
+  const previousConversion = lastConversion;
   lastConversion = record;
+  await cleanupConversionArtifacts(
+    [...toArtifactRoots(previousConversion?.outputs), ...toArtifactRoots(record.outputs, true)],
+    outputChannel,
+  );
   return record.id;
 }
 
-export async function undoLastConversion(expectedId?: string): Promise<void> {
+export async function undoLastConversion(
+  expectedId?: string,
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   try {
     if (!lastConversion) {
       await vscode.window.showInformationMessage(userMessage("message.undo.none"));
@@ -30,11 +54,32 @@ export async function undoLastConversion(expectedId?: string): Promise<void> {
       return;
     }
 
-    await undoConversionOutputs(lastConversion);
+    await undoConversionOutputs(lastConversion, outputChannel);
     lastConversion = undefined;
     await vscode.window.showInformationMessage(userMessage("message.undo.removedLastOutput"));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage("message.undo.failed", message));
   }
+}
+
+function toArtifactRoots(
+  outputs: readonly ConversionOutput[] | undefined,
+  preserveBackups = false,
+): ConversionArtifactRoot[] {
+  return (
+    outputs?.flatMap((output) =>
+      output.stagingRootPath
+        ? [
+            {
+              rootPath: output.stagingRootPath,
+              workspacePath: output.workspacePath,
+              ...(preserveBackups && output.previousFilePath !== undefined
+                ? { preservePaths: [output.previousFilePath] }
+                : {}),
+            },
+          ]
+        : [],
+    ) ?? []
+  );
 }

@@ -9,8 +9,6 @@ English | [日本語](README.ja.md)
 This extension is designed to make PDF and image files easier to handle in VS Code.
 It provides PDF splitting and cropping, conversion between PDF, image, SVG, Mermaid, and editable Draw.io image files, and LaTeX code generation.
 
-## Demo
-
 ## Features
 
 ### PDF Operations
@@ -50,11 +48,11 @@ You can install this extension in one of the following ways:
 | Split PDF              | `.pdf`                                                                              | `.pdf`                  | Split a PDF into single pages              | None                     |
 | Convert to PDF         | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                           | `.pdf`                  | Convert raster images to PDF               | None                     |
 | Convert to PDF         | `.svg`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.pdf`                  | Convert figure files to PDF                | Depends on input format  |
-| Convert to PNG         | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images | `.png`                  | Convert figure files to PNG                | Depends on input format  |
-| Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Depends on input format  |
-| Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Depends on input format  |
-| Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Depends on input format  |
-| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.svg`                  | Convert figure files to SVG                | Depends on input format  |
+| Convert to PNG         | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images | `.png`                  | Convert figure files to PNG                | Poppler for PDF input    |
+| Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Poppler for PDF input    |
+| Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Poppler for PDF input    |
+| Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Poppler for PDF input    |
+| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.svg`                  | Convert figure files to SVG                | Poppler for PDF input    |
 | Insert PDF into LaTeX  | `.pdf`                                                                              | LaTeX code              | Generate `figure` / `includegraphics` code | None                     |
 | Insert clipboard image | Clipboard image                                                                     | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format |
 
@@ -62,7 +60,8 @@ You can install this extension in one of the following ways:
 
 - **Draw.io**: The Draw.io desktop application is required to convert editable Draw.io images (`.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`). Download it from [Draw.io](https://github.com/jgraph/drawio-desktop/releases).
 - **Ghostscript**: Required for PDF margin detection during PDF cropping.
-- **rsvg-convert**: SVG to PDF conversion requires rsvg-convert (from [librsvg](https://wiki.gnome.org/Projects/LibRsvg)). On macOS: `brew install librsvg`. On Debian/Ubuntu: `apt install librsvg2-bin`.
+- **Poppler / `pdftocairo`**: Required for rendering PDF pages to PNG, JPEG, WebP, AVIF, or SVG. On macOS: `brew install poppler`. On Debian/Ubuntu: `apt install poppler-utils`.
+- **rsvg-convert**: Required only when `latex-graphics-helper.convertToPdf.svg.engine` is set to `rsvg-convert`. It is provided by [librsvg](https://wiki.gnome.org/Projects/LibRsvg). On macOS: `brew install librsvg`. On Debian/Ubuntu: `apt install librsvg2-bin`.
 - **Google Chrome / Chromium**: Required when using the Puppeteer backend for SVG conversion and when converting Mermaid files.
 
 ## Configuration
@@ -90,4 +89,10 @@ Output paths and LaTeX snippet candidates can also be changed from VS Code setti
 
 ## Output Panel
 
-Open **View → Output → LaTeX Graphics Helper** to see command execution logs, batch progress, and external tool errors.
+Open **View → Output → LaTeX Graphics Helper** to see relevant command inputs, external tool failures, conflict decisions, committed outputs, and cleanup failures. Progress is shown in the VS Code notification.
+
+## Safe Mode and Undo
+
+Safe Mode is enabled by default and asks before an existing output is overwritten. Choose **Keep Both**, **Overwrite**, or **Cancel**. Undo is available for the latest completed conversion, merge, crop, split, or clipboard paste and only reverts outputs that have not changed since they were created. Undo is kept in memory and is not available after the extension restarts.
+
+Normal staging files are removed after a conversion, cancellation, failure, or successful Undo. An overwrite backup is kept only while it is needed by the current Undo record. Staging is also cleared when the extension starts; diagnostic ASCII scratch files are managed separately and may be retained after an external-tool failure.

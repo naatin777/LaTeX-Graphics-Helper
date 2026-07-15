@@ -6,6 +6,11 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import {
+  cleanupConversionArtifacts,
+  type ConversionArtifactRoot,
+} from "./cleanup_conversion_artifacts.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 
 export type OutputConflictDecision = "keep-both" | "cancel" | "overwrite";
 
@@ -13,17 +18,21 @@ export interface PreparedConversionOutput {
   stagedOutputPath: string;
   outputPath: string;
   workspacePath: string;
+  stagingRootPath?: string;
 }
 
 export interface CommittedConversionOutput {
   outputPath: string;
   workspacePath: string;
   previousFilePath?: string;
+  stagingRootPath?: string;
 }
 
 export interface CommitConversionOutputsOptions {
   resolveConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
+  operationName?: string;
+  outputChannel?: LineOutputChannel;
 }
 
 interface ResolvedOutput extends PreparedConversionOutput {
@@ -35,19 +44,29 @@ export async function commitConversionOutputs(
   outputs: PreparedConversionOutput[],
   options: CommitConversionOutputsOptions = {},
 ): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
-  assertUniqueRequestedOutputs(outputs);
-  await validatePreparedOutputs(outputs);
+  const artifacts = toArtifactRoots(outputs);
 
-  const conflicts = await findExistingOutputs(outputs);
-  const decision = await resolveDecision(conflicts, options.resolveConflicts);
-  const resolvedOutputs = await resolveOutputPaths(outputs, decision);
+  try {
+    options.signal?.throwIfAborted();
+    assertUniqueRequestedOutputs(outputs);
+    await validatePreparedOutputs(outputs);
 
-  options.signal?.throwIfAborted();
-  await createBackups(resolvedOutputs, decision);
-  options.signal?.throwIfAborted();
+    const conflicts = await findExistingOutputs(outputs);
+    const decision = await resolveDecision(conflicts, options.resolveConflicts);
+    options.outputChannel?.appendLine(
+      `[${options.operationName ?? "conversion"}] conflict decision: ${decision}`,
+    );
+    const resolvedOutputs = await resolveOutputPaths(outputs, decision);
 
-  return commitResolvedOutputs(resolvedOutputs, options.signal);
+    options.signal?.throwIfAborted();
+    await createBackups(resolvedOutputs, decision);
+    options.signal?.throwIfAborted();
+
+    return await commitResolvedOutputs(resolvedOutputs, options);
+  } catch (error) {
+    await cleanupConversionArtifacts(artifacts, options.outputChannel);
+    throw error;
+  }
 }
 
 async function resolveDecision(
@@ -121,17 +140,17 @@ async function createBackups(
 
 async function commitResolvedOutputs(
   outputs: ResolvedOutput[],
-  signal?: AbortSignal,
+  options: CommitConversionOutputsOptions,
 ): Promise<CommittedConversionOutput[]> {
   const committed: ResolvedOutput[] = [];
 
   try {
     for (const output of outputs) {
-      signal?.throwIfAborted();
+      options.signal?.throwIfAborted();
       await assertExistingPathInWorkspace(output.stagedOutputPath, output.workspacePath);
       await assertWritablePathInWorkspace(output.outputPath, output.workspacePath);
       await mkdir(path.dirname(output.outputPath), { recursive: true });
-      signal?.throwIfAborted();
+      options.signal?.throwIfAborted();
 
       if (output.previousFilePath) {
         await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
@@ -146,22 +165,38 @@ async function commitResolvedOutputs(
       }
 
       committed.push(output);
-      signal?.throwIfAborted();
+      options.signal?.throwIfAborted();
     }
   } catch (error) {
     await rollbackCommittedOutputs(committed);
     throw error;
   }
 
-  return committed.map(({ outputPath, workspacePath, previousFilePath }) => {
+  return committed.map(({ outputPath, workspacePath, previousFilePath, stagingRootPath }) => {
     const result: CommittedConversionOutput = { outputPath, workspacePath };
 
     if (previousFilePath !== undefined) {
       result.previousFilePath = previousFilePath;
     }
 
+    if (stagingRootPath !== undefined) {
+      result.stagingRootPath = stagingRootPath;
+    }
+
+    options.outputChannel?.appendLine(
+      `[${options.operationName ?? "conversion"}] committed output: ${outputPath}`,
+    );
+
     return result;
   });
+}
+
+function toArtifactRoots(outputs: PreparedConversionOutput[]): ConversionArtifactRoot[] {
+  return outputs.flatMap((output) =>
+    output.stagingRootPath
+      ? [{ rootPath: output.stagingRootPath, workspacePath: output.workspacePath }]
+      : [],
+  );
 }
 
 async function rollbackCommittedOutputs(outputs: ResolvedOutput[]): Promise<void> {

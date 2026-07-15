@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
@@ -9,8 +10,13 @@ import { userMessage } from "./user_messages.js";
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
+export const CROP_PDF_AUTO_COMMAND = "latex-graphics-helper.cropPdf.auto";
 
-export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function cropPdfAuto(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -31,8 +37,6 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     const ghostscriptPath =
       configuration.get<string>("execPath.ghostscript") ||
       (process.platform === "win32" ? "gswin64c.exe" : "gs");
-    const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
-
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -40,21 +44,17 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
         cancellable: true,
       },
       async (progress, token) => {
-        try {
-          return await withCancellationSignal(token, async (signal) => {
-            progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
-            return cropPdfFiles({
-              jobs,
-              margin: selectedMargin,
-              ghostscriptPath,
-              signal,
-              outputChannel,
-              resolveOutputConflicts,
-            });
+        return withCancellationSignal(token, async (signal) => {
+          progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
+          return cropPdfFiles({
+            jobs,
+            margin: selectedMargin,
+            ghostscriptPath,
+            signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveOutputConflicts,
           });
-        } finally {
-          outputChannel.dispose();
-        }
+        });
       },
     );
 
@@ -62,7 +62,7 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(

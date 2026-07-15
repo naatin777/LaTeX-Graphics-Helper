@@ -95,7 +95,18 @@ suite("Draw.ioの複雑なpath変換", () => {
         runId: "drawio-complex-path",
       });
 
-      assert.deepStrictEqual(outputs, [{ outputPath, workspacePath }]);
+      assert.deepStrictEqual(outputs, [
+        {
+          outputPath,
+          workspacePath,
+          stagingRootPath: path.join(
+            workspacePath,
+            ".latex-graphics-helper",
+            "convert-png-to-pdf",
+            "drawio-complex-path",
+          ),
+        },
+      ]);
       assert.strictEqual(drawioCalls.length, 1);
       assert.strictEqual(drawioCalls[0]?.executable, "drawio");
       assert.deepStrictEqual(drawioCalls[0]?.args.slice(0, 4), ["-x", "-f", "pdf", "-o"]);

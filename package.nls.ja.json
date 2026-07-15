@@ -177,6 +177,7 @@
   "message.splitPdf.success": "{0}個のPDF分割ファイルを作成しました。",
   "message.mergePdf.success": "{0}個のPDFファイルを結合しました。",
   "message.undoUnavailable": "{0} 取り消しは利用できません: {1}",
+  "message.clipboardPaste.undoUnavailable": "画像は保存されましたが、取り消しは利用できません: {0}",
   "message.convertPngToPdf.cancelled": "PNG変換はキャンセルされました。",
   "message.convertToPdf.cancelled": "PDF変換はキャンセルされました。",
   "message.convertToOutput.cancelled": "{0}変換はキャンセルされました。",

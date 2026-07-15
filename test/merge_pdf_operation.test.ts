@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { mergePdf } from "../src/operations/merge_pdf.js";
+import { rememberLastConversion } from "../src/commands/undo_last_conversion.js";
 import {
   createConversionUndoRecord,
   undoConversionOutputs,
@@ -44,19 +45,12 @@ suite("PDF結合operation", () => {
         runId: "safe-mode",
         resolveOutputConflicts: async () => "keep-both",
       });
+      await rememberLastConversion(outputs);
 
       assert.strictEqual(outputs[0]?.outputPath, path.join(workspacePath, "merged-1.pdf"));
       assert.strictEqual(await readFile(outputPath, "utf8"), "existing output");
-      await assert.doesNotReject(
-        access(
-          path.join(
-            workspacePath,
-            ".latex-graphics-helper",
-            "merge-pdf",
-            "safe-mode",
-            "result.pdf",
-          ),
-        ),
+      await assert.rejects(
+        access(path.join(workspacePath, ".latex-graphics-helper", "merge-pdf", "safe-mode")),
       );
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
@@ -115,6 +109,41 @@ suite("PDF結合operation", () => {
         { name: "AbortError" },
       );
       await assert.rejects(access(outputPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test("競合解決でキャンセルされた場合はstagingを削除し既存出力を維持する", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-merge-operation-"));
+
+    try {
+      const firstPath = path.join(workspacePath, "first.pdf");
+      const secondPath = path.join(workspacePath, "second.pdf");
+      const outputPath = path.join(workspacePath, "merged.pdf");
+      const stagingRootPath = path.join(
+        workspacePath,
+        ".latex-graphics-helper",
+        "merge-pdf",
+        "cancelled",
+      );
+      await copyFile(firstFixturePath, firstPath);
+      await copyFile(secondFixturePath, secondPath);
+      await writeFile(outputPath, "existing output");
+
+      await assert.rejects(
+        mergePdf({
+          sourcePaths: [firstPath, secondPath],
+          outputPath,
+          workspacePath,
+          runId: "cancelled",
+          resolveOutputConflicts: async () => "cancel",
+        }),
+        /cancelled/,
+      );
+
+      assert.strictEqual(await readFile(outputPath, "utf8"), "existing output");
+      await assert.rejects(access(stagingRootPath));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

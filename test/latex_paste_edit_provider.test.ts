@@ -72,6 +72,64 @@ suite("LaTeXクリップボード画像挿入", () => {
     }
   });
 
+  test("Undo記録に失敗しても保存済み画像とPaste editを維持する", async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const directory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, "lgh-latex-paste-undo-"));
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      sandbox.stub(vscode.window, "showQuickPick").resolves({
+        label: "画像形式で貼り付け",
+        detail: "画像をfigure環境に配置",
+        description: "(標準)",
+        pasteKind: "image",
+      } as vscode.QuickPickItem & { pasteKind: "image" });
+      sandbox.stub(vscode.window, "showInputBox").resolves(path.join(directory, "pasted"));
+      const showWarningMessage = sandbox
+        .stub(vscode.window, "showWarningMessage")
+        .resolves(undefined);
+      const document = await vscode.workspace.openTextDocument(documentUri);
+      const provider = new LatexPasteEditProvider({
+        rememberLastConversion: async () => {
+          throw new Error("backup unavailable");
+        },
+      });
+      const tokenSource = new vscode.CancellationTokenSource();
+
+      try {
+        const edits = await provider.provideDocumentPasteEdits(
+          document,
+          [new vscode.Range(0, 0, 0, 0)],
+          pngDataTransfer(),
+          {} as vscode.DocumentPasteEditContext,
+          tokenSource.token,
+          {
+            ...testAppConfig(),
+            outputPathClipboardImage: path.join(directory, "pasted"),
+          },
+        );
+
+        assert.ok(edits);
+        assert.strictEqual(edits.length, 1);
+        assert.ok(await readFile(path.join(directory, "pasted.png")));
+        const edit = edits[0];
+        assert.ok(edit);
+        assert.ok(edit.insertText instanceof vscode.SnippetString);
+        assert.ok(normalizeSnippetValue(edit.insertText.value).includes("pasted.png"));
+        assert.ok(showWarningMessage.calledOnce);
+      } finally {
+        tokenSource.dispose();
+      }
+    } finally {
+      sandbox.restore();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   test("clipboard画像をPDFとして保存しfigure snippetを作る", async () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder);

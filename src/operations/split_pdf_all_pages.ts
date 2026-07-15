@@ -8,6 +8,7 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type OutputConflictDecision,
@@ -41,23 +42,27 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const limit = pLimit(SPLIT_CONCURRENCY);
-  const stagedByJob = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() => {
-        options.signal?.throwIfAborted();
-        return splitPdf({ job, index, runId, signal: options.signal });
-      }),
-    ),
-  );
-  const stagedPages = stagedByJob.flat();
+  const artifacts = stagingArtifactsForJobs(options.jobs, "split-pdf", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedPages, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
+  return withStagingCleanup(artifacts, async () => {
+    const limit = pLimit(SPLIT_CONCURRENCY);
+    const stagedByJob = await Promise.all(
+      options.jobs.map((job, index) =>
+        limit(() => {
+          options.signal?.throwIfAborted();
+          return splitPdf({ job, index, runId, signal: options.signal });
+        }),
+      ),
+    );
+    const stagedPages = stagedByJob.flat();
+
+    options.signal?.throwIfAborted();
+    return commitConversionOutputs(stagedPages, {
+      ...(options.signal !== undefined && { signal: options.signal }),
+      ...(options.resolveOutputConflicts !== undefined && {
+        resolveConflicts: options.resolveOutputConflicts,
+      }),
+    });
   });
 }
 
@@ -121,6 +126,7 @@ async function splitPdf(params: {
       stagedOutputPath,
       outputPath: job.outputPathForPage(page),
       workspacePath: job.workspacePath,
+      stagingRootPath: path.join(job.workspacePath, ".latex-graphics-helper", "split-pdf", runId),
     });
   }
 

@@ -2,6 +2,7 @@ import path from "node:path";
 
 import * as vscode from "vscode";
 
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { mergePdf } from "../operations/merge_pdf.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
@@ -13,6 +14,7 @@ export const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.
 export async function mergePdfSelectedFilesCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
 ): Promise<void> {
   try {
     const sourceUris = selectedUris(uri, uris);
@@ -46,16 +48,17 @@ export async function mergePdfSelectedFilesCommand(
             workspacePath: workspace.uri.fsPath,
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         });
       },
     );
 
-    const successMessage = userMessage("message.mergePdf.success", outputs.length);
+    const successMessage = userMessage("message.mergePdf.success", sourceUris.length);
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -88,10 +91,19 @@ function isAbortError(error: unknown): boolean {
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
   const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
+  const selected = [...uniqueUris.values()];
 
-  return [...uniqueUris.values()].filter((candidate) =>
-    candidate.fsPath.toLowerCase().endsWith(".pdf"),
-  );
+  for (const candidate of selected) {
+    if (candidate.scheme !== "file") {
+      throw new Error(`Only local PDF files are supported: ${candidate.toString()}`);
+    }
+
+    if (path.extname(candidate.fsPath).toLowerCase() !== ".pdf") {
+      throw new Error(`Only PDF files can be merged: ${candidate.fsPath}`);
+    }
+  }
+
+  return selected;
 }
 
 function workspaceForSources(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {

@@ -11,6 +11,7 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
@@ -67,32 +68,40 @@ export async function convertToJpegFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stageJpegConversion(
-          job,
-          index,
-          runId,
-          options.pdftocairoPath,
-          options.mermaid,
-          options.drawio,
-          options.runPdfToPng,
-          options,
-          options.signal,
-        ),
-      ),
-    ),
-  );
+  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-to-jpeg", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const stagedOutputs = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() =>
+            stageJpegConversion(
+              job,
+              index,
+              runId,
+              options.pdftocairoPath,
+              options.mermaid,
+              options.drawio,
+              options.runPdfToPng,
+              options,
+              options.signal,
+            ),
+          ),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedOutputs, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+      });
+    },
+    options.outputChannel,
+  );
 }
 
 async function stageJpegConversion(
@@ -133,6 +142,12 @@ async function stageJpegConversion(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-jpeg",
+      runId,
+    ),
   };
 }
 

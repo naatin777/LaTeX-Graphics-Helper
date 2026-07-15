@@ -17,12 +17,75 @@ import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:f
 import os from "node:os";
 import path from "node:path";
 
+import { rememberLastConversion } from "../src/commands/undo_last_conversion.js";
 import {
   createConversionUndoRecord,
   undoConversionOutputs,
 } from "../src/operations/undo_last_conversion.js";
 
 suite("直前変換の取り消し処理", () => {
+  test("新しいUndo recordの作成で古いbackupを削除し、現在のbackupは保持する", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
+    const firstOutputPath = path.join(workspacePath, "first.pdf");
+    const secondOutputPath = path.join(workspacePath, "second.pdf");
+    const firstRoot = path.join(workspacePath, ".latex-graphics-helper", "first");
+    const secondRoot = path.join(workspacePath, ".latex-graphics-helper", "second");
+    const firstBackupPath = path.join(firstRoot, "first.previous");
+    const secondBackupPath = path.join(secondRoot, "second.previous");
+
+    try {
+      await writeFixture(firstOutputPath, "generated-first");
+      await writeFixture(firstBackupPath, "original-first");
+      await rememberLastConversion([
+        {
+          outputPath: firstOutputPath,
+          workspacePath,
+          previousFilePath: firstBackupPath,
+          stagingRootPath: firstRoot,
+        },
+      ]);
+      await assert.doesNotReject(access(firstBackupPath));
+
+      await writeFixture(secondOutputPath, "generated-second");
+      await writeFixture(secondBackupPath, "original-second");
+      await rememberLastConversion([
+        {
+          outputPath: secondOutputPath,
+          workspacePath,
+          previousFilePath: secondBackupPath,
+          stagingRootPath: secondRoot,
+        },
+      ]);
+
+      await assert.rejects(access(firstBackupPath));
+      await assert.doesNotReject(access(secondBackupPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test("Undo成功後に対象recordのbackupとstagingを削除する", async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
+    const outputPath = path.join(workspacePath, "output.pdf");
+    const rootPath = path.join(workspacePath, ".latex-graphics-helper", "run");
+    const previousFilePath = path.join(rootPath, "output.previous");
+
+    try {
+      await writeFixture(outputPath, "generated");
+      await writeFixture(previousFilePath, "original");
+      const record = await createConversionUndoRecord([
+        { outputPath, workspacePath, previousFilePath, stagingRootPath: rootPath },
+      ]);
+
+      await undoConversionOutputs(record);
+
+      assert.strictEqual(await readFile(outputPath, "utf8"), "original");
+      await assert.rejects(access(previousFilePath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test("変更されていない出力を削除し、workspace内の作業ファイルは残す", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-undo-workspace-"));
     const firstOutputPath = path.join(workspacePath, "output", "first.pdf");

@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { PUBLIC_COMMAND_IDS } from "../src/extension.js";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
@@ -48,6 +50,24 @@ interface PackageJson {
 }
 
 suite("package.jsonの変換メニュー定義", () => {
+  test("公開command・menu・extension登録のID一覧が整合する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const manifestCommandIds = new Set(
+      packageJson.contributes.commands.map((command) => command.command),
+    );
+    const menuCommandIds = new Set(
+      Object.values(packageJson.contributes.menus)
+        .flatMap((entries) => entries.map((entry) => entry.command))
+        .filter((command): command is string => command !== undefined),
+    );
+
+    assert.deepStrictEqual(new Set(PUBLIC_COMMAND_IDS), manifestCommandIds);
+
+    for (const menuCommandId of menuCommandIds) {
+      assert.ok(manifestCommandIds.has(menuCommandId), `${menuCommandId} is not a public command`);
+    }
+  });
+
   test("未実装のmanual PDFコマンドを公開しない", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));

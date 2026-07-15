@@ -10,6 +10,7 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
@@ -73,32 +74,40 @@ export async function convertToSvgFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stageSvgConversion(
-          job,
-          index,
-          runId,
-          options.pdftocairoPath,
-          options.mermaid,
-          options.drawio,
-          options.runPdfToSvg,
-          options,
-          options.signal,
-        ),
-      ),
-    ),
-  );
+  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-to-svg", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const stagedOutputs = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() =>
+            stageSvgConversion(
+              job,
+              index,
+              runId,
+              options.pdftocairoPath,
+              options.mermaid,
+              options.drawio,
+              options.runPdfToSvg,
+              options,
+              options.signal,
+            ),
+          ),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedOutputs, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+      });
+    },
+    options.outputChannel,
+  );
 }
 
 async function stageSvgConversion(
@@ -138,6 +147,12 @@ async function stageSvgConversion(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-svg",
+      runId,
+    ),
   };
 }
 

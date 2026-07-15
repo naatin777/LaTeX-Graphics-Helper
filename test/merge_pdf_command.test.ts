@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { PDFDocument } from "pdf-lib";
-import { createSandbox } from "sinon";
+import { createSandbox, match } from "sinon";
 import * as vscode from "vscode";
 
 import { assertRenderedPdfPagesSimilar } from "./helpers/pdf_visual_assertions.js";
@@ -45,7 +45,7 @@ suite("PDF結合コマンド", () => {
     );
 
     try {
-      const firstPdfPath = path.join(temporaryDirectory, "q a.pdf");
+      const firstPdfPath = path.join(temporaryDirectory, "q a.PDF");
       const secondPdfPath = path.join(temporaryDirectory, " 薔薇🌹.pdf");
       const outputPath = path.join(temporaryDirectory, "merged.pdf");
       const renderDirectory = path.join(temporaryDirectory, "rendered");
@@ -55,7 +55,9 @@ suite("PDF結合コマンド", () => {
       await mkdir(renderDirectory);
 
       sandbox.stub(vscode.window, "showSaveDialog").resolves(vscode.Uri.file(outputPath));
-      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+      const showInformationMessage = sandbox
+        .stub(vscode.window, "showInformationMessage")
+        .resolves(undefined);
       sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
 
       const commandExecution = vscode.commands.executeCommand(
@@ -79,6 +81,12 @@ suite("PDF結合コマンド", () => {
         expectedPageSizes,
       );
       assert.ok((await stat(outputPath)).size > 0);
+      assert.ok(
+        showInformationMessage.calledWith(
+          localeMap("message.mergePdf.success").replace("{0}", "2"),
+          match.any,
+        ),
+      );
 
       let outputPageNumber = 1;
       for (const [sourceIndex, sourcePath] of [firstPdfPath, secondPdfPath].entries()) {
@@ -115,9 +123,11 @@ suite("PDF結合コマンド", () => {
     );
 
     try {
-      const pdfPath = path.join(temporaryDirectory, "q a.pdf");
+      const firstPdfPath = path.join(temporaryDirectory, "q a.pdf");
+      const secondPdfPath = path.join(temporaryDirectory, " 薔薇🌹.pdf");
       const textPath = path.join(temporaryDirectory, "notes.txt");
-      await copyFile(firstFixturePath, pdfPath);
+      await copyFile(firstFixturePath, firstPdfPath);
+      await copyFile(secondFixturePath, secondPdfPath);
       await writeFile(textPath, "not a PDF");
 
       const showSaveDialog = sandbox.stub(vscode.window, "showSaveDialog");
@@ -126,8 +136,8 @@ suite("PDF結合コマンド", () => {
 
       const commandExecution = vscode.commands.executeCommand(
         MERGE_PDF_SELECTED_FILES_COMMAND,
-        vscode.Uri.file(pdfPath),
-        [vscode.Uri.file(pdfPath), vscode.Uri.file(textPath)],
+        vscode.Uri.file(firstPdfPath),
+        [vscode.Uri.file(firstPdfPath), vscode.Uri.file(secondPdfPath), vscode.Uri.file(textPath)],
       );
 
       await runCommandAndClearNotificationsUntilDone(commandExecution);
@@ -135,6 +145,45 @@ suite("PDF結合コマンド", () => {
       assert.strictEqual(showSaveDialog.called, false);
       assert.strictEqual(showErrorMessage.calledOnce, true);
       await assert.rejects(access(path.join(temporaryDirectory, "merged.pdf")));
+    } finally {
+      sandbox.restore();
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test("非file URIを含む選択は結合を開始しない", async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const temporaryDirectory = await mkdtemp(
+      path.join(workspaceFolder.uri.fsPath, "lgh-merge-pdf-command-") + "-",
+    );
+
+    try {
+      const firstPdfPath = path.join(temporaryDirectory, "first.pdf");
+      const secondPdfPath = path.join(temporaryDirectory, "second.pdf");
+      await copyFile(firstFixturePath, firstPdfPath);
+      await copyFile(secondFixturePath, secondPdfPath);
+
+      const showSaveDialog = sandbox.stub(vscode.window, "showSaveDialog");
+      const showErrorMessage = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+
+      const commandExecution = vscode.commands.executeCommand(
+        MERGE_PDF_SELECTED_FILES_COMMAND,
+        vscode.Uri.file(firstPdfPath),
+        [
+          vscode.Uri.file(firstPdfPath),
+          vscode.Uri.file(secondPdfPath),
+          vscode.Uri.parse("untitled:notes.pdf"),
+        ],
+      );
+
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      assert.strictEqual(showSaveDialog.called, false);
+      assert.strictEqual(showErrorMessage.calledOnce, true);
     } finally {
       sandbox.restore();
       await rm(temporaryDirectory, { recursive: true, force: true });

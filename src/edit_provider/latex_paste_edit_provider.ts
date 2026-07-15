@@ -7,7 +7,12 @@ import * as vscode from "vscode";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { resolveOutputConflicts } from "../commands/safe_mode.js";
 import { rememberLastConversion } from "../commands/undo_last_conversion.js";
+import {
+  cleanupConversionArtifacts,
+  type ConversionArtifactRoot,
+} from "../operations/cleanup_conversion_artifacts.js";
 import { localeMap } from "../locale_map.js";
+import { userMessage } from "../commands/user_messages.js";
 import { convertPngToPdfFiles } from "../operations/convert_png_to_pdf.js";
 import {
   commitConversionOutputs,
@@ -15,6 +20,7 @@ import {
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "../operations/commit_conversion_outputs.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { assertWritablePathInWorkspace } from "../security/workspace_path.js";
 import { escapeLatex, escapeLatexLabel } from "./latex_escape.js";
 import { readLatexInsertionConfig, type LatexInsertionConfig } from "./latex_config.js";
@@ -40,13 +46,19 @@ interface PasteQuickPickItem extends vscode.QuickPickItem {
 
 export interface LatexPasteEditProviderOptions {
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  rememberLastConversion?: (outputs: CommittedConversionOutput[]) => Promise<string>;
+  outputChannel?: LineOutputChannel;
 }
 
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
   private readonly resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  private readonly rememberConversion: (outputs: CommittedConversionOutput[]) => Promise<string>;
+  private readonly outputChannel: LineOutputChannel | undefined;
 
   constructor(options: LatexPasteEditProviderOptions = {}) {
     this.resolveConflicts = options.resolveOutputConflicts ?? resolveOutputConflicts;
+    this.rememberConversion = options.rememberLastConversion ?? rememberLastConversion;
+    this.outputChannel = options.outputChannel;
   }
 
   async provideDocumentPasteEdits(
@@ -119,6 +131,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             workspaceFolder.uri.fsPath,
             runId,
             this.resolveConflicts,
+            this.outputChannel,
           )
         : await writeClipboardImage(
             data,
@@ -126,8 +139,17 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             workspaceFolder.uri.fsPath,
             runId,
             this.resolveConflicts,
+            this.outputChannel,
           );
-    await rememberLastConversion(outputs);
+
+    try {
+      await this.rememberConversion(outputs);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await vscode.window.showWarningMessage(
+        userMessage("message.clipboardPaste.undoUnavailable", message),
+      );
+    }
 
     const outputFilePath = outputs[0]?.outputPath;
 
@@ -198,10 +220,14 @@ async function writeClipboardImage(
   workspacePath: string,
   runId: string,
   resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+  outputChannel?: LineOutputChannel,
 ): Promise<CommittedConversionOutput[]> {
   const stagedOutput = await stageClipboardImage(data, outputPath, workspacePath, runId);
+  outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedOutput.stagedOutputPath}`);
   return commitConversionOutputs([stagedOutput], {
     resolveConflicts,
+    operationName: "clipboard-paste",
+    ...(outputChannel !== undefined && { outputChannel }),
   });
 }
 
@@ -211,20 +237,32 @@ async function writeClipboardImageAsPdf(
   workspacePath: string,
   runId: string,
   resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+  outputChannel?: LineOutputChannel,
 ): Promise<CommittedConversionOutput[]> {
   const stagedImagePath = await stageClipboardImage(data, outputPath, workspacePath, runId);
-  return convertPngToPdfFiles({
-    jobs: [
-      {
-        sourcePath: stagedImagePath.stagedOutputPath,
-        outputPath: appendExtension(outputPath, "pdf"),
-        workspacePath,
-      },
-    ],
-    runId,
-    supportedExtensions: [`.${data.type.ext}`],
-    resolveOutputConflicts: resolveConflicts,
-  });
+  outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedImagePath.stagedOutputPath}`);
+  const sourceArtifact: ConversionArtifactRoot = {
+    rootPath: stagedImagePath.stagingRootPath ?? path.dirname(stagedImagePath.stagedOutputPath),
+    workspacePath,
+  };
+
+  try {
+    return await convertPngToPdfFiles({
+      jobs: [
+        {
+          sourcePath: stagedImagePath.stagedOutputPath,
+          outputPath: appendExtension(outputPath, "pdf"),
+          workspacePath,
+        },
+      ],
+      runId,
+      supportedExtensions: [`.${data.type.ext}`],
+      resolveOutputConflicts: resolveConflicts,
+      ...(outputChannel !== undefined && { outputChannel }),
+    });
+  } finally {
+    await cleanupConversionArtifacts([sourceArtifact], outputChannel);
+  }
 }
 
 async function stageClipboardImage(
@@ -240,6 +278,7 @@ async function stageClipboardImage(
     runId,
     `source.${data.type.ext}`,
   );
+  const stagingRootPath = path.dirname(stagedOutputPath);
   const finalOutputPath = appendExtension(outputPath, data.type.ext);
 
   await assertWritablePathInWorkspace(stagedOutputPath, workspacePath);
@@ -250,6 +289,7 @@ async function stageClipboardImage(
     stagedOutputPath,
     outputPath: finalOutputPath,
     workspacePath,
+    stagingRootPath,
   };
 }
 

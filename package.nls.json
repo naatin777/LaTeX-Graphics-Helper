@@ -159,6 +159,7 @@
   "message.splitPdf.success": "Created {0} split PDF file(s).",
   "message.mergePdf.success": "Merged {0} PDF file(s).",
   "message.undoUnavailable": "{0} Undo is unavailable: {1}",
+  "message.clipboardPaste.undoUnavailable": "The image was saved, but Undo is unavailable: {0}",
   "message.convertPngToPdf.cancelled": "PNG conversion was cancelled.",
   "message.convertToPdf.cancelled": "PDF conversion was cancelled.",
   "message.convertToOutput.cancelled": "{0} conversion was cancelled.",

@@ -184,6 +184,7 @@
 - [0181: 外部ツールの一回限りpath probeを削除する](0181-remove-external-tool-path-probe.md)
 - [0182: Draw.ioの複雑なpathを使う実fixtureテストを追加する](0182-add-drawio-complex-path-test.md)
 - [0183: 未接続のCI scope classifierを削除する](0183-remove-unused-ci-scope.md)
+- [0184: v1公開前の安全性・一貫性を修正する](0184-fix-v1-safety-consistency.md)
 
 ## Todo Tasks
 

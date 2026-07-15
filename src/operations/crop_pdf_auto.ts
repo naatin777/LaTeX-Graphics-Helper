@@ -10,6 +10,7 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
@@ -82,35 +83,45 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   const platform = options.platform ?? process.platform;
   const scratchBaseCandidates =
     options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const converted = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() => {
-        options.signal?.throwIfAborted();
+  const artifacts = stagingArtifactsForJobs(options.jobs, "crop-pdf", runId);
 
-        return convertPdf({
-          job,
-          index,
-          margin: options.margin,
-          ghostscriptPath: options.ghostscriptPath,
-          runId,
-          runGhostscript,
-          platform,
-          scratchBaseCandidates,
-          signal: options.signal,
-          ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-        });
-      }),
-    ),
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const converted = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() => {
+            options.signal?.throwIfAborted();
+
+            return convertPdf({
+              job,
+              index,
+              margin: options.margin,
+              ghostscriptPath: options.ghostscriptPath,
+              runId,
+              runGhostscript,
+              platform,
+              scratchBaseCandidates,
+              signal: options.signal,
+              ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+            });
+          }),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(converted, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+        operationName: "crop-pdf",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+      });
+    },
+    options.outputChannel,
   );
-
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(converted, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
 }
 
 async function convertPdf(params: {
@@ -220,6 +231,7 @@ async function convertPdf(params: {
       stagedOutputPath,
       outputPath: job.outputPath,
       workspacePath: job.workspacePath,
+      stagingRootPath: path.join(job.workspacePath, ".latex-graphics-helper", "crop-pdf", runId),
     };
   } catch (error) {
     if (scratch) {

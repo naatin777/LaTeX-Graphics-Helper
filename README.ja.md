@@ -9,8 +9,6 @@
 VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
 PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.io 画像の形式変換、LaTeX コード生成などを提供します。
 
-## デモ
-
 ## 機能
 
 ### PDF 操作
@@ -38,11 +36,11 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.i
 | PDF の分割                      | `.pdf`                                                                            | `.pdf`                      | PDF をページごとに分割                  | 不要                     |
 | PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                         | `.pdf`                      | ラスター画像を PDF に変換               | 不要                     |
 | PDF へ変換                      | `.svg`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.pdf`                      | 図版ファイルを PDF に変換               | 入力形式により異なります |
-| PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | 入力形式により異なります |
-| JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | 入力形式により異なります |
-| WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | 入力形式により異なります |
-| AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | 入力形式により異なります |
-| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.svg`                      | 図版ファイルを SVG に変換               | 入力形式により異なります |
+| PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | PDF入力ではPoppler       |
+| JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | PDF入力ではPoppler       |
+| WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | PDF入力ではPoppler       |
+| AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | PDF入力ではPoppler       |
+| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.svg`                      | 図版ファイルを SVG に変換               | PDF入力ではPoppler       |
 | PDF の LaTeX 挿入               | `.pdf`                                                                            | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                     |
 | クリップボード画像の LaTeX 挿入 | クリップボード画像                                                                | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります |
 
@@ -66,12 +64,13 @@ Open VSX Registry からもインストールできます。
 
 一部の機能では、VS Code 拡張機能とは別に外部ツールが必要です。使用する機能に応じて、必要なツールをインストールしてください。
 
-| ツール                   | 用途                        | 必須になる機能                                        | 備考                                                  |
-| ------------------------ | --------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| Ghostscript              | PDF の余白検出              | PDF トリミング                                        | `gs` または `gswin64c` が利用可能である必要があります |
-| rsvg-convert             | SVG から PDF への変換       | SVG から PDF 変換                                     | SVG 変換バックエンドの 1 つです                       |
-| Google Chrome / Chromium | SVG / Mermaid 変換          | SVG から PDF、Mermaid から PDF/PNG/JPEG/WebP/AVIF/SVG | puppeteer-core / Mermaid CLI から使用します           |
-| Draw.io Desktop          | editable Draw.io 画像の変換 | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`  | Draw.io デスクトップアプリケーションが必要です        |
+| ツール                   | 用途                        | 必須になる機能                                        | 備考                                                                           |
+| ------------------------ | --------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Ghostscript              | PDF の余白検出              | PDF トリミング                                        | `gs` または `gswin64c` が利用可能である必要があります                          |
+| Poppler / `pdftocairo`   | PDFページの画像化           | PDFからPNG/JPEG/WebP/AVIF/SVGへの変換                 | macOS: `brew install poppler`、Debian/Ubuntu: `sudo apt install poppler-utils` |
+| rsvg-convert             | SVG から PDF への変換       | `rsvg-convert`バックエンドを選択した場合              | SVG 変換バックエンドの 1 つです                                                |
+| Google Chrome / Chromium | SVG / Mermaid 変換          | SVG から PDF、Mermaid から PDF/PNG/JPEG/WebP/AVIF/SVG | puppeteer-core / Mermaid CLI から使用します                                    |
+| Draw.io Desktop          | editable Draw.io 画像の変換 | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`  | Draw.io デスクトップアプリケーションが必要です                                 |
 
 ### すべての機能を利用する場合
 
@@ -99,7 +98,7 @@ rsvg-convert または Google Chrome / Chromium
 ### macOS
 
 ```sh
-brew install ghostscript librsvg
+brew install ghostscript poppler librsvg
 ```
 
 Draw.io Desktop は以下からインストールしてください。
@@ -109,7 +108,7 @@ Draw.io Desktop は以下からインストールしてください。
 ### Debian / Ubuntu
 
 ```sh
-sudo apt install ghostscript librsvg2-bin
+sudo apt install ghostscript poppler-utils librsvg2-bin
 ```
 
 Draw.io Desktop は以下からインストールしてください。
@@ -121,6 +120,7 @@ Draw.io Desktop は以下からインストールしてください。
 以下のツールをインストールし、必要に応じて実行ファイルへのパスを VS Code の設定で指定してください。
 
 - Ghostscript
+- Poppler（`pdftocairo`）
 - Draw.io Desktop
 - Google Chrome / Chromium
 
@@ -149,11 +149,17 @@ Draw.io Desktop は以下からインストールしてください。
 
 ## Output パネル
 
-コマンド実行ログ、バッチ処理の進行状況、外部ツールのエラーは VS Code の Output パネルで確認できます。
+必要なコマンド入力、外部ツールのエラー、競合解決、確定した出力、cleanup失敗は VS Code の Output パネルで確認できます。バッチの進行状況は通知に表示されます。
 
 ```text
 表示 → 出力 → LaTeX Graphics Helper
 ```
+
+## Safe Mode と Undo
+
+Safe Mode は初期状態で有効です。既存の出力を上書きする前に、**Keep Both**、**Overwrite**、**Cancel**を選択します。Undo は最後に完了した変換、結合、クロップ、分割、クリップボード貼り付けに対して利用でき、生成後に変更された出力は取り消しません。Undo はメモリ上だけに保持されるため、拡張機能の再起動後は利用できません。
+
+通常のstagingは、変換の成功後、失敗時、キャンセル時、Undo成功後に不要なものが削除されます。上書き前のbackupは現在のUndo recordが必要な間だけ保持されます。拡張機能起動時にも前回セッションのstagingを削除します。診断用のASCII scratchは別管理のため、外部ツール失敗時に残る場合があります。
 
 ## トラブルシューティング
 

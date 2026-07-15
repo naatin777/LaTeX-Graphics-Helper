@@ -3,11 +3,17 @@ import { copyFile, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
+import {
+  cleanupConversionArtifacts,
+  type ConversionArtifactRoot,
+} from "./cleanup_conversion_artifacts.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 
 export interface ConversionOutput {
   outputPath: string;
   workspacePath: string;
   previousFilePath?: string;
+  stagingRootPath?: string;
 }
 
 export interface ConversionUndoRecord {
@@ -56,7 +62,10 @@ export async function createConversionUndoRecord(
   };
 }
 
-export async function undoConversionOutputs(record: ConversionUndoRecord): Promise<void> {
+export async function undoConversionOutputs(
+  record: ConversionUndoRecord,
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
   await Promise.all(record.outputs.map(validateUnchangedOutput));
 
   for (const output of record.outputs) {
@@ -70,6 +79,8 @@ export async function undoConversionOutputs(record: ConversionUndoRecord): Promi
       await rm(output.outputPath);
     }
   }
+
+  await cleanupConversionArtifacts(toArtifactRoots(record), outputChannel);
 }
 
 async function validateUnchangedOutput(output: ConversionUndoOutput): Promise<void> {
@@ -100,4 +111,12 @@ async function calculateSha256(filePath: string): Promise<string> {
   return createHash("sha256")
     .update(await readFile(filePath))
     .digest("hex");
+}
+
+function toArtifactRoots(record: ConversionUndoRecord): ConversionArtifactRoot[] {
+  return record.outputs.flatMap((output) =>
+    output.stagingRootPath
+      ? [{ rootPath: output.stagingRootPath, workspacePath: output.workspacePath }]
+      : [],
+  );
 }
