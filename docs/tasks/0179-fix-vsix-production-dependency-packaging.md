@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -17,10 +17,20 @@ pnpmで管理しているproduction dependencyをVSIXへ確実に同梱し、`sh
 - `.vscodeignore`に不要なdocs / test / AI開発ファイルを同梱しない方針を決め、必要なら整理する
 - release workflowで使う生成コマンドを決める
 
+## 実装結果
+
+- `scripts/package-vsix.mjs`を追加し、OS一時directoryへruntime allowlistをstagingしてからnpmのproduction dependencyをinstallする方式にした
+- `package:vsix`を追加し、`package`からplatform-specific VSIX生成を呼び出すようにした
+- release workflowをLinux、macOS、Windowsのmatrix package jobとpublish jobへ分割した
+- runnerのOS / architectureからVSIX targetを決め、`sharp`のnative packageを同じrunnerで同梱するようにした
+- `.vscodeignore`をstagingへ渡し、docs、test、source、AI開発設定、source map、開発用Draw.io assetを除外するようにした
+- [ADR-0015](../adr/0015-build-platform-specific-vsix-from-runtime-staging.md)と[調査メモ](../research/2026-07-15-vsix-runtime-staging-result.md)へ方式と確認結果を記録した
+
 ## 変更可能なファイル
 
 - `package.json`
 - `pnpm-lock.yaml`
+- `scripts/package-vsix.mjs`
 - `.vscodeignore`
 - `.github/workflows/release.yml`
 - `docs/tasks/0179-fix-vsix-production-dependency-packaging.md`
@@ -47,3 +57,12 @@ pnpmで管理しているproduction dependencyをVSIXへ確実に同梱し、`sh
 - `pnpm run check`
 - release workflowのdry-run相当を確認する
 - `git diff --check`
+
+## 実施した確認
+
+- `node --check scripts/package-vsix.mjs`
+- `pnpm exec oxfmt --check scripts/package-vsix.mjs package.json`
+- `pnpm run package:vsix -- --target darwin-arm64 --out /tmp/lgh-darwin-arm64-script.vsix`
+- 生成VSIXのmanifest、target、runtime dependency、sharp native binary、不要なdevelopment/repository filesを`unzip -l`で確認した
+
+Linux、Windowsの実VSIX生成とnetwork遮断下での起動・機能確認は、タスク0180の対象とする。
