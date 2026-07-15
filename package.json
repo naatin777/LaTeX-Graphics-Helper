@@ -53,7 +53,8 @@
     "test:playwright": "pnpm run build && playwright test --project=webview-browser",
     "test:playwright:electron": "pnpm run build && playwright test --project=vscode-electron",
     "test:all": "pnpm run test:vscode && pnpm run test:playwright",
-    "package": "pnpm run build && vsce package"
+    "package": "pnpm run build && pnpm run package:vsix",
+    "package:vsix": "node scripts/package-vsix.mjs"
   },
   "dependencies": {
     "@mermaid-js/mermaid-cli": "^11.15.0",

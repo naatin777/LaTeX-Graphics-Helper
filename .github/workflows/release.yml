@@ -6,10 +6,18 @@ on:
             - 'v*.*.*'
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
+    package:
+        name: Package (${{ matrix.os }})
+        runs-on: ${{ matrix.os }}
         permissions:
-            contents: write
+            contents: read
+        strategy:
+            fail-fast: false
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - macos-latest
+                    - windows-latest
         steps:
             - uses: actions/checkout@v7
 
@@ -25,8 +33,48 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - run: pnpm run package
+            - name: Resolve VSIX target
+              id: target
               shell: bash
+              run: |
+                  case "${RUNNER_OS}:${RUNNER_ARCH}" in
+                    Linux:X64) echo "value=linux-x64" >> "$GITHUB_OUTPUT" ;;
+                    Linux:ARM64) echo "value=linux-arm64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:X64) echo "value=darwin-x64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:ARM64) echo "value=darwin-arm64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:X64) echo "value=win32-x64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:ARM64) echo "value=win32-arm64" >> "$GITHUB_OUTPUT" ;;
+                    *) echo "Unsupported runner: ${RUNNER_OS}:${RUNNER_ARCH}" >&2; exit 1 ;;
+                  esac
+
+            - run: pnpm run build
+              shell: bash
+
+            - run: pnpm run package:vsix -- --target "${{ steps.target.outputs.value }}" --out "latex-graphics-helper-${{ steps.target.outputs.value }}.vsix"
+              shell: bash
+
+            - uses: actions/upload-artifact@v4
+              with:
+                  name: vsix-${{ matrix.os }}
+                  path: '*.vsix'
+                  if-no-files-found: error
+
+    publish:
+        name: Publish VSIX packages
+        needs: package
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+
+            - uses: actions/download-artifact@v4
+              with:
+                  pattern: vsix-*
+                  merge-multiple: true
+                  path: .
 
             - name: GitHub Release (VSIX + Full Changelog compare link)
               shell: bash
@@ -42,13 +90,25 @@ jobs:
                     notes="**Full Changelog**: https://github.com/$repo/commits/$tag"
                   fi
                   if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
-                    gh release upload "$tag" *.vsix --repo "$repo" --clobber
+                    gh release upload "$tag" ./*.vsix --repo "$repo" --clobber
                   else
-                    gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
+                    gh release create "$tag" ./*.vsix --repo "$repo" --notes "$notes"
                   fi
 
-            - run: pnpm exec vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
+            - name: Publish to Visual Studio Marketplace
               shell: bash
+              env:
+                  VSCE_PAT: ${{ secrets.VSCE_PAT }}
+              run: |
+                  for vsix in ./*.vsix; do
+                    npm exec --yes @vscode/vsce@3.9.2 -- publish --packagePath "$vsix" --pat "$VSCE_PAT"
+                  done
 
-            - run: pnpm exec ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
+            - name: Publish to Open VSX
               shell: bash
+              env:
+                  OVSX_PAT: ${{ secrets.OVSX_PAT }}
+              run: |
+                  for vsix in ./*.vsix; do
+                    npm exec --yes ovsx@1.0.1 -- publish "$vsix" --pat "$OVSX_PAT"
+                  done
