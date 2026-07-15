@@ -14,9 +14,8 @@ import {
 } from "../operations/convert_to_png.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 
@@ -53,48 +52,35 @@ export async function convertToPngCommand(
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToPngOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.convertToOutput.title", sourceUris.length, "PNG"),
-        cancellable: true,
+    await runConversionCommand({
+      operationName: "convert-to-png",
+      ...(outputChannel !== undefined && { outputChannel }),
+      messages: {
+        progressTitle: userMessage(
+          "message.progress.convertToOutput.title",
+          sourceUris.length,
+          "PNG",
+        ),
+        prepareMessage: userMessage("message.progress.prepareConversion", "PNG"),
+        successMessage: (count) => userMessage("message.convertToOutput.success", count, "PNG"),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage("message.convertToOutput.cancelled", "PNG"),
+        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "PNG", reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "PNG") });
-          return convertToPngFiles({
-            jobs,
-            pdftocairoPath,
-            mermaid,
-            drawio,
-            platform: process.platform,
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-          });
+      run: (signal) => {
+        return convertToPngFiles({
+          jobs,
+          pdftocairoPath,
+          mermaid,
+          drawio,
+          platform: process.platform,
+          signal,
+          resolveOutputConflicts,
+          ...(outputChannel !== undefined && { outputChannel }),
         });
       },
-    );
-
-    const successMessage = userMessage("message.convertToOutput.success", outputs.length, "PNG");
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs, outputChannel);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(

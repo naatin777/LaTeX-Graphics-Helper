@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0190: 変換commandの共通境界を小さく整理する](0190-reduce-conversion-command-review-surface.md)
+- [0191: raster operationの共通pipelineを整理する](0191-reduce-raster-operation-review-surface.md)
 
 ## Planned v1 Safety Path
 

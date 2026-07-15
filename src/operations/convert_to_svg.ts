@@ -22,6 +22,7 @@ import {
   runPdftocairoWithAsciiScratch,
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
+import { runExternalTool } from "./run_external_tool.js";
 
 export type { MermaidPuppeteerOptions };
 
@@ -299,10 +300,11 @@ async function executeDrawio(
   args: string[],
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(executable, args, {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    signal,
+  await runExternalTool({
+    toolName: "drawio",
+    executable,
+    args,
+    ...(signal !== undefined && { signal }),
   });
 }
 

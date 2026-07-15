@@ -15,9 +15,8 @@ import {
   type DrawioToJpegOptions,
 } from "../operations/convert_to_jpeg.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
@@ -53,48 +52,34 @@ export async function convertToJpegCommand(
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToJpegOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.convertToOutput.title", sourceUris.length, "JPEG"),
-        cancellable: true,
+    await runConversionCommand({
+      operationName: "convert-to-jpeg",
+      ...(outputChannel !== undefined && { outputChannel }),
+      messages: {
+        progressTitle: userMessage(
+          "message.progress.convertToOutput.title",
+          sourceUris.length,
+          "JPEG",
+        ),
+        prepareMessage: userMessage("message.progress.prepareConversion", "JPEG"),
+        successMessage: (count) => userMessage("message.convertToOutput.success", count, "JPEG"),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage("message.convertToOutput.cancelled", "JPEG"),
+        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "JPEG", reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "JPEG") });
-          return convertToJpegFiles({
-            jobs,
-            pdftocairoPath,
-            mermaid,
-            drawio,
-            platform: process.platform,
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-          });
-        });
-      },
-    );
-
-    const successMessage = userMessage("message.convertToOutput.success", outputs.length, "JPEG");
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs, outputChannel);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+      run: (signal) =>
+        convertToJpegFiles({
+          jobs,
+          pdftocairoPath,
+          mermaid,
+          drawio,
+          platform: process.platform,
+          signal,
+          resolveOutputConflicts,
+          ...(outputChannel !== undefined && { outputChannel }),
+        }),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(

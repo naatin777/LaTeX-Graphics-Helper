@@ -16,9 +16,8 @@ import {
   type WebpOutputOptions,
 } from "../operations/convert_to_webp.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
@@ -56,49 +55,35 @@ export async function convertToWebpCommand(
     const drawio = readDrawioToWebpOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.convertToOutput.title", sourceUris.length, "WebP"),
-        cancellable: true,
+    await runConversionCommand({
+      operationName: "convert-to-webp",
+      ...(outputChannel !== undefined && { outputChannel }),
+      messages: {
+        progressTitle: userMessage(
+          "message.progress.convertToOutput.title",
+          sourceUris.length,
+          "WebP",
+        ),
+        prepareMessage: userMessage("message.progress.prepareConversion", "WebP"),
+        successMessage: (count) => userMessage("message.convertToOutput.success", count, "WebP"),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage("message.convertToOutput.cancelled", "WebP"),
+        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "WebP", reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "WebP") });
-          return convertToWebpFiles({
-            jobs,
-            pdftocairoPath,
-            mermaid,
-            drawio,
-            webp,
-            platform: process.platform,
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-          });
-        });
-      },
-    );
-
-    const successMessage = userMessage("message.convertToOutput.success", outputs.length, "WebP");
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs, outputChannel);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+      run: (signal) =>
+        convertToWebpFiles({
+          jobs,
+          pdftocairoPath,
+          mermaid,
+          drawio,
+          webp,
+          platform: process.platform,
+          signal,
+          resolveOutputConflicts,
+          ...(outputChannel !== undefined && { outputChannel }),
+        }),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(

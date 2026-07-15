@@ -13,9 +13,8 @@ import {
   type SvgToPdfEngine,
   type SvgToPdfOptions,
 } from "../operations/convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_PNG_TO_PDF_COMMAND = "latex-graphics-helper.convertPngToPdf";
@@ -120,49 +119,31 @@ async function convertSelectedPngFilesToPdf(
         messages.supportedExtensions,
       ),
     );
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage(messages.titleKey, jobs.length),
-        cancellable: true,
+    await runConversionCommand({
+      operationName: messages.operationName,
+      ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
+      messages: {
+        progressTitle: userMessage(messages.titleKey, jobs.length),
+        prepareMessage: userMessage("message.progress.prepareConversion", "PDF"),
+        successMessage: (count) => userMessage(messages.successKey, count),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage(messages.cancelledKey),
+        failedMessage: (reason) => userMessage(messages.failedKey, reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
-          return convertPngToPdfFiles({
-            jobs,
-            signal,
-            resolveOutputConflicts,
-            supportedExtensions: messages.supportedExtensions,
-            svgToPdf,
-            mermaid,
-            drawio,
-            operationName: messages.operationName,
-            ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
-          });
-        });
-      },
-    );
-
-    const successMessage = userMessage(messages.successKey, outputs.length);
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs, messages.outputChannel);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+      run: (signal) =>
+        convertPngToPdfFiles({
+          jobs,
+          signal,
+          resolveOutputConflicts,
+          supportedExtensions: messages.supportedExtensions,
+          svgToPdf,
+          mermaid,
+          drawio,
+          operationName: messages.operationName,
+          ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
+        }),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(userMessage(messages.cancelledKey));

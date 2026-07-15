@@ -26,6 +26,7 @@ import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
 } from "./run_rsvg_convert_with_ascii_scratch.js";
+import { runExternalTool } from "./run_external_tool.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
@@ -236,10 +237,11 @@ async function executeDrawio(
   args: string[],
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(executable, args, {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    signal,
+  await runExternalTool({
+    toolName: "drawio",
+    executable,
+    args,
+    ...(signal !== undefined && { signal }),
   });
 }
 

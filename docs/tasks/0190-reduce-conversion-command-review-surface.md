@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## Change Contract
 
@@ -30,13 +30,19 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 
 - `src/commands/convert_to_*.ts`
 - `src/commands/convert_png_to_pdf.ts`
+- `src/commands/run_conversion_command.ts`
 - `src/commands/progress_cancellation.ts`
 - `src/operations/external_tool_*.ts`
+- `src/operations/convert_to_*.ts`
+- `src/operations/convert_png_to_pdf.ts`
 - `src/operations/run_external_tool.ts`
+- `test/run_external_tool.test.ts`
+- `AGENTS.md`
 - `test/convert_to_*_command.test.ts`
 - `test/convert_to_pdf_command.test.ts`
 - `docs/specs/output-format-conversion.md`
 - `docs/tasks/0190-reduce-conversion-command-review-surface.md`
+- `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/README.md`
 
 ### Related
@@ -73,5 +79,8 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                                                                                                                                                                         | Result | Notes                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
+| `pnpm run check:all`                                                                                                                                                            | PASS   | runtime/test/Webview typechecks, RuleSync, task preflight, NLS |
+| `./node_modules/.bin/vscode-test --grep "PNGに変換コマンド\|JPEGに変換コマンド\|WebPに変換コマンド\|AVIFに変換コマンド\|SVGに変換コマンド\|PDFに変換コマンド\|外部tool runner"` | PASS   | 50 tests                                                       |
+| `git diff --check`                                                                                                                                                              | PASS   | no whitespace errors                                           |

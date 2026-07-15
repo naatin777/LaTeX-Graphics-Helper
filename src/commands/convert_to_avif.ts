@@ -16,9 +16,8 @@ import {
   type DrawioToAvifOptions,
 } from "../operations/convert_to_avif.js";
 import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
@@ -56,49 +55,35 @@ export async function convertToAvifCommand(
     const drawio = readDrawioToAvifOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.convertToOutput.title", sourceUris.length, "AVIF"),
-        cancellable: true,
+    await runConversionCommand({
+      operationName: "convert-to-avif",
+      ...(outputChannel !== undefined && { outputChannel }),
+      messages: {
+        progressTitle: userMessage(
+          "message.progress.convertToOutput.title",
+          sourceUris.length,
+          "AVIF",
+        ),
+        prepareMessage: userMessage("message.progress.prepareConversion", "AVIF"),
+        successMessage: (count) => userMessage("message.convertToOutput.success", count, "AVIF"),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage("message.convertToOutput.cancelled", "AVIF"),
+        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "AVIF", reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "AVIF") });
-          return convertToAvifFiles({
-            jobs,
-            pdftocairoPath,
-            mermaid,
-            drawio,
-            avif,
-            platform: process.platform,
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-          });
-        });
-      },
-    );
-
-    const successMessage = userMessage("message.convertToOutput.success", outputs.length, "AVIF");
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs, outputChannel);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+      run: (signal) =>
+        convertToAvifFiles({
+          jobs,
+          pdftocairoPath,
+          mermaid,
+          drawio,
+          avif,
+          platform: process.platform,
+          signal,
+          resolveOutputConflicts,
+          ...(outputChannel !== undefined && { outputChannel }),
+        }),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(

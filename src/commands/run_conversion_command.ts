@@ -1,0 +1,75 @@
+import * as vscode from "vscode";
+
+import type { CommittedConversionOutput } from "../operations/commit_conversion_outputs.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
+import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { userMessage } from "./user_messages.js";
+
+export interface ConversionCommandMessages {
+  progressTitle: string;
+  prepareMessage: string;
+  successMessage: (count: number) => string;
+  undoUnavailableMessage: (successMessage: string, reason: string) => string;
+  cancelledMessage: string;
+  failedMessage: (reason: string) => string;
+}
+
+export async function runConversionCommand(options: {
+  operationName: string;
+  messages: ConversionCommandMessages;
+  outputChannel?: LineOutputChannel;
+  run: (signal: AbortSignal) => Promise<CommittedConversionOutput[]>;
+}): Promise<void> {
+  try {
+    const outputs = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: options.messages.progressTitle,
+        cancellable: true,
+      },
+      async (progress, token) =>
+        withCancellationSignal(token, async (signal) => {
+          progress.report({ message: options.messages.prepareMessage });
+          return options.run(signal);
+        }),
+    );
+    const successMessage = options.messages.successMessage(outputs.length);
+    let undoId: string;
+
+    try {
+      undoId = await rememberLastConversion(outputs, options.outputChannel);
+    } catch (error) {
+      const reason = errorMessage(error);
+      options.outputChannel?.appendLine(`[${options.operationName}] Undo record failed: ${reason}`);
+      await vscode.window.showWarningMessage(
+        options.messages.undoUnavailableMessage(successMessage, reason),
+      );
+      return;
+    }
+
+    const undoAction = userMessage("message.action.undo");
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
+    if (selectedAction === undoAction) {
+      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
+    }
+  } catch (error) {
+    if (isAbortError(error)) {
+      options.outputChannel?.appendLine(`[${options.operationName}] cancellation requested`);
+      await vscode.window.showInformationMessage(options.messages.cancelledMessage);
+      return;
+    }
+
+    const reason = errorMessage(error);
+    options.outputChannel?.appendLine(`[${options.operationName}] failure: ${reason}`);
+    await vscode.window.showErrorMessage(options.messages.failedMessage(reason));
+  }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
