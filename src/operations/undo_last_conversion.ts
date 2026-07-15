@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { copyFile, readFile, rm } from "node:fs/promises";
+import { copyFile, rm } from "node:fs/promises";
 import path from "node:path";
 
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
@@ -7,6 +6,7 @@ import {
   cleanupConversionArtifacts,
   type ConversionArtifactRoot,
 } from "./cleanup_conversion_artifacts.js";
+import { hashFile } from "./file_content_hash.js";
 import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 
 export interface ConversionOutput {
@@ -108,9 +108,7 @@ async function recordPreviousFile(
 }
 
 async function calculateSha256(filePath: string): Promise<string> {
-  return createHash("sha256")
-    .update(await readFile(filePath))
-    .digest("hex");
+  return hashFile(filePath);
 }
 
 function toArtifactRoots(record: ConversionUndoRecord): ConversionArtifactRoot[] {

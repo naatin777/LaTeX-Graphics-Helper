@@ -4,6 +4,35 @@
 
 Todo
 
+## Change Contract
+
+### Problem
+
+### Allowed behaviors
+
+- B-001:
+- B-002:
+
+### Unresolved
+
+### Affected boundaries
+
+### Allowed files
+
+### Evidence matrix
+
+| Behavior | Test / verification | Evidence type |
+| -------- | ------------------- | ------------- |
+| B-001    |                     |               |
+
+### Dependencies
+
+- Blocked by:
+- Blocks:
+- Can run in parallel with:
+
+### Not changing
+
 ## 目的
 
 このタスクで達成することを書く。
@@ -11,6 +40,13 @@ Todo
 ## 完了条件
 
 - 完了を判断できる条件を書く
+
+## Completion criteria
+
+## Verification results
+
+| Command | Result | Notes |
+| ------- | ------ | ----- |
 
 ## 変更可能なファイル
 
