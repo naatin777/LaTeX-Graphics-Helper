@@ -37,6 +37,7 @@ suite("CI scope classifier", () => {
         createInput([
           changed("docs/tasks/example.md"),
           changed("README.ja.md"),
+          changed("README CI 設計 🌹.md"),
           changed("CHANGELOG.md"),
         ]),
       ),
@@ -102,6 +103,14 @@ suite("CI scope classifier", () => {
   test("分類表にないfileはfull scopeにする", () => {
     assertDecision(
       classifyCiScope(createInput([changed("assets/new-runtime-asset.bin")])),
+      "full",
+      fullTargets,
+    );
+  });
+
+  test("分類表にないsrc fileもextension coreと推測せずfull scopeにする", () => {
+    assertDecision(
+      classifyCiScope(createInput([changed("src/unclassified.ts")])),
       "full",
       fullTargets,
     );

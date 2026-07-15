@@ -9,7 +9,9 @@
 //
 // Not tested:
 // - GitHub Actions outputへの書き込み
-// - 実際のgit diff引数とNUL区切りparser
+// - 実際のgit diff process起動とrevision range
+
+import assert from "node:assert/strict";
 
 import {
   assertDecision,
@@ -20,16 +22,20 @@ import {
   createInput,
   fullTargets,
   loadClassifier,
+  loadNameStatusParser,
   webviewTargets,
   type CiScopeInput,
   type ClassifyCiScope,
+  type ParseNameStatus,
 } from "./helpers/ci_scope_classifier_contract.js";
 
 let classifyCiScope: ClassifyCiScope;
+let parseNameStatus: ParseNameStatus;
 
 suite("CI scope classifierの境界入力", () => {
   suiteSetup(async () => {
     classifyCiScope = await loadClassifier();
+    parseNameStatus = await loadNameStatusParser();
   });
 
   test("通常pushのdocs-only変更でもdocs scopeにする", () => {
@@ -121,6 +127,22 @@ suite("CI scope classifierの境界入力", () => {
       checkOnlyTargets,
     );
   });
+
+  test("NUL区切りrename statusから変更前後のpathを保持する", () => {
+    assert.deepStrictEqual(parseNameStatus("R100\0docs/旧 🌹.md\0docs/新\n設計.md\0"), [
+      {
+        path: "docs/新\n設計.md",
+        previousPath: "docs/旧 🌹.md",
+        status: "renamed",
+      },
+    ]);
+  });
+
+  for (const gitStatus of ["R", "R101", "R999"]) {
+    test(`不正なrename status ${gitStatus}を受理しない`, () => {
+      assert.strictEqual(parseNameStatus(`${gitStatus}\0old.md\0new.md\0`), undefined);
+    });
+  }
 
   test("malformed inputをthrowせずfull scopeへ倒す", () => {
     assertFullWithoutThrow(classifyCiScope, null);

@@ -41,10 +41,14 @@ export interface CiScopeDecision {
 }
 
 export type ClassifyCiScope = (input: unknown) => CiScopeDecision;
+export type ParseNameStatus = (output: string) => ChangedFile[] | undefined;
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const classifierUrl = pathToFileURL(
   path.join(repositoryRoot, ".github", "scripts", "detect-ci-scope.mjs"),
+).href;
+const gitDiffReaderUrl = pathToFileURL(
+  path.join(repositoryRoot, ".github", "scripts", "ci-scope", "read-git-diff.mjs"),
 ).href;
 const allOperatingSystems: OperatingSystem[] = ["linux", "macos", "windows"];
 
@@ -89,6 +93,13 @@ export async function loadClassifier(): Promise<ClassifyCiScope> {
   assert.ok(isRecord(classifierModule));
   assert.strictEqual(typeof classifierModule.classifyCiScope, "function");
   return classifierModule.classifyCiScope as ClassifyCiScope;
+}
+
+export async function loadNameStatusParser(): Promise<ParseNameStatus> {
+  const gitDiffReaderModule: unknown = await import(gitDiffReaderUrl);
+  assert.ok(isRecord(gitDiffReaderModule));
+  assert.strictEqual(typeof gitDiffReaderModule.parseNameStatus, "function");
+  return gitDiffReaderModule.parseNameStatus as ParseNameStatus;
 }
 
 export function changed(filePath: string): ChangedFile {
