@@ -177,12 +177,13 @@
 - [0174: CI scope classifierを実装する](0174-implement-ci-scope-classifier.md)
 - [0175: Playwright CIをscope判定へ接続する](0175-wire-playwright-ci-scope.md)
 - [0176: VS Code testのcore / conversion分割を設計する](0176-design-vscode-test-core-conversion-split.md)
+- [0177: Check workflowとpackage checkの差分を整理する](0177-align-check-workflow-with-package-check.md)
 
 ## Todo Tasks
 
 ### AI開発ハーネスとCI
 
-- [0177: Check workflowとpackage checkの差分を整理する](0177-align-check-workflow-with-package-check.md)
+- [0178: Check workflowでpackage checkを実行する](0178-run-package-check-in-ci.md)
 
 ### リリース準備
 
