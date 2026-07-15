@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0186: session-safeなstaging lifecycleを実装する](0186-define-session-safe-staging-lifecycle.md)
+- [0188: AIハーネスとStop hookを検証専用にする](0188-build-task-preflight-and-stop-harness.md)
 
 ## Planned v1 Safety Path
 

@@ -7,9 +7,11 @@ import * as vscode from "vscode";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { resolveOutputConflicts } from "../commands/safe_mode.js";
 import { rememberLastConversion } from "../commands/undo_last_conversion.js";
+import { withCancellationSignal } from "../commands/progress_cancellation.js";
 import {
   cleanupConversionArtifacts,
   type ConversionArtifactRoot,
+  withStagingCleanup,
 } from "../operations/cleanup_conversion_artifacts.js";
 import { localeMap } from "../locale_map.js";
 import { userMessage } from "../commands/user_messages.js";
@@ -57,8 +59,10 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
   constructor(options: LatexPasteEditProviderOptions = {}) {
     this.resolveConflicts = options.resolveOutputConflicts ?? resolveOutputConflicts;
-    this.rememberConversion = options.rememberLastConversion ?? rememberLastConversion;
     this.outputChannel = options.outputChannel;
+    this.rememberConversion =
+      options.rememberLastConversion ??
+      ((outputs) => rememberLastConversion(outputs, this.outputChannel));
   }
 
   async provideDocumentPasteEdits(
@@ -75,99 +79,157 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
       return undefined;
     }
 
-    const pasteAsPdfLabel = localeMap("pasteAsPdfLabel");
-    const pasteAsImageLabel = localeMap("pasteAsImageLabel");
-    const pickedItem = await vscode.window.showQuickPick<PasteQuickPickItem>([
-      {
-        label: pasteAsPdfLabel,
-        detail: localeMap("pasteAsPdfDetail"),
-        description: `(${localeMap("builtIn")})`,
-        pasteKind: "pdf",
-      },
-      {
-        label: pasteAsImageLabel,
-        detail: localeMap("pasteAsImageDetail"),
-        description: `(${localeMap("builtIn")})`,
-        pasteKind: "image",
-      },
-    ]);
-
-    if (!pickedItem || token.isCancellationRequested) {
-      return undefined;
-    }
-
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-
-    if (!workspaceFolder) {
-      return undefined;
-    }
-
-    const defaultOutputPath = resolveOutputPath(config.outputPathClipboardImage, {
-      workspacePath: workspaceFolder.uri.fsPath,
-      workspaceName: workspaceFolder.name,
-      sourcePath: document.uri.fsPath,
-    });
-    const inputOutputPath = await vscode.window.showInputBox(
-      {
-        title: localeMap("pasteOutputPathTitle"),
-        prompt: localeMap("pasteOutputPathPrompt"),
-        value: defaultOutputPath,
-        validateInput: (value) => validateOutputBasePath(value, workspaceFolder.uri.fsPath),
-      },
-      token,
-    );
-
-    if (!inputOutputPath || token.isCancellationRequested) {
-      return undefined;
-    }
-
-    const outputPath = resolveUserOutputBasePath(inputOutputPath, workspaceFolder.uri.fsPath);
-    const runId = randomUUID();
-    const outputs =
-      pickedItem.pasteKind === "pdf"
-        ? await writeClipboardImageAsPdf(
-            data,
-            outputPath,
-            workspaceFolder.uri.fsPath,
-            runId,
-            this.resolveConflicts,
-            this.outputChannel,
-          )
-        : await writeClipboardImage(
-            data,
-            outputPath,
-            workspaceFolder.uri.fsPath,
-            runId,
-            this.resolveConflicts,
-            this.outputChannel,
-          );
-
     try {
-      await this.rememberConversion(outputs);
+      return await withCancellationSignal(token, async (signal) => {
+        const pasteAsPdfLabel = localeMap("pasteAsPdfLabel");
+        const pasteAsImageLabel = localeMap("pasteAsImageLabel");
+        const pickedItem = await vscode.window.showQuickPick<PasteQuickPickItem>([
+          {
+            label: pasteAsPdfLabel,
+            detail: localeMap("pasteAsPdfDetail"),
+            description: `(${localeMap("builtIn")})`,
+            pasteKind: "pdf",
+          },
+          {
+            label: pasteAsImageLabel,
+            detail: localeMap("pasteAsImageDetail"),
+            description: `(${localeMap("builtIn")})`,
+            pasteKind: "image",
+          },
+        ]);
+
+        signal.throwIfAborted();
+
+        if (!pickedItem) {
+          return undefined;
+        }
+
+        const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+
+        if (!workspaceFolder) {
+          return undefined;
+        }
+
+        const defaultOutputPath = resolveOutputPath(config.outputPathClipboardImage, {
+          workspacePath: workspaceFolder.uri.fsPath,
+          workspaceName: workspaceFolder.name,
+          sourcePath: document.uri.fsPath,
+        });
+        const inputOutputPath = await vscode.window.showInputBox(
+          {
+            title: localeMap("pasteOutputPathTitle"),
+            prompt: localeMap("pasteOutputPathPrompt"),
+            value: defaultOutputPath,
+            validateInput: (value) => validateOutputBasePath(value, workspaceFolder.uri.fsPath),
+          },
+          token,
+        );
+
+        signal.throwIfAborted();
+
+        if (!inputOutputPath) {
+          return undefined;
+        }
+
+        const workspacePath = workspaceFolder.uri.fsPath;
+        const outputPath = resolveUserOutputBasePath(inputOutputPath, workspacePath);
+        const runId = randomUUID();
+        const artifact: ConversionArtifactRoot = {
+          rootPath: clipboardStagingRoot(workspacePath, runId),
+          workspacePath,
+        };
+
+        return withStagingCleanup(
+          [artifact],
+          async () => {
+            let undoRecorded = false;
+            let outputs: CommittedConversionOutput[] = [];
+
+            try {
+              signal.throwIfAborted();
+              outputs =
+                pickedItem.pasteKind === "pdf"
+                  ? await writeClipboardImageAsPdf(
+                      data,
+                      outputPath,
+                      workspacePath,
+                      runId,
+                      this.resolveConflicts,
+                      signal,
+                      this.outputChannel,
+                    )
+                  : await writeClipboardImage(
+                      data,
+                      outputPath,
+                      workspacePath,
+                      runId,
+                      this.resolveConflicts,
+                      signal,
+                      this.outputChannel,
+                    );
+
+              signal.throwIfAborted();
+
+              try {
+                await this.rememberConversion(outputs);
+                undoRecorded = true;
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                await vscode.window.showWarningMessage(
+                  userMessage("message.clipboardPaste.undoUnavailable", message),
+                );
+              }
+
+              signal.throwIfAborted();
+              const outputFilePath = outputs[0]?.outputPath;
+
+              if (!outputFilePath) {
+                throw new Error("Clipboard paste did not produce an output file.");
+              }
+
+              const relativeFilePath = path.relative(
+                path.dirname(document.uri.fsPath),
+                outputFilePath,
+              );
+              const basename = path.basename(outputFilePath, path.extname(outputFilePath));
+              const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
+
+              return [
+                new vscode.DocumentPasteEdit(
+                  snippet,
+                  pickedItem.label,
+                  vscode.DocumentDropOrPasteEditKind.Empty,
+                ),
+              ];
+            } finally {
+              await cleanupConversionArtifacts(
+                [
+                  {
+                    ...artifact,
+                    ...(undoRecorded
+                      ? {
+                          preservePaths: outputs.flatMap((output) =>
+                            output.previousFilePath ? [output.previousFilePath] : [],
+                          ),
+                        }
+                      : {}),
+                  },
+                ],
+                this.outputChannel,
+              );
+            }
+          },
+          this.outputChannel,
+        );
+      });
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.clipboardPaste.undoUnavailable", message),
-      );
+      if (!isAbortError(error)) {
+        throw error;
+      }
+
+      this.outputChannel?.appendLine("[clipboard-paste] cancellation requested");
+      return undefined;
     }
-
-    const outputFilePath = outputs[0]?.outputPath;
-
-    if (!outputFilePath) {
-      throw new Error("Clipboard paste did not produce an output file.");
-    }
-
-    const relativeFilePath = path.relative(path.dirname(document.uri.fsPath), outputFilePath);
-    const basename = path.basename(outputFilePath, path.extname(outputFilePath));
-    const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
-
-    return [
-      new vscode.DocumentPasteEdit(
-        snippet,
-        pickedItem.label,
-        vscode.DocumentDropOrPasteEditKind.Empty,
-      ),
-    ];
   }
 
   createSingleFileSnippet(
@@ -220,12 +282,15 @@ async function writeClipboardImage(
   workspacePath: string,
   runId: string,
   resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+  signal: AbortSignal,
   outputChannel?: LineOutputChannel,
 ): Promise<CommittedConversionOutput[]> {
   const stagedOutput = await stageClipboardImage(data, outputPath, workspacePath, runId);
+  signal.throwIfAborted();
   outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedOutput.stagedOutputPath}`);
   return commitConversionOutputs([stagedOutput], {
     resolveConflicts,
+    signal,
     operationName: "clipboard-paste",
     ...(outputChannel !== undefined && { outputChannel }),
   });
@@ -237,32 +302,31 @@ async function writeClipboardImageAsPdf(
   workspacePath: string,
   runId: string,
   resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+  signal: AbortSignal,
   outputChannel?: LineOutputChannel,
 ): Promise<CommittedConversionOutput[]> {
   const stagedImagePath = await stageClipboardImage(data, outputPath, workspacePath, runId);
+  signal.throwIfAborted();
   outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedImagePath.stagedOutputPath}`);
-  const sourceArtifact: ConversionArtifactRoot = {
-    rootPath: stagedImagePath.stagingRootPath ?? path.dirname(stagedImagePath.stagedOutputPath),
-    workspacePath,
-  };
 
-  try {
-    return await convertPngToPdfFiles({
-      jobs: [
-        {
-          sourcePath: stagedImagePath.stagedOutputPath,
-          outputPath: appendExtension(outputPath, "pdf"),
-          workspacePath,
-        },
-      ],
-      runId,
-      supportedExtensions: [`.${data.type.ext}`],
-      resolveOutputConflicts: resolveConflicts,
-      ...(outputChannel !== undefined && { outputChannel }),
-    });
-  } finally {
-    await cleanupConversionArtifacts([sourceArtifact], outputChannel);
-  }
+  return convertPngToPdfFiles({
+    jobs: [
+      {
+        sourcePath: stagedImagePath.stagedOutputPath,
+        outputPath: appendExtension(outputPath, "pdf"),
+        workspacePath,
+      },
+    ],
+    runId,
+    signal,
+    supportedExtensions: [`.${data.type.ext}`],
+    resolveOutputConflicts: resolveConflicts,
+    ...(outputChannel !== undefined && { outputChannel }),
+  });
+}
+
+function clipboardStagingRoot(workspacePath: string, runId: string): string {
+  return path.join(workspacePath, ".latex-graphics-helper", "clipboard-paste", runId);
 }
 
 async function stageClipboardImage(
@@ -333,4 +397,8 @@ function appendExtension(outputPath: string, extension: string): string {
   }
 
   return `${outputPath}${normalizedExtension}`;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }

@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## Change Contract
 
@@ -70,5 +70,8 @@ Clipboard data、CancellationToken、staging、conversion、commit、Undo、LaTe
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                                                                | Result | Notes                                                                                     |
+| ---------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| `pnpm run check:all`                                                   | PASS   | lint, format, runtime/test/Webview typecheck completed; pre-existing lint warnings remain |
+| `./node_modules/.bin/vscode-test --grep "LaTeXクリップボード画像挿入"` | PASS   | 6 Clipboard Paste tests passed, including cancellation and staging cleanup                |
+| `git diff --check`                                                     | PASS   | no whitespace errors                                                                      |

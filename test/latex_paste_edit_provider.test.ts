@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -121,6 +121,9 @@ suite("LaTeXクリップボード画像挿入", () => {
         assert.ok(edit.insertText instanceof vscode.SnippetString);
         assert.ok(normalizeSnippetValue(edit.insertText.value).includes("pasted.png"));
         assert.ok(showWarningMessage.calledOnce);
+        await assert.rejects(
+          access(path.join(directory, ".latex-graphics-helper", "clipboard-paste")),
+        );
       } finally {
         tokenSource.dispose();
       }
@@ -237,6 +240,102 @@ suite("LaTeXクリップボード画像挿入", () => {
         tokenSource.dispose();
       }
     } finally {
+      sandbox.restore();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("変換開始前のcancelでは出力とstagingを作らない", async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const directory = await mkdtemp(
+      path.join(workspaceFolder.uri.fsPath, "lgh-latex-paste-cancel-"),
+    );
+    const tokenSource = new vscode.CancellationTokenSource();
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      const showQuickPick = sandbox.stub(vscode.window, "showQuickPick");
+      sandbox.stub(vscode.window, "showInputBox").resolves(path.join(directory, "pasted"));
+      tokenSource.cancel();
+
+      const document = await vscode.workspace.openTextDocument(documentUri);
+      const provider = new LatexPasteEditProvider();
+      const edits = await provider.provideDocumentPasteEdits(
+        document,
+        [new vscode.Range(0, 0, 0, 0)],
+        pngDataTransfer(),
+        {} as vscode.DocumentPasteEditContext,
+        tokenSource.token,
+        {
+          ...testAppConfig(),
+          outputPathClipboardImage: path.join(directory, "pasted"),
+        },
+      );
+
+      assert.strictEqual(edits, undefined);
+      assert.ok(showQuickPick.notCalled);
+      await assert.rejects(access(path.join(directory, "pasted.png")));
+    } finally {
+      tokenSource.dispose();
+      sandbox.restore();
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("conflict処理中のcancelでは既存出力を変更せずstagingを削除する", async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const directory = await mkdtemp(
+      path.join(workspaceFolder.uri.fsPath, "lgh-latex-paste-conflict-cancel-"),
+    );
+    const tokenSource = new vscode.CancellationTokenSource();
+    const lines: string[] = [];
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      const outputPath = path.join(directory, "pasted.png");
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      await writeFile(outputPath, "existing clipboard image");
+      sandbox.stub(vscode.window, "showQuickPick").resolves({
+        label: "画像形式で貼り付け",
+        detail: "画像をfigure環境に配置",
+        description: "(標準)",
+        pasteKind: "image",
+      } as vscode.QuickPickItem & { pasteKind: "image" });
+      sandbox.stub(vscode.window, "showInputBox").resolves(path.join(directory, "pasted"));
+
+      const document = await vscode.workspace.openTextDocument(documentUri);
+      const provider = new LatexPasteEditProvider({
+        resolveOutputConflicts: async () => {
+          tokenSource.cancel();
+          return "overwrite";
+        },
+        outputChannel: { appendLine: (line) => lines.push(line) },
+      });
+      const edits = await provider.provideDocumentPasteEdits(
+        document,
+        [new vscode.Range(0, 0, 0, 0)],
+        pngDataTransfer(),
+        {} as vscode.DocumentPasteEditContext,
+        tokenSource.token,
+        {
+          ...testAppConfig(),
+          outputPathClipboardImage: path.join(directory, "pasted"),
+        },
+      );
+
+      assert.strictEqual(edits, undefined);
+      assert.strictEqual(await readFile(outputPath, "utf8"), "existing clipboard image");
+      await assert.rejects(access(path.join(directory, ".latex-graphics-helper")));
+      assert.ok(lines.some((line) => line.includes("cancellation requested")));
+    } finally {
+      tokenSource.dispose();
       sandbox.restore();
       await rm(directory, { recursive: true, force: true });
     }
