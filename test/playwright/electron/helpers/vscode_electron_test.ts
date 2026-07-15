@@ -1,4 +1,4 @@
-import { rm, writeFile } from "node:fs/promises";
+import { access, rm, writeFile } from "node:fs/promises";
 
 import { type ElectronApplication, type Page, type TestInfo } from "@playwright/test";
 
@@ -110,16 +110,38 @@ export async function attachElectronDiagnostics({
 export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
+  afterClose?: () => Promise<void>,
 ): Promise<void> {
-  try {
-    if (electronApp) {
-      const electronProcess = electronApp.process();
-      await electronApp.close();
-      if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
-        electronProcess.kill();
+  await Promise.resolve()
+    .then(async () => {
+      if (electronApp) {
+        const electronProcess = electronApp.process();
+        await electronApp.close();
+        if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
+          electronProcess.kill();
+        }
       }
-    }
-  } finally {
-    await rm(temporaryRoot, { recursive: true, force: true });
+    })
+    .then(async () => {
+      await afterClose?.();
+    })
+    .finally(() =>
+      rm(temporaryRoot, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 100,
+      }),
+    );
+
+  if (await pathExists(temporaryRoot)) {
+    throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
+}
+
+function pathExists(filePath: string): Promise<boolean> {
+  return access(filePath).then(
+    () => true,
+    () => false,
+  );
 }

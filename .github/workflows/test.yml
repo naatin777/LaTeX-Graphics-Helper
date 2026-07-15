@@ -38,12 +38,15 @@ jobs:
                     - os: ubuntu-latest
                       label: Linux
                       test_command: xvfb-run pnpm run test
+                      packaged_test_command: xvfb-run pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
                     - os: macos-latest
                       label: macOS
                       test_command: pnpm run test
+                      packaged_test_command: pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
                     - os: windows-latest
                       label: Windows
                       test_command: pnpm run test
+                      packaged_test_command: pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
         steps:
             - uses: actions/checkout@v7
 
@@ -82,13 +85,39 @@ jobs:
             - run: ${{ matrix.test_command }}
               shell: bash
 
+            - name: Resolve VSIX target
+              id: target
+              shell: bash
+              run: |
+                  case "${RUNNER_OS}:${RUNNER_ARCH}" in
+                    Linux:X64) echo "value=linux-x64" >> "$GITHUB_OUTPUT" ;;
+                    Linux:ARM64) echo "value=linux-arm64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:X64) echo "value=darwin-x64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:ARM64) echo "value=darwin-arm64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:X64) echo "value=win32-x64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:ARM64) echo "value=win32-arm64" >> "$GITHUB_OUTPUT" ;;
+                    *) echo "Unsupported runner: ${RUNNER_OS}:${RUNNER_ARCH}" >&2; exit 1 ;;
+                  esac
+
+            - run: pnpm run build
+              shell: bash
+
+            - run: pnpm run package:vsix -- --target "${{ steps.target.outputs.value }}" --out "latex-graphics-helper-${{ steps.target.outputs.value }}.vsix"
+              shell: bash
+
+            - name: Run packaged VSIX offline smoke test
+              run: ${{ matrix.packaged_test_command }}
+              shell: bash
+              env:
+                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ steps.target.outputs.value }}.vsix
+
             - if: matrix.os == 'ubuntu-latest'
               run: xvfb-run pnpm run test:playwright:electron
               shell: bash
 
-            - if: failure() && matrix.os == 'ubuntu-latest'
+            - if: failure()
               uses: actions/upload-artifact@v7
               with:
-                  name: vscode-electron-test-results
+                  name: vscode-test-results-${{ matrix.label }}
                   path: test-results/
                   if-no-files-found: ignore
