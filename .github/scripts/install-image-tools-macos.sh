@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # e2e tools used by conversion tests on macOS.
-brew install poppler librsvg ghostscript qpdf
+brew install poppler librsvg ghostscript
 
 gs_path="$(command -v gs)"
 pdftocairo_path="$(command -v pdftocairo)"
