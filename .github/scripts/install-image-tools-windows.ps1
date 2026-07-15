@@ -1,26 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-# e2e tools used by conversion tests on Windows.
-$qpdfVersion = '12.3.2'
-$qpdfSha256 = '8941870a604e7c87ed24566b038d46c24ce76616254d2383c578f60c0677f202'
-$qpdfZip = Join-Path $env:RUNNER_TEMP 'qpdf.zip'
-$qpdfRoot = Join-Path $env:RUNNER_TEMP 'qpdf'
-
-Write-Host 'Downloading qpdf...'
-Invoke-WebRequest "https://github.com/qpdf/qpdf/releases/download/v${qpdfVersion}/qpdf-${qpdfVersion}-msvc64.zip" -OutFile $qpdfZip
-
-$actualQpdfSha256 = (Get-FileHash $qpdfZip -Algorithm SHA256).Hash.ToLowerInvariant()
-if ($actualQpdfSha256 -ne $qpdfSha256) {
-	throw "qpdf archive SHA-256 mismatch: expected $qpdfSha256, got $actualQpdfSha256"
-}
-
-Expand-Archive $qpdfZip -DestinationPath $qpdfRoot -Force
-$qpdf = Get-ChildItem -Path $qpdfRoot -Recurse -Filter qpdf.exe | Select-Object -First 1
-if (-not $qpdf) {
-	throw "qpdf.exe not found under $qpdfRoot"
-}
-
 $popplerVersion = '24.08.0-0'
 $popplerZip = Join-Path $env:RUNNER_TEMP 'poppler.zip'
 $popplerRoot = Join-Path $env:RUNNER_TEMP 'poppler'
@@ -64,7 +44,6 @@ if (-not $gs) {
 if (-not (Test-Path $pdftocairo.FullName)) { throw "missing $($pdftocairo.FullName)" }
 if (-not (Test-Path $rsvgConvert)) { throw "missing $rsvgConvert" }
 if (-not (Test-Path $gs.FullName)) { throw "missing $($gs.FullName)" }
-if (-not (Test-Path $qpdf.FullName)) { throw "missing $($qpdf.FullName)" }
 
 $chromeCandidates = @(
 	(Join-Path $env:ProgramFiles 'Google/Chrome/Application/chrome.exe'),

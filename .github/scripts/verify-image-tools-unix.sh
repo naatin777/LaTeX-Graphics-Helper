@@ -14,13 +14,10 @@ gs_path="$(read_setting "latex-graphics-helper.execPath.ghostscript")"
 pdftocairo_path="$(read_setting "latex-graphics-helper.execPath.pdftocairo")"
 rsvg_convert_path="$(read_setting "latex-graphics-helper.execPath.rsvgConvert")"
 chrome_path="$(read_setting "latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath")"
-qpdf_path="$(command -v qpdf)"
-
 test -x "${gs_path}"
 test -x "${pdftocairo_path}"
 test -x "${rsvg_convert_path}"
 test -x "${chrome_path}"
-test -x "${qpdf_path}"
 
 echo "Ghostscript: ${gs_path}"
 "${gs_path}" --version
@@ -33,9 +30,6 @@ echo "rsvg-convert: ${rsvg_convert_path}"
 
 echo "Chrome from settings.json: ${chrome_path}"
 "${chrome_path}" --version
-
-echo "qpdf: ${qpdf_path}"
-"${qpdf_path}" --version
 
 work_dir="$(mktemp -d)"
 trap 'rm -rf "${work_dir}"' EXIT
