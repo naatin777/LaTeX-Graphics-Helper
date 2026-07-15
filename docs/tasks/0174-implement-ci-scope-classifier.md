@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -41,3 +41,25 @@ Todo
 - classifier testを実行する
 - `pnpm run check`
 - `git diff --check`
+
+## 実装
+
+- `.github/scripts/detect-ci-scope.mjs`をGitHub Actions用のentry pointとした
+- pureな分類境界、Git差分取得、Actions output生成を責務別のmoduleへ分けた
+- classifierの入力は`unknown`として扱い、malformed input、hostile object、diff取得失敗、unknown pathではthrowせずfull scopeへ倒す
+- renameは変更前後のpathを分類し、`git diff --name-status -z`で空白・Unicode・改行を含むpathを分離したまま読み取る
+- 判定結果をscalar flag、対象OSのJSON配列、decision全体のJSONとして`GITHUB_OUTPUT`へ出力する
+- logには固定されたscopeとreasonだけを出し、変更pathは含めない
+
+## 実施結果
+
+- classifier仕様テストは34件成功した
+- unknownな`src/**`はextension coreと推測せずfull scopeへ倒し、既知core pathだけを明示した
+- `README*.md`の空白・Unicode名と、NUL区切りrename statusの正常・異常系を回帰テストへ追加した
+- 過去のdocs-only commit範囲を使ったCLI smoke testで`scope=docs`と重いjobの無効化flagを出力できた
+- `pnpm run check`は成功した
+- `pnpm run check:test`は成功した
+- `pnpm run test`は実VS Code上で208件成功し、Extension Hostも正常終了した
+- 新規JavaScript 3fileは`oxfmt --check`と`node --check`に成功した
+- `git diff --check`は成功した
+- workflowへの接続は0175へ残した

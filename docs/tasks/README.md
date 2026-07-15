@@ -172,14 +172,14 @@
 - [0171: task実行とLuna委譲を行うskillを実装する](0171-implement-ai-task-routing-skill.md)
 - [0160: worktreeを使う並列作業の運用を設計する](0160-design-worktree-parallel-workflow.md)
 - [0161: 変更影響に応じたCI scopeを設計する](0161-design-change-based-ci-scope.md)
+- [0172: CI scope設計の現状baselineを測定する](0172-measure-ci-scope-baseline.md)
+- [0173: CI scope classifierの仕様テストを追加する](0173-add-ci-scope-classifier-tests.md)
+- [0174: CI scope classifierを実装する](0174-implement-ci-scope-classifier.md)
 
 ## Todo Tasks
 
 ### AI開発ハーネスとCI
 
-- [0172: CI scope設計の現状baselineを測定する](0172-measure-ci-scope-baseline.md)
-- [0173: CI scope classifierの仕様テストを追加する](0173-add-ci-scope-classifier-tests.md)
-- [0174: CI scope classifierを実装する](0174-implement-ci-scope-classifier.md)
 - [0175: Playwright CIをscope判定へ接続する](0175-wire-playwright-ci-scope.md)
 - [0176: VS Code testのcore / conversion分割を設計する](0176-design-vscode-test-core-conversion-split.md)
 - [0177: Check workflowとpackage checkの差分を整理する](0177-align-check-workflow-with-package-check.md)
