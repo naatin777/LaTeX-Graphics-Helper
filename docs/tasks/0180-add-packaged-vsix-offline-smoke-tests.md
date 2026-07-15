@@ -71,3 +71,9 @@ VS Codeのdownload、VSIX生成、VSIX installはテスト準備のためnetwork
 - 生成したVSIXをinstallしたextensionに存在しない`pdftocairo` pathを渡し、失敗することを確認した
 
 ローカルmacOSでは、packaged VSIX経路のElectron起動時にVS Code 1.128.0がmacOSのLaunchServices内で`SIGABRT`する環境依存の失敗が発生した。同じ環境の既存Electron testは成功しているため、3 OSのpackaged UI経路はPRのGitHub Actionsで確認する。
+
+## Windows timeoutの追加修正
+
+GitHub ActionsのWindows実行では、PDF表示・crop・merge・CLI失敗確認まで成功した後、packaged VSIXに含まれる大量のproduction dependencyを削除する終了処理が通常の120秒テスト上限を超えた。
+
+そのため、packaged VSIX経路だけテスト上限を240秒へ広げ、`taskkill`にも10秒の上限を設定して、終了処理が無期限にテストを占有しないようにした。Windows Actionsでの再実行結果を確認するまで、Statusは`Todo`のままとする。

@@ -150,11 +150,17 @@ async function terminateElectronProcess(
 
   if (process.platform === "win32" && electronProcess.pid !== undefined) {
     await execFileAsync("taskkill", ["/PID", String(electronProcess.pid), "/T", "/F"], {
+      timeout: 10_000,
       windowsHide: true,
     }).then(
       () => undefined,
       () => undefined,
     );
+
+    if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
+      electronProcess.kill();
+    }
+
     return;
   }
 

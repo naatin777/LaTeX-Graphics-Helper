@@ -55,6 +55,11 @@ const expectedCropBox = {
 test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", async ({
   playwright,
 }, testInfo) => {
+  if (packagedVsixPath) {
+    // Windows also removes the packaged production dependency tree during teardown.
+    testInfo.setTimeout(240_000);
+  }
+
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
   // oxlint-disable-next-line eslint/no-underscore-dangle
   const electron = playwright._electron;
