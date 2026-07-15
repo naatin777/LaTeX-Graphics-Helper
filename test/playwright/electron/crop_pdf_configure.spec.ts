@@ -16,11 +16,7 @@ import {
   openCropPdfConfigure,
   waitForWebviewTheme,
 } from "./helpers/crop_pdf_webview.js";
-import {
-  installPackagedVsix,
-  type InstalledExtension,
-  uninstallPackagedVsix,
-} from "./helpers/packaged_vsix.js";
+import { installPackagedVsix, type InstalledExtension } from "./helpers/packaged_vsix.js";
 import {
   attachElectronDiagnostics,
   disposeElectronTest,
@@ -265,18 +261,7 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
     });
     throw error;
   } finally {
-    await disposeElectronTest(electronApp, temporaryRoot, async () => {
-      if (!installedExtension) {
-        return;
-      }
-
-      await uninstallPackagedVsix({
-        ...installedExtension,
-        extensionsDir,
-        userDataDir,
-        version: vscodeVersion,
-      });
-    });
+    await disposeElectronTest(electronApp, temporaryRoot);
   }
 });
 

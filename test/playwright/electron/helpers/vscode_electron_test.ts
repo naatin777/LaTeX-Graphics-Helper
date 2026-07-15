@@ -110,7 +110,6 @@ export async function attachElectronDiagnostics({
 export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
-  afterClose?: () => Promise<void>,
 ): Promise<void> {
   await Promise.resolve()
     .then(async () => {
@@ -121,9 +120,6 @@ export async function disposeElectronTest(
           electronProcess.kill();
         }
       }
-    })
-    .then(async () => {
-      await afterClose?.();
     })
     .finally(() =>
       rm(temporaryRoot, {

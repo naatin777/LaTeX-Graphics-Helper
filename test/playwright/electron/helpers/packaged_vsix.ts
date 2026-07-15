@@ -1,20 +1,16 @@
-import { access, readdir, readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 import { runVSCodeCommand } from "@vscode/test-electron";
 
-interface VsCodeProfileOptions {
+interface PackagedVsixOptions {
   extensionsDir: string;
   userDataDir: string;
   version: string;
-}
-
-interface PackagedVsixOptions extends VsCodeProfileOptions {
   vsixPath: string;
 }
 
 export interface InstalledExtension {
-  extensionId: string;
   extensionPath: string;
 }
 
@@ -35,24 +31,6 @@ export async function installPackagedVsix(
   return findInstalledExtension(options.extensionsDir);
 }
 
-export async function uninstallPackagedVsix(
-  options: VsCodeProfileOptions & InstalledExtension,
-): Promise<void> {
-  await runVSCodeCommand(
-    [
-      "--uninstall-extension",
-      options.extensionId,
-      `--extensions-dir=${options.extensionsDir}`,
-      `--user-data-dir=${options.userDataDir}`,
-    ],
-    { version: options.version },
-  );
-
-  if (await pathExists(path.join(options.extensionPath, "out", "extension.js"))) {
-    throw new Error(`Packaged extension runtime was not removed: ${options.extensionPath}`);
-  }
-}
-
 async function findInstalledExtension(extensionsDir: string): Promise<InstalledExtension> {
   const entries = await readdir(extensionsDir, { withFileTypes: true });
   const matches = (
@@ -67,10 +45,7 @@ async function findInstalledExtension(extensionsDir: string): Promise<InstalledE
             return undefined;
           }
 
-          return {
-            extensionId: `${manifest.publisher}.${manifest.name}`,
-            extensionPath,
-          };
+          return { extensionPath };
         }),
     )
   ).filter((match): match is InstalledExtension => match !== undefined);
@@ -94,11 +69,4 @@ async function readManifest(
       ...(typeof manifest.publisher === "string" ? { publisher: manifest.publisher } : {}),
     }))
     .catch(() => undefined);
-}
-
-function pathExists(filePath: string): Promise<boolean> {
-  return access(filePath).then(
-    () => true,
-    () => false,
-  );
 }
