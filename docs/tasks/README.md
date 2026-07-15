@@ -179,12 +179,14 @@
 - [0176: VS Code testのcore / conversion分割を設計する](0176-design-vscode-test-core-conversion-split.md)
 - [0177: Check workflowとpackage checkの差分を整理する](0177-align-check-workflow-with-package-check.md)
 - [0178: Check workflowでpackage checkを実行する](0178-run-package-check-in-ci.md)
+- [0162: パッケージ済みVSIXのオフライン・3 OS動作を調査する](0162-audit-offline-vsix-cross-platform.md)
 
 ## Todo Tasks
 
 ### リリース準備
 
-- [0162: パッケージ済みVSIXのオフライン・3 OS動作を調査する](0162-audit-offline-vsix-cross-platform.md)
+- [0179: VSIXのproduction dependency同梱とplatform packageを成立させる](0179-fix-vsix-production-dependency-packaging.md)
+- [0180: パッケージ済みVSIXのオフライン3 OS smoke testを追加する](0180-add-packaged-vsix-offline-smoke-tests.md)
 - [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md)
 
 ### PDF GUI

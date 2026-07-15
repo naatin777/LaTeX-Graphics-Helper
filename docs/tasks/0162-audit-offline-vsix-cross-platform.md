@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -50,3 +50,20 @@ Todo
 - networkを利用できない条件で実VS Codeから起動する
 - Linux、macOS、Windowsの結果を比較する
 - `git diff --check`
+
+## 実施結果
+
+- 実際にbuildしたVSIXの内容を確認した
+- PDF.js worker、CMap、standard fonts、WASMが両Webview appへ含まれることを確認した
+- `src`と`webview`のruntime codeに外部URLへのnetwork取得処理がないことを静的確認した
+- 通常の`vsce package`がpnpmの依存ツリー検証で失敗することを確認した
+- `--no-dependencies`でVSIXは作成できるが、runtime dependencyが同梱されないためrelease artifactには使えないと判断した
+- `sharp`がinstall環境のOS / architectureごとのnative packageを選ぶため、単一VSIXを3 OSで共有できる根拠がないと判断した
+- macOS arm64について静的なVSIX内容を確認し、Linux / Windowsはパッケージ済みVSIXの実機動作を未確認として記録した
+- 依存同梱・platform packageの問題を[0179](0179-fix-vsix-production-dependency-packaging.md)へ分離した
+- 3 OSのoffline smoke testを[0180](0180-add-packaged-vsix-offline-smoke-tests.md)へ分離した
+- 調査とrelease workflow変更は同じタスクで実施していない
+
+## 調査メモ
+
+- [オフラインVSIXと3 OS配布の調査メモ](../research/2026-07-15-offline-vsix-cross-platform.md)
