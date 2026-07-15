@@ -182,6 +182,7 @@
 - [0162: パッケージ済みVSIXのオフライン・3 OS動作を調査する](0162-audit-offline-vsix-cross-platform.md)
 - [0179: VSIXのproduction dependency同梱とplatform packageを成立させる](0179-fix-vsix-production-dependency-packaging.md)
 - [0181: 外部ツールの一回限りpath probeを削除する](0181-remove-external-tool-path-probe.md)
+- [0182: Draw.ioの複雑なpathを使う実fixtureテストを追加する](0182-add-drawio-complex-path-test.md)
 
 ## Todo Tasks
 
