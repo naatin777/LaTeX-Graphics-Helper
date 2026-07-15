@@ -86,9 +86,9 @@ jobs:
               run: xvfb-run pnpm run test:playwright:electron
               shell: bash
 
-            - if: failure() && matrix.os == 'ubuntu-latest'
+            - if: failure()
               uses: actions/upload-artifact@v7
               with:
-                  name: vscode-electron-test-results
+                  name: vscode-test-results-${{ matrix.label }}
                   path: test-results/
                   if-no-files-found: ignore

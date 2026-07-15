@@ -1,6 +1,10 @@
-import { rm, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { access, rm, writeFile } from "node:fs/promises";
+import { promisify } from "node:util";
 
 import { type ElectronApplication, type Page, type TestInfo } from "@playwright/test";
+
+const execFileAsync = promisify(execFile);
 
 interface ElectronTestPaths {
   extensionsDir: string;
@@ -111,15 +115,67 @@ export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
 ): Promise<void> {
-  try {
-    if (electronApp) {
-      const electronProcess = electronApp.process();
-      await electronApp.close();
-      if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
-        electronProcess.kill();
+  await Promise.resolve()
+    .then(async () => {
+      if (electronApp) {
+        const electronProcess = electronApp.process();
+        const closePromise = electronApp.close().then(
+          () => undefined,
+          () => undefined,
+        );
+        await Promise.race([closePromise, timeout(5_000)]);
+        await terminateElectronProcess(electronProcess);
       }
-    }
-  } finally {
-    await rm(temporaryRoot, { recursive: true, force: true });
+    })
+    .finally(() =>
+      rm(temporaryRoot, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 100,
+      }),
+    );
+
+  if (await pathExists(temporaryRoot)) {
+    throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
+}
+
+async function terminateElectronProcess(
+  electronProcess: ReturnType<ElectronApplication["process"]>,
+): Promise<void> {
+  if (electronProcess.exitCode !== null || electronProcess.signalCode !== null) {
+    return;
+  }
+
+  if (process.platform === "win32" && electronProcess.pid !== undefined) {
+    await execFileAsync("taskkill", ["/PID", String(electronProcess.pid), "/T", "/F"], {
+      timeout: 10_000,
+      windowsHide: true,
+    }).then(
+      () => undefined,
+      () => undefined,
+    );
+
+    if (electronProcess.exitCode === null && electronProcess.signalCode === null) {
+      electronProcess.kill();
+    }
+
+    return;
+  }
+
+  electronProcess.kill();
+}
+
+function timeout(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+function pathExists(filePath: string): Promise<boolean> {
+  return access(filePath).then(
+    () => true,
+    () => false,
+  );
 }

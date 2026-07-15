@@ -1,6 +1,8 @@
+import assert from "node:assert/strict";
 import { cp, mkdir, mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { expect, test, type Page } from "@playwright/test";
 import { downloadAndUnzipVSCode } from "@vscode/test-electron";
@@ -10,9 +12,11 @@ import { cropConfigureFixture } from "../../helpers/crop_configure_fixture.js";
 import { captureCropPdfScreenshot } from "./helpers/crop_pdf_screenshot.js";
 import {
   expectPdfCanvasesReadable,
+  expectWebviewNetworkBlocked,
   openCropPdfConfigure,
   waitForWebviewTheme,
 } from "./helpers/crop_pdf_webview.js";
+import { installPackagedVsix, type InstalledExtension } from "./helpers/packaged_vsix.js";
 import {
   attachElectronDiagnostics,
   disposeElectronTest,
@@ -21,6 +25,7 @@ import {
 
 const projectRoot = process.cwd();
 const vscodeVersion = "1.128.0";
+const packagedVsixPath = process.env.LGH_VSIX_PATH ? resolve(process.env.LGH_VSIX_PATH) : undefined;
 const temporaryBase = process.platform === "win32" ? tmpdir() : "/tmp";
 const sourceFixture = join(
   projectRoot,
@@ -29,6 +34,14 @@ const sourceFixture = join(
   "pdf-operations",
   "user-files",
   cropConfigureFixture.fileName,
+);
+const secondarySourceFixture = join(
+  projectRoot,
+  "test",
+  "fixtures",
+  "pdf-operations",
+  "user-files",
+  " 薔薇🌹.pdf",
 );
 const initialTheme = "Default Dark Modern";
 const alternateTheme = "Default Light Modern";
@@ -42,6 +55,11 @@ const expectedCropBox = {
 test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", async ({
   playwright,
 }, testInfo) => {
+  if (packagedVsixPath) {
+    // Windows also removes the packaged production dependency tree during teardown.
+    testInfo.setTimeout(240_000);
+  }
+
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
   // oxlint-disable-next-line eslint/no-underscore-dangle
   const electron = playwright._electron;
@@ -56,6 +74,7 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
   const outputPath = join(workspacePath, "q a-crop.pdf");
   let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
   let window: Page | undefined;
+  let installedExtension: InstalledExtension | undefined;
   const consoleMessages: string[] = [];
   const sourceFixtureBytes = await readFile(sourceFixture);
 
@@ -71,12 +90,21 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
 
     const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
 
+    if (packagedVsixPath) {
+      installedExtension = await installPackagedVsix({
+        extensionsDir,
+        userDataDir,
+        version: vscodeVersion,
+        vsixPath: packagedVsixPath,
+      });
+    }
+
     electronApp = await electron.launch({
       executablePath: vscodeExecutablePath,
       cwd: projectRoot,
       args: [
         workspacePath,
-        `--extensionDevelopmentPath=${projectRoot}`,
+        ...(packagedVsixPath ? [] : [`--extensionDevelopmentPath=${projectRoot}`]),
         `--user-data-dir=${userDataDir}`,
         `--shared-data-dir=${sharedDataDir}`,
         `--extensions-dir=${extensionsDir}`,
@@ -88,6 +116,7 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
         "--disable-gpu-sandbox",
         "--no-cached-data",
         "--locale=en",
+        ...(packagedVsixPath ? ["--host-resolver-rules=MAP * ~NOTFOUND"] : []),
       ],
     });
     electronApp.on("console", (message) => {
@@ -130,6 +159,10 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
       "Page 2 / 2",
     ]);
     await expect(webviewFrame.getByText(/PDFを表示できませんでした:/)).toHaveCount(0);
+
+    if (packagedVsixPath) {
+      await expectWebviewNetworkBlocked(webviewFrame);
+    }
 
     const darkTheme = await waitForWebviewTheme(body, "vscode-dark");
 
@@ -211,6 +244,14 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
     });
     await expect(successNotification).toBeVisible();
     await vscodeWindow.keyboard.press("Escape");
+
+    if (installedExtension) {
+      await verifyPackagedPdfOperations(
+        installedExtension.extensionPath,
+        workspacePath,
+        temporaryRoot,
+      );
+    }
   } catch (error) {
     await attachElectronDiagnostics({
       consoleMessages,
@@ -228,3 +269,74 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
     await disposeElectronTest(electronApp, temporaryRoot);
   }
 });
+
+async function verifyPackagedPdfOperations(
+  extensionPath: string,
+  workspacePath: string,
+  temporaryRoot: string,
+): Promise<void> {
+  const firstSourcePath = join(workspacePath, "merge-source-1.pdf");
+  const secondSourcePath = join(workspacePath, "merge-source-2.pdf");
+  const mergedOutputPath = join(workspacePath, "merged-offline.pdf");
+  const missingToolOutputPath = join(workspacePath, "missing-pdftocairo.png");
+  const packagedMergeModule = (await import(
+    pathToFileURL(join(extensionPath, "out", "operations", "merge_pdf.js")).href
+  )) as {
+    mergePdf: (options: {
+      sourcePaths: string[];
+      outputPath: string;
+      workspacePath: string;
+    }) => Promise<void>;
+  };
+  const packagedPngModule = (await import(
+    pathToFileURL(join(extensionPath, "out", "operations", "convert_to_png.js")).href
+  )) as {
+    convertToPngFiles: (options: {
+      jobs: Array<{
+        sourcePath: string;
+        outputPath: string;
+        workspacePath: string;
+      }>;
+      pdftocairoPath: string;
+      mermaid: { browserChannel: string };
+      drawio: { drawioPath: string };
+      runId: string;
+    }) => Promise<unknown>;
+  };
+
+  await Promise.all([
+    cp(sourceFixture, firstSourcePath),
+    cp(secondarySourceFixture, secondSourcePath),
+  ]);
+  const sourcePageCounts = await Promise.all(
+    [firstSourcePath, secondSourcePath].map(async (sourcePath) =>
+      (await PDFDocument.load(await readFile(sourcePath))).getPageCount(),
+    ),
+  );
+
+  await packagedMergeModule.mergePdf({
+    sourcePaths: [firstSourcePath, secondSourcePath],
+    outputPath: mergedOutputPath,
+    workspacePath,
+  });
+
+  const mergedDocument = await PDFDocument.load(await readFile(mergedOutputPath));
+  expect(mergedDocument.getPageCount()).toBe(sourcePageCounts[0]! + sourcePageCounts[1]!);
+
+  await assert.rejects(
+    packagedPngModule.convertToPngFiles({
+      jobs: [
+        {
+          sourcePath: firstSourcePath,
+          outputPath: missingToolOutputPath,
+          workspacePath,
+        },
+      ],
+      pdftocairoPath: join(temporaryRoot, "missing-cli", "pdftocairo"),
+      mermaid: { browserChannel: "chrome" },
+      drawio: { drawioPath: join(temporaryRoot, "missing-cli", "drawio") },
+      runId: "packaged-offline-missing-pdftocairo",
+    }),
+    /ENOENT|pdftocairo failed/,
+  );
+}

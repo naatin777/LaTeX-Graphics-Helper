@@ -87,6 +87,19 @@ export async function expectPdfCanvasesReadable(
     .toBe(true);
 }
 
+export async function expectWebviewNetworkBlocked(frame: Frame): Promise<void> {
+  const externalRequestSucceeded = await frame.evaluate(async () => {
+    try {
+      await fetch("https://example.com", { signal: AbortSignal.timeout(2_000) });
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  expect(externalRequestSucceeded).toBe(false);
+}
+
 export async function waitForWebviewTheme(
   body: Locator,
   themeClass: "vscode-dark" | "vscode-light",
