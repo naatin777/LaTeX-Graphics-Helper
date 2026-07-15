@@ -1,11 +1,20 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import * as vscode from "vscode";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import { resolveOutputConflicts } from "../commands/safe_mode.js";
+import { rememberLastConversion } from "../commands/undo_last_conversion.js";
 import { localeMap } from "../locale_map.js";
-import { convertPngToPdf } from "../operations/convert_png_to_pdf.js";
+import { convertPngToPdfFiles } from "../operations/convert_png_to_pdf.js";
+import {
+  commitConversionOutputs,
+  type CommittedConversionOutput,
+  type OutputConflictDecision,
+  type PreparedConversionOutput,
+} from "../operations/commit_conversion_outputs.js";
 import { assertWritablePathInWorkspace } from "../security/workspace_path.js";
 import { escapeLatex, escapeLatexLabel } from "./latex_escape.js";
 import { readLatexInsertionConfig, type LatexInsertionConfig } from "./latex_config.js";
@@ -23,7 +32,23 @@ interface ClipboardImageData {
   buffer: Buffer;
 }
 
+type PasteKind = "pdf" | "image";
+
+interface PasteQuickPickItem extends vscode.QuickPickItem {
+  pasteKind: PasteKind;
+}
+
+export interface LatexPasteEditProviderOptions {
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+}
+
 export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider {
+  private readonly resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>;
+
+  constructor(options: LatexPasteEditProviderOptions = {}) {
+    this.resolveConflicts = options.resolveOutputConflicts ?? resolveOutputConflicts;
+  }
+
   async provideDocumentPasteEdits(
     document: vscode.TextDocument,
     _ranges: readonly vscode.Range[],
@@ -40,16 +65,18 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
     const pasteAsPdfLabel = localeMap("pasteAsPdfLabel");
     const pasteAsImageLabel = localeMap("pasteAsImageLabel");
-    const pickedItem = await vscode.window.showQuickPick([
+    const pickedItem = await vscode.window.showQuickPick<PasteQuickPickItem>([
       {
         label: pasteAsPdfLabel,
         detail: localeMap("pasteAsPdfDetail"),
         description: `(${localeMap("builtIn")})`,
+        pasteKind: "pdf",
       },
       {
         label: pasteAsImageLabel,
         detail: localeMap("pasteAsImageDetail"),
         description: `(${localeMap("builtIn")})`,
+        pasteKind: "image",
       },
     ]);
 
@@ -83,9 +110,31 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     }
 
     const outputPath = resolveUserOutputBasePath(inputOutputPath, workspaceFolder.uri.fsPath);
-    const outputFilePath = isPasteAsPdf(pickedItem.label, pasteAsPdfLabel)
-      ? await writeClipboardImageAsPdf(data, outputPath, workspaceFolder.uri.fsPath)
-      : await writeClipboardImage(data, outputPath, workspaceFolder.uri.fsPath);
+    const runId = randomUUID();
+    const outputs =
+      pickedItem.pasteKind === "pdf"
+        ? await writeClipboardImageAsPdf(
+            data,
+            outputPath,
+            workspaceFolder.uri.fsPath,
+            runId,
+            this.resolveConflicts,
+          )
+        : await writeClipboardImage(
+            data,
+            outputPath,
+            workspaceFolder.uri.fsPath,
+            runId,
+            this.resolveConflicts,
+          );
+    await rememberLastConversion(outputs);
+
+    const outputFilePath = outputs[0]?.outputPath;
+
+    if (!outputFilePath) {
+      throw new Error("Clipboard paste did not produce an output file.");
+    }
+
     const relativeFilePath = path.relative(path.dirname(document.uri.fsPath), outputFilePath);
     const basename = path.basename(outputFilePath, path.extname(outputFilePath));
     const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
@@ -147,37 +196,61 @@ async function writeClipboardImage(
   data: ClipboardImageData,
   outputPath: string,
   workspacePath: string,
-): Promise<string> {
-  const outputFilePath = appendExtension(outputPath, data.type.ext);
-  await assertWritablePathInWorkspace(outputFilePath, workspacePath);
-  await mkdir(path.dirname(outputFilePath), { recursive: true });
-  await writeFile(outputFilePath, data.buffer);
-  return outputFilePath;
+  runId: string,
+  resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+): Promise<CommittedConversionOutput[]> {
+  const stagedOutput = await stageClipboardImage(data, outputPath, workspacePath, runId);
+  return commitConversionOutputs([stagedOutput], {
+    resolveConflicts,
+  });
 }
 
 async function writeClipboardImageAsPdf(
   data: ClipboardImageData,
   outputPath: string,
   workspacePath: string,
-): Promise<string> {
-  const imagePath = await writeClipboardImage(data, outputPath, workspacePath);
-  const pdfPath = appendExtension(outputPath, "pdf");
-
-  try {
-    await convertPngToPdf({
-      sourcePath: imagePath,
-      outputPath: pdfPath,
-      workspacePath,
-    });
-  } finally {
-    await rm(imagePath, { force: true });
-  }
-
-  return pdfPath;
+  runId: string,
+  resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
+): Promise<CommittedConversionOutput[]> {
+  const stagedImagePath = await stageClipboardImage(data, outputPath, workspacePath, runId);
+  return convertPngToPdfFiles({
+    jobs: [
+      {
+        sourcePath: stagedImagePath.stagedOutputPath,
+        outputPath: appendExtension(outputPath, "pdf"),
+        workspacePath,
+      },
+    ],
+    runId,
+    supportedExtensions: [`.${data.type.ext}`],
+    resolveOutputConflicts: resolveConflicts,
+  });
 }
 
-function isPasteAsPdf(label: string, localizedPdfLabel: string): boolean {
-  return label === localizedPdfLabel || label === "PDF形式で貼り付け";
+async function stageClipboardImage(
+  data: ClipboardImageData,
+  outputPath: string,
+  workspacePath: string,
+  runId: string,
+): Promise<PreparedConversionOutput> {
+  const stagedOutputPath = path.join(
+    workspacePath,
+    ".latex-graphics-helper",
+    "clipboard-paste",
+    runId,
+    `source.${data.type.ext}`,
+  );
+  const finalOutputPath = appendExtension(outputPath, data.type.ext);
+
+  await assertWritablePathInWorkspace(stagedOutputPath, workspacePath);
+  await mkdir(path.dirname(stagedOutputPath), { recursive: true });
+  await writeFile(stagedOutputPath, data.buffer);
+
+  return {
+    stagedOutputPath,
+    outputPath: finalOutputPath,
+    workspacePath,
+  };
 }
 
 function resolveUserOutputBasePath(value: string, workspacePath: string): string {

@@ -11,6 +11,7 @@ import * as vscode from "vscode";
 
 import { assertRenderedPdfPagesSimilar } from "./helpers/pdf_visual_assertions.js";
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
+import { localeMap } from "../src/locale_map.js";
 
 const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -192,6 +193,9 @@ suite("PDF結合コマンド", () => {
 
       sandbox.stub(vscode.window, "showSaveDialog").resolves(vscode.Uri.file(outputPath));
       sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+      sandbox
+        .stub(vscode.window, "showWarningMessage")
+        .resolves({ title: localeMap("message.safeMode.overwrite") });
       sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
 
       const commandExecution = vscode.commands.executeCommand(

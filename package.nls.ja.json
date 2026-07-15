@@ -96,11 +96,8 @@
 
   "submenu.splitPdf": "PDFを分割",
   "command.splitPdf.allPages": "全ページを分割",
-  "command.splitPdf.manual": "手動でPDFを分割",
-
   "submenu.mergePdf": "PDFを結合",
   "command.mergePdf.selectedFiles": "選択したPDFファイルを結合",
-  "command.mergePdf.manual": "手動でPDFを結合",
 
   "submenu.convert": "変換",
   "submenu.convertDrawio": "Draw.ioファイルを変換",
@@ -170,6 +167,7 @@
   "message.progress.convertToOutput.title": "{0}個のファイルを{1}に変換しています",
   "message.progress.cropPdf.title": "{0}個のPDFファイルをクロップしています",
   "message.progress.splitPdf.title": "{0}個のPDFファイルを分割しています",
+  "message.progress.mergePdf.title": "{0}個のPDFファイルを結合しています",
   "message.progress.prepareConversion": "{0}変換を準備しています...",
   "message.progress.preparePdfSplit": "PDF分割を準備しています...",
   "message.convertPngToPdf.success": "{0}個のPNGファイルをPDFに変換しました。",
@@ -184,6 +182,7 @@
   "message.convertToOutput.cancelled": "{0}変換はキャンセルされました。",
   "message.cropPdf.cancelled": "PDFクロップはキャンセルされました。",
   "message.splitPdf.cancelled": "PDF分割はキャンセルされました。",
+  "message.mergePdf.cancelled": "PDF結合はキャンセルされました。",
   "message.convertPngToPdf.failed": "PNGからPDFへの変換に失敗しました: {0}",
   "message.convertToPdf.failed": "PDFへの変換に失敗しました: {0}",
   "message.convertToOutput.failed": "{0}への変換に失敗しました: {1}",

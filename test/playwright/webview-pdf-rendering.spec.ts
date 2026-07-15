@@ -96,7 +96,7 @@ test.afterAll(async () => {
   });
 });
 
-for (const appName of ["crop_pdf", "merge_pdf"]) {
+for (const appName of ["crop_pdf"]) {
   test(`${appName} renders the first PDF page`, async ({ page }) => {
     await page.goto(`${baseUrl}/${appName}/index.html`);
 

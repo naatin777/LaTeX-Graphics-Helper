@@ -3,6 +3,9 @@ import path from "node:path";
 import * as vscode from "vscode";
 
 import { mergePdf } from "../operations/merge_pdf.js";
+import { withCancellationSignal } from "./progress_cancellation.js";
+import { resolveOutputConflicts } from "./safe_mode.js";
+import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
@@ -29,19 +32,57 @@ export async function mergePdfSelectedFilesCommand(
       return;
     }
 
-    await mergePdf({
-      sourcePaths: sourceUris.map((sourceUri) => sourceUri.fsPath),
-      outputPath: outputUri.fsPath,
-      workspacePath: workspace.uri.fsPath,
-    });
-
-    await vscode.window.showInformationMessage(
-      userMessage("message.mergePdf.success", sourceUris.length),
+    const outputs = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: userMessage("message.progress.mergePdf.title", sourceUris.length),
+        cancellable: true,
+      },
+      async (_progress, token) => {
+        return withCancellationSignal(token, async (signal) => {
+          return mergePdf({
+            sourcePaths: sourceUris.map((sourceUri) => sourceUri.fsPath),
+            outputPath: outputUri.fsPath,
+            workspacePath: workspace.uri.fsPath,
+            signal,
+            resolveOutputConflicts,
+          });
+        });
+      },
     );
+
+    const successMessage = userMessage("message.mergePdf.success", outputs.length);
+    let undoId: string;
+
+    try {
+      undoId = await rememberLastConversion(outputs);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await vscode.window.showWarningMessage(
+        userMessage("message.undoUnavailable", successMessage, message),
+      );
+      return;
+    }
+
+    const undoAction = userMessage("message.action.undo");
+    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
+
+    if (selectedAction === undoAction) {
+      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
+    }
   } catch (error) {
+    if (isAbortError(error)) {
+      await vscode.window.showInformationMessage(userMessage("message.mergePdf.cancelled"));
+      return;
+    }
+
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage("message.mergePdf.failed", message));
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
