@@ -40,6 +40,7 @@ GitHub Actions、pnpm lockfile、staging package、native Sharp、VSIX target ma
 - `.github/workflows/release.yml`
 - `.vscode-test.mjs`
 - `test/playwright/electron/crop_pdf_configure.spec.ts`
+- `test/safe_mode_status_bar.test.ts`
 - `test/playwright/electron/helpers/packaged_vsix.ts`
 - `test/package_vsix.test.ts`
 - `docs/tasks/0193-harden-webview-boundaries-and-performance.md`
@@ -100,6 +101,7 @@ tagからVSIXまでの検証・依存・target・native moduleの経路を、loc
 | `LGH_VSIX_PATH=/tmp/lgh-package-darwin-arm64.vsix pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts` | Pass            | 1 test passed; installed VSIX exercised PDF operations and packaged Sharp PNG→JPEG.    |
 | `pnpm run package:vsix -- --target linux-x64 ...` on `darwin-arm64`                                                                                        | Pass            | Rejected with exit 1 because target did not match runner.                              |
 | `LGH_TASK_BASE=HEAD~1 pnpm run task:check`                                                                                                                 | Pass            | CI-style base diff mode accepted the committed task scope.                             |
+| `pnpm run test:vscode`                                                                                                                                     | Pass            | 213 tests passed after aligning the Safe Mode tooltip expectation with NLS.            |
 | `git diff --check`                                                                                                                                         | Pass            | No whitespace errors.                                                                  |
 | package/smoke on `linux-*`, `win32-*`, and `darwin-x64` runners                                                                                            | Not run locally | Must be confirmed by the release matrix before this task can be marked Done.           |
 
