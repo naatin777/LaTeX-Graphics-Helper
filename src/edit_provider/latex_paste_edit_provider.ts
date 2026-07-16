@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import * as vscode from "vscode";
@@ -8,22 +6,17 @@ import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { resolveOutputConflicts } from "../commands/safe_mode.js";
 import { rememberLastConversion } from "../commands/undo_last_conversion.js";
 import { withCancellationSignal } from "../commands/progress_cancellation.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-  withStagingCleanup,
-} from "../operations/cleanup_conversion_artifacts.js";
 import { localeMap } from "../locale_map.js";
 import { userMessage } from "../commands/user_messages.js";
-import { convertPngToPdfFiles } from "../operations/convert_png_to_pdf.js";
-import {
-  commitConversionOutputs,
-  type CommittedConversionOutput,
-  type OutputConflictDecision,
-  type PreparedConversionOutput,
-} from "../operations/commit_conversion_outputs.js";
+import type { CommittedConversionOutput } from "../operations/commit_conversion_outputs.js";
+import type { OutputConflictDecision } from "../operations/commit_conversion_outputs.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
-import { assertWritablePathInWorkspace } from "../security/workspace_path.js";
+import {
+  cleanupSavedClipboardImage,
+  saveClipboardImage,
+  type ClipboardImageData,
+  type ClipboardPasteKind,
+} from "../operations/save_clipboard_image.js";
 import { escapeLatex, escapeLatexLabel } from "./latex_escape.js";
 import { readLatexInsertionConfig, type LatexInsertionConfig } from "./latex_config.js";
 import { LatexSnippet } from "./latex_snippet.js";
@@ -33,14 +26,7 @@ const CLIPBOARD_IMAGE_TYPES = [
   { mime: "image/jpeg", ext: "jpeg" },
 ] as const;
 
-type ClipboardImageType = (typeof CLIPBOARD_IMAGE_TYPES)[number];
-
-interface ClipboardImageData {
-  type: ClipboardImageType;
-  buffer: Buffer;
-}
-
-type PasteKind = "pdf" | "image";
+type PasteKind = ClipboardPasteKind;
 
 interface PasteQuickPickItem extends vscode.QuickPickItem {
   pasteKind: PasteKind;
@@ -133,94 +119,57 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
         const workspacePath = workspaceFolder.uri.fsPath;
         const outputPath = resolveUserOutputBasePath(inputOutputPath, workspacePath);
-        const runId = randomUUID();
-        const artifact: ConversionArtifactRoot = {
-          rootPath: clipboardStagingRoot(workspacePath, runId),
-          workspacePath,
-        };
-
-        return withStagingCleanup(
-          [artifact],
-          async () => {
-            let undoRecorded = false;
-            let outputs: CommittedConversionOutput[] = [];
-
-            try {
-              signal.throwIfAborted();
-              outputs =
-                pickedItem.pasteKind === "pdf"
-                  ? await writeClipboardImageAsPdf(
-                      data,
-                      outputPath,
-                      workspacePath,
-                      runId,
-                      this.resolveConflicts,
-                      signal,
-                      this.outputChannel,
-                    )
-                  : await writeClipboardImage(
-                      data,
-                      outputPath,
-                      workspacePath,
-                      runId,
-                      this.resolveConflicts,
-                      signal,
-                      this.outputChannel,
-                    );
-
-              signal.throwIfAborted();
-
-              try {
-                await this.rememberConversion(outputs);
-                undoRecorded = true;
-              } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                await vscode.window.showWarningMessage(
-                  userMessage("message.clipboardPaste.undoUnavailable", message),
-                );
-              }
-
-              signal.throwIfAborted();
-              const outputFilePath = outputs[0]?.outputPath;
-
-              if (!outputFilePath) {
-                throw new Error("Clipboard paste did not produce an output file.");
-              }
-
-              const relativeFilePath = path.relative(
-                path.dirname(document.uri.fsPath),
-                outputFilePath,
-              );
-              const basename = path.basename(outputFilePath, path.extname(outputFilePath));
-              const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
-
-              return [
-                new vscode.DocumentPasteEdit(
-                  snippet,
-                  pickedItem.label,
-                  vscode.DocumentDropOrPasteEditKind.Empty,
-                ),
-              ];
-            } finally {
-              await cleanupConversionArtifacts(
-                [
-                  {
-                    ...artifact,
-                    ...(undoRecorded
-                      ? {
-                          preservePaths: outputs.flatMap((output) =>
-                            output.previousFilePath ? [output.previousFilePath] : [],
-                          ),
-                        }
-                      : {}),
-                  },
-                ],
-                this.outputChannel,
-              );
-            }
+        let undoRecorded = false;
+        const saved = await saveClipboardImage(
+          {
+            data,
+            kind: pickedItem.pasteKind,
+            outputBasePath: outputPath,
+            workspacePath,
           },
-          this.outputChannel,
+          {
+            signal,
+            resolveConflicts: this.resolveConflicts,
+            ...(this.outputChannel !== undefined && { outputChannel: this.outputChannel }),
+          },
         );
+
+        try {
+          try {
+            await this.rememberConversion(saved.outputs);
+            undoRecorded = true;
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            await vscode.window.showWarningMessage(
+              userMessage("message.clipboardPaste.undoUnavailable", message),
+            );
+          }
+
+          signal.throwIfAborted();
+          const outputFilePath = saved.outputs[0]?.outputPath;
+
+          if (!outputFilePath) {
+            throw new Error("Clipboard paste did not produce an output file.");
+          }
+
+          const relativeFilePath = path.relative(path.dirname(document.uri.fsPath), outputFilePath);
+          const basename = path.basename(outputFilePath, path.extname(outputFilePath));
+          const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
+
+          return [
+            new vscode.DocumentPasteEdit(
+              snippet,
+              pickedItem.label,
+              vscode.DocumentDropOrPasteEditKind.Empty,
+            ),
+          ];
+        } finally {
+          await cleanupSavedClipboardImage(
+            saved,
+            undoRecorded,
+            this.outputChannel === undefined ? undefined : { outputChannel: this.outputChannel },
+          );
+        }
       });
     } catch (error) {
       if (!isAbortError(error)) {
@@ -276,87 +225,6 @@ async function readClipboardImageData(
   return undefined;
 }
 
-async function writeClipboardImage(
-  data: ClipboardImageData,
-  outputPath: string,
-  workspacePath: string,
-  runId: string,
-  resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
-  signal: AbortSignal,
-  outputChannel?: LineOutputChannel,
-): Promise<CommittedConversionOutput[]> {
-  const stagedOutput = await stageClipboardImage(data, outputPath, workspacePath, runId);
-  signal.throwIfAborted();
-  outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedOutput.stagedOutputPath}`);
-  return commitConversionOutputs([stagedOutput], {
-    resolveConflicts,
-    signal,
-    operationName: "clipboard-paste",
-    ...(outputChannel !== undefined && { outputChannel }),
-  });
-}
-
-async function writeClipboardImageAsPdf(
-  data: ClipboardImageData,
-  outputPath: string,
-  workspacePath: string,
-  runId: string,
-  resolveConflicts: (conflicts: string[]) => Promise<OutputConflictDecision>,
-  signal: AbortSignal,
-  outputChannel?: LineOutputChannel,
-): Promise<CommittedConversionOutput[]> {
-  const stagedImagePath = await stageClipboardImage(data, outputPath, workspacePath, runId);
-  signal.throwIfAborted();
-  outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedImagePath.stagedOutputPath}`);
-
-  return convertPngToPdfFiles({
-    jobs: [
-      {
-        sourcePath: stagedImagePath.stagedOutputPath,
-        outputPath: appendExtension(outputPath, "pdf"),
-        workspacePath,
-      },
-    ],
-    runId,
-    signal,
-    supportedExtensions: [`.${data.type.ext}`],
-    resolveOutputConflicts: resolveConflicts,
-    ...(outputChannel !== undefined && { outputChannel }),
-  });
-}
-
-function clipboardStagingRoot(workspacePath: string, runId: string): string {
-  return path.join(workspacePath, ".latex-graphics-helper", "clipboard-paste", runId);
-}
-
-async function stageClipboardImage(
-  data: ClipboardImageData,
-  outputPath: string,
-  workspacePath: string,
-  runId: string,
-): Promise<PreparedConversionOutput> {
-  const stagedOutputPath = path.join(
-    workspacePath,
-    ".latex-graphics-helper",
-    "clipboard-paste",
-    runId,
-    `source.${data.type.ext}`,
-  );
-  const stagingRootPath = path.dirname(stagedOutputPath);
-  const finalOutputPath = appendExtension(outputPath, data.type.ext);
-
-  await assertWritablePathInWorkspace(stagedOutputPath, workspacePath);
-  await mkdir(path.dirname(stagedOutputPath), { recursive: true });
-  await writeFile(stagedOutputPath, data.buffer);
-
-  return {
-    stagedOutputPath,
-    outputPath: finalOutputPath,
-    workspacePath,
-    stagingRootPath,
-  };
-}
-
 function resolveUserOutputBasePath(value: string, workspacePath: string): string {
   const trimmedValue = value.trim();
   return path.isAbsolute(trimmedValue)
@@ -383,20 +251,6 @@ function validateOutputBasePath(value: string, workspacePath: string): string | 
   }
 
   return undefined;
-}
-
-function appendExtension(outputPath: string, extension: string): string {
-  const normalizedExtension = extension.startsWith(".") ? extension : `.${extension}`;
-  const currentExtension = path.extname(outputPath).toLowerCase();
-
-  if (
-    currentExtension === normalizedExtension ||
-    (normalizedExtension === ".jpeg" && currentExtension === ".jpg")
-  ) {
-    return outputPath;
-  }
-
-  return `${outputPath}${normalizedExtension}`;
 }
 
 function isAbortError(error: unknown): boolean {
