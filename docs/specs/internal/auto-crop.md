@@ -74,7 +74,7 @@ progressはキャンセル可能とする。
 - `.latex-graphics-helper/` 内の途中ファイルは残す
 - エラーではなくキャンセル通知を表示する
 
-詳細は `docs/specs/conversion-progress-and-cancellation.md` を参照する。
+詳細は `docs/specs/internal/conversion-progress-and-cancellation.md` を参照する。
 
 ## 出力
 
@@ -90,7 +90,7 @@ progressはキャンセル可能とする。
 
 すべての入力PDFについて変換処理が成功するまで、指定出力先へファイルを作成しない。
 
-出力先にファイルが既に存在する場合は、`docs/specs/safe-mode.md`に従って処理する。
+出力先にファイルが既に存在する場合は、`docs/specs/internal/safe-mode.md`に従って処理する。
 
 完成ファイルの反映途中で失敗した場合は、その実行で既に反映した出力ファイルを削除する。
 
@@ -106,7 +106,7 @@ progressはキャンセル可能とする。
 
 通常の `Ctrl+Z` / `Cmd+Z` は変更しない。
 
-詳細は `docs/specs/undo-last-conversion.md` を参照する。
+詳細は `docs/specs/internal/undo-last-conversion.md` を参照する。
 
 ## エラー
 

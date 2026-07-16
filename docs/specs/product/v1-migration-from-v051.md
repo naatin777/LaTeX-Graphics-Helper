@@ -130,6 +130,6 @@ migration noteでは、このファイルの以下の表をユーザー向けに
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/product/output-format-conversion.md`
 - `docs/tasks/0112-track-v051-public-feature-parity.md`
 - `docs/tasks/0115-decide-v051-legacy-compatibility.md`

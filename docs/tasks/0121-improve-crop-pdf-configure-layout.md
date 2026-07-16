@@ -35,7 +35,7 @@ Done
 
 ## 関連
 
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 - [0120: cropPdf.configure GUIを実操作できる状態へ仕上げる](0120-finish-crop-pdf-configure-gui.md)
 
 ## 確認方法

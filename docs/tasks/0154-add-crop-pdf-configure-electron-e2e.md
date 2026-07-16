@@ -109,8 +109,8 @@ VS Code、Explorer、Webview、PDF.js、Hostとのmessage、`pdf-lib`によるAp
 
 ## 関連
 
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
-- [テスト方針](../test-policy.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
+- [テスト方針](../specs/internal/test-policy.md)
 - [ADR-0013: VS Code ElectronをWebview visual testに使う](../adr/0013-use-vscode-electron-for-webview-visual-tests.md)
 - [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
 - [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)

@@ -50,7 +50,7 @@ ${fileDirname}/${fileBasenameNoExtension}/${page}.pdf
 
 出力先が同じ変換内で重複する場合は、出力反映前に全体停止する。
 
-出力先に既存ファイルがある場合は、`docs/specs/safe-mode.md`に従って処理する。
+出力先に既存ファイルがある場合は、`docs/specs/internal/safe-mode.md`に従って処理する。
 
 出力反映途中で失敗した場合は、その実行で反映済みの出力だけを削除する。
 
@@ -74,7 +74,7 @@ Webviewは使用しない。
 
 生成したすべてのページPDFを、直前の変換1回分として記録する。
 
-取消時の安全条件は `docs/specs/undo-last-conversion.md` に従う。
+取消時の安全条件は `docs/specs/internal/undo-last-conversion.md` に従う。
 
 ## エラー
 

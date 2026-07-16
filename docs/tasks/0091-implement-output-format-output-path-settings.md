@@ -35,7 +35,7 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0090-add-output-format-output-path-setting-tests.md`
 
 ## 確認方法

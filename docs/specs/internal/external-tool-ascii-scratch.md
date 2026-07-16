@@ -119,7 +119,7 @@ separatorはNode.js `path`が生成したnative形式をそのまま引数とし
 
 別名file、0 byte file、途中fileは成功扱いしない。期待外のfileはscratch内に残してよいが、transaction stagingや論理出力へcopyしない。
 
-PDF・画像として内容が妥当かを検証するpreflightは[変換入力preflightタスク](../tasks/0128-design-input-preflight-validation.md)で別に決める。
+PDF・画像として内容が妥当かを検証するpreflightは[変換入力preflightタスク](../../tasks/0128-design-input-preflight-validation.md)で別に決める。
 
 ## Safe ModeとUndo
 
@@ -215,9 +215,9 @@ platform、temp候補、file APIはテストから注入できるようにし、
 
 ## 関連
 
-- [ADR-0012](../adr/0012-use-os-temp-for-incompatible-windows-tools.md)
+- [ADR-0012](../../adr/0012-use-os-temp-for-incompatible-windows-tools.md)
 - [workspace境界仕様](file-operation-security.md)
 - [Safe Mode仕様](safe-mode.md)
 - [直前変換取消仕様](undo-last-conversion.md)
 - [進捗・cancel仕様](conversion-progress-and-cancellation.md)
-- [OS別path互換性調査](../research/2026-07-11-external-tool-path-compatibility.md)
+- [OS別path互換性調査](../../research/2026-07-11-external-tool-path-compatibility.md)

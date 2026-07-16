@@ -42,8 +42,8 @@ VS Code command、operation、Safe Mode、Output Channel、workspace path、mani
 - `test/safe_mode*.test.ts`
 - `test/*command*.test.ts`
 - `test/workspace_path.test.ts`
-- `docs/specs/safe-mode.md`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/safe-mode.md`
+- `docs/specs/internal/file-operation-security.md`
 - `README.md`
 - `README.ja.md`
 - `AGENTS.md`
@@ -55,8 +55,8 @@ VS Code command、operation、Safe Mode、Output Channel、workspace path、mani
 
 ### Related
 
-- [Safe Mode仕様](../specs/safe-mode.md)
-- [ファイル操作security仕様](../specs/file-operation-security.md)
+- [Safe Mode仕様](../specs/internal/safe-mode.md)
+- [ファイル操作security仕様](../specs/internal/file-operation-security.md)
 
 ### Evidence matrix
 

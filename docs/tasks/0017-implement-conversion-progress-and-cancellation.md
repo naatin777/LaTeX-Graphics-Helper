@@ -23,8 +23,8 @@ Done
 
 - `src/commands/crop_pdf_auto.ts`
 - `src/operations/crop_pdf_auto.ts`
-- `docs/specs/auto-crop.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/auto-crop.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0017-implement-conversion-progress-and-cancellation.md`
@@ -37,8 +37,8 @@ Done
 
 ## 関連
 
-- `docs/specs/auto-crop.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/auto-crop.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 - `docs/tasks/0016-add-conversion-cancellation-tests.md`
 
 ## 確認方法

@@ -26,7 +26,7 @@ Ghostscriptが見つからない場合や実行に失敗した場合に、適切
 
 ## 関連
 
-- `docs/specs/auto-crop.md`
+- `docs/specs/internal/auto-crop.md`
 
 ## 確認方法
 

@@ -34,7 +34,7 @@ LaTeX document drop provider、URI-list parsing、local/remote URI境界、relat
 - `src/edit_provider/latex_snippet.ts`
 - `test/latex_drop_edit_provider.test.ts`
 - `test/latex_snippet.test.ts`
-- `docs/specs/latex-insertion.md`
+- `docs/specs/product/latex-insertion.md`
 - `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/0192-harden-latex-drop-and-paste.md`
 - `docs/tasks/README.md`
@@ -99,7 +99,7 @@ Drop/Pasteの入力境界を仕様化し、ユーザーが意図しない部分�
 
 ## 関連
 
-- [LaTeX挿入仕様](../specs/latex-insertion.md)
+- [LaTeX挿入仕様](../specs/product/latex-insertion.md)
 
 ## 確認方法
 

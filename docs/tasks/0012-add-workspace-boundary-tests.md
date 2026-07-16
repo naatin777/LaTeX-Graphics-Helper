@@ -54,9 +54,9 @@ Not tested:
 
 ## 関連
 
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`
 - `docs/test-matrix.md`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/file-operation-security.md`
 - `docs/tasks/0009-restrict-file-operations-to-workspace.md`
 
 ## 確認方法

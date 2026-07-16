@@ -43,7 +43,7 @@ JPEG、WebP、AVIFはsharpで読み取ってPNGに正規化してPDFへ埋め込
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0043-add-convert-to-pdf-image-format-tests.md`
 
 ## 確認方法

@@ -22,7 +22,7 @@ Done
 - `src/presentation/commit_output_files.ts`
 - `src/commands/crop_pdf_auto.ts`
 - `src/operations/crop_pdf_auto.ts`
-- `docs/specs/auto-crop.md`
+- `docs/specs/internal/auto-crop.md`
 - `docs/specs/workspace-edit-output-commit.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`

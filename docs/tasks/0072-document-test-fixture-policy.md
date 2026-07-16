@@ -10,13 +10,13 @@ Done
 
 ## 完了条件
 
-- `docs/test-policy.md` に変換テストのfixture方針を追加する
+- `docs/specs/internal/test-policy.md` に変換テストのfixture方針を追加する
 - `AGENTS.md` にAI向けの短い注意を追加する
 - タスク一覧にこのタスクを追加する
 
 ## 変更可能なファイル
 
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`
 - `AGENTS.md`
 - `docs/tasks/0072-document-test-fixture-policy.md`
 - `docs/tasks/README.md`
@@ -29,7 +29,7 @@ Done
 
 ## 関連
 
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`
 - `AGENTS.md`
 
 ## 確認方法

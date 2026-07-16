@@ -30,7 +30,7 @@ Todo
 
 ## 関連
 
-- [output-format-conversion.md](../specs/output-format-conversion.md)
+- [output-format-conversion.md](../specs/internal/output-format-conversion.md)
 
 ## 確認方法
 

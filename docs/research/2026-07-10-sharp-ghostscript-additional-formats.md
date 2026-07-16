@@ -76,4 +76,4 @@
 
 - `docs/tasks/0129-design-additional-image-and-eps-formats.md`
 - `docs/tasks/0128-design-input-preflight-validation.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`

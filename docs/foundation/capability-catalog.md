@@ -64,4 +64,4 @@
 - staleな対象一覧を個別specで更新するか、共通capability specへ統合するか
 - conversion source / output matrixを正式contractとしてどこへ置くか
 
-採用後は、この文書を第二の仕様正本として維持せず、確定内容を`docs/specs/`と`docs/test-policy.md`へ移す。
+採用後は、この文書を第二の仕様正本として維持せず、確定内容を`docs/specs/`と`docs/specs/internal/test-policy.md`へ移す。

@@ -51,7 +51,7 @@ Crop Webview frontend、PDF.js rendering lifecycle、Host/Webview protocol、CSP
 - `test/crop_pdf_configure_command.test.ts`
 - `test/webview/**`
 - `test/playwright/webview-pdf-rendering.spec.ts`
-- `docs/specs/crop-pdf-configure.md`
+- `docs/specs/internal/crop-pdf-configure.md`
 - `docs/tasks/0192-harden-latex-drop-and-paste.md`
 - `docs/tasks/0193-harden-webview-boundaries-and-performance.md`
 - `docs/tasks/README.md`
@@ -118,7 +118,7 @@ Crop Webview frontend、PDF.js rendering lifecycle、Host/Webview protocol、CSP
 
 ## 関連
 
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 
 ## 確認方法
 

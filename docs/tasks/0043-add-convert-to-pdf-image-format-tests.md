@@ -12,7 +12,7 @@ Done
 
 ## 背景
 
-`docs/specs/output-format-conversion.md`では、`PDF`出力形式コマンドがPNG、JPEG、WebP、AVIF、SVG、Draw.ioを入力として受け取れる方針になっている。
+`docs/specs/internal/output-format-conversion.md`では、`PDF`出力形式コマンドがPNG、JPEG、WebP、AVIF、SVG、Draw.ioを入力として受け取れる方針になっている。
 
 現状の`convertToPdf`はPNG入力だけに対応している。まずは既存のsharp/pdf-lib実装に近いJPEG、WebP、AVIFを対象にする。
 
@@ -41,7 +41,7 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0034-add-convert-to-pdf-output-format-tests.md`
 - `docs/tasks/0035-implement-convert-to-pdf-output-format-command.md`
 

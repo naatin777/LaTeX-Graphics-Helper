@@ -35,7 +35,7 @@ Done
 ## 関連
 
 - [Ghostscript scratch失敗テスト](0143-add-windows-ghostscript-ascii-staging-tests.md)
-- [外部コマンド用ASCII scratch仕様](../specs/external-tool-ascii-scratch.md)
+- [外部コマンド用ASCII scratch仕様](../specs/internal/external-tool-ascii-scratch.md)
 - [ADR-0012](../adr/0012-use-os-temp-for-incompatible-windows-tools.md)
 
 ## 確認方法

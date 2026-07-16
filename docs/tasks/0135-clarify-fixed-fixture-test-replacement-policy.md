@@ -18,7 +18,7 @@ Done
 
 ## 変更可能なファイル
 
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`
 - `.rulesync/rules/overview.md`
 - RuleSyncが生成するAIルールファイル
 - `docs/tasks/README.md`
@@ -32,7 +32,7 @@ Done
 
 ## 関連
 
-- [テスト方針](../test-policy.md)
+- [テスト方針](../specs/internal/test-policy.md)
 - [0126: 実fixtureと画像比較を使うテスト方針を決める](0126-design-real-fixture-and-visual-testing.md)
 
 ## 確認方法

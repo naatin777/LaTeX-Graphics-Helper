@@ -17,7 +17,7 @@ Todo
 
 ## 変更可能なファイル
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/adr/`
 - `docs/tasks/0098-decide-pair-output-path-settings-migration.md`
 - 必要なら `docs/tasks/README.md`

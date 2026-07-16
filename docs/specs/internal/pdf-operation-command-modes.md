@@ -50,7 +50,7 @@ Webview GUIでPDFを確認しながら条件を指定して実行する操作。
 注意:
 
 - 現行実装に `manual` や `selectedPages` が残っている場合は、後続の実装タスクで上記方針へ合わせる
-- 既存の公開済み旧command IDとの互換aliasは、`docs/specs/v1-migration-from-v051.md`の方針に従い実装しない
+- 既存の公開済み旧command IDとの互換aliasは、`docs/specs/product/v1-migration-from-v051.md`の方針に従い実装しない
 
 ## crop
 

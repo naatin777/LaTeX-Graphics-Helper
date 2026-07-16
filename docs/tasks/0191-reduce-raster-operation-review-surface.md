@@ -45,13 +45,13 @@ raster operations、source format、output path、Sharp encoder、Draw.io/Mermai
 - `test/raster_conversion_pipeline.test.ts`
 - `test/source_format.test.ts`
 - `AGENTS.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/README.md`
 
 ### Related
 
-- [出力形式変換仕様](../specs/output-format-conversion.md)
+- [出力形式変換仕様](../specs/internal/output-format-conversion.md)
 
 ### Evidence matrix
 

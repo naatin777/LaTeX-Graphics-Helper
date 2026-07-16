@@ -25,7 +25,7 @@ Done
 
 ## やること
 
-- `docs/specs/output-format-conversion.md` の出力パス設定移行方針を具体化する
+- `docs/specs/internal/output-format-conversion.md` の出力パス設定移行方針を具体化する
 - 新しい `outputPath.convertTo*` 設定の候補を決める
 - 新設定と既存ペア別設定の優先順位を決める
 - 空文字・空白のみ・未設定・ページ番号変数の扱いを決める
@@ -39,7 +39,7 @@ Done
 
 ## 変更可能なファイル
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0089-design-output-format-output-path-settings.md`
 - `docs/tasks/README.md`
 
@@ -52,7 +52,7 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0048-track-unimplemented-work.md`
 - `docs/tasks/0069-define-output-path-template-source-semantics.md`
 

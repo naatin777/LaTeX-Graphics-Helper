@@ -37,7 +37,7 @@ Done
 ## 関連
 
 - `docs/tasks/0070-add-convert-to-jpeg-tests.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 
 ## 確認方法
 

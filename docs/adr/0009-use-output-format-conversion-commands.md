@@ -31,7 +31,7 @@ Accepted
 
 その後、v1.0.0では破壊的変更として旧command IDの互換aliasを実装しない方針に変更した。
 
-詳細な移行表は`docs/specs/v1-migration-from-v051.md`に記録する。
+詳細な移行表は`docs/specs/product/v1-migration-from-v051.md`に記録する。
 
 ## Consequences
 
@@ -45,7 +45,7 @@ Accepted
 
 ## Related
 
-- `docs/specs/output-format-conversion.md`
-- `docs/specs/safe-mode.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/output-format-conversion.md`
+- `docs/specs/internal/safe-mode.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 - `docs/tasks/0032-redesign-conversion-commands-by-output-format.md`

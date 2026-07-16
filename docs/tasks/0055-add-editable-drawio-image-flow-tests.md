@@ -31,10 +31,10 @@ Done
 ## 関連
 
 - `docs/tasks/0054-implement-editable-drawio-image-to-pdf.md`
-- `docs/specs/output-format-conversion.md`
-- `docs/specs/safe-mode.md`
-- `docs/specs/undo-last-conversion.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/output-format-conversion.md`
+- `docs/specs/internal/safe-mode.md`
+- `docs/specs/internal/undo-last-conversion.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 
 ## 確認方法
 

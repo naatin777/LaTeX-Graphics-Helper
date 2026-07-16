@@ -62,6 +62,6 @@ GitHub Actionsで外部ツールを検証するときは、インストール後
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/output-format-conversion.md`
+- `docs/specs/internal/file-operation-security.md`
 - `docs/tasks/0066-verify-ci-external-tools.md`

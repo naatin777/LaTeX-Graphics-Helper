@@ -70,7 +70,7 @@ Done
 - 同じ拡張子のファイルを同じ出力形式へ変換しようとした場合は、非対応入力として全体停止する
 - 出力形式基準への移行は、まず`PDFに変換`から段階的に行う
 
-詳細は`docs/specs/output-format-conversion.md`へ記録した。
+詳細は`docs/specs/internal/output-format-conversion.md`へ記録した。
 
 ## 完了条件
 
@@ -102,9 +102,9 @@ Done
 
 ## 関連
 
-- `docs/specs/safe-mode.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/safe-mode.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/adr/0009-use-output-format-conversion-commands.md`
 - `docs/tasks/0028-add-png-safe-mode-tests.md`
 - `docs/tasks/0029-integrate-png-conversion-with-safe-mode.md`

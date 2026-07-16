@@ -35,7 +35,7 @@ Done
 
 ## 関連
 
-- [テスト方針](../test-policy.md)
+- [テスト方針](../specs/internal/test-policy.md)
 - [0135: 固定fixtureによる既存テスト置換方針を明記する](0135-clarify-fixed-fixture-test-replacement-policy.md)
 
 ## 確認方法

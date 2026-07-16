@@ -50,7 +50,7 @@ PDF操作GUIの命名や実装と混ぜると仕様が膨らむため、LaTeX挿
 
 - [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
 - [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)
-- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
+- [pdf-operation-command-modes.md](../specs/internal/pdf-operation-command-modes.md)
 
 ## 確認方法
 

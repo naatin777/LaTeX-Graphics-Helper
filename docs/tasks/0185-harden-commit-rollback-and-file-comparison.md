@@ -38,8 +38,8 @@ commit、backup、rollback、cancellation、Output Channel、large-file comparis
 - `test/file_content_hash.test.ts`
 - `docs/tasks/0000-template.md`
 - `docs/tasks/0186-0195-*.md`
-- `docs/specs/undo-last-conversion.md`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/undo-last-conversion.md`
+- `docs/specs/internal/file-operation-security.md`
 - `docs/tasks/0185-harden-commit-rollback-and-file-comparison.md`
 - `docs/tasks/README.md`
 

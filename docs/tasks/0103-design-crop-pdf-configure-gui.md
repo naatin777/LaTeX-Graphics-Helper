@@ -49,8 +49,8 @@ Done
 ## 関連
 
 - [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
-- [auto-crop.md](../specs/auto-crop.md)
-- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
+- [auto-crop.md](../specs/internal/auto-crop.md)
+- [pdf-operation-command-modes.md](../specs/internal/pdf-operation-command-modes.md)
 
 ## 確認方法
 
@@ -58,7 +58,7 @@ Done
 
 ## 実施内容
 
-- `docs/specs/crop-pdf-configure.md` を追加した
+- `docs/specs/internal/crop-pdf-configure.md` を追加した
 - 初期実装は単一PDFだけを対象にする方針にした
 - 1つのbboxを全ページまたは選択ページへ適用する方針にした
 - ページごとに異なるcrop範囲、複数PDF同時処理、margin指定は初期実装の対象外にした

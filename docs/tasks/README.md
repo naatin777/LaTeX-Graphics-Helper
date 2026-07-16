@@ -2,7 +2,29 @@
 
 ## Current Task
 
-- [0201: Node testを3 OS CIで検証する](0201-experiment-node-test-ci-matrix.md)（進行中）
+- [0201: Node-level testの実行基盤を決定する](0201-decide-node-test-runtime.md)（進行中）
+
+## Task boundaries
+
+Taskは小さな作業手順やPR単位ではなく、達成する成果または意思決定を単位とする。
+
+1つのtaskは複数のphase、experiment、PRを含んでよい。
+
+次の理由だけでは新しいtaskを作成しない。
+
+- PRやbranchが別になる
+- localとCIで実行場所が異なる
+- 実験結果の記録が必要
+- script名を変更する
+- policy文書を更新する
+- maintainerによる判断が必要
+
+新しいtaskへ分けるのは、次のいずれかを満たす場合とする。
+
+- 単独で利用価値がある
+- 必要な意思決定が独立している
+- 変更範囲またはリスクが大きく異なる
+- 別担当で並行して完了できる
 
 ## Planned
 

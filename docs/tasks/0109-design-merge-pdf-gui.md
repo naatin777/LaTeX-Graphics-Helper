@@ -47,7 +47,7 @@ Todo
 
 - [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
 - [0006: WebviewにPDFの最初のページを表示する](0006-render-first-pdf-page-in-webviews.md)
-- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
+- [pdf-operation-command-modes.md](../specs/internal/pdf-operation-command-modes.md)
 
 ## 確認方法
 

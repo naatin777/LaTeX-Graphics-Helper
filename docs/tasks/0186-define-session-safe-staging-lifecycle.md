@@ -32,7 +32,7 @@ workspace staging、Undo backup、複数window、symlink、cleanup失敗。
 - `src/operations/*.ts`
 - `test/cleanup_conversion_artifacts.test.ts`
 - `test/undo_last_conversion.test.ts`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/file-operation-security.md`
 - `docs/adr/0006-use-workspace-staging-for-file-operations.md`
 - `docs/tasks/0186-define-session-safe-staging-lifecycle.md`
 - `docs/tasks/README.md`

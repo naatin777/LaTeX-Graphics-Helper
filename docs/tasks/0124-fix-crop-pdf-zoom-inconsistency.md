@@ -31,7 +31,7 @@ Done
 
 ## 関連
 
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 - [0122: cropPdf.configureのズーム操作とスクロール範囲を改善する](0122-improve-crop-pdf-zoom-and-scroll.md)
 
 ## 確認方法

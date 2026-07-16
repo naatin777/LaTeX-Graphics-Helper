@@ -126,7 +126,7 @@ OSで禁止される文字、予約名、先頭末尾空白、末尾ピリオド
 - Windows専用の禁止文字・予約名をmacOS/Linuxで一律には拒否しない
 - 自動置換は行わない
 
-正式仕様は[outputPath検証仕様](../specs/output-path-validation.md)を正本とする。
+正式仕様は[outputPath検証仕様](../specs/internal/output-path-validation.md)を正本とする。
 
 ## 再確認条件
 

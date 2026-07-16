@@ -29,8 +29,8 @@ Done
 - `package.json`
 - `package.nls.json`
 - `package.nls.ja.json`
-- `docs/specs/conversion-progress-and-cancellation.md`
-- `docs/specs/split-pdf-all-pages.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/split-pdf-all-pages.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0019-implement-split-pdf-all-pages.md`
@@ -45,7 +45,7 @@ Done
 
 ## 関連
 
-- `docs/specs/split-pdf-all-pages.md`
+- `docs/specs/internal/split-pdf-all-pages.md`
 - `docs/tasks/0018-add-split-pdf-all-pages-tests.md`
 
 ## 確認方法

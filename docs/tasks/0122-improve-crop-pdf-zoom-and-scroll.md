@@ -32,7 +32,7 @@ Done
 
 ## 関連
 
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 - [0121: cropPdf.configure GUIのレイアウトを左右分割へ改善する](0121-improve-crop-pdf-configure-layout.md)
 
 ## 確認方法
