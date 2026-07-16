@@ -18,7 +18,7 @@ import {
   type SvgToPdfOptions,
 } from "../operations/convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runConversionCommand } from "./run_conversion_command.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 import type { CommandDependencies } from "./command_dependencies.js";
 
@@ -123,9 +123,10 @@ async function convertSelectedPngFilesToPdf(
         messages.supportedExtensions,
       ),
     );
-    await runConversionCommand({
+    await runOutputConversion({
       operationName: messages.operationName,
       ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(messages.titleKey, jobs.length),
         prepareMessage: userMessage("message.progress.prepareConversion", "PDF"),
@@ -135,17 +136,19 @@ async function convertSelectedPngFilesToPdf(
         cancelledMessage: userMessage(messages.cancelledKey),
         failedMessage: (reason) => userMessage(messages.failedKey, reason),
       },
-      run: (signal) =>
+      run: (runtime) =>
         convertPngToPdfFiles({
           jobs,
-          signal,
-          resolveOutputConflicts,
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
           supportedExtensions: messages.supportedExtensions,
           svgToPdf,
           mermaid,
           drawio,
           operationName: messages.operationName,
-          ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         }),
     });
   } catch (error) {

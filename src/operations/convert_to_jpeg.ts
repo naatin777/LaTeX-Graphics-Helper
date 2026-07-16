@@ -27,7 +27,8 @@ import {
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
 import { runExternalTool } from "./run_external_tool.js";
-import { runRasterConversionPipeline } from "./raster_conversion_pipeline.js";
+import type { ConversionRuntime } from "./conversion_runtime.js";
+import { runStagedConversionBatch } from "./run_staged_conversion_batch.js";
 
 const RASTER_IMAGE_EXTENSIONS = [".png", ".webp", ".avif"] as const;
 const execFileAsync = promisify(execFile);
@@ -64,16 +65,19 @@ export async function convertToJpegFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  return runRasterConversionPipeline({
+  const runtime: ConversionRuntime = {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
+  return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: "convert-to-jpeg",
     runId,
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveOutputConflicts: options.resolveOutputConflicts,
-    }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-    stage: (job, index, stageRunId, signal) =>
+    runtime,
+    stage: (job, index, stageRunId, stageRuntime) =>
       stageJpegConversion(
         job,
         index,
@@ -83,7 +87,7 @@ export async function convertToJpegFiles(
         options.drawio,
         options.runPdfToPng,
         options,
-        signal,
+        stageRuntime.signal,
       ),
   });
 }

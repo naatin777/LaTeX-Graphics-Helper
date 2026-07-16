@@ -17,7 +17,7 @@ import {
   type MermaidPuppeteerOptions,
 } from "../operations/convert_to_svg.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runConversionCommand } from "./run_conversion_command.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 import type { CommandDependencies } from "./command_dependencies.js";
 
@@ -55,9 +55,10 @@ export async function convertToSvgCommand(
     const puppeteer = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToSvgOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    await runConversionCommand({
+    await runOutputConversion({
       operationName: "convert-to-svg",
       ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(
           "message.progress.convertToOutput.title",
@@ -71,16 +72,18 @@ export async function convertToSvgCommand(
         cancelledMessage: userMessage("message.convertToOutput.cancelled", "SVG"),
         failedMessage: (reason) => userMessage("message.convertToOutput.failed", "SVG", reason),
       },
-      run: (signal) =>
+      run: (runtime) =>
         convertToSvgFiles({
           jobs,
           pdftocairoPath,
           mermaid: puppeteer,
           drawio,
           platform: process.platform,
-          signal,
-          resolveOutputConflicts,
-          ...(outputChannel !== undefined && { outputChannel }),
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         }),
     });
   } catch (error) {

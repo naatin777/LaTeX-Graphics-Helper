@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 
 import type { CommittedConversionOutput } from "../operations/commit_conversion_outputs.js";
+import type { ConversionRuntime } from "../operations/conversion_runtime.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
@@ -15,11 +16,13 @@ export interface ConversionCommandMessages {
   failedMessage: (reason: string) => string;
 }
 
-export async function runConversionCommand(options: {
+/** Owns progress, cancellation, Undo registration, and user notifications for output conversion. */
+export async function runOutputConversion(options: {
   operationName: string;
   messages: ConversionCommandMessages;
   outputChannel?: LineOutputChannel;
-  run: (signal: AbortSignal) => Promise<CommittedConversionOutput[]>;
+  resolveConflicts?: ConversionRuntime["resolveConflicts"];
+  run: (runtime: ConversionRuntime) => Promise<CommittedConversionOutput[]>;
 }): Promise<void> {
   try {
     const outputs = await vscode.window.withProgress(
@@ -31,7 +34,13 @@ export async function runConversionCommand(options: {
       async (progress, token) =>
         withCancellationSignal(token, async (signal) => {
           progress.report({ message: options.messages.prepareMessage });
-          return options.run(signal);
+          return options.run({
+            signal,
+            ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+            ...(options.resolveConflicts !== undefined && {
+              resolveConflicts: options.resolveConflicts,
+            }),
+          });
         }),
     );
     const successMessage = options.messages.successMessage(outputs.length);

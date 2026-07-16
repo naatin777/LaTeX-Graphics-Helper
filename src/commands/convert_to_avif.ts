@@ -20,7 +20,7 @@ import {
   type DrawioToAvifOptions,
 } from "../operations/convert_to_avif.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runConversionCommand } from "./run_conversion_command.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
@@ -59,9 +59,10 @@ export async function convertToAvifCommand(
     const drawio = readDrawioToAvifOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    await runConversionCommand({
+    await runOutputConversion({
       operationName: "convert-to-avif",
       ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(
           "message.progress.convertToOutput.title",
@@ -75,7 +76,7 @@ export async function convertToAvifCommand(
         cancelledMessage: userMessage("message.convertToOutput.cancelled", "AVIF"),
         failedMessage: (reason) => userMessage("message.convertToOutput.failed", "AVIF", reason),
       },
-      run: (signal) =>
+      run: (runtime) =>
         convertToAvifFiles({
           jobs,
           pdftocairoPath,
@@ -83,9 +84,11 @@ export async function convertToAvifCommand(
           drawio,
           avif,
           platform: process.platform,
-          signal,
-          resolveOutputConflicts,
-          ...(outputChannel !== undefined && { outputChannel }),
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         }),
     });
   } catch (error) {

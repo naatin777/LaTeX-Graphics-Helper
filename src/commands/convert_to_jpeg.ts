@@ -19,7 +19,7 @@ import {
   type DrawioToJpegOptions,
 } from "../operations/convert_to_jpeg.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runConversionCommand } from "./run_conversion_command.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
@@ -56,9 +56,10 @@ export async function convertToJpegCommand(
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToJpegOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    await runConversionCommand({
+    await runOutputConversion({
       operationName: "convert-to-jpeg",
       ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(
           "message.progress.convertToOutput.title",
@@ -72,16 +73,18 @@ export async function convertToJpegCommand(
         cancelledMessage: userMessage("message.convertToOutput.cancelled", "JPEG"),
         failedMessage: (reason) => userMessage("message.convertToOutput.failed", "JPEG", reason),
       },
-      run: (signal) =>
+      run: (runtime) =>
         convertToJpegFiles({
           jobs,
           pdftocairoPath,
           mermaid,
           drawio,
           platform: process.platform,
-          signal,
-          resolveOutputConflicts,
-          ...(outputChannel !== undefined && { outputChannel }),
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         }),
     });
   } catch (error) {

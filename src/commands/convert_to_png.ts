@@ -17,7 +17,7 @@ import {
 } from "../operations/convert_to_png.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runConversionCommand } from "./run_conversion_command.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 import type { CommandDependencies } from "./command_dependencies.js";
@@ -56,9 +56,10 @@ export async function convertToPngCommand(
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToPngOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    await runConversionCommand({
+    await runOutputConversion({
       operationName: "convert-to-png",
       ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(
           "message.progress.convertToOutput.title",
@@ -72,16 +73,18 @@ export async function convertToPngCommand(
         cancelledMessage: userMessage("message.convertToOutput.cancelled", "PNG"),
         failedMessage: (reason) => userMessage("message.convertToOutput.failed", "PNG", reason),
       },
-      run: (signal) => {
+      run: (runtime) => {
         return convertToPngFiles({
           jobs,
           pdftocairoPath,
           mermaid,
           drawio,
           platform: process.platform,
-          signal,
-          resolveOutputConflicts,
-          ...(outputChannel !== undefined && { outputChannel }),
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         });
       },
     });

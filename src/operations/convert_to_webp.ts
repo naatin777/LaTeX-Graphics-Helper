@@ -28,7 +28,8 @@ import {
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
 import { runExternalTool } from "./run_external_tool.js";
-import { runRasterConversionPipeline } from "./raster_conversion_pipeline.js";
+import type { ConversionRuntime } from "./conversion_runtime.js";
+import { runStagedConversionBatch } from "./run_staged_conversion_batch.js";
 
 const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".avif"] as const;
 const execFileAsync = promisify(execFile);
@@ -70,16 +71,19 @@ export async function convertToWebpFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
-  return runRasterConversionPipeline({
+  const runtime: ConversionRuntime = {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveConflicts: options.resolveOutputConflicts,
+    }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
+  return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: "convert-to-webp",
     runId,
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveOutputConflicts: options.resolveOutputConflicts,
-    }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-    stage: (job, index, stageRunId, signal) =>
+    runtime,
+    stage: (job, index, stageRunId, stageRuntime) =>
       stageWebpConversion(
         job,
         index,
@@ -90,7 +94,7 @@ export async function convertToWebpFiles(
         options.webp,
         options.runPdfToPng,
         options,
-        signal,
+        stageRuntime.signal,
       ),
   });
 }

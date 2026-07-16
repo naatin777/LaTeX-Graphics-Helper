@@ -5,16 +5,16 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { runRasterConversionPipeline } from "../src/operations/raster_conversion_pipeline.js";
+import { runStagedConversionBatch } from "../src/operations/run_staged_conversion_batch.js";
 
-suite("raster共通pipeline", () => {
+suite("staged conversion batch", () => {
   test("staging・commit・cleanupを形式固有stage callbackと接続する", async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-raster-pipeline-"));
     const outputPath = path.join(workspacePath, "result.png");
     const stagingRootPath = path.join(workspacePath, ".latex-graphics-helper", "fixture", "run");
 
     try {
-      const outputs = await runRasterConversionPipeline({
+      const outputs = await runStagedConversionBatch({
         jobs: [{ workspacePath }],
         operationName: "fixture-raster",
         runId: "run",
