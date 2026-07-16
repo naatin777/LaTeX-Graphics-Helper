@@ -118,7 +118,11 @@ suite("LaTeXファイルdrag挿入", () => {
 
   test("workspace外のlocal PDFはrelative pathで挿入する", async () => {
     const directory = await createTemporaryWorkspaceDirectory("lgh-latex-drop-document-");
-    const outsideDirectory = await mkdtemp(path.join("/tmp", "lgh-latex-drop-outside-"));
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+    const outsideDirectory = await mkdtemp(
+      path.join(path.dirname(workspaceFolder.uri.fsPath), "lgh-latex-drop-outside-"),
+    );
 
     try {
       const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
