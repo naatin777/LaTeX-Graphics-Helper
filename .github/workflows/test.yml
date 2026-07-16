@@ -71,13 +71,13 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       label: Linux
-                      test_command: xvfb-run pnpm run test
+                      test_command: xvfb-run pnpm run test:vscode
                     - os: macos-latest
                       label: macOS
-                      test_command: pnpm run test
+                      test_command: pnpm run test:vscode
                     - os: windows-latest
                       label: Windows
-                      test_command: pnpm run test
+                      test_command: pnpm run test:vscode
         steps:
             - uses: actions/checkout@v7
 
