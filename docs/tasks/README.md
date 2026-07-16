@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0191: raster operationの共通pipelineを整理する](0191-reduce-raster-operation-review-surface.md)
+- [0192: LaTeX Drop/Pasteの入力仕様を明確化する](0192-harden-latex-drop-and-paste.md)
 
 ## Planned v1 Safety Path
 

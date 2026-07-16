@@ -2,70 +2,106 @@
 
 ## Status
 
-Todo
+In Progress
 
 ## Change Contract
 
 ### Problem
 
-URI-list、workspace外PDF、単一PDFのalignment、snippet builderの重複について仕様と実装の一貫性を再確認する。
+LaTeXへのPDF dropがURI-listのコメント、重複、非file URI、壊れたURI、非PDF入力を区別せず一部処理する。単一PDFのalignmentが設定を使わず、snippet builderにも同一実装が重複している。
 
 ### Allowed behaviors
 
-- B-001: URI-listの空行/comment/non-file URI/parse error/重複/case-insensitive PDFを決定的に扱う。
-- B-002: 非対応入力の混在時のprovider辞退または拒否をspecで明記する。
-- B-003: 単一PDFも設定済みalignmentを使う。
-- B-004: workspace外はlocal file、relative path、未保存document、Windows drive/UNC、remote workspaceの挙動をspec化する。
-- B-005: LatexSnippetの同一private methodを一つにする。
+- B-001: `text/uri-list`の空行と`#`コメントを無視し、file URIを安全にparseする。
+- B-002: URI parse失敗、非file URI、非PDF URIを1件でも含むURI-listではprovider全体を辞退し、部分的なsnippetを返さない。
+- B-003: 大文字小文字非依存でPDFを判定し、重複file URIは最初の1件だけ処理する。
+- B-004: local fileのPDFをdocumentからのrelative pathへ変換する。workspace外の同一filesystem rootは許可し、異なるdrive・UNC rootなどrelative pathにならない場合は辞退する。
+- B-005: 未保存document、remote document、cancellation時はsnippetを返さない。
+- B-006: 単一PDFでも`figure.alignmentOptions`を使い、Clipboard Pasteとalignment挙動を揃える。
+- B-007: `LatexSnippet`の同一option append実装を1つへ統合する。
 
 ### Unresolved
 
-- 非対応URI混在時のpartial処理可否は、既存provider契約とテストを照合して決める。
+- WindowsのUNC pathで同一rootをrelative pathへ変換できるかはWindows CIで追加確認する。
 
 ### Affected boundaries
 
-VS Code DocumentDrop/Paste provider、URI parser、LaTeX snippet生成。
+LaTeX document drop provider、URI-list parsing、local/remote URI境界、relative path生成、LaTeX snippet builder。
 
 ### Allowed files
 
 - `src/edit_provider/latex_drop_edit_provider.ts`
-- `src/edit_provider/latex_paste_edit_provider.ts`
 - `src/edit_provider/latex_snippet.ts`
 - `test/latex_drop_edit_provider.test.ts`
-- `test/latex_paste_edit_provider.test.ts`
-- `docs/specs/*.md` (LaTeX insertion/drop related only)
+- `test/latex_snippet.test.ts`
+- `docs/specs/latex-insertion.md`
+- `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/0192-harden-latex-drop-and-paste.md`
 - `docs/tasks/README.md`
 
 ### Evidence matrix
 
-| Behavior | Test / verification      | Evidence type          |
-| -------- | ------------------------ | ---------------------- |
-| B-001    | URI-list matrix tests    | provider test          |
-| B-002    | mixed input test         | provider/spec test     |
-| B-003    | alignment setting test   | snippet/provider test  |
-| B-004    | path matrix/spec review  | provider test and spec |
-| B-005    | snippet regression suite | unit test              |
+| Behavior | Test / verification                            | Evidence type          |
+| -------- | ---------------------------------------------- | ---------------------- |
+| B-001    | URI-list parsing tests                         | behavior test          |
+| B-002    | mixed/invalid URI-list tests                   | negative behavior test |
+| B-003    | uppercase PDF and duplicate URI tests          | behavior test          |
+| B-004    | external local PDF and non-relative path tests | path behavior test     |
+| B-005    | unsaved/remote/cancellation tests              | boundary test          |
+| B-006    | single PDF alignment test                      | snippet assertion      |
+| B-007    | snippet option regression tests                | unit/regression test   |
 
 ### Dependencies
 
-- Blocked by: 0189
-- Blocks: 0195
-- Can run in parallel with: 0190, 0191, 0193
+- Blocked by: 0187, 0191
+- Blocks: 0193
+- Can run in parallel with: 0194, 0195
 
 ### Not changing
 
-- conversion safety implementation
-- Webview protocol
-- new LaTeX builder framework
+- Clipboard image conversion lifecycle already completed in 0187.
+- workspace write security and conversion output commit behavior.
+- new LaTeX syntax or new insertion settings.
+- partial processing of unsupported URI-list entries.
+
+## 目的
+
+Drop/Pasteの入力境界を仕様化し、ユーザーが意図しない部分処理や設定無視を起こさないようにする。
+
+## 完了条件
+
+- 仕様、実装、テストがURI-listとpath境界で一致する。
+- 単一PDF、複数PDF、Clipboard Pasteのalignmentが同じ設定を使う。
+- taskのVerification resultsを実測値で埋める。
 
 ## Completion criteria
 
-- closed-worldで曖昧な入力挙動が残っていない。
-- providerの実挙動とsnippet/spec/testが一致する。
-- 実測verificationを記録する。
+- B-001からB-007のEvidence matrixが成功している。
+- `pnpm run check:all`と対象integration testが成功している。
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
+| Command                                                                                                                    | Result | Notes                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `pnpm run check:all`                                                                                                       | Passed | lint, format, runtime/test/Webview typecheck, RuleSync, task preflight, NLS           |
+| `pnpm run build:test`                                                                                                      | Passed | TypeScript and Crop Webview production build                                          |
+| `pnpm exec vscode-test --run out/test/latex_drop_edit_provider.test.js --run out/test/latex_snippet.test.js --forbid-only` | Passed | 7 tests covering URI-list, path boundary, cancellation, alignment, and option builder |
+| `git diff --check`                                                                                                         | Passed | no whitespace errors                                                                  |
+
+## 変更可能なファイル
+
+- Change ContractのAllowed filesと同じ。
+
+## 対象外
+
+- Webview、CI/release、設定key移行。
+- LaTeX snippet builder全体の再設計。
+
+## 関連
+
+- [LaTeX挿入仕様](../specs/latex-insertion.md)
+
+## 確認方法
+
+- URI-listの正常系、拒否系、重複、cancellationをVS Code integration testで確認する。
+- snippetのalignment、relative path、placeholderを最終文字列で確認する。

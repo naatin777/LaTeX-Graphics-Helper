@@ -28,7 +28,7 @@ export class LatexSnippet {
   }
 
   appendFigureAlignment(): this {
-    return this.appendCommandTextOption(this.config.figureAlignmentOptions);
+    return this.appendOption(this.config.figureAlignmentOptions);
   }
 
   appendGraphicsOptions(): this {
@@ -83,17 +83,6 @@ export class LatexSnippet {
 
   convertToLatexPath(filePath: string): string {
     return filePath.split(/[\\/]+/).join("/");
-  }
-
-  private appendCommandTextOption(options: string[]): this {
-    if (options.length > 1) {
-      this.snippet.appendChoice(options, this.tabstop);
-      this.tabstop += 1;
-      return this;
-    }
-
-    this.snippet.appendText(options[0] ?? "");
-    return this;
   }
 
   private appendOption(options: string[]): this {

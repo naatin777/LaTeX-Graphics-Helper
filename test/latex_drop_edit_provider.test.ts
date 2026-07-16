@@ -23,10 +23,12 @@ suite("LaTeXファイルdrag挿入", () => {
       await writePdf(pdfUri);
 
       const document = await vscode.workspace.openTextDocument(documentUri);
-      const edit = await provideDropEdit(document, [pdfUri]);
+      const edit = await provideDropEdit(document, [pdfUri], testAppConfig(["\\raggedleft"]));
       const snippet = snippetValue(edit);
 
       assert.match(snippet, /\\begin\{figure\}/);
+      assert.ok(snippet.includes("\\raggedleft"));
+      assert.ok(!snippet.includes("\\centering"));
       assert.ok(snippet.includes("\\includegraphics[width=0.8\\linewidth]{figures/sample.pdf}"));
       assert.ok(snippet.includes("\\caption{${1:sample}}"));
       assert.ok(snippet.includes("\\label{fig:${2:sample}}"));
@@ -61,32 +63,148 @@ suite("LaTeXファイルdrag挿入", () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+
+  test("URI-listの空行、comment、重複、拡張子大文字を処理する", async () => {
+    const directory = await createTemporaryWorkspaceDirectory("lgh-latex-drop-uri-list-");
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      const pdfUri = vscode.Uri.file(path.join(directory, "UPPER.PDF"));
+
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      await writePdf(pdfUri);
+
+      const document = await vscode.workspace.openTextDocument(documentUri);
+      const edit = await provideDropResult(
+        document,
+        `# dropped by the file manager\r\n\r\n${pdfUri.toString()}\r\n${pdfUri.toString()}\r\n`,
+      );
+
+      assert.ok(edit);
+      const snippet = snippetValue(edit);
+      assert.strictEqual(snippet.split("\\includegraphics").length - 1, 1);
+      assert.ok(snippet.includes("UPPER.PDF"));
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("非file・非PDF・壊れたURIを含むURI-listは部分処理しない", async () => {
+    const directory = await createTemporaryWorkspaceDirectory("lgh-latex-drop-invalid-");
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      const pdfUri = vscode.Uri.file(path.join(directory, "sample.pdf"));
+      const imageUri = vscode.Uri.file(path.join(directory, "sample.png"));
+
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      await writePdf(pdfUri);
+      await vscode.workspace.fs.writeFile(imageUri, Buffer.from("image", "utf8"));
+      const document = await vscode.workspace.openTextDocument(documentUri);
+
+      assert.strictEqual(
+        await provideDropResult(document, `${pdfUri.toString()}\r\nhttps://example.test/a.pdf`),
+        undefined,
+      );
+      assert.strictEqual(
+        await provideDropResult(document, `${pdfUri.toString()}\r\n${imageUri.toString()}`),
+        undefined,
+      );
+      assert.strictEqual(await provideDropResult(document, "%%%"), undefined);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("workspace外のlocal PDFはrelative pathで挿入する", async () => {
+    const directory = await createTemporaryWorkspaceDirectory("lgh-latex-drop-document-");
+    const outsideDirectory = await mkdtemp(path.join("/tmp", "lgh-latex-drop-outside-"));
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      const pdfUri = vscode.Uri.file(path.join(outsideDirectory, "outside.pdf"));
+
+      await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
+      await writePdf(pdfUri);
+      const document = await vscode.workspace.openTextDocument(documentUri);
+      const edit = await provideDropResult(document, pdfUri.toString());
+
+      assert.ok(edit);
+      const snippet = snippetValue(edit);
+      assert.ok(snippet.includes("\\includegraphics[width=0.8\\linewidth]{../"));
+      assert.ok(snippet.includes("outside.pdf"));
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+      await rm(outsideDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test("cancel済みまたは未保存documentではsnippetを返さない", async () => {
+    const directory = await createTemporaryWorkspaceDirectory("lgh-latex-drop-cancel-");
+
+    try {
+      const documentUri = vscode.Uri.file(path.join(directory, "sample.pdf"));
+      const mainDocumentUri = vscode.Uri.file(path.join(directory, "main.tex"));
+      await writePdf(documentUri);
+      await vscode.workspace.fs.writeFile(mainDocumentUri, Buffer.from("", "utf8"));
+      const cancelledDocument = await vscode.workspace.openTextDocument(mainDocumentUri);
+      const tokenSource = new vscode.CancellationTokenSource();
+      tokenSource.cancel();
+
+      assert.strictEqual(
+        await provideDropResult(cancelledDocument, documentUri.toString(), tokenSource.token),
+        undefined,
+      );
+      tokenSource.dispose();
+
+      const unsavedDocument = await vscode.workspace.openTextDocument({
+        language: "latex",
+        content: "",
+      });
+      assert.strictEqual(
+        await provideDropResult(unsavedDocument, documentUri.toString()),
+        undefined,
+      );
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 });
 
 async function provideDropEdit(
   document: vscode.TextDocument,
   uris: vscode.Uri[],
+  config = testAppConfig(),
 ): Promise<vscode.DocumentDropEdit> {
+  const edit = await provideDropResult(
+    document,
+    uris.map((uri) => uri.toString()).join("\r\n"),
+    undefined,
+    config,
+  );
+  assert.ok(edit);
+  return edit;
+}
+
+async function provideDropResult(
+  document: vscode.TextDocument,
+  uriList: string,
+  token?: vscode.CancellationToken,
+  config = testAppConfig(),
+): Promise<vscode.DocumentDropEdit | undefined> {
   const provider = new LatexDropEditProvider();
   const dataTransfer = new vscode.DataTransfer();
-  dataTransfer.set(
-    "text/uri-list",
-    new vscode.DataTransferItem(uris.map((uri) => uri.toString()).join("\r\n")),
-  );
+  dataTransfer.set("text/uri-list", new vscode.DataTransferItem(uriList));
   const tokenSource = new vscode.CancellationTokenSource();
 
   try {
-    const edit = await provider.provideDocumentDropEdits(
+    return await provider.provideDocumentDropEdits(
       document,
       new vscode.Position(0, 0),
       dataTransfer,
-      tokenSource.token,
-      testAppConfig(),
+      token ?? tokenSource.token,
+      config,
     );
-
-    assert.ok(edit);
-    assert.ok(!Array.isArray(edit));
-    return edit;
   } finally {
     tokenSource.dispose();
   }
@@ -113,11 +231,11 @@ async function createTemporaryWorkspaceDirectory(prefix: string): Promise<string
   return mkdtemp(path.join(workspaceFolder.uri.fsPath, prefix));
 }
 
-function testAppConfig() {
+function testAppConfig(figureAlignmentOptions = ["\\centering"]) {
   return {
     outputPathClipboardImage: "${fileDirname}/${dateNow}",
     figurePlacementOptions: ["[H]"],
-    figureAlignmentOptions: ["\\centering"],
+    figureAlignmentOptions,
     figureGraphicsOptions: ["[width=0.8\\linewidth]"],
     subfigureVerticalAlignmentOptions: ["[t]"],
     subfigureWidthOptions: ["{0.45\\linewidth}"],
