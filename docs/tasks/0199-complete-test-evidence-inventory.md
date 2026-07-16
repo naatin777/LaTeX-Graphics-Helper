@@ -6,7 +6,7 @@ Done
 
 ## Scope
 
-対象は`origin/next/v1` at `75ca52a`。このtaskではtestの移動・削除・リファクタリング、Vitest採用、Browser/Electronのrunner変更、production/config/CI/dependency変更を行わず、現在のrepository tree・test・config・script・workflowからEvidenceを再監査した。
+対象は`origin/next/v1` at `75ca52a53df947dfbd4b07709ef538b6e056fdc8`。このtaskではtestの移動・削除・リファクタリング、Vitest採用、Browser/Electronのrunner変更、production/config/CI/dependency変更を行わず、現在のrepository tree・test・config・script・workflowからEvidenceを再監査した。
 
 ## Confirmed Evidence
 
@@ -82,10 +82,10 @@ No production code, test, fixture, screenshot, package script, config, workflow,
 
 | Command                       | Result      | Notes                                                                                                      |
 | ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
-| `git status --short`          | pass        | 変更対象は10個のMarkdownだけだった                                                                         |
+| `git status --short`          | pass        | 最終添削時の追加差分は2個のMarkdownだけだった                                                              |
 | `git diff --check`            | pass        | whitespace/errorなし                                                                                       |
 | `pnpm run check:nls`          | pass        | NLS consistency OK (220 keys)                                                                              |
 | `pnpm run check:all`          | pass        | lint warningは既存コード由来。lint、format、typecheck、NLSを完了                                           |
 | `pnpm run format:check`       | unavailable | repositoryにscriptが存在しない                                                                             |
-| explicit Markdown Oxfmt check | pass        | changed Markdown 10 filesに`pnpm exec oxfmt --check`を実行                                                 |
+| explicit Markdown Oxfmt check | pass        | baseとの差分とworking treeのchanged Markdown 11 filesに`pnpm exec oxfmt --check`を実行                     |
 | docs-only workflow behavior   | confirmed   | detector実行結果は`docs_only=true`。`docs/*`変更はtest/playwright runtime jobをskipし、Check jobは実行する |

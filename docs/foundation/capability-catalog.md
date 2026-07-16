@@ -1,7 +1,7 @@
 # v1 capability catalog
 
 - 対象baseline: `next/v1` at `75ca52a53df947dfbd4b07709ef538b6e056fdc8`
-- 更新対象: `audit/v1-test-evidence-inventory` at `91cb36ef86e3f3af38d11fa9fe65d91d68a17569`
+- 監査branch: `audit/v1-test-evidence-inventory`
 - 状態: 監査用draft
 - 正本: この文書は正式仕様ではない。利用者向けcontractは`docs/specs/`、採用判断は`docs/adr/`へ移す。
 - Evidence状態:
