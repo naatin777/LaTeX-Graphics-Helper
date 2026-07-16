@@ -1,49 +1,29 @@
-# 変換処理の進捗表示とキャンセル仕様
+# 変換処理の進捗表示とキャンセルの内部契約
 
-## 原則
+`conversion-progress-and-cancellation`の利用者向け挙動は、[product specification](../product/conversion-progress-and-cancellation.md)を正本とする。この文書は、command、core、外部処理、stagingの境界だけを記録する。
 
-Webviewを使用しない変換処理は、`vscode.window.withProgress` で実行中であることを表示する。
+## Progress boundary
 
-Webviewを使用する処理は、Webview側で状態を表示できるため、この仕様の対象外とする。
+- Webviewを使用しない変換では、command層が`vscode.window.withProgress`を開始する。
+- progress locationは`vscode.ProgressLocation.Notification`、`cancellable`は`true`とする。
+- 変換coreへVS Code APIを渡さず、coreはruntime-neutralな入力を受け取る。
 
-## Progress
+## Cancellation propagation
 
-- `vscode.ProgressLocation.Notification` を使用する
-- `cancellable: true` にする
-- command層で `withProgress` を開始する
-- 変換処理のcore層へVS Code APIを渡さない
+command層で`AbortController`を作成し、VS Codeの`CancellationToken`から`AbortSignal`へ接続する。
 
-## キャンセル
+- 外部commandの終了を要求する。
+- `p-limit`で待機中の処理を開始しない。
+- `pdf-lib`など即時停止できない処理は、処理前後のcheckpointでsignalを確認する。
+- operation stagingのcleanupは、そのoperation rootの所有者が行う。
+- 外部toolの診断scratchは通常のoperation stagingと分離して管理する。
 
-command層で `AbortController` を作成し、VS Codeの `CancellationToken` がキャンセルされたら `abort()` する。
+## Clipboard Paste transaction
 
-変換処理のcore層は `AbortSignal` を受け取る。
+Clipboard PasteはQuickPick・InputBox後から変換、commit、Undo記録、cleanupまで同じ`AbortSignal`へ接続する。
 
-キャンセル時は以下の動作とする。
-
-- 実行中の外部コマンドを終了する
-- `p-limit` で待機中の変換を開始しない
-- `pdf-lib` など即時停止できない同期処理は、処理前後のチェックポイントで停止する
-- 指定出力先へは結果を反映しない
-- 通常のoperation stagingは、そのoperation rootだけをcleanupする。外部toolの診断scratchは別管理とし、失敗時に残る場合がある
-- 通常の失敗エラーではなく、キャンセルされたことを通知する
-
-## 対応済み
-
-- `latex-graphics-helper.cropPdf.auto`
-- `latex-graphics-helper.splitPdf.allPages`
-- `latex-graphics-helper.convertPngToPdf`
-
-今後、Webviewを使用しない変換commandを実装する場合も同じ方式を使用する。
-
-## Clipboard Paste
-
-Clipboard PasteもQuickPick・InputBox後から変換、commit、Undo記録、cleanupまで同じ`AbortSignal`へ接続する。
-
-- 変換開始前またはcommit前のcancelでは最終出力を作らない。
-- conflict dialog中にcancelされた場合はcommitを開始せず、既存出力を変更しない。
-- commit中にcancelされた場合は、commit済み出力と現在処理中の出力をcommit側のrollbackへ渡す。
-- Sharp・pdf-libなど即時停止できない処理は完了を待つ場合があるが、cancel後に新しい最終commitを開始しない。
-- stagingのmkdir/write失敗、変換失敗、commit失敗、cancelではClipboard Pasteのoperation rootだけをcleanupする。
-- commit完了後にeditor側のtokenがcancelされた場合は、既に作成した出力とUndo recordを保持し、snippetは返さない。
-- Undo record作成失敗はPaste全体を失敗にせず、出力とsnippetを維持する。不要stagingはcleanupし、失敗はOutput Channelへ記録する。
+- commit前のsignalはcommit coordinatorへ渡し、commitを開始しない。
+- commit中のsignalはcommit側のrollbackへ渡す。
+- Sharp・pdf-libなど即時停止できない処理は完了を待つ場合があるが、signal確認後に新しいfinal commitを開始しない。
+- stagingのmkdir/write、変換、commit、cancelに伴うcleanupはClipboard Pasteのoperation rootに限定する。
+- commit後にUndo recordを作成できない場合のrecord失敗処理と不要stagingのcleanupは、Pasteのtransaction ownerが行う。

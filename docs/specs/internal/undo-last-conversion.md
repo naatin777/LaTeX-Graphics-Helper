@@ -1,63 +1,30 @@
-# 直前の変換を安全に取り消す仕様
+# 直前の変換取消の内部契約
 
-## 対象
+直前の変換取消に関する利用者向け操作と結果は、[product specification](../product/undo-last-conversion.md)を正本とする。この文書は、record state、取消前validation、artifact executor、cleanupのtransactionだけを記録する。
 
-以下のcommandが直前に作成または上書きした出力ファイルを対象とする。
+## Record state
 
-- `cropPdf.auto`
-- `splitPdf.allPages`
-- `mergePdf.selectedFiles`
-- クリップボード画像のLaTeX挿入
+成功した変換について、直前の1回分だけをmemoryへ記録する。recordは次を保持する。
 
-## ユーザー操作
+- output artifactのpath
+- 対象workspaceのpath
+- 生成直後のcontent SHA-256
+- overwrite時のbackup pathとbackup SHA-256
 
-変換成功後の通知に「取り消す」を表示する。
+SHA-256はNode.jsのstreaming readで計算する。次の変換が成功した場合はrecordを置き換え、以前のrecordだけが参照していたstagingとbackupを削除する。新しいrecordの作成に失敗した場合は以前のrecordを保持する。extension restart後はrecordを復元しない。
 
-「取り消す」を選択すると、専用command `latex-graphics-helper.undoLastConversion` を実行する。
+## Validation ownership
 
-通常の `Ctrl+Z` / `Cmd+Z` は変更しない。
+Undo executorはartifactへ変更を加える前に、recordの全entryについて次を検証する。
 
-古い通知の「取り消す」が選択された時点で、より新しい変換が成功している場合は何も削除しない。
-
-## 記録
-
-変換成功時に、直前の1回分として以下をメモリへ記録する。
-
-- 出力ファイルのパス
-- 対象workspaceのパス
-- 生成直後のファイル内容のSHA-256
-- 上書き前ファイルのバックアップパスとSHA-256（上書きした場合）
-
-SHA-256はNode.jsのstreaming readで計算し、PDFや画像全体を同時にメモリへ載せない。
-
-次の変換が成功した場合は、以前の記録を置き換える。以前の記録だけが参照していたstagingとbackupは削除する。新しい記録の作成に失敗した場合は、以前の記録を保持する。
-
-拡張機能の再起動後は記録を復元しない。
-
-## 取消前検証
-
-削除を始める前に、記録されたすべての出力について以下を検証する。
-
-1. ファイルが存在する
-2. 論理パスと実体パスが記録されたworkspace内にある
+1. fileが存在する
+2. logical pathと実体pathが記録されたworkspace内にある
 3. 現在のSHA-256が生成直後のSHA-256と一致する
 
-1件でも検証に失敗した場合は、どの出力も削除しない。
+全entryの検証が成功するまで、削除またはbackupからの復元を開始しない。1件でも失敗した場合はexecutorをabortする。
 
-## 削除
+## Artifact transaction
 
-全出力の検証成功後、新規作成した出力ファイルは削除する。
+recordのartifact種別に応じて削除またはbackupからの復元を行う。処理完了後はrecordが保持していたstagingとbackupをcleanupし、cleanup failureがあってもartifact operationの結果を巻き戻さない。cleanup failureはOutputへ記録する。
 
-上書きした出力ファイルは、バックアップから元の内容を復元する。
-
-Undo成功後は、対象recordが保持していたstagingとbackupを削除する。cleanupに失敗しても、出力の取り消し結果は成功として扱う。
-
-出力の取り消しが成功したら、cleanupの成否にかかわらず直前の記録を破棄する。cleanupに失敗した場合はOutputパネルへ記録する。
-
-削除途中で失敗した場合はエラーとして通知する。削除済みファイルの自動復元はこの仕様の対象外とする。
-
-## 対象外
-
-- 複数回分の取消履歴
-- VS Code再起動後の取消
-- 通常Undoへのkeybinding追加
+artifact operationの途中で削除または復元が失敗した場合は、executorはfailureを呼び出し側へ返す。削除済みartifactの自動復元はこのcontractの責務外とする。
