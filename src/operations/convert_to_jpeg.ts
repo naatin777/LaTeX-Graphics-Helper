@@ -56,6 +56,34 @@ export interface ConvertToJpegFilesOptions extends PdfToolScratchOptions {
   signal?: AbortSignal;
 }
 
+interface JpegStageTools {
+  pdftocairoPath: string;
+  mermaid: MermaidPuppeteerOptions;
+  drawio: DrawioToJpegOptions;
+  runPdfToPng?: RunPdfToPng;
+}
+
+interface JpegStageContext {
+  runId: string;
+  runtime: Pick<ConversionRuntime, "signal">;
+  tools: JpegStageTools;
+  scratch: PdfToolScratchOptions;
+}
+
+interface JpegStagePaths {
+  stageDirectory: string;
+  stagedOutputPath: string;
+  stagingRootPath: string;
+}
+
+interface JpegRenderRequest {
+  sourcePath: string;
+  outputPath: string;
+  workspacePath: string;
+  stageDirectory?: string;
+  page?: number;
+}
+
 export async function convertToJpegFiles(
   options: ConvertToJpegFilesOptions,
 ): Promise<CommittedConversionOutput[]> {
@@ -72,236 +100,210 @@ export async function convertToJpegFiles(
     }),
     ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
   };
+  const tools: JpegStageTools = {
+    pdftocairoPath: options.pdftocairoPath,
+    mermaid: options.mermaid,
+    drawio: options.drawio,
+    ...(options.runPdfToPng !== undefined && { runPdfToPng: options.runPdfToPng }),
+  };
+  const scratch: PdfToolScratchOptions = {
+    ...(options.platform !== undefined && { platform: options.platform }),
+    ...(options.scratchBaseCandidates !== undefined && {
+      scratchBaseCandidates: options.scratchBaseCandidates,
+    }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: "convert-to-jpeg",
     runId,
     runtime,
     stage: (job, index, stageRunId, stageRuntime) =>
-      stageJpegConversion(
-        job,
-        index,
-        stageRunId,
-        options.pdftocairoPath,
-        options.mermaid,
-        options.drawio,
-        options.runPdfToPng,
-        options,
-        stageRuntime.signal,
-      ),
+      stageJpegConversion(job, index, {
+        runId: stageRunId,
+        runtime: {
+          ...(stageRuntime.signal !== undefined && { signal: stageRuntime.signal }),
+        },
+        tools,
+        scratch,
+      }),
   });
 }
 
 async function stageJpegConversion(
   job: ConvertToJpegJob,
   index: number,
-  runId: string,
-  pdftocairoPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToJpegOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  context: JpegStageContext,
 ): Promise<PreparedConversionOutput> {
-  signal?.throwIfAborted();
-  const stageDirectory = path.join(
-    job.workspacePath,
-    ".latex-graphics-helper",
-    "convert-to-jpeg",
-    runId,
-    `${index + 1}`,
-  );
-  const stagedOutputPath = path.join(stageDirectory, "result.jpeg");
-
-  await writeSourceAsJpeg(
-    job,
-    stagedOutputPath,
-    stageDirectory,
-    pdftocairoPath,
-    mermaid,
-    drawio,
-    runPdfToPng,
-    scratchOptions,
-    signal,
-  );
-  signal?.throwIfAborted();
-
-  return {
-    stagedOutputPath,
-    outputPath: job.outputPath,
-    workspacePath: job.workspacePath,
+  context.runtime.signal?.throwIfAborted();
+  const paths: JpegStagePaths = {
+    stageDirectory: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-jpeg",
+      context.runId,
+      `${index + 1}`,
+    ),
+    stagedOutputPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-jpeg",
+      context.runId,
+      `${index + 1}`,
+      "result.jpeg",
+    ),
     stagingRootPath: path.join(
       job.workspacePath,
       ".latex-graphics-helper",
       "convert-to-jpeg",
-      runId,
+      context.runId,
     ),
+  };
+
+  await writeSourceAsJpeg(job, paths, context);
+  context.runtime.signal?.throwIfAborted();
+
+  return {
+    stagedOutputPath: paths.stagedOutputPath,
+    outputPath: job.outputPath,
+    workspacePath: job.workspacePath,
+    stagingRootPath: paths.stagingRootPath,
   };
 }
 
 async function writeSourceAsJpeg(
   job: ConvertToJpegJob,
-  outputPath: string,
-  stageDirectory: string,
-  pdftocairoPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToJpegOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  paths: JpegStagePaths,
+  context: JpegStageContext,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(job.sourcePath)) {
-    await writeDrawioAsJpeg(
-      job,
-      outputPath,
-      stageDirectory,
-      pdftocairoPath,
-      drawio,
-      runPdfToPng,
-      scratchOptions,
-      signal,
-    );
+    await writeDrawioAsJpeg(job, paths, context);
     return;
   }
 
+  const request: JpegRenderRequest = {
+    sourcePath: job.sourcePath,
+    outputPath: paths.stagedOutputPath,
+    workspacePath: job.workspacePath,
+    stageDirectory: paths.stageDirectory,
+    ...(job.page !== undefined && { page: job.page }),
+  };
+
   if (extension === ".pdf") {
-    await writePdfPageAsJpeg(
-      job.sourcePath,
-      outputPath,
-      stageDirectory,
-      job.workspacePath,
-      pdftocairoPath,
-      job.page,
-      runPdfToPng,
-      scratchOptions,
-      signal,
-    );
+    await writePdfPageAsJpeg(request, context);
     return;
   }
 
   if (isMermaidPath(job.sourcePath)) {
-    await writeMermaidAsJpeg(
-      job.sourcePath,
-      outputPath,
-      stageDirectory,
-      job.workspacePath,
-      mermaid,
-      signal,
-    );
+    await writeMermaidAsJpeg(request, context);
     return;
   }
 
-  await writeImageAsJpeg(job.sourcePath, outputPath, job.workspacePath, signal);
+  await writeImageAsJpeg(request, context);
 }
 
 async function writeDrawioAsJpeg(
   job: ConvertToJpegJob,
-  outputPath: string,
-  stageDirectory: string,
-  pdftocairoPath: string,
-  drawio: DrawioToJpegOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  paths: JpegStagePaths,
+  context: JpegStageContext,
 ): Promise<void> {
-  signal?.throwIfAborted();
-  const pdfPath = path.join(stageDirectory, "drawio.pdf");
+  context.runtime.signal?.throwIfAborted();
+  const pdfPath = path.join(paths.stageDirectory, "drawio.pdf");
   await assertWritablePathInWorkspace(pdfPath, job.workspacePath);
   await mkdir(path.dirname(pdfPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
-  await (drawio.runDrawio ?? executeDrawio)(
-    drawio.drawioPath,
+  await (context.tools.drawio.runDrawio ?? executeDrawio)(
+    context.tools.drawio.drawioPath,
     ["-x", "-f", "pdf", "-o", pdfPath, job.sourcePath],
-    signal,
+    context.runtime.signal,
   );
   await writePdfPageAsJpeg(
-    pdfPath,
-    outputPath,
-    stageDirectory,
-    job.workspacePath,
-    pdftocairoPath,
-    job.page ?? 1,
-    runPdfToPng,
-    scratchOptions,
-    signal,
+    {
+      sourcePath: pdfPath,
+      outputPath: paths.stagedOutputPath,
+      workspacePath: job.workspacePath,
+      stageDirectory: paths.stageDirectory,
+      page: job.page ?? 1,
+    },
+    context,
   );
 }
 
 async function writePdfPageAsJpeg(
-  sourcePath: string,
-  outputPath: string,
-  stageDirectory: string,
-  workspacePath: string,
-  pdftocairoPath: string,
-  page = 1,
-  runPdfToPng?: RunPdfToPng,
-  scratchOptions: PdfToolScratchOptions = {},
-  signal?: AbortSignal,
+  request: JpegRenderRequest,
+  context: JpegStageContext,
 ): Promise<void> {
-  const pngPath = path.join(stageDirectory, "source.png");
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  const pngPath = path.join(
+    request.stageDirectory ?? path.dirname(request.outputPath),
+    "source.png",
+  );
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
   await runPdftocairoWithAsciiScratch({
-    sourcePath,
+    sourcePath: request.sourcePath,
     outputPath: pngPath,
     scratchOutputFileName: "output.png",
-    scratch: scratchOptions,
-    ...(signal !== undefined && { signal }),
+    scratch: context.scratch,
+    ...(context.runtime.signal !== undefined && { signal: context.runtime.signal }),
     run: async (toolSourcePath, toolOutputPath) => {
-      if (runPdfToPng) {
-        await runPdfToPng(toolSourcePath, toolOutputPath, page, signal);
+      if (context.tools.runPdfToPng) {
+        await context.tools.runPdfToPng(
+          toolSourcePath,
+          toolOutputPath,
+          request.page ?? 1,
+          context.runtime.signal,
+        );
         return;
       }
 
       const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
       await execFileAsync(
-        pdftocairoPath,
+        context.tools.pdftocairoPath,
         [
           "-png",
           "-singlefile",
           "-f",
-          String(page),
+          String(request.page ?? 1),
           "-l",
-          String(page),
+          String(request.page ?? 1),
           toolSourcePath,
           outputPrefix,
         ],
         {
           encoding: "utf8",
           maxBuffer: 10 * 1024 * 1024,
-          signal,
+          signal: context.runtime.signal,
         },
       );
     },
   });
 
-  await writeImageAsJpeg(pngPath, outputPath, workspacePath, signal);
+  await writeImageAsJpeg({ ...request, sourcePath: pngPath }, context);
 }
 
 async function writeMermaidAsJpeg(
-  sourcePath: string,
-  outputPath: string,
-  stageDirectory: string,
-  workspacePath: string,
-  mermaid: MermaidPuppeteerOptions,
-  signal?: AbortSignal,
+  request: JpegRenderRequest,
+  context: JpegStageContext,
 ): Promise<void> {
-  const pngPath = path.join(stageDirectory, "mermaid.png");
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  const pngPath = path.join(
+    request.stageDirectory ?? path.dirname(request.outputPath),
+    "mermaid.png",
+  );
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
   try {
-    await runMermaidCli(sourcePath, asPngOutputPath(pngPath), {
+    await runMermaidCli(request.sourcePath, asPngOutputPath(pngPath), {
       outputFormat: "png",
-      puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
+      puppeteerConfig: createMermaidPuppeteerConfig(context.tools.mermaid),
       quiet: true,
     });
   } catch (error) {
@@ -312,21 +314,19 @@ async function writeMermaidAsJpeg(
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
   }
 
-  await writeImageAsJpeg(pngPath, outputPath, workspacePath, signal);
+  await writeImageAsJpeg({ ...request, sourcePath: pngPath }, context);
 }
 
 async function writeImageAsJpeg(
-  sourcePath: string,
-  outputPath: string,
-  workspacePath: string,
-  signal?: AbortSignal,
+  request: JpegRenderRequest,
+  context: JpegStageContext,
 ): Promise<void> {
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(outputPath, workspacePath);
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  const sourceBuffer = await readFile(sourcePath);
-  signal?.throwIfAborted();
-  await sharp(sourceBuffer).jpeg().toFile(outputPath);
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(request.outputPath, request.workspacePath);
+  await mkdir(path.dirname(request.outputPath), { recursive: true });
+  const sourceBuffer = await readFile(request.sourcePath);
+  context.runtime.signal?.throwIfAborted();
+  await sharp(sourceBuffer).jpeg().toFile(request.outputPath);
 }
 
 async function executeDrawio(
