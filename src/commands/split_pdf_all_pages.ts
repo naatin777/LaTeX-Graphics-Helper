@@ -3,11 +3,11 @@ import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_pages.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
 export const SPLIT_PDF_ALL_PAGES_COMMAND = "latex-graphics-helper.splitPdf.allPages";
@@ -15,8 +15,9 @@ export const SPLIT_PDF_ALL_PAGES_COMMAND = "latex-graphics-helper.splitPdf.allPa
 export async function splitPdfAllPagesCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 

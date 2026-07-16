@@ -12,6 +12,7 @@ import {
 } from "../operations/cleanup_conversion_artifacts.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const UNDO_LAST_CONVERSION_COMMAND = "latex-graphics-helper.undoLastConversion";
 
@@ -41,8 +42,9 @@ export async function rememberLastConversion(
 
 export async function undoLastConversion(
   expectedId?: string,
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     if (!lastConversion) {
       await vscode.window.showInformationMessage(userMessage("message.undo.none"));

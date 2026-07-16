@@ -10,7 +10,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from "../application/source_format.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   convertToPngFiles,
   type ConvertToPngJob,
@@ -21,6 +20,7 @@ import { resolveOutputConflicts } from "./safe_mode.js";
 import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 
@@ -31,8 +31,9 @@ const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${
 export async function convertToPngCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 

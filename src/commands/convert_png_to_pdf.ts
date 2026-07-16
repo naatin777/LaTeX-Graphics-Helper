@@ -20,6 +20,7 @@ import {
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CONVERT_PNG_TO_PDF_COMMAND = "latex-graphics-helper.convertPngToPdf";
 export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
@@ -44,8 +45,9 @@ const PDF_IMAGE_EXTENSIONS = [
 export async function convertPngToPdfCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PNG_EXTENSIONS,
     titleKey: "message.progress.convertPngToPdf.title",
@@ -60,8 +62,9 @@ export async function convertPngToPdfCommand(
 export async function convertToPdfCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PDF_IMAGE_EXTENSIONS,
     titleKey: "message.progress.convertToPdf.title",

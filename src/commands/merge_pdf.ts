@@ -2,20 +2,21 @@ import path from "node:path";
 
 import * as vscode from "vscode";
 
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { mergePdf } from "../operations/merge_pdf.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
 
 export async function mergePdfSelectedFilesCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 

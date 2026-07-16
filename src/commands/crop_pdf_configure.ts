@@ -20,6 +20,7 @@ import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CROP_PDF_CONFIGURE_COMMAND = "latex-graphics-helper.cropPdf.configure";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
@@ -28,8 +29,9 @@ export async function cropPdfConfigureCommand(
   context: vscode.ExtensionContext,
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     await runCropPdfConfigureCommand(context, uri, uris, outputChannel);
   } catch (error) {

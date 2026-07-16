@@ -11,7 +11,7 @@ import {
   logicalSourcePathForOutputTemplate,
 } from "../application/source_format.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import {
   convertToJpegFiles,
@@ -31,8 +31,9 @@ const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${
 export async function convertToJpegCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 

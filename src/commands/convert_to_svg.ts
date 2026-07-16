@@ -10,7 +10,6 @@ import {
   logicalSourcePathForOutputTemplate,
 } from "../application/source_format.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   convertToSvgFiles,
   type ConvertToSvgJob,
@@ -20,6 +19,7 @@ import {
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 
@@ -30,8 +30,9 @@ const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${
 export async function convertToSvgCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 

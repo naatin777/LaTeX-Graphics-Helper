@@ -3,12 +3,12 @@ import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { localeMap } from "../locale_map.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
@@ -17,8 +17,9 @@ export const CROP_PDF_AUTO_COMMAND = "latex-graphics-helper.cropPdf.auto";
 export async function cropPdfAuto(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
-  outputChannel?: LineOutputChannel,
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 
