@@ -237,11 +237,12 @@ export function validateCurrentTask({ root = process.cwd(), files = [], base } =
 function main() {
   try {
     const options = parseArguments(process.argv.slice(2));
+    const base = options.base ?? process.env.LGH_TASK_BASE;
     const result = validateCurrentTask({
       ...options,
       root: options.root,
       files: options.files,
-      base: options.base,
+      base,
     });
     console.log(JSON.stringify(result, null, 2));
     if (!result.ok) process.exitCode = 1;
