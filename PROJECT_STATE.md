@@ -26,7 +26,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- `docs/tasks/README.md` のCurrent Taskを参照する。
+- なし。0194はBlocked、0195は未着手。
 
 ## Non-goals
 
@@ -42,7 +42,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Important Decisions
 
-- 作業は `docs/tasks/README.md` からリンクされた1つのタスクに限定する。
+- 作業中は `docs/tasks/README.md` からリンクされた1つのtaskに限定する。作業がない場合はCurrent Taskを空にする。
 - 気になるリファクタは、すぐ直さず `docs/refactor-backlog.md` に書く。
 - 設計判断に迷ったら、`docs/adr/` に記録してから進める。
 - READMEは日本語で正確に書いてから英語化してよい。
