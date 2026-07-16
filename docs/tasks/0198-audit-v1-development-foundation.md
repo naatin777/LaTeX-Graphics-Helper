@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -79,10 +79,10 @@ v1の追加リファクタリングへ進む前に、仕様の正本、テスト
 
 ### Remaining obligations
 
-- repository treeから全test fileを完全列挙する
 - branch protection / ruleset上のrequired statusを確認する
-- Browser / Electronのtest case単位重複表を作る
 - maintainerがrequired platformとquality priorityを承認する
 - 採用判断を個別ADRまたはtest policyへ移す
+
+repository treeのtest file完全列挙とBrowser / Electronのtest case単位重複表は、0199で完了した。残る項目は監査未完了ではなく、maintainerのSelection Gateまたは後続taskとして扱う。
 
 production code、test、CI、dependencyはこのtaskでは変更していない。
