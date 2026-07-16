@@ -8,9 +8,9 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Current priority
 
-- P0 testを使ったNode runtime分離実験
-- Extension Host / Nodeの実行時間・診断性・依存差の比較
-- 実験結果に基づくrunnerとdirectory方針のSelection Gate
+- Node runtime実験結果を基に、3 OS CI実験を行うか判断する
+- Node runtime正式採用とMocha / Vitest比較を分離して判断する
+- activation、command、configuration、provider、actual VS Code state/UIのtestはExtension Hostに維持する
 
 ## Implemented
 
@@ -25,7 +25,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- [0200: Node test runtimeを小規模検証する](docs/tasks/0200-experiment-node-test-runtime.md)
+現在進行中のtaskなし
 
 ## Non-goals
 

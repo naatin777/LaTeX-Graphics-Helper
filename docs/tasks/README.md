@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0200: Node test runtimeを小規模検証する](0200-experiment-node-test-runtime.md)（進行中）
+なし
 
 ## Planned
 
@@ -16,6 +16,7 @@
 
 ## Recent Completed
 
+- [0200: Node test runtimeを小規模検証する](0200-experiment-node-test-runtime.md)
 - [0199: v1 test Evidence inventoryを完了する](0199-complete-test-evidence-inventory.md)
 - [0198: v1開発基盤の前提を監査する](0198-audit-v1-development-foundation.md)
 - [0196: v1構造とハーネスを簡素化する](0196-simplify-v1-architecture-and-harness.md)
