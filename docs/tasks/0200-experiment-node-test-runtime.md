@@ -93,15 +93,15 @@ Full Host `test:vscode` warm: 26.44s / 26.71s / 28.83s（median 26.71s、211 pas
 
 意図的なfailureは一時変更として実行し、commit前に元へ戻す。
 
-| Criterion                 | Host                                                                               | Node                                                    |
-| ------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------- | ---- |
-| failure message           | `AssertionError [ERR_ASSERTION]`、17 passing / 1 failing                           | 同じ                                                    | 同等 |
-| expected / actual         | 同じdiff（actual `editable-drawio-svg` / expected `pdf`）                          | 同じdiff                                                | 同等 |
-| test fileと行番号         | `out/test/source_format.test.js:6:16`                                              | `test/source_format.test.ts:13:12`                      | Node |
-| stack trace / source map  | compiled JS path。source map fileは生成されるがHost出力はTSへ逆引きしない          | TS sourceへ逆引き。Mocha内部stackのみ                   | Node |
-| cleanup後の状態           | selected testsのtemp artifactはclean。VS Code user-dataはrunner管理のignored state | selected testsのtemp artifactはclean。VS Code stateなし | Node |
-| runner固有noise           | VS Code startup、AccountPolicy、cached-data warning、Extension Host終了ログ        | なし                                                    | Node |
-| failure原因の特定しやすさ | assertion差分は明確だが環境noiseとcompiled pathが残る                              | assertion差分、TS line、短いstackが直接出る             | Node |
+| Criterion                 | Host                                                                               | Node                                                    | Better |
+| ------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------- | ------ |
+| failure message           | `AssertionError [ERR_ASSERTION]`、17 passing / 1 failing                           | 同じ                                                    | 同等   |
+| expected / actual         | 同じdiff（actual `editable-drawio-svg` / expected `pdf`）                          | 同じdiff                                                | 同等   |
+| test fileと行番号         | `out/test/source_format.test.js:6:16`                                              | `test/source_format.test.ts:13:12`                      | Node   |
+| stack trace / source map  | compiled JS path。source map fileは生成されるがHost出力はTSへ逆引きしない          | TS sourceへ逆引き。Mocha内部stackのみ                   | Node   |
+| cleanup後の状態           | selected testsのtemp artifactはclean。VS Code user-dataはrunner管理のignored state | selected testsのtemp artifactはclean。VS Code stateなし | Node   |
+| runner固有noise           | VS Code startup、AccountPolicy、cached-data warning、Extension Host終了ログ        | なし                                                    | Node   |
+| failure原因の特定しやすさ | assertion差分は明確だが環境noiseとcompiled pathが残る                              | assertion差分、TS line、短いstackが直接出る             | Node   |
 
 Failure injectionは`source_format.test.ts`の期待値を一時的に`pdf`へ変更して実行し、比較後に`editable-drawio-svg`へ復元した。意図的failureはcommitに残していない。
 
