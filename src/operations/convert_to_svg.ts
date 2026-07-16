@@ -10,6 +10,8 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { isEditableDrawioImagePath, sourceFormatForPath } from "../application/source_format.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
@@ -21,17 +23,11 @@ import {
   runPdftocairoWithAsciiScratch,
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
+import { runExternalTool } from "./run_external_tool.js";
 
 export type { MermaidPuppeteerOptions };
 
 const CONVERSION_CONCURRENCY = 2;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToSvgJob {
@@ -73,32 +69,42 @@ export async function convertToSvgFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stageSvgConversion(
-          job,
-          index,
-          runId,
-          options.pdftocairoPath,
-          options.mermaid,
-          options.drawio,
-          options.runPdfToSvg,
-          options,
-          options.signal,
-        ),
-      ),
-    ),
-  );
+  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-to-svg", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const stagedOutputs = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() =>
+            stageSvgConversion(
+              job,
+              index,
+              runId,
+              options.pdftocairoPath,
+              options.mermaid,
+              options.drawio,
+              options.runPdfToSvg,
+              options,
+              options.signal,
+            ),
+          ),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedOutputs, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+        operationName: "convert-to-svg",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+      });
+    },
+    options.outputChannel,
+  );
 }
 
 async function stageSvgConversion(
@@ -138,6 +144,12 @@ async function stageSvgConversion(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-svg",
+      runId,
+    ),
   };
 }
 
@@ -282,10 +294,11 @@ async function executeDrawio(
   args: string[],
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(executable, args, {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    signal,
+  await runExternalTool({
+    toolName: "drawio",
+    executable,
+    args,
+    ...(signal !== undefined && { signal }),
   });
 }
 
@@ -319,14 +332,9 @@ function isSupportedSourcePath(sourcePath: string): boolean {
 
   return (
     extension === ".pdf" ||
-    MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number]) ||
+    sourceFormatForPath(sourcePath) === "mermaid" ||
     isEditableDrawioImagePath(sourcePath)
   );
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function asSvgOutputPath(outputPath: string): `${string}.svg` {

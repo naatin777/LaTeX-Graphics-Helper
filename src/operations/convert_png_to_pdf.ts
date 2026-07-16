@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
@@ -13,28 +13,25 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { isEditableDrawioImagePath, isMermaidPath } from "../application/source_format.js";
+import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 import {
   runRsvgConvertWithAsciiScratch,
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
 } from "./run_rsvg_convert_with_ascii_scratch.js";
+import { runExternalTool } from "./run_external_tool.js";
 
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
 const SVG_EXTENSION = ".svg";
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const execFileAsync = promisify(execFile);
 
 export type SvgToPdfEngine = "puppeteer" | "rsvg-convert";
@@ -59,13 +56,6 @@ export interface DrawioToPdfOptions {
 
 export type RunDrawio = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 
-export interface ConvertPngToPdfOptions {
-  sourcePath: string;
-  outputPath: string;
-  workspacePath: string;
-  signal?: AbortSignal;
-}
-
 export interface ConvertPngToPdfJob {
   sourcePath: string;
   outputPath: string;
@@ -83,18 +73,8 @@ export interface ConvertPngToPdfFilesOptions {
   drawio?: DrawioToPdfOptions;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
-}
-
-export async function convertPngToPdf(options: ConvertPngToPdfOptions): Promise<void> {
-  const { sourcePath, outputPath, workspacePath, signal } = options;
-
-  signal?.throwIfAborted();
-  await assertExistingPathInWorkspace(sourcePath, workspacePath);
-  await assertWritablePathInWorkspace(outputPath, workspacePath);
-  await assertOutputDoesNotExist(outputPath);
-  signal?.throwIfAborted();
-
-  await writeImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+  outputChannel?: LineOutputChannel;
+  operationName?: string;
 }
 
 export async function convertPngToPdfFiles(
@@ -109,35 +89,46 @@ export async function convertPngToPdfFiles(
   const platform = options.platform ?? process.platform;
   const scratchOptions: RsvgToolScratchOptions = {
     platform,
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     ...(options.scratchBaseCandidates !== undefined && {
       scratchBaseCandidates: options.scratchBaseCandidates,
     }),
   };
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stagePngConversion(
-          job,
-          index,
-          runId,
-          options.signal,
-          options.svgToPdf,
-          options.mermaid,
-          options.drawio,
-          scratchOptions,
-        ),
-      ),
-    ),
-  );
+  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-png-to-pdf", runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(CONVERSION_CONCURRENCY);
+      const stagedOutputs = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() =>
+            stagePngConversion(
+              job,
+              index,
+              runId,
+              options.signal,
+              options.svgToPdf,
+              options.mermaid,
+              options.drawio,
+              scratchOptions,
+            ),
+          ),
+        ),
+      );
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedOutputs, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+        operationName: options.operationName ?? "convert-png-to-pdf",
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+      });
+    },
+    options.outputChannel,
+  );
 }
 
 async function stagePngConversion(
@@ -159,6 +150,12 @@ async function stagePngConversion(
     `${index + 1}`,
     "result.pdf",
   );
+  const stagingRootPath = path.join(
+    job.workspacePath,
+    ".latex-graphics-helper",
+    "convert-png-to-pdf",
+    runId,
+  );
 
   await writeImageAsPdf(
     job.sourcePath,
@@ -176,6 +173,7 @@ async function stagePngConversion(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath,
   };
 }
 
@@ -196,7 +194,7 @@ async function writeImageAsPdf(
     return;
   }
 
-  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
+  if (isMermaidPath(sourcePath)) {
     await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
     return;
   }
@@ -233,10 +231,11 @@ async function executeDrawio(
   args: string[],
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(executable, args, {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    signal,
+  await runExternalTool({
+    toolName: "drawio",
+    executable,
+    args,
+    ...(signal !== undefined && { signal }),
   });
 }
 
@@ -536,25 +535,4 @@ function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly 
 function isSupportedSourcePath(sourcePath: string, supportedExtensionSet: Set<string>): boolean {
   const lowerSourcePath = sourcePath.toLowerCase();
   return [...supportedExtensionSet].some((extension) => lowerSourcePath.endsWith(extension));
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
-}
-
-async function assertOutputDoesNotExist(outputPath: string): Promise<void> {
-  try {
-    await access(outputPath);
-    throw new Error(`Output file already exists: ${outputPath}`);
-  } catch (error) {
-    if (isFileNotFoundError(error)) {
-      return;
-    }
-    throw error;
-  }
-}
-
-function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }

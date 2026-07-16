@@ -4,6 +4,9 @@
     "module": "ESNext",
     // Vite / bundler 前提の import 解決。
     "moduleResolution": "Bundler",
+    "paths": {
+      "@lgh-crop-pdf-protocol": ["../src/application/crop_pdf_protocol.ts"]
+    },
     // 出力する JavaScript の言語レベル。
     "target": "ES2022",
     // Webview はブラウザ環境なので DOM を含める。
@@ -31,6 +34,6 @@
     // vite/client の import.meta.env 型などを使えるようにする。
     "types": ["vite/client"]
   },
-  "include": ["apps/**/*", "vite.config.ts"],
+  "include": ["apps/**/*", "../src/application/crop_pdf_protocol.ts", "vite.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

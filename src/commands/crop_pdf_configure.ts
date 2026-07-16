@@ -4,18 +4,23 @@ import path from "node:path";
 import { PDFDocument } from "pdf-lib";
 import * as vscode from "vscode";
 
-import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
-  cropPdfWithConfiguredBox,
   type CropBox,
+  type CropConfigureHostToWebview,
   type CropTarget,
-} from "../operations/crop_pdf_configure.js";
+  isCropConfigureMessage,
+} from "../application/crop_pdf_protocol.js";
+import { localeMap } from "../locale_map.js";
+import { resolveOutputPath } from "../config/resolve_output_path.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import { cropPdfWithConfiguredBox } from "../operations/crop_pdf_configure.js";
 import { getWebviewHtml } from "../presentation/webview/get_webview_html.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CROP_PDF_CONFIGURE_COMMAND = "latex-graphics-helper.cropPdf.configure";
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
@@ -24,6 +29,27 @@ export async function cropPdfConfigureCommand(
   context: vscode.ExtensionContext,
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
+): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
+  try {
+    await runCropPdfConfigureCommand(context, uri, uris, outputChannel);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    outputChannel?.appendLine(`[crop-pdf-configure] failure: ${message}`);
+    if (isAbortError(error)) {
+      await vscode.window.showInformationMessage(userMessage("message.cropPdf.cancelled"));
+      return;
+    }
+    await vscode.window.showErrorMessage(userMessage("message.cropPdf.failed", message));
+  }
+}
+
+async function runCropPdfConfigureCommand(
+  context: vscode.ExtensionContext,
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  outputChannel?: LineOutputChannel,
 ): Promise<void> {
   const inputUri = resolveSinglePdfUri(uri, uris);
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(inputUri);
@@ -39,7 +65,7 @@ export async function cropPdfConfigureCommand(
   const firstPageMediaBox = firstPage?.getMediaBox();
   const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
   const outputTemplate = configuration.get<string>("outputPath.cropPdf", DEFAULT_OUTPUT_PATH);
-  const initMessage = {
+  const initMessage: CropConfigureHostToWebview = {
     type: "init",
     payload: {
       pdfSrc: "",
@@ -52,6 +78,7 @@ export async function cropPdfConfigureCommand(
       initialPage: 1,
       width: firstPageMediaBox?.width ?? 0,
       height: firstPageMediaBox?.height ?? 0,
+      labels: cropPdfLabels(),
     },
   };
   const panel = vscode.window.createWebviewPanel(
@@ -73,6 +100,7 @@ export async function cropPdfConfigureCommand(
     extensionUri: context.extensionUri,
     title: "Crop PDF",
     appName: "crop_pdf",
+    locale: vscode.env.language,
   });
   initMessage.payload.pdfSrc = panel.webview.asWebviewUri(inputUri).toString();
   initMessage.payload.workerSrc = panel.webview
@@ -103,6 +131,12 @@ export async function cropPdfConfigureCommand(
       return;
     }
 
+    if (message.type === "previewLoadFailed") {
+      outputChannel?.appendLine(`[crop-pdf-configure] preview failure: ${message.payload.message}`);
+      void vscode.window.showErrorMessage(message.payload.message);
+      return;
+    }
+
     if (isApplying) {
       return;
     }
@@ -115,6 +149,7 @@ export async function cropPdfConfigureCommand(
       cropBox: message.payload.cropBox,
       target: message.payload.target,
       panel,
+      ...(outputChannel !== undefined && { outputChannel }),
     }).finally(() => {
       isApplying = false;
     });
@@ -140,9 +175,11 @@ async function applyConfiguredCrop(params: {
   cropBox: CropBox;
   target: CropTarget;
   panel: vscode.WebviewPanel;
+  outputChannel?: LineOutputChannel;
 }): Promise<void> {
   try {
-    const { inputUri, workspaceFolder, outputTemplate, cropBox, target, panel } = params;
+    const { inputUri, workspaceFolder, outputTemplate, cropBox, target, panel, outputChannel } =
+      params;
     const sourcePath = inputUri.fsPath;
     const outputPath = resolveOutputPath(outputTemplate, {
       workspacePath: workspaceFolder.uri.fsPath,
@@ -169,6 +206,7 @@ async function applyConfiguredCrop(params: {
             },
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         }),
     );
@@ -177,7 +215,7 @@ async function applyConfiguredCrop(params: {
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       panel.dispose();
       const message = error instanceof Error ? error.message : String(error);
@@ -195,12 +233,13 @@ async function applyConfiguredCrop(params: {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    params.outputChannel?.appendLine(`[crop-pdf-configure] failure: ${message}`);
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(userMessage("message.cropPdf.cancelled"));
       return;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage("message.cropPdf.failed", message));
   }
 }
@@ -229,70 +268,43 @@ function resolveSinglePdfUri(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri 
   return inputUri;
 }
 
-function isCropConfigureMessage(
-  message: unknown,
-): message is
-  | { type: "ready" }
-  | { type: "cancel" }
-  | { type: "apply"; payload: { cropBox: CropBox; target: CropTarget } } {
-  if (typeof message !== "object" || message === null || !("type" in message)) {
-    return false;
-  }
-
-  if (message.type === "ready" || message.type === "cancel") {
-    return true;
-  }
-
-  if (message.type !== "apply" || !("payload" in message)) {
-    return false;
-  }
-
-  const payload = message.payload;
-
-  if (typeof payload !== "object" || payload === null) {
-    return false;
-  }
-
-  if (!("cropBox" in payload) || !("target" in payload)) {
-    return false;
-  }
-
-  return isCropBox(payload.cropBox) && isCropTarget(payload.target);
-}
-
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
 
-function isCropBox(value: unknown): value is CropBox {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
-  return (
-    "left" in value &&
-    typeof value.left === "number" &&
-    "bottom" in value &&
-    typeof value.bottom === "number" &&
-    "right" in value &&
-    typeof value.right === "number" &&
-    "top" in value &&
-    typeof value.top === "number"
-  );
-}
-
-function isCropTarget(value: unknown): value is CropTarget {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
-    return false;
-  }
-
-  if (value.type === "all") {
-    return true;
-  }
-
-  if (value.type !== "selected" || !("pages" in value) || !Array.isArray(value.pages)) {
-    return false;
-  }
-
-  return value.pages.every((page) => typeof page === "number");
+function cropPdfLabels() {
+  return {
+    title: localeMap("webview.cropPdf.title"),
+    description: localeMap("webview.cropPdf.description"),
+    pageLabel: localeMap("webview.cropPdf.pageLabel"),
+    pages: localeMap("webview.cropPdf.pages"),
+    preview: localeMap("webview.cropPdf.preview"),
+    previewDescription: localeMap("webview.cropPdf.previewDescription"),
+    previewAriaLabel: localeMap("webview.cropPdf.previewAriaLabel"),
+    cropSettings: localeMap("webview.cropPdf.cropSettings"),
+    cropBox: localeMap("webview.cropPdf.cropBox"),
+    cropBoxDescription: localeMap("webview.cropPdf.cropBoxDescription"),
+    left: localeMap("webview.cropPdf.left"),
+    bottom: localeMap("webview.cropPdf.bottom"),
+    right: localeMap("webview.cropPdf.right"),
+    top: localeMap("webview.cropPdf.top"),
+    currentPageSize: localeMap("webview.cropPdf.currentPageSize"),
+    targetPages: localeMap("webview.cropPdf.targetPages"),
+    allPages: localeMap("webview.cropPdf.allPages"),
+    selectedPages: localeMap("webview.cropPdf.selectedPages"),
+    pagesInput: localeMap("webview.cropPdf.pagesInput"),
+    pagesPlaceholder: localeMap("webview.cropPdf.pagesPlaceholder"),
+    zoomOut: localeMap("webview.cropPdf.zoomOut"),
+    zoomIn: localeMap("webview.cropPdf.zoomIn"),
+    previewZoom: localeMap("webview.cropPdf.previewZoom"),
+    apply: localeMap("webview.cropPdf.apply"),
+    cancel: localeMap("webview.cropPdf.cancel"),
+    previewRenderError: localeMap("webview.cropPdf.previewRenderError"),
+    previewApplyError: localeMap("webview.cropPdf.previewApplyError"),
+    cropBoxNumberError: localeMap("webview.cropPdf.cropBoxNumberError"),
+    cropBoxSizeError: localeMap("webview.cropPdf.cropBoxSizeError"),
+    pagesRequiredError: localeMap("webview.cropPdf.pagesRequiredError"),
+    pageWholeNumberError: localeMap("webview.cropPdf.pageWholeNumberError"),
+    pageOutOfRangeError: localeMap("webview.cropPdf.pageOutOfRangeError"),
+  };
 }

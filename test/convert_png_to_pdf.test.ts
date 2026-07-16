@@ -16,7 +16,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { convertPngToPdf } from "../src/operations/convert_png_to_pdf.js";
+import { convertPngToPdfFiles } from "../src/operations/convert_png_to_pdf.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,10 +30,10 @@ suite("PNGからPDFへの変換処理", () => {
     // Copy fixture PNG file
     await copyFile(path.join(__dirname, "..", "..", "test", "fixtures", "test.png"), sourcePath);
 
-    await convertPngToPdf({
-      sourcePath,
-      outputPath,
-      workspacePath,
+    await convertPngToPdfFiles({
+      jobs: [{ sourcePath, outputPath, workspacePath }],
+      supportedExtensions: [".png"],
+      operationName: "convert-png-to-pdf",
     });
 
     // Verify output PDF exists

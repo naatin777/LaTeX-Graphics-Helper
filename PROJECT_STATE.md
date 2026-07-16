@@ -6,11 +6,10 @@
 
 LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への挿入作業を扱いやすくする拡張機能です。
 
-## Current Priority
+## Current priority
 
-既存の主要機能を、把握できる状態で安定させる。
-
-今は、完璧な設計・大規模なリファクタ・高度なCI/CDよりも、動く範囲を小さく保ち、完成に近づけることを優先する。
+- cross-platform VSIX verification
+- README・NLS・設定同期
 
 ## Implemented
 
@@ -23,11 +22,11 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - Insert LaTeX code from PDF
 - Insert LaTeX code from clipboard image
 
-## In Progress
+## In progress
 
-- なし。現在のタスクは `docs/tasks/README.md` で管理する。
+- なし。0194はBlocked、0195と0197は未着手。
 
-## Not Doing Now
+## Non-goals
 
 - 大規模なアーキテクチャ変更
 - ディレクトリ構成の全面整理
@@ -36,10 +35,12 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - 好みレベルのリファクタリング
 - 新しい依存の追加
 - 仕様が固まっていない機能の作り込み
+- 新しいユーザー機能
+- Coding Houtei相当のrepository内実装
 
 ## Important Decisions
 
-- 作業は `docs/tasks/README.md` からリンクされた1つのタスクに限定する。
+- 作業中は `docs/tasks/README.md` からリンクされた1つのtaskに限定する。作業がない場合はCurrent Taskを空にする。
 - 気になるリファクタは、すぐ直さず `docs/refactor-backlog.md` に書く。
 - 設計判断に迷ったら、`docs/adr/` に記録してから進める。
 - READMEは日本語で正確に書いてから英語化してよい。

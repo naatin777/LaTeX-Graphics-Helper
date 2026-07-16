@@ -1,16 +1,25 @@
 import * as vscode from "vscode";
+import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import { localeMap } from "../locale_map.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-crop.pdf";
+export const CROP_PDF_AUTO_COMMAND = "latex-graphics-helper.cropPdf.auto";
 
-export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function cropPdfAuto(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
+): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -31,8 +40,6 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     const ghostscriptPath =
       configuration.get<string>("execPath.ghostscript") ||
       (process.platform === "win32" ? "gswin64c.exe" : "gs");
-    const outputChannel = vscode.window.createOutputChannel("LaTeX Graphics Helper");
-
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -40,21 +47,17 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
         cancellable: true,
       },
       async (progress, token) => {
-        try {
-          return await withCancellationSignal(token, async (signal) => {
-            progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
-            return cropPdfFiles({
-              jobs,
-              margin: selectedMargin,
-              ghostscriptPath,
-              signal,
-              outputChannel,
-              resolveOutputConflicts,
-            });
+        return withCancellationSignal(token, async (signal) => {
+          progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
+          return cropPdfFiles({
+            jobs,
+            margin: selectedMargin,
+            ghostscriptPath,
+            signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveOutputConflicts,
           });
-        } finally {
-          outputChannel.dispose();
-        }
+        });
       },
     );
 
@@ -62,7 +65,7 @@ export async function cropPdfAuto(uri?: vscode.Uri, uris?: vscode.Uri[]): Promis
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -112,6 +115,10 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): CropPdfJob {
 
   const sourcePath = sourceUri.fsPath;
 
+  if (path.extname(sourcePath).toLowerCase() !== ".pdf") {
+    throw new Error(`Only PDF files can be cropped: ${sourcePath}`);
+  }
+
   return {
     sourcePath,
     workspacePath: workspace.uri.fsPath,
@@ -140,12 +147,14 @@ async function selectMargin(options: number[]): Promise<number | undefined> {
   const items = options.map((margin) => ({
     label: `${margin} pt`,
     description:
-      margin === 0 ? "Crop to the detected content bounds" : `Keep ${margin} pt around the content`,
+      margin === 0
+        ? localeMap("quickPick.cropPdf.margin.detectedBounds")
+        : localeMap("quickPick.cropPdf.margin.keepAroundContent").replace("{0}", margin.toString()),
     margin,
   }));
   const selected = await vscode.window.showQuickPick(items, {
-    title: "Select PDF crop margin",
-    placeHolder: "The selected margin is applied to all PDF files.",
+    title: localeMap("quickPick.cropPdf.margin.title"),
+    placeHolder: localeMap("quickPick.cropPdf.margin.placeholder"),
   });
 
   return selected?.margin;

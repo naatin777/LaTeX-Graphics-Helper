@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_pages.js";
@@ -6,13 +7,17 @@ import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
+export const SPLIT_PDF_ALL_PAGES_COMMAND = "latex-graphics-helper.splitPdf.allPages";
 
 export async function splitPdfAllPagesCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
 ): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -36,6 +41,7 @@ export async function splitPdfAllPagesCommand(
             jobs,
             signal,
             resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
           });
         });
       },
@@ -45,7 +51,7 @@ export async function splitPdfAllPagesCommand(
     let undoId: string;
 
     try {
-      undoId = await rememberLastConversion(outputs);
+      undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(
@@ -90,6 +96,10 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
   }
 
   const sourcePath = sourceUri.fsPath;
+
+  if (path.extname(sourcePath).toLowerCase() !== ".pdf") {
+    throw new Error(`Only PDF files can be split: ${sourcePath}`);
+  }
 
   return {
     sourcePath,

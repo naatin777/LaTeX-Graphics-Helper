@@ -1,218 +1,32 @@
 # Tasks
 
-タスクは、1タスクにつき1つのMarkdownファイルで管理する。
-
-新しいタスクは `0000-template.md` をコピーして作成する。
-
 ## Current Task
 
-- なし
+なし
 
-## Rules
+## Planned
 
-- 作業中のタスクは1つに限定する
-- タスクの目的を途中で増やさない
-- 完了条件を満たしたら `Status` を `Done` にする
-- 残った作業は別のタスクとして作成する
-- 完了済みタスクをバックログ台帳として再利用しない
-- 同じ問題が再発した場合も、完了済みタスクを追記せず新しいタスクを作る
-- 仕様に関係する場合は `docs/specs/` をリンクする
-- 設計判断に関係する場合は `docs/adr/` をリンクする
+- [0197: cross-platform VSIX release verification](0197-verify-cross-platform-vsix-release.md)（未着手）
+- [0195: README・NLS・設定・task archiveを同期する](0195-sync-docs-settings-and-task-archive.md)（未着手）
 
-## Completed Tasks
+## Blocked
 
-- [0001: タスク管理をdocs/tasksへ統合する](0001-consolidate-task-management.md)
-- [0002: 検証ベースラインを確立する](0002-establish-validation-baseline.md)
-- [0003: lintのPDF.js worker importエラーを解消する](0003-fix-pdfjs-worker-lint-errors.md)
-- [0004: 標準のtestコマンドを決定する](0004-decide-standard-test-command.md)
-- [0005: WebviewのPDF表示テストを先行追加する](0005-add-failing-webview-pdf-rendering-tests.md)
-- [0006: WebviewにPDFの最初のページを表示する](0006-render-first-pdf-page-in-webviews.md)
-- [0007: WebviewのPDF表示内容検証を強化する](0007-strengthen-webview-pdf-rendering-tests.md)
-- [0008: cropPdf.autoを安全な作業領域で実装する](0008-implement-safe-auto-crop.md)
-- [0009: ファイル操作をworkspace内へ制限する](0009-restrict-file-operations-to-workspace.md)
-- [0011: cropPdf.autoを単純で安全な構成へ変更する](0011-simplify-auto-crop.md)
-- [0012: workspace境界の失敗テストを追加する](0012-add-workspace-boundary-tests.md)
-- [0013: WorkspaceEdit出力反映の失敗テストを追加する](0013-add-workspace-edit-output-tests.md)
-- [0014: 安全な変換取消の失敗テストを追加する](0014-add-safe-conversion-undo-tests.md)
-- [0015: 安全な直前変換取消を実装する](0015-implement-safe-conversion-undo.md)
-- [0016: 変換キャンセルの失敗テストを追加する](0016-add-conversion-cancellation-tests.md)
-- [0017: 変換の進捗表示とキャンセルを実装する](0017-implement-conversion-progress-and-cancellation.md)
-- [0018: splitPdf.allPagesの失敗テストを追加する](0018-add-split-pdf-all-pages-tests.md)
-- [0019: splitPdf.allPagesを安全に実装する](0019-implement-split-pdf-all-pages.md)
-- [0020: Ghostscriptがない場合のエラーハンドリングをテストする](0020-add-ghostscript-missing-error-test.md)
-- [0021: Outputチャンネルへのログ出力機能を実装する](0021-implement-output-channel-logging.md)
-- [0022: PNGをPDFに変換する機能のテストを追加する](0022-add-png-to-pdf-conversion-tests.md)
-- [0023: PNGをPDFに変換する機能を実装する](0023-implement-png-to-pdf-conversion.md)
-- [0024: コマンドを呼び出してファイル変換できてるかをチェックするテストを追加する](0024-add-command-execution-test.md)
-- [0025: 生成されたmediaフォルダをGit管理から外す](0025-ignore-generated-media.md)
-- [0026: Safe Modeの失敗テストを追加する](0026-add-safe-mode-tests.md)
-- [0027: Safe Modeをcropとsplitへ実装する](0027-implement-safe-mode.md)
-- [0028: PNG変換のSafe Mode失敗テストを追加する](0028-add-png-safe-mode-tests.md)
-- [0029: PNG変換を安全な作業領域とSafe Modeへ統合する](0029-integrate-png-conversion-with-safe-mode.md)
-- [0030: Safe Modeダイアログ結果のテストを追加する](0030-add-safe-mode-dialog-result-tests.md)
-- [0031: Safe ModeのVS Code UI挙動を自動テストする](0031-verify-safe-mode-ui-manually.md)
-- [0032: 変換コマンドを出力形式基準へ再設計する](0032-redesign-conversion-commands-by-output-format.md)
-- [0033: RuleSyncでAI作業ルールを一元管理する](0033-adopt-rulesync-for-ai-rules.md)
-- [0034: PDFに変換コマンドの失敗テストを追加する](0034-add-convert-to-pdf-output-format-tests.md)
-- [0035: PDFに変換コマンドを実装する](0035-implement-convert-to-pdf-output-format-command.md)
-- [0036: VS Code command testの通知待ち対策helperを追加する](0036-add-command-test-notification-helper.md)
-- [0037: RuleSyncのStop hookでlint/format自動修正を実行する](0037-add-rulesync-stop-fix-hook.md)
-- [0038: Codex Stop hookのJSON出力エラーを修正する](0038-fix-codex-stop-hook-json-output.md)
-- [0039: macOS CIでconvert PNG to PDF command testがtimeoutする問題を修正する](0039-fix-macos-convert-png-command-timeout.md)
-- [0040: 変換サブメニューのPDF表示へ移行する失敗テストを追加する](0040-add-legacy-to-pdf-command-visibility-tests.md)
-- [0041: 変換サブメニューのPDF表示へ移行する](0041-implement-convert-menu-pdf-visibility.md)
-- [0042: 実行可能な変換context menuを共有サブメニューへ集約する](0042-consolidate-existing-convert-context-menu.md)
-- [0043: JPEG/WebP/AVIFをPDFに変換する失敗テストを追加する](0043-add-convert-to-pdf-image-format-tests.md)
-- [0044: JPEG/WebP/AVIFをPDFに変換する](0044-implement-convert-to-pdf-image-formats.md)
-- [0045: SVGをPDFに変換する失敗テストを追加する](0045-add-convert-to-pdf-svg-tests.md)
-- [0046: SVGをPDFに変換する](0046-implement-convert-to-pdf-svg.md)
-- [0047: Mermaidファイル変換の仕様を決める](0047-design-mermaid-file-conversion.md)
-- [0048: 未実装・保留事項を整理する](0048-track-unimplemented-work.md)
-- [0049: MermaidをSVGに変換する失敗テストを追加する](0049-add-convert-to-svg-mermaid-tests.md)
-- [0050: MermaidをSVGに変換する](0050-implement-convert-to-svg-mermaid.md)
-- [0051: MermaidをPDFに変換する失敗テストを追加する](0051-add-convert-to-pdf-mermaid-tests.md)
-- [0052: MermaidをPDFに変換する](0052-implement-convert-to-pdf-mermaid.md)
-- [0053: editable Draw.io画像をPDF変換対象にする失敗テストを追加する](0053-add-editable-drawio-image-to-pdf-tests.md)
-- [0054: editable Draw.io画像をPDF変換対象にする](0054-implement-editable-drawio-image-to-pdf.md)
-- [0055: editable Draw.io画像のSafe Mode・Undo・cancelテストを追加する](0055-add-editable-drawio-image-flow-tests.md)
-- [0056: 大文字拡張子の扱いを全体確認する](0056-audit-uppercase-extension-handling.md)
-- [0057: テスト名を日本語で分かりやすく整理する](0057-make-test-names-easier-to-read-in-japanese.md)
-- [0058: 変換context menuの拡張子判定を大文字小文字非依存にする](0058-make-convert-context-menu-extension-matching-case-insensitive.md)
-- [0059: テスト名を全体的に日本語化する](0059-localize-test-names-broadly.md)
-- [0060: pnpm実行時にnode_modulesが再作成される問題を調査する](0060-investigate-pnpm-node-modules-recreation.md)
-- [0061: pnpm 11向けに設定置き場とdeps status checkを整理する](0061-align-pnpm-config-for-v11-deps-status.md)
-- [0062: 変換機能ドキュメントを現在の実装に合わせる](0062-update-conversion-docs.md)
-- [0063: convertToPngの仕様を決める](0063-design-convert-to-png.md)
-- [0064: convertToPngの失敗テストを追加する](0064-add-convert-to-png-tests.md)
-- [0065: convertToPngを実装する](0065-implement-convert-to-png.md)
-- [0066: GitHub Actionsで外部変換ツールを実体確認する](0066-verify-ci-external-tools.md)
-- [0067: プロジェクト成果物ごとの言語方針を決める](0067-decide-language-policy.md)
-- [0068: commit messageとPR bodyの定型を決める](0068-standardize-commit-and-pr-format.md)
-- [0069: outputPathテンプレート変数の入力基準を整理する](0069-define-output-path-template-source-semantics.md)
-- [0070: convertToJpegの失敗テストを追加する](0070-add-convert-to-jpeg-tests.md)
-- [0071: convertToJpegを実装する](0071-implement-convert-to-jpeg.md)
-- [0072: 変換テストのfixture方針を記録する](0072-document-test-fixture-policy.md)
-- [0073: convertToSvgの入力形式をPDFとDraw.ioへ広げる](0073-expand-convert-to-svg-inputs.md)
-- [0074: convertToWebpを実装する](0074-implement-convert-to-webp.md)
-- [0075: convertToAvifを実装する](0075-implement-convert-to-avif.md)
-- [0076: withProgress cancellation handlingを共通化する](0076-common-progress-cancellation.md)
-- [0077: Playwrightテストをsrc配下から移動する](0077-relocate-playwright-tests.md)
-- [0078: progressとnotification文言を多言語対応する](0078-localize-progress-and-notification-messages.md)
-- [0079: vscode-testをshard並列実行できるか検証する](0079-vscode-test-sharding.md)
-- [0080: VS Code integration testで各テストの所要時間を表示する](0080-show-vscode-test-durations.md)
-- [0081: GitHub Actionsのdependency setup時間を削減する](0081-reduce-github-actions-dependency-setup-time.md)
-- [0082: Corepack方式のpnpm setupを他のCI workflowへ展開する](0082-expand-corepack-setup-to-ci-workflows.md)
-- [0083: GitHub Actions parallel stepsの適用候補を調査する](0083-audit-github-actions-parallel-steps.md)
-- [0084: Playwright browser cacheを導入すべきか評価する](0084-evaluate-playwright-browser-cache.md)
-- [0085: 外部ツールinstall時間をOS別に分解する](0085-break-down-external-tool-install-time.md)
-- [0086: macOSの外部ツールinstall時間を削減する](0086-reduce-macos-external-tool-install-time.md)
-- [0087: 一時的なCI計測wrapperを通常運用から外す](0087-remove-temporary-ci-timing-wrappers.md)
-- [0088: 出力形式基準コマンド実装後の変換ドキュメントを同期する](0088-sync-conversion-docs-after-output-format-commands.md)
-- [0089: 出力形式基準のoutputPath設定移行方針を決める](0089-design-output-format-output-path-settings.md)
-- [0090: 出力形式基準outputPath設定のテストを追加する](0090-add-output-format-output-path-setting-tests.md)
-- [0091: 出力形式基準outputPath設定を実装する](0091-implement-output-format-output-path-settings.md)
-- [0092: docs-only変更では重いCIをスキップする](0092-skip-heavy-ci-for-docs-only-changes.md)
-- [0093: GitHub Actionsの重複表示を減らす](0093-consolidate-ci-workflows.md)
-- [0094: 未実装・保留事項を個別タスクへ分割する](0094-split-backlog-into-actionable-tasks.md)
-- [0095: READMEとtest matrixを最新実装に同期する](0095-sync-readme-and-test-matrix-with-current-implementation.md)
-- [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
-- [0112: v0.5.1公開機能との差分を整理する](0112-track-v051-public-feature-parity.md)
-- [0113: 現行PDF結合コマンドの基本動作テストを追加する](0113-add-basic-merge-pdf-command-tests.md)
-- [0114: 現行PDF結合コマンドの基本動作を実装する](0114-restore-basic-merge-pdf-command.md)
-- [0125: mergePdfの操作テストを追加する](0125-add-merge-pdf-operation-tests.md)
-- [0115: v0.5.1からの破壊的変更を文書化する](0115-decide-v051-legacy-compatibility.md)
-- [0116: LaTeX挿入機能の失敗テストを追加する](0116-add-latex-insertion-settings-tests.md)
-- [0117: ファイルdragとクリップボードpasteによるLaTeX挿入を復元する](0117-restore-latex-insertion-settings.md)
-- [0118: mergePdf quick系command IDをselectedFilesへ寄せる](0118-rename-merge-pdf-selected-files-command.md)
-- [0103: cropPdf.configure GUIの仕様を決める](0103-design-crop-pdf-configure-gui.md)
-- [0104: cropPdf.configure GUIの失敗テストを追加する](0104-add-crop-pdf-configure-gui-tests.md)
-- [0105: cropPdf.configure GUIを実装する](0105-implement-crop-pdf-configure-gui.md)
-- [0120: cropPdf.configure GUIを実操作できる状態へ仕上げる](0120-finish-crop-pdf-configure-gui.md)
-- [0121: cropPdf.configure GUIのレイアウトを左右分割へ改善する](0121-improve-crop-pdf-configure-layout.md)
-- [0122: cropPdf.configureのズーム操作とスクロール範囲を改善する](0122-improve-crop-pdf-zoom-and-scroll.md)
-- [0123: cropPdf.configureの操作テストを追加する](0123-add-crop-pdf-configure-operation-tests.md)
-- [0126: 実fixtureと画像比較を使うテスト方針を決める](0126-design-real-fixture-and-visual-testing.md)
-- [0130: 複雑なUnicodeファイル名のcrop出力テストを追加する](0130-add-complex-unicode-output-path-tests.md)
-- [0131: outputPathのOS禁止名検証を設計する](0131-design-output-path-os-name-validation.md)
-- [0132: outputPathのOS禁止名失敗テストを追加する](0132-add-output-path-os-name-validation-tests.md)
-- [0133: outputPathのOS禁止名検証を実装する](0133-implement-output-path-os-name-validation.md)
-- [0135: 固定fixtureによる既存テスト置換方針を明記する](0135-clarify-fixed-fixture-test-replacement-policy.md)
-- [0136: crop Applyの動的fixtureテストを固定fixtureへ置き換える](0136-replace-crop-apply-generated-fixture-test.md)
-- [0137: Gemini Code Assistのレビュー手順を削除する](0137-remove-gemini-code-assist-review-workflow.md)
-- [0138: crop fixtureテストで設定済みpdftocairoを使う](0138-use-configured-pdftocairo-in-crop-fixture-tests.md)
-- [0139: Windows Poppler用にASCIIの画像比較ディレクトリを使う](0139-use-ascii-render-directory-for-windows-poppler.md)
-- [0140: GitHub Actionsの3 OSへqpdfを導入する](0140-install-qpdf-in-ci.md)
-- [0141: 外部コマンドのOS別path互換性を実測する](0141-audit-external-tool-path-compatibility.md)
-- [0142: 外部コマンド用ASCII stagingの仕様を決める](0142-design-ascii-staging-for-external-tools.md)
-- [0143: Windows Ghostscript用ASCII scratchの失敗テストを追加する](0143-add-windows-ghostscript-ascii-staging-tests.md)
-- [0144: Windows Ghostscript用ASCII scratchを実装する](0144-implement-windows-ghostscript-ascii-staging.md)
-- [0145: Windows pdftocairo出力用ASCII stagingの失敗テストを追加する](0145-add-windows-pdftocairo-ascii-staging-tests.md)
-- [0146: Windows pdftocairo出力用ASCII stagingを実装する](0146-implement-windows-pdftocairo-ascii-staging.md)
-- [0147: Windows rsvg-convert用ASCII stagingの失敗テストを追加する](0147-add-windows-rsvg-ascii-staging-tests.md)
-- [0148: Windows rsvg-convert用ASCII stagingを実装する](0148-implement-windows-rsvg-ascii-staging.md)
-- [0149: convert command正常系を複数形式batchへ統合する](0149-consolidate-convert-command-tests.md)
-- [0151: CI環境変数のローカル・CI運用を整理する](0151-document-ci-env-policy.md)
-- [0150: PDF描画内容比較テストを追加する](0150-add-pdf-visual-content-tests.md)
-- [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
-- [0153: VS Code Electron Playwright harnessを追加する](0153-add-vscode-electron-harness.md)
-- [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
-- [0155: VS Code WebviewでPDF.jsを安定して読み込む](0155-stabilize-pdfjs-loading-in-vscode-webview.md)
-- [0156: AI開発ハーネスの最小構成を設計する](0156-design-ai-development-harness.md)
-- [0165: ADRの役割を定義し既存ADRを監査する](0165-define-adr-scope-and-audit.md)
-- [0166: ADR-0001からStop hookの運用詳細を分離する](0166-separate-stop-hook-details-from-adr-0001.md)
-- [0167: ADR-0011からPR・commit templateを分離する](0167-separate-templates-from-language-adr.md)
-- [0168: ADR-0013からElectron testの実行詳細を分離する](0168-separate-electron-test-details-from-adr-0013.md)
-- [0157: next/v1のbranch・PR運用をRuleSyncへ記録する](0157-document-next-v1-branch-workflow.md)
-- [0163: RuleSync生成物の同期をCIで検証する](0163-verify-rulesync-generated-files-in-ci.md)
-- [0164: Stop hookのdirty worktree方針を決める](0164-design-safe-stop-fix-hook.md)
-- [0169: Stop hookのdirty worktree安全テストを追加する](0169-add-safe-stop-hook-worktree-tests.md)
-- [0170: Stop hookへdirty worktree guardを実装する](0170-implement-safe-stop-hook-worktree-guard.md)
-- [0158: RuleSync ruleを責務別に分割する](0158-split-rulesync-rules-by-responsibility.md)
-- [0159: task実行とLuna委譲を行うskillを設計する](0159-design-ai-task-routing-skill.md)
-- [0171: task実行とLuna委譲を行うskillを実装する](0171-implement-ai-task-routing-skill.md)
-- [0160: worktreeを使う並列作業の運用を設計する](0160-design-worktree-parallel-workflow.md)
-- [0161: 変更影響に応じたCI scopeを設計する](0161-design-change-based-ci-scope.md)
-- [0172: CI scope設計の現状baselineを測定する](0172-measure-ci-scope-baseline.md)
-- [0173: CI scope classifierの仕様テストを追加する](0173-add-ci-scope-classifier-tests.md)
-- [0174: CI scope classifierを実装する](0174-implement-ci-scope-classifier.md)
-- [0175: Playwright CIをscope判定へ接続する](0175-wire-playwright-ci-scope.md)
-- [0176: VS Code testのcore / conversion分割を設計する](0176-design-vscode-test-core-conversion-split.md)
-- [0177: Check workflowとpackage checkの差分を整理する](0177-align-check-workflow-with-package-check.md)
-- [0178: Check workflowでpackage checkを実行する](0178-run-package-check-in-ci.md)
-- [0162: パッケージ済みVSIXのオフライン・3 OS動作を調査する](0162-audit-offline-vsix-cross-platform.md)
-- [0179: VSIXのproduction dependency同梱とplatform packageを成立させる](0179-fix-vsix-production-dependency-packaging.md)
-- [0181: 外部ツールの一回限りpath probeを削除する](0181-remove-external-tool-path-probe.md)
-- [0182: Draw.ioの複雑なpathを使う実fixtureテストを追加する](0182-add-drawio-complex-path-test.md)
-- [0183: 未接続のCI scope classifierを削除する](0183-remove-unused-ci-scope.md)
+- [0194: CI・release・VSIX packagingを再現可能にする](0194-harden-ci-release-and-vsix.md)（他OS runnerでのpackageおよびpackaged VSIX smokeが未確認）
 
-## Todo Tasks
+## Recent Completed
 
-### リリース準備
+- [0196: v1構造とハーネスを簡素化する](0196-simplify-v1-architecture-and-harness.md)
+- [0193: Webviewのprotocol・CSP・i18n・性能を改善する](0193-harden-webview-boundaries-and-performance.md)
+- [0192: LaTeX Drop/Pasteの入力仕様を明確化する](0192-harden-latex-drop-and-paste.md)
+- [0191: raster operationの共通pipelineを整理する](0191-reduce-raster-operation-review-surface.md)
+- [0190: 変換commandの共通境界を小さく整理する](0190-reduce-conversion-command-review-surface.md)
+- [0189: Safe Mode・command境界・Output Channelを統一する](0189-align-command-boundaries-and-output-channel.md)
+- [0188: AIハーネスとStop hookを検証専用にする](0188-build-task-preflight-and-stop-harness.md)
+- [0187: Clipboard Pasteのcancellationとcleanupを統合する](0187-harden-clipboard-paste-lifecycle.md)
+- [0186: session-safeなstaging lifecycleを実装する](0186-define-session-safe-staging-lifecycle.md)
 
-- [0180: パッケージ済みVSIXのオフライン3 OS smoke testを追加する](0180-add-packaged-vsix-offline-smoke-tests.md)
-- [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md)
+## Archive
 
-### PDF GUI
+- [完了task archive](archive/completed.md)
 
-- [0106: splitPdf.configure GUIの仕様を決める](0106-design-split-pdf-configure-gui.md)
-- [0107: splitPdf.configure GUIの失敗テストを追加する](0107-add-split-pdf-configure-gui-tests.md)
-- [0108: splitPdf.configure GUIを実装する](0108-implement-split-pdf-configure-gui.md)
-- [0109: mergePdf GUIの仕様を決める](0109-design-merge-pdf-gui.md)
-- [0110: mergePdf GUIの失敗テストを追加する](0110-add-merge-pdf-gui-tests.md)
-- [0111: mergePdf GUIを実装する](0111-implement-merge-pdf-gui.md)
-
-### 変換・出力仕様
-
-- [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md)
-- [0097: PDFページを1つの画像へ結合する仕様を決める](0097-design-pdf-pages-to-single-image.md)
-- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)
-- [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md)
-- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
-- [0119: LaTeX挿入フォーマットの仕様を決める](0119-design-latex-insertion-format.md)
-- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md)
-
-### 信頼性と内部処理
-
-- [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
-- [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md)
-- [0134: splitPdfのoutputPath事前検証失敗テストを追加する](0134-add-split-output-path-preflight-tests.md)
+個別のtask fileは削除せず、archiveから参照できる番号範囲に整理する。

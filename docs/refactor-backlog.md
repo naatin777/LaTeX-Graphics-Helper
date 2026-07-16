@@ -48,15 +48,28 @@
 
 ## Items
 
-### Example: similar command handlers
+### 形式別operationの残る引数列
 
-- Area: command handlers
+- Area: conversion operations
+- Type: Readability
+- Concrete problem: raster operationの公開optionsには、legacy test injectionとruntime値（signal、conflict resolver、Output Channel）がまだ混在している。
+- Evidence: `src/operations/convert_to_png.ts`、`convert_to_jpeg.ts`、`convert_to_webp.ts`、`convert_to_avif.ts`の`ConvertTo*FilesOptions`。
+- Trigger: 次に形式別operationの依存を変更するとき、または同じruntime値を追加するとき。
+- Why not now: 今回はstaged batchとcommand runnerの共有境界を先に固定し、既存の安全性テストと直接operation callerを無用に書き換えない。
+- Related files: `src/operations/conversion_runtime.ts`, `src/operations/run_staged_conversion_batch.ts`, `src/operations/convert_to_*.ts`, `test/convert_to_*_operation.test.ts`
+- Expected test impact: operation APIの回帰、Safe Mode、cancellation、tool injectionの再確認が必要。
+- Reversibility: runtimeをoptionsへ導入する変更は、形式別に戻せる。
+
+### PDF/SVGのstaging batch重複
+
+- Area: conversion operations
 - Type: Duplication
-- Why it bothers me: 複数の command handler が似ている。
-- Concrete problem: まだ具体的な問題はない。
-- Do now? No
-- Condition to do: 3つ目の同じ変更が必要になったら検討する。
-- Related files:
-  - `src/...`
+- Concrete problem: PDF/SVG operationにもstaging・concurrency・commit・cleanupの似た処理が残っている。
+- Evidence: `src/operations/convert_png_to_pdf.ts`と`src/operations/convert_to_svg.ts`はraster batchとは別の形式固有pipelineを持つ。
+- Trigger: PDF/SVGの安全性変更が同じ境界で3回以上必要になったとき。
+- Why not now: PDF/SVGはrasterと異なるtool/encoder差分があり、今回の共通化でgeneric conversion engineへ近づけない。
+- Related files: `src/operations/convert_png_to_pdf.ts`, `src/operations/convert_to_svg.ts`, `src/operations/run_staged_conversion_batch.ts`
+- Expected test impact: PDF/SVGの実変換、external tool failure、cleanup、Safe Modeの全suite。
+- Reversibility: 形式固有のまま小さいhelperを導入できる。
 
 ---

@@ -6,8 +6,9 @@ export default defineConfig({
 	files: 'out/test/**/*.test.js',
 
 	// テストに使う VS Code。
-	// stable 固定でよい。最新 Insiders での検証は CI matrix や別 label で追加すればよい。
-	version: 'stable',
+	// 同じcommitを同じVS Codeで再実行できるよう固定する。
+	// latest stable compatibility testはrequired testと別jobで追加する。
+	version: '1.128.0',
 
 	// Extension Development Host に読み込ませる拡張のパス。
 	// 通常は repo root。

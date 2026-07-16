@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { cp, mkdir, mkdtemp, readFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -43,6 +43,7 @@ const secondarySourceFixture = join(
   "user-files",
   " 薔薇🌹.pdf",
 );
+const rasterSourceFixture = join(projectRoot, "test", "fixtures", "test.png");
 const initialTheme = "Default Dark Modern";
 const alternateTheme = "Default Light Modern";
 const expectedCropBox = {
@@ -279,6 +280,8 @@ async function verifyPackagedPdfOperations(
   const secondSourcePath = join(workspacePath, "merge-source-2.pdf");
   const mergedOutputPath = join(workspacePath, "merged-offline.pdf");
   const missingToolOutputPath = join(workspacePath, "missing-pdftocairo.png");
+  const rasterInputPath = join(workspacePath, "packaged-raster-input.png");
+  const rasterOutputPath = join(workspacePath, "packaged-raster-output.jpeg");
   const packagedMergeModule = (await import(
     pathToFileURL(join(extensionPath, "out", "operations", "merge_pdf.js")).href
   )) as {
@@ -303,10 +306,26 @@ async function verifyPackagedPdfOperations(
       runId: string;
     }) => Promise<unknown>;
   };
+  const packagedJpegModule = (await import(
+    pathToFileURL(join(extensionPath, "out", "operations", "convert_to_jpeg.js")).href
+  )) as {
+    convertToJpegFiles: (options: {
+      jobs: Array<{
+        sourcePath: string;
+        outputPath: string;
+        workspacePath: string;
+      }>;
+      pdftocairoPath: string;
+      mermaid: { browserChannel: string };
+      drawio: { drawioPath: string };
+      runId: string;
+    }) => Promise<unknown>;
+  };
 
   await Promise.all([
     cp(sourceFixture, firstSourcePath),
     cp(secondarySourceFixture, secondSourcePath),
+    cp(rasterSourceFixture, rasterInputPath),
   ]);
   const sourcePageCounts = await Promise.all(
     [firstSourcePath, secondSourcePath].map(async (sourcePath) =>
@@ -322,6 +341,21 @@ async function verifyPackagedPdfOperations(
 
   const mergedDocument = await PDFDocument.load(await readFile(mergedOutputPath));
   expect(mergedDocument.getPageCount()).toBe(sourcePageCounts[0]! + sourcePageCounts[1]!);
+
+  await packagedJpegModule.convertToJpegFiles({
+    jobs: [
+      {
+        sourcePath: rasterInputPath,
+        outputPath: rasterOutputPath,
+        workspacePath,
+      },
+    ],
+    pdftocairoPath: join(temporaryRoot, "missing-cli", "pdftocairo"),
+    mermaid: { browserChannel: "chrome" },
+    drawio: { drawioPath: join(temporaryRoot, "missing-cli", "drawio") },
+    runId: "packaged-offline-raster-sharp",
+  });
+  expect((await stat(rasterOutputPath)).size).toBeGreaterThan(0);
 
   await assert.rejects(
     packagedPngModule.convertToPngFiles({

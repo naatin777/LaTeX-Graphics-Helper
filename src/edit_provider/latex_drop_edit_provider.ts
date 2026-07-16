@@ -12,32 +12,57 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     document: vscode.TextDocument,
     _position: vscode.Position,
     dataTransfer: vscode.DataTransfer,
-    _token: vscode.CancellationToken,
+    token: vscode.CancellationToken,
     config: LatexInsertionConfig = readLatexInsertionConfig(),
   ): Promise<vscode.DocumentDropEdit | undefined> {
+    if (token.isCancellationRequested || document.uri.scheme !== "file") {
+      return undefined;
+    }
+
     const dataTransferItem = dataTransfer.get("text/uri-list");
 
     if (!dataTransferItem) {
       return undefined;
     }
 
-    const uris = (await dataTransferItem.asString())
-      .split(/\r?\n/)
-      .filter(Boolean)
-      .map((value) => vscode.Uri.parse(value, true))
-      .filter((uri) => path.extname(uri.fsPath).toLowerCase() === ".pdf");
+    let uriList: string;
 
-    if (uris.length === 0) {
+    try {
+      uriList = await dataTransferItem.asString();
+    } catch {
+      return undefined;
+    }
+
+    if (token.isCancellationRequested) {
+      return undefined;
+    }
+
+    const uris = parsePdfUris(uriList, token);
+
+    if (!uris || uris.length === 0 || token.isCancellationRequested) {
       return undefined;
     }
 
     const documentDirname = path.dirname(document.uri.fsPath);
     const fileNames = uris.map((uri) => path.basename(uri.fsPath, path.extname(uri.fsPath)));
     const relativeFilePaths = uris.map((uri) => path.relative(documentDirname, uri.fsPath));
+
+    if (relativeFilePaths.some((relativeFilePath) => path.isAbsolute(relativeFilePath))) {
+      return undefined;
+    }
+
+    if (token.isCancellationRequested) {
+      return undefined;
+    }
+
     const snippet =
       uris.length === 1
         ? this.createSinglePdfSnippet(config, fileNames[0] ?? "", relativeFilePaths[0] ?? "")
         : this.createMultiplePdfSnippet(config, fileNames, relativeFilePaths);
+
+    if (token.isCancellationRequested) {
+      return undefined;
+    }
 
     return new vscode.DocumentDropEdit(snippet, localeMap("insertLatex"));
   }
@@ -51,7 +76,7 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
     snippet.wrapEnvironment("figure", () => {
       snippet.appendFigurePlacement().lineBreak();
-      snippet.appendCommand("centering").lineBreak();
+      snippet.appendFigureAlignment().lineBreak();
       snippet
         .appendCommand(
           "includegraphics",
@@ -115,4 +140,36 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
     return snippet.snippet;
   }
+}
+
+function parsePdfUris(uriList: string, token: vscode.CancellationToken): vscode.Uri[] | undefined {
+  const uniqueUris = new Map<string, vscode.Uri>();
+
+  for (const rawLine of uriList.split(/\r?\n/)) {
+    if (token.isCancellationRequested) {
+      return undefined;
+    }
+
+    const line = rawLine.trim();
+
+    if (line === "" || line.startsWith("#")) {
+      continue;
+    }
+
+    let uri: vscode.Uri;
+
+    try {
+      uri = vscode.Uri.parse(line, true);
+    } catch {
+      return undefined;
+    }
+
+    if (uri.scheme !== "file" || path.extname(uri.fsPath).toLowerCase() !== ".pdf") {
+      return undefined;
+    }
+
+    uniqueUris.set(uri.toString(), uri);
+  }
+
+  return [...uniqueUris.values()];
 }

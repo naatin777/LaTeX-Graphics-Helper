@@ -17,7 +17,7 @@ export function initializeSafeMode(context: vscode.ExtensionContext): void {
     100,
   );
   statusBarItem.command = TOGGLE_SAFE_MODE_COMMAND;
-  statusBarItem.tooltip = "Toggle output overwrite confirmation";
+  statusBarItem.tooltip = userMessage("message.safeMode.tooltip");
   updateStatusBar();
   statusBarItem.show();
 
@@ -73,5 +73,5 @@ function updateStatusBar(): void {
   }
 
   const enabled = requireSafeModeState().isEnabled();
-  statusBarItem.text = `$(shield) Safe Mode: ${enabled ? "ON" : "OFF"}`;
+  statusBarItem.text = `$(shield) ${userMessage(enabled ? "message.safeMode.statusOn" : "message.safeMode.statusOff")}`;
 }

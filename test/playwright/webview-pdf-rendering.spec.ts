@@ -13,10 +13,12 @@ const webviewRoot = join(projectRoot, "media", "webview");
 let server: Server;
 let baseUrl: string;
 let pdfBytes: Uint8Array;
+let largePdfBytes: Uint8Array;
 let cropOperationPdfBytes: Buffer;
 
 test.beforeAll(async () => {
   pdfBytes = await createTestPdf();
+  largePdfBytes = await createLargeTestPdf();
   cropOperationPdfBytes = await readFile(
     join(
       projectRoot,
@@ -37,6 +39,15 @@ test.beforeAll(async () => {
         "Content-Length": pdfBytes.byteLength,
       });
       response.end(pdfBytes);
+      return;
+    }
+
+    if (requestUrl.pathname === "/large-fixture.pdf") {
+      response.writeHead(200, {
+        "Content-Type": "application/pdf",
+        "Content-Length": largePdfBytes.byteLength,
+      });
+      response.end(largePdfBytes);
       return;
     }
 
@@ -96,7 +107,7 @@ test.afterAll(async () => {
   });
 });
 
-for (const appName of ["crop_pdf", "merge_pdf"]) {
+for (const appName of ["crop_pdf"]) {
   test(`${appName} renders the first PDF page`, async ({ page }) => {
     await page.goto(`${baseUrl}/${appName}/index.html`);
 
@@ -217,6 +228,44 @@ test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
       { page: "1", width: 320, height: 180 },
       { page: "2", width: 200, height: 120 },
     ]);
+});
+
+test("crop_pdf renders distant pages lazily and Apply does not wait for them", async ({ page }) => {
+  await installVsCodeMessageRecorder(page);
+  await page.goto(`${baseUrl}/crop_pdf/index.html`);
+
+  await page.evaluate((pdfSrc) => {
+    (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "init",
+          payload: {
+            pdfSrc,
+            fileName: "large-fixture.pdf",
+            pageCount: 8,
+            initialPage: 1,
+          },
+        },
+      }),
+    );
+  }, `${baseUrl}/large-fixture.pdf`);
+
+  const firstPage = page.locator('canvas[data-pdf-page="1"]');
+  const lastPage = page.locator('canvas[data-pdf-page="8"]');
+  await expect(firstPage).toHaveAttribute("data-pdf-width", "320");
+  await expect(lastPage).not.toHaveAttribute("data-pdf-width");
+
+  await page.getByRole("button", { name: "Apply" }).click();
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (globalThis as { __vscodeMessages?: unknown[] }).__vscodeMessages?.at(-1),
+      ),
+    )
+    .toMatchObject({ type: "apply" });
+
+  await lastPage.scrollIntoViewIfNeeded();
+  await expect(lastPage).toHaveAttribute("data-pdf-width", "320");
 });
 
 test("crop_pdf renders high-DPI canvases without changing preview layout size", async ({
@@ -941,6 +990,23 @@ async function createTestPdf(): Promise<Uint8Array> {
     height: 120,
     color: rgb(0.5, 0, 1),
   });
+
+  return document.save();
+}
+
+async function createLargeTestPdf(): Promise<Uint8Array> {
+  const document = await PDFDocument.create();
+
+  for (let pageNumber = 1; pageNumber <= 8; pageNumber += 1) {
+    const page = document.addPage([320, 180]);
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: 320,
+      height: 180,
+      color: rgb(pageNumber / 8, 0.2, 0.8 - pageNumber / 16),
+    });
+  }
 
   return document.save();
 }

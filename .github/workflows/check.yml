@@ -30,8 +30,5 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - run: pnpm run rulesync:check
-              shell: bash
-
-            - run: pnpm run check
+            - run: pnpm run check:all
               shell: bash

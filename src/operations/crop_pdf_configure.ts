@@ -9,11 +9,16 @@ import {
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
 import {
+  cleanupConversionArtifacts,
+  type ConversionArtifactRoot,
+} from "./cleanup_conversion_artifacts.js";
+import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
+import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
 
 export interface CropBox {
   left: number;
@@ -42,6 +47,7 @@ export interface CropPdfConfigureOptions {
   runId?: string;
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  outputChannel?: LineOutputChannel;
 }
 
 export async function cropPdfWithConfiguredBox(
@@ -49,23 +55,40 @@ export async function cropPdfWithConfiguredBox(
 ): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
+  const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
+  const stagingRootPath = path.join(
+    options.job.workspacePath,
+    ".latex-graphics-helper",
+    "crop-pdf-configure",
+    runId,
+  );
+  const artifacts: ConversionArtifactRoot[] = [
+    { rootPath: stagingRootPath, workspacePath: options.job.workspacePath },
+  ];
 
-  const preparedOutput = await createConfiguredCropOutput(options);
+  try {
+    const preparedOutput = await createConfiguredCropOutput(options, runId);
 
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs([preparedOutput], {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-  });
+    options.signal?.throwIfAborted();
+    return await commitConversionOutputs([preparedOutput], {
+      ...(options.signal !== undefined && { signal: options.signal }),
+      ...(options.resolveOutputConflicts !== undefined && {
+        resolveConflicts: options.resolveOutputConflicts,
+      }),
+      operationName: "crop-pdf-configure",
+      ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+    });
+  } catch (error) {
+    await cleanupConversionArtifacts(artifacts, options.outputChannel);
+    throw error;
+  }
 }
 
 async function createConfiguredCropOutput(
   options: CropPdfConfigureOptions,
+  runId: string,
 ): Promise<PreparedConversionOutput> {
   const { job, signal } = options;
-  const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
   const workDirectory = path.join(
     job.workspacePath,
     ".latex-graphics-helper",
@@ -102,6 +125,12 @@ async function createConfiguredCropOutput(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "crop-pdf-configure",
+      runId,
+    ),
   };
 }
 

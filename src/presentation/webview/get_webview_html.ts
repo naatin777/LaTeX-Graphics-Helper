@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import * as vscode from "vscode";
 
 export function getWebviewHtml(params: {
@@ -5,8 +7,9 @@ export function getWebviewHtml(params: {
   extensionUri: vscode.Uri;
   title: string;
   appName: string;
+  locale?: string;
 }): string {
-  const { webview, extensionUri, title, appName } = params;
+  const { webview, extensionUri, title, appName, locale = vscode.env.language } = params;
 
   const scriptUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, "media", "webview", appName, "index.js"),
@@ -19,7 +22,7 @@ export function getWebviewHtml(params: {
   const nonce = getNonce();
 
   return /* html */ `<!doctype html>
-<html lang="ja">
+<html lang="${escapeHtml(locale)}">
   <head>
     <meta charset="UTF-8">
 
@@ -32,7 +35,7 @@ export function getWebviewHtml(params: {
         font-src ${webview.cspSource} data: blob:;
         style-src ${webview.cspSource} 'unsafe-inline';
         worker-src ${webview.cspSource} blob:;
-        script-src 'nonce-${nonce}' ${webview.cspSource};
+        script-src 'nonce-${nonce}';
       "
     >
 
@@ -51,14 +54,7 @@ export function getWebviewHtml(params: {
 }
 
 function getNonce(): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let value = "";
-
-  for (let i = 0; i < 32; i++) {
-    value += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  return value;
+  return randomBytes(16).toString("base64");
 }
 
 function escapeHtml(value: string): string {

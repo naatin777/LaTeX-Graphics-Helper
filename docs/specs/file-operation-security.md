@@ -66,3 +66,23 @@ OS一時scratchはworkspace境界とは別の専用境界として扱う。
 パス検証から実際のファイル操作までの間にsymlinkが差し替えられる競合を、Node.jsの通常のパスAPIだけで完全に防ぐことはこのタスクの範囲外とする。
 
 重要な書き込み直前に再検証し、検証と操作の間隔を短くする。
+
+## commitとrollback
+
+最終出力へ反映する経路は、stagingから`commitConversionOutputs`を通る。
+
+- overwrite対象はconflict表示前のSHA-256をstreamingで記録し、判断中に変更された場合は上書きしない。
+- overwrite前のbackup作成後にcopyが失敗した場合は、現在処理中の出力を含めてbackupから復元する。
+- 新規出力はexclusive placeholderで拡張機能が作成したfile identityを記録する。copy失敗時に別プロセスが置き換えたpathは削除しない。
+- 既に成功した出力と現在処理中の出力をrollback対象にする。
+- rollbackの各失敗は元のcommit errorと別に保持し、対象pathとともにOutput Channelへ記録する。
+- rollback失敗に関連するbackupは、手動確認のためcleanup対象から保護する。
+- rollbackが全件成功した場合だけ、commit errorを通常の失敗として返す。
+
+大きなPDF・画像の比較は、全内容を`readFile`で同時にメモリへ載せず、file size確認後にNode.js streamからSHA-256を計算する。
+
+## 起動時cleanup
+
+v1ではsession ownershipを証明できないため、拡張機能起動時に`.latex-graphics-helper`全体を削除しない。別windowのactive staging、Undo backup、未知のdirectory、harness log、symlink先を残す。
+
+通常のsuccess/failure/cancellation/Undoに伴うcleanupは、artifact lifecycleで明示された今回のoperation rootに限って実行する。crash後の残骸は次回起動時に自動削除しない。

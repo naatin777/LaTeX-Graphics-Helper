@@ -31,7 +31,7 @@ export async function openCropPdfConfigure(
 
   const cropPdfMenu = vscodeWindow.getByRole("menuitem", { name: "Crop PDF" });
   await expect(cropPdfMenu).toBeVisible();
-  await cropPdfMenu.click();
+  await cropPdfMenu.hover();
 
   const configureMenu = vscodeWindow.getByRole("menuitem", { name: "Configure crop" });
   await expect(configureMenu).toBeVisible();

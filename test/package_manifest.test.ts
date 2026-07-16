@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { PUBLIC_COMMAND_IDS } from "../src/extension.js";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
@@ -13,6 +15,10 @@ const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
 const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
 const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
 const CONVERT_SUBMENU = "latex-graphics-helper.convert";
+const UNIMPLEMENTED_MANUAL_COMMANDS = [
+  "latex-graphics-helper.splitPdf.manual",
+  "latex-graphics-helper.mergePdf.manual",
+] as const;
 const LEGACY_TO_PDF_COMMANDS = [
   "latex-graphics-helper.convertDrawioToPdf",
   "latex-graphics-helper.convertPngToPdf",
@@ -44,6 +50,39 @@ interface PackageJson {
 }
 
 suite("package.jsonの変換メニュー定義", () => {
+  test("公開command・menu・extension登録のID一覧が整合する", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const manifestCommandIds = new Set(
+      packageJson.contributes.commands.map((command) => command.command),
+    );
+    const menuCommandIds = new Set(
+      Object.values(packageJson.contributes.menus)
+        .flatMap((entries) => entries.map((entry) => entry.command))
+        .filter((command): command is string => command !== undefined),
+    );
+
+    assert.deepStrictEqual(new Set(PUBLIC_COMMAND_IDS), manifestCommandIds);
+
+    for (const menuCommandId of menuCommandIds) {
+      assert.ok(manifestCommandIds.has(menuCommandId), `${menuCommandId} is not a public command`);
+    }
+  });
+
+  test("未実装のmanual PDFコマンドを公開しない", async () => {
+    const packageJson = await readJson<PackageJson>("package.json");
+    const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
+    const menuCommandIds = new Set(
+      Object.values(packageJson.contributes.menus)
+        .flatMap((entries) => entries.map((entry) => entry.command))
+        .filter((command): command is string => command !== undefined),
+    );
+
+    for (const command of UNIMPLEMENTED_MANUAL_COMMANDS) {
+      assert.ok(!commandIds.has(command), `${command} should not be public`);
+      assert.ok(!menuCommandIds.has(command), `${command} should not be in menus`);
+    }
+  });
+
   test("PDFに変換コマンドだけを公開し、旧PDF変換コマンドは公開しない", async () => {
     const packageJson = await readJson<PackageJson>("package.json");
     const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));

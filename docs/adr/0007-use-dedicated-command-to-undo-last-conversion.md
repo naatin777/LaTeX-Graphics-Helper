@@ -30,7 +30,7 @@ Explorerへフォーカスして通常のUndoを実行しても、作成したPD
 - 取消前に全ファイルのworkspace境界とSHA-256を検証する
 - ファイルの変更、欠損、workspace外へのsymlink変更が1件でもあれば、何も削除しない
 - 全検証成功後に、今回生成した出力ファイルだけを削除する
-- `.latex-graphics-helper/` 内の作業ファイルは削除しない
+- Undo成功後は、対象recordが保持したstagingと上書き前backupを削除する
 - 通常の `Ctrl+Z` / `Cmd+Z` へkeybindingを登録しない
 
 ## 理由

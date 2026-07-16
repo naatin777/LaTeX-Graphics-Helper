@@ -5,7 +5,6 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
-import pLimit from "p-limit";
 import sharp from "sharp";
 
 import {
@@ -13,7 +12,11 @@ import {
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
 import {
-  commitConversionOutputs,
+  isEditableDrawioImagePath,
+  isMermaidPath,
+  sourceFormatForPath,
+} from "../application/source_format.js";
+import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
@@ -24,16 +27,11 @@ import {
   runPdftocairoWithAsciiScratch,
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
+import { runExternalTool } from "./run_external_tool.js";
+import type { ConversionRuntime } from "./conversion_runtime.js";
+import { runStagedConversionBatch } from "./run_staged_conversion_batch.js";
 
-const CONVERSION_CONCURRENCY = 2;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
 const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToAvifJob {
@@ -64,6 +62,35 @@ export interface ConvertToAvifFilesOptions extends PdfToolScratchOptions {
   signal?: AbortSignal;
 }
 
+interface AvifStageTools {
+  pdftocairoPath: string;
+  mermaid: MermaidPuppeteerOptions;
+  drawio: DrawioToAvifOptions;
+  runPdfToPng?: RunPdfToPng;
+}
+
+interface AvifStageContext {
+  runId: string;
+  runtime: Pick<ConversionRuntime, "signal">;
+  tools: AvifStageTools;
+  scratch: PdfToolScratchOptions;
+  output: AvifOutputOptions;
+}
+
+interface AvifStagePaths {
+  stageDirectory: string;
+  stagedOutputPath: string;
+  stagingRootPath: string;
+}
+
+interface AvifRenderRequest {
+  sourcePath: string;
+  outputPath: string;
+  workspacePath: string;
+  stageDirectory?: string;
+  page?: number;
+}
+
 export async function convertToAvifFiles(
   options: ConvertToAvifFilesOptions,
 ): Promise<CommittedConversionOutput[]> {
@@ -73,249 +100,218 @@ export async function convertToAvifFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
-  const limit = pLimit(CONVERSION_CONCURRENCY);
-  const stagedOutputs = await Promise.all(
-    options.jobs.map((job, index) =>
-      limit(() =>
-        stageAvifConversion(
-          job,
-          index,
-          runId,
-          options.pdftocairoPath,
-          options.mermaid,
-          options.drawio,
-          options.avif,
-          options.runPdfToPng,
-          options,
-          options.signal,
-        ),
-      ),
-    ),
-  );
-
-  options.signal?.throwIfAborted();
-  return commitConversionOutputs(stagedOutputs, {
+  const runtime: ConversionRuntime = {
     ...(options.signal !== undefined && { signal: options.signal }),
     ...(options.resolveOutputConflicts !== undefined && {
       resolveConflicts: options.resolveOutputConflicts,
     }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
+  const tools: AvifStageTools = {
+    pdftocairoPath: options.pdftocairoPath,
+    mermaid: options.mermaid,
+    drawio: options.drawio,
+    ...(options.runPdfToPng !== undefined && { runPdfToPng: options.runPdfToPng }),
+  };
+  const scratch: PdfToolScratchOptions = {
+    ...(options.platform !== undefined && { platform: options.platform }),
+    ...(options.scratchBaseCandidates !== undefined && {
+      scratchBaseCandidates: options.scratchBaseCandidates,
+    }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
+  return runStagedConversionBatch({
+    jobs: options.jobs,
+    operationName: "convert-to-avif",
+    runId,
+    runtime,
+    stage: (job, index, stageRunId, stageRuntime) =>
+      stageAvifConversion(job, index, {
+        runId: stageRunId,
+        runtime: {
+          ...(stageRuntime.signal !== undefined && { signal: stageRuntime.signal }),
+        },
+        tools,
+        scratch,
+        output: options.avif,
+      }),
   });
 }
 
 async function stageAvifConversion(
   job: ConvertToAvifJob,
   index: number,
-  runId: string,
-  pdftocairoPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToAvifOptions,
-  avif: AvifOutputOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  context: AvifStageContext,
 ): Promise<PreparedConversionOutput> {
-  signal?.throwIfAborted();
-  const stageDirectory = path.join(
-    job.workspacePath,
-    ".latex-graphics-helper",
-    "convert-to-avif",
-    runId,
-    `${index + 1}`,
-  );
-  const stagedOutputPath = path.join(stageDirectory, "result.avif");
+  context.runtime.signal?.throwIfAborted();
+  const paths: AvifStagePaths = {
+    stageDirectory: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-avif",
+      context.runId,
+      `${index + 1}`,
+    ),
+    stagedOutputPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-avif",
+      context.runId,
+      `${index + 1}`,
+      "result.avif",
+    ),
+    stagingRootPath: path.join(
+      job.workspacePath,
+      ".latex-graphics-helper",
+      "convert-to-avif",
+      context.runId,
+    ),
+  };
 
-  await writeSourceAsAvif(
-    job,
-    stagedOutputPath,
-    stageDirectory,
-    pdftocairoPath,
-    mermaid,
-    drawio,
-    avif,
-    runPdfToPng,
-    scratchOptions,
-    signal,
-  );
-  signal?.throwIfAborted();
+  await writeSourceAsAvif(job, paths, context);
+  context.runtime.signal?.throwIfAborted();
 
   return {
-    stagedOutputPath,
+    stagedOutputPath: paths.stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
+    stagingRootPath: paths.stagingRootPath,
   };
 }
 
 async function writeSourceAsAvif(
   job: ConvertToAvifJob,
-  outputPath: string,
-  stageDirectory: string,
-  pdftocairoPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToAvifOptions,
-  avif: AvifOutputOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  paths: AvifStagePaths,
+  context: AvifStageContext,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(job.sourcePath)) {
-    await writeDrawioAsAvif(
-      job,
-      outputPath,
-      stageDirectory,
-      pdftocairoPath,
-      drawio,
-      avif,
-      runPdfToPng,
-      scratchOptions,
-      signal,
-    );
+    await writeDrawioAsAvif(job, paths, context);
     return;
   }
+
+  const request: AvifRenderRequest = {
+    sourcePath: job.sourcePath,
+    outputPath: paths.stagedOutputPath,
+    workspacePath: job.workspacePath,
+    stageDirectory: paths.stageDirectory,
+    ...(job.page !== undefined && { page: job.page }),
+  };
 
   if (extension === ".pdf") {
-    await writePdfPageAsAvif(
-      job.sourcePath,
-      outputPath,
-      stageDirectory,
-      job.workspacePath,
-      pdftocairoPath,
-      avif,
-      job.page,
-      runPdfToPng,
-      scratchOptions,
-      signal,
-    );
+    await writePdfPageAsAvif(request, context);
     return;
   }
 
-  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
-    await writeMermaidAsAvif(
-      job.sourcePath,
-      outputPath,
-      stageDirectory,
-      job.workspacePath,
-      mermaid,
-      avif,
-      signal,
-    );
+  if (isMermaidPath(job.sourcePath)) {
+    await writeMermaidAsAvif(request, context);
     return;
   }
 
-  await writeImageAsAvif(job.sourcePath, outputPath, job.workspacePath, avif, signal);
+  await writeImageAsAvif(request, context);
 }
 
 async function writeDrawioAsAvif(
   job: ConvertToAvifJob,
-  outputPath: string,
-  stageDirectory: string,
-  pdftocairoPath: string,
-  drawio: DrawioToAvifOptions,
-  avif: AvifOutputOptions,
-  runPdfToPng: RunPdfToPng | undefined,
-  scratchOptions: PdfToolScratchOptions,
-  signal?: AbortSignal,
+  paths: AvifStagePaths,
+  context: AvifStageContext,
 ): Promise<void> {
-  signal?.throwIfAborted();
-  const pdfPath = path.join(stageDirectory, "drawio.pdf");
+  context.runtime.signal?.throwIfAborted();
+  const pdfPath = path.join(paths.stageDirectory, "drawio.pdf");
   await assertWritablePathInWorkspace(pdfPath, job.workspacePath);
   await mkdir(path.dirname(pdfPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
-  await (drawio.runDrawio ?? executeDrawio)(
-    drawio.drawioPath,
+  await (context.tools.drawio.runDrawio ?? executeDrawio)(
+    context.tools.drawio.drawioPath,
     ["-x", "-f", "pdf", "-o", pdfPath, job.sourcePath],
-    signal,
+    context.runtime.signal,
   );
   await writePdfPageAsAvif(
-    pdfPath,
-    outputPath,
-    stageDirectory,
-    job.workspacePath,
-    pdftocairoPath,
-    avif,
-    job.page ?? 1,
-    runPdfToPng,
-    scratchOptions,
-    signal,
+    {
+      sourcePath: pdfPath,
+      outputPath: paths.stagedOutputPath,
+      workspacePath: job.workspacePath,
+      stageDirectory: paths.stageDirectory,
+      page: job.page ?? 1,
+    },
+    context,
   );
 }
 
 async function writePdfPageAsAvif(
-  sourcePath: string,
-  outputPath: string,
-  stageDirectory: string,
-  workspacePath: string,
-  pdftocairoPath: string,
-  avif: AvifOutputOptions,
-  page = 1,
-  runPdfToPng?: RunPdfToPng,
-  scratchOptions: PdfToolScratchOptions = {},
-  signal?: AbortSignal,
+  request: AvifRenderRequest,
+  context: AvifStageContext,
 ): Promise<void> {
-  const pngPath = path.join(stageDirectory, "source.png");
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  const pngPath = path.join(
+    request.stageDirectory ?? path.dirname(request.outputPath),
+    "source.png",
+  );
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
   await runPdftocairoWithAsciiScratch({
-    sourcePath,
+    sourcePath: request.sourcePath,
     outputPath: pngPath,
     scratchOutputFileName: "output.png",
-    scratch: scratchOptions,
-    ...(signal !== undefined && { signal }),
+    scratch: context.scratch,
+    ...(context.runtime.signal !== undefined && { signal: context.runtime.signal }),
     run: async (toolSourcePath, toolOutputPath) => {
-      if (runPdfToPng) {
-        await runPdfToPng(toolSourcePath, toolOutputPath, page, signal);
+      if (context.tools.runPdfToPng) {
+        await context.tools.runPdfToPng(
+          toolSourcePath,
+          toolOutputPath,
+          request.page ?? 1,
+          context.runtime.signal,
+        );
         return;
       }
 
       const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
       await execFileAsync(
-        pdftocairoPath,
+        context.tools.pdftocairoPath,
         [
           "-png",
           "-singlefile",
           "-f",
-          String(page),
+          String(request.page ?? 1),
           "-l",
-          String(page),
+          String(request.page ?? 1),
           toolSourcePath,
           outputPrefix,
         ],
         {
           encoding: "utf8",
           maxBuffer: 10 * 1024 * 1024,
-          signal,
+          signal: context.runtime.signal,
         },
       );
     },
   });
 
-  await writeImageAsAvif(pngPath, outputPath, workspacePath, avif, signal);
+  await writeImageAsAvif({ ...request, sourcePath: pngPath }, context);
 }
 
 async function writeMermaidAsAvif(
-  sourcePath: string,
-  outputPath: string,
-  stageDirectory: string,
-  workspacePath: string,
-  mermaid: MermaidPuppeteerOptions,
-  avif: AvifOutputOptions,
-  signal?: AbortSignal,
+  request: AvifRenderRequest,
+  context: AvifStageContext,
 ): Promise<void> {
-  const pngPath = path.join(stageDirectory, "mermaid.png");
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(pngPath, workspacePath);
+  const pngPath = path.join(
+    request.stageDirectory ?? path.dirname(request.outputPath),
+    "mermaid.png",
+  );
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
-  signal?.throwIfAborted();
+  context.runtime.signal?.throwIfAborted();
 
   try {
-    await runMermaidCli(sourcePath, asPngOutputPath(pngPath), {
+    await runMermaidCli(request.sourcePath, asPngOutputPath(pngPath), {
       outputFormat: "png",
-      puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
+      puppeteerConfig: createMermaidPuppeteerConfig(context.tools.mermaid),
       quiet: true,
     });
   } catch (error) {
@@ -326,22 +322,19 @@ async function writeMermaidAsAvif(
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
   }
 
-  await writeImageAsAvif(pngPath, outputPath, workspacePath, avif, signal);
+  await writeImageAsAvif({ ...request, sourcePath: pngPath }, context);
 }
 
 async function writeImageAsAvif(
-  sourcePath: string,
-  outputPath: string,
-  workspacePath: string,
-  avif: AvifOutputOptions,
-  signal?: AbortSignal,
+  request: AvifRenderRequest,
+  context: AvifStageContext,
 ): Promise<void> {
-  signal?.throwIfAborted();
-  await assertWritablePathInWorkspace(outputPath, workspacePath);
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  const sourceBuffer = await readFile(sourcePath);
-  signal?.throwIfAborted();
-  await sharp(sourceBuffer).avif({ effort: avif.effort }).toFile(outputPath);
+  context.runtime.signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(request.outputPath, request.workspacePath);
+  await mkdir(path.dirname(request.outputPath), { recursive: true });
+  const sourceBuffer = await readFile(request.sourcePath);
+  context.runtime.signal?.throwIfAborted();
+  await sharp(sourceBuffer).avif({ effort: context.output.effort }).toFile(request.outputPath);
 }
 
 async function executeDrawio(
@@ -349,10 +342,11 @@ async function executeDrawio(
   args: string[],
   signal?: AbortSignal,
 ): Promise<void> {
-  await execFileAsync(executable, args, {
-    encoding: "utf8",
-    maxBuffer: 10 * 1024 * 1024,
-    signal,
+  await runExternalTool({
+    toolName: "drawio",
+    executable,
+    args,
+    ...(signal !== undefined && { signal }),
   });
 }
 
@@ -387,15 +381,10 @@ function isSupportedSourcePath(sourcePath: string): boolean {
   return (
     extension === ".pdf" ||
     extension === ".svg" ||
-    MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number]) ||
+    sourceFormatForPath(sourcePath) === "mermaid" ||
     RASTER_IMAGE_EXTENSIONS.includes(extension as (typeof RASTER_IMAGE_EXTENSIONS)[number]) ||
     isEditableDrawioImagePath(sourcePath)
   );
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function asPngOutputPath(outputPath: string): `${string}.png` {

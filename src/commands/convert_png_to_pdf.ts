@@ -5,6 +5,11 @@ import * as vscode from "vscode";
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
+  isEditableDrawioImagePath,
+  logicalSourcePathForOutputTemplate,
+} from "../application/source_format.js";
+import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
   type DrawioToPdfOptions,
@@ -12,23 +17,16 @@ import {
   type SvgToPdfEngine,
   type SvgToPdfOptions,
 } from "../operations/convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CONVERT_PNG_TO_PDF_COMMAND = "latex-graphics-helper.convertPngToPdf";
 export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const PNG_EXTENSIONS = [".png"] as const;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const PDF_IMAGE_EXTENSIONS = [
   ".png",
   ".jpg",
@@ -36,21 +34,37 @@ const PDF_IMAGE_EXTENSIONS = [
   ".webp",
   ".avif",
   ".svg",
-  ...MERMAID_EXTENSIONS,
-  ...EDITABLE_DRAWIO_IMAGE_EXTENSIONS,
+  ".mmd",
+  ".mermaid",
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
 ] as const;
 
-export async function convertPngToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertPngToPdfCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
+): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PNG_EXTENSIONS,
     titleKey: "message.progress.convertPngToPdf.title",
     successKey: "message.convertPngToPdf.success",
     failedKey: "message.convertPngToPdf.failed",
     cancelledKey: "message.convertPngToPdf.cancelled",
+    operationName: "convert-png-to-pdf",
+    ...(outputChannel !== undefined && { outputChannel }),
   });
 }
 
-export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToPdfCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
+): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PDF_IMAGE_EXTENSIONS,
     titleKey: "message.progress.convertToPdf.title",
@@ -58,6 +72,8 @@ export async function convertToPdfCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
     failedKey: "message.convertToPdf.failed",
     cancelledKey: "message.convertToPdf.cancelled",
     outputFormatOutputPathKey: "outputPath.convertToPdf",
+    operationName: "convert-to-pdf",
+    ...(outputChannel !== undefined && { outputChannel }),
   });
 }
 
@@ -71,6 +87,8 @@ async function convertSelectedPngFilesToPdf(
     failedKey: "message.convertPngToPdf.failed" | "message.convertToPdf.failed";
     cancelledKey: "message.convertPngToPdf.cancelled" | "message.convertToPdf.cancelled";
     outputFormatOutputPathKey?: "outputPath.convertToPdf";
+    operationName: string;
+    outputChannel?: LineOutputChannel;
   },
 ): Promise<void> {
   try {
@@ -102,49 +120,37 @@ async function convertSelectedPngFilesToPdf(
           outputFormatOutputTemplate,
         ),
         logicalSourcePathForOutputTemplate(sourceUri.fsPath),
+        messages.supportedExtensions,
       ),
     );
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage(messages.titleKey, jobs.length),
-        cancellable: true,
+    await runOutputConversion({
+      operationName: messages.operationName,
+      ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
+      messages: {
+        progressTitle: userMessage(messages.titleKey, jobs.length),
+        prepareMessage: userMessage("message.progress.prepareConversion", "PDF"),
+        successMessage: (count) => userMessage(messages.successKey, count),
+        undoUnavailableMessage: (success, reason) =>
+          userMessage("message.undoUnavailable", success, reason),
+        cancelledMessage: userMessage(messages.cancelledKey),
+        failedMessage: (reason) => userMessage(messages.failedKey, reason),
       },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "PDF") });
-          return convertPngToPdfFiles({
-            jobs,
-            signal,
-            resolveOutputConflicts,
-            supportedExtensions: messages.supportedExtensions,
-            svgToPdf,
-            mermaid,
-            drawio,
-          });
-        });
-      },
-    );
-
-    const successMessage = userMessage(messages.successKey, outputs.length);
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+      run: (runtime) =>
+        convertPngToPdfFiles({
+          jobs,
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          supportedExtensions: messages.supportedExtensions,
+          svgToPdf,
+          mermaid,
+          drawio,
+          operationName: messages.operationName,
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+        }),
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(userMessage(messages.cancelledKey));
@@ -198,14 +204,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-export function logicalSourcePathForOutputTemplate(sourcePath: string): string {
-  if (!isEditableDrawioImagePath(sourcePath)) {
-    return sourcePath;
-  }
-
-  return sourcePath.replace(/\.(drawio|dio)\.(png|svg)$/i, "");
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
@@ -263,6 +261,7 @@ function createJob(
   sourceUri: vscode.Uri,
   outputTemplate: string,
   templateSourcePath: string,
+  supportedExtensions: readonly string[],
 ): ConvertPngToPdfJob {
   if (sourceUri.scheme !== "file") {
     throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
@@ -274,6 +273,11 @@ function createJob(
     throw new Error(`The image must be inside an open workspace: ${sourceUri.fsPath}`);
   }
 
+  const lowerSourcePath = sourceUri.fsPath.toLowerCase();
+  if (!supportedExtensions.some((extension) => lowerSourcePath.endsWith(extension))) {
+    throw new Error(`Unsupported input format: ${sourceUri.fsPath}`);
+  }
+
   return {
     sourcePath: sourceUri.fsPath,
     workspacePath: workspace.uri.fsPath,
@@ -283,11 +287,6 @@ function createJob(
       workspaceName: workspace.name,
     }),
   };
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function isAbortError(error: unknown): boolean {

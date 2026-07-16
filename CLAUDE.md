@@ -1,3 +1,1 @@
-# AGENTS.md
-
-このファイルは、Codex / AI coding agent に守ってほしいプロジェクト固有の作業ルールです。
+Read and follow `AGENTS.md` at the repository root.

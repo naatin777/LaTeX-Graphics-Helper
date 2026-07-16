@@ -7,16 +7,20 @@ import { readFile } from "node:fs/promises";
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
 import {
+  isEditableDrawioImagePath,
+  logicalSourcePathForOutputTemplate,
+} from "../application/source_format.js";
+import {
   convertToPngFiles,
   type ConvertToPngJob,
   type DrawioToPngOptions,
 } from "../operations/convert_to_png.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
-import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
+import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
+import type { CommandDependencies } from "./command_dependencies.js";
 
 export const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
 
@@ -24,7 +28,12 @@ const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.png";
 const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.png";
 const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.png";
 
-export async function convertToPngCommand(uri?: vscode.Uri, uris?: vscode.Uri[]): Promise<void> {
+export async function convertToPngCommand(
+  uri?: vscode.Uri,
+  uris?: vscode.Uri[],
+  dependencies?: CommandDependencies,
+): Promise<void> {
+  const outputChannel = dependencies?.outputChannel;
   try {
     const sourceUris = selectedUris(uri, uris);
 
@@ -47,47 +56,26 @@ export async function convertToPngCommand(uri?: vscode.Uri, uris?: vscode.Uri[])
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToPngOptions(configuration);
     const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
-    const outputs = await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.convertToOutput.title", sourceUris.length, "PNG"),
-        cancellable: true,
-      },
-      async (progress, token) => {
-        return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.prepareConversion", "PNG") });
-          return convertToPngFiles({
-            jobs,
-            pdftocairoPath,
-            mermaid,
-            drawio,
-            platform: process.platform,
-            signal,
-            resolveOutputConflicts,
-          });
+    await runOutputConversion({
+      operationName: "convert-to-png",
+      ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
+      messages: createOutputConversionMessages("PNG", sourceUris.length),
+      run: (runtime) => {
+        return convertToPngFiles({
+          jobs,
+          pdftocairoPath,
+          mermaid,
+          drawio,
+          platform: process.platform,
+          ...(runtime.signal !== undefined && { signal: runtime.signal }),
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveOutputConflicts: runtime.resolveConflicts,
+          }),
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         });
       },
-    );
-
-    const successMessage = userMessage("message.convertToOutput.success", outputs.length, "PNG");
-    let undoId: string;
-
-    try {
-      undoId = await rememberLastConversion(outputs);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
-      return;
-    }
-
-    const undoAction = userMessage("message.action.undo");
-    const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
-
-    if (selectedAction === undoAction) {
-      await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
-    }
+    });
   } catch (error) {
     if (isAbortError(error)) {
       await vscode.window.showInformationMessage(
@@ -126,6 +114,7 @@ async function createJobs(
   }
 
   if (extension === ".pdf") {
+    await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 
@@ -257,10 +246,6 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
 
   return [...uniqueUris.values()];
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  return /\.(drawio|dio)\.(png|svg)$/i.test(sourcePath);
 }
 
 function isAbortError(error: unknown): boolean {

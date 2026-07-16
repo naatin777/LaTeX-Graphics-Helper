@@ -72,14 +72,6 @@ function getCurrentTarget() {
   return `${platform}-${architecture}`;
 }
 
-function getExactToolVersion(versionRange, toolName) {
-  const version = versionRange.match(/\d+\.\d+\.\d+/)?.[0];
-  if (!version) {
-    throw new Error(`Cannot resolve ${toolName} version from: ${versionRange}`);
-  }
-  return version;
-}
-
 function createRuntimeManifest(packageManifest) {
   const {
     devDependencies: _devDependencies,
@@ -103,7 +95,7 @@ function runCommand(command, args, options) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       ...options,
-      shell: process.platform === "win32",
+      shell: false,
       stdio: "inherit",
     });
     child.once("error", reject);
@@ -117,22 +109,23 @@ function runCommand(command, args, options) {
   });
 }
 
-function getNpmCommand() {
-  return process.platform === "win32" ? "npm.cmd" : "npm";
+function getPnpmCommand() {
+  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 }
 
 async function packageVsix({ outputPath, target }) {
   const packageManifest = JSON.parse(
     await readFile(path.join(rootDirectory, "package.json"), "utf8"),
   );
-  const vsceVersion = getExactToolVersion(
-    packageManifest.devDependencies?.["@vscode/vsce"] ?? "",
-    "@vscode/vsce",
-  );
   const stageDirectory = await mkdtemp(path.join(os.tmpdir(), "latex-graphics-helper-vsix-"));
 
   try {
     await mkdir(path.dirname(outputPath), { recursive: true });
+    await runCommand(
+      getPnpmCommand(),
+      ["--filter", ".", "deploy", "--prod", "--legacy", stageDirectory],
+      { cwd: rootDirectory },
+    );
     await writeFile(
       path.join(stageDirectory, "package.json"),
       `${JSON.stringify(createRuntimeManifest(packageManifest), null, 2)}\n`,
@@ -140,24 +133,9 @@ async function packageVsix({ outputPath, target }) {
     await copyRuntimeFiles(stageDirectory);
 
     await runCommand(
-      getNpmCommand(),
+      process.execPath,
       [
-        "install",
-        "--omit=dev",
-        "--ignore-scripts",
-        "--no-audit",
-        "--no-fund",
-        "--package-lock=false",
-      ],
-      { cwd: stageDirectory },
-    );
-    await runCommand(
-      getNpmCommand(),
-      [
-        "exec",
-        "--yes",
-        `@vscode/vsce@${vsceVersion}`,
-        "--",
+        path.join(rootDirectory, "node_modules", "@vscode", "vsce", "vsce"),
         "package",
         "--target",
         target,

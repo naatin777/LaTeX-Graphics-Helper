@@ -61,7 +61,7 @@ suite("Safe Modeステータスバー", () => {
 
     assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: ON");
     assert.strictEqual(statusBarItem.command, TOGGLE_SAFE_MODE_COMMAND);
-    assert.strictEqual(statusBarItem.tooltip, "Toggle output overwrite confirmation");
+    assert.strictEqual(statusBarItem.tooltip, "Toggle Safe Mode");
     assert.strictEqual(statusBarItem.showCallCount, 1);
   });
 

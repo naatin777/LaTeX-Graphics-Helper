@@ -75,7 +75,18 @@ suite("PDF configure crop処理", () => {
       runId: "all-pages",
     });
 
-    assert.deepStrictEqual(outputs, [{ outputPath, workspacePath }]);
+    assert.deepStrictEqual(outputs, [
+      {
+        outputPath,
+        workspacePath,
+        stagingRootPath: path.join(
+          workspacePath,
+          ".latex-graphics-helper",
+          "crop-pdf-configure",
+          "all-pages",
+        ),
+      },
+    ]);
 
     const outputDocument = await PDFDocument.load(await readFile(outputPath));
     assert.strictEqual(outputDocument.getPageCount(), 2);
