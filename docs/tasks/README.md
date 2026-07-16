@@ -2,7 +2,7 @@
 
 ## Current Task
 
-なし
+- [0201: Node testを3 OS CIで検証する](0201-experiment-node-test-ci-matrix.md)（進行中）
 
 ## Planned
 
