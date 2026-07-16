@@ -5,42 +5,39 @@
 - 状態: Baseline draft / 採用判断前
 - 判断owner: maintainer
 - 関連task: [0198](../tasks/0198-audit-v1-development-foundation.md)
-- 外部tool調査: [v1 test tooling research](../research/v1-test-tooling-2026-07.md)
 
-## 1. Decision scope
+## 1. Purpose
 
-今回決めたいことは、production codeの形ではない。
+今回の目的はproduction codeを綺麗にすることではない。
 
-次の変更を評価できる前提を作る。
+次の変更を評価できる共通baselineを作る。
 
-- どの文書を利用者向け仕様の正本とするか
-- capabilityごとに、どの失敗を防ぐか
+- どの利用者向けcontractを守るか
+- どの文書を仕様の正本とするか
+- capabilityごとにどの失敗を防ぐか
 - どのtest runtimeが何を証明するか
 - PR、full verification、releaseで必要なEvidenceは何か
 - test directoryとscript名が何を意味するか
 - Browser PlaywrightとPlaywright Electronをどう使い分けるか
-- Oxlintをどの境界とriskへ適用するか
-- AIへどのSkillまたはguideを使わせるか
+- Oxlint、Oxfmt、TypeScript configが現在のfile treeを正しく表しているか
+- AIへどのSkillまたはread-only workflowを使わせるか
 
 今回決めないこと:
 
 - class、factory object、関数などproduction codeの具体形
 - test fileの実移動
-- runnerの削除
+- Browser Playwrightの削除
+- Playwright Electronへの全面移行
 - dependency追加
-- CI変更
+- CI workflow変更
 - 新しいSkillの実装
 
-## 2. Actor and product value
+## 2. Problem frame
 
-### Primary actor
+### Actor
 
-- 拡張機能を利用して、PDF・画像・Draw.ioを変換またはLaTeXへ挿入する利用者
-
-### Engineering actor
-
-- maintainer
-- repository上で変更を行うAI coding agent
+- Primary: PDF・画像・Draw.ioを変換またはLaTeXへ挿入する利用者
+- Engineering: maintainer、repository上で変更を行うAI coding agent
 
 ### Product value
 
@@ -50,29 +47,42 @@
 
 変更がどの仕様を満たし、どのEvidenceで確認され、何が未確認かをmaintainerが短時間で判断できること。
 
-## 3. Problem statement
+### Observed problem
 
-現在は、安全性primitiveと多数の回帰testが追加されている一方、仕様、test runtime、directory、script、CI、lint boundary、AI workflowが同じ分類を共有していない。
+安全性primitiveと多数の回帰testは存在するが、仕様、test runtime、directory、script、CI、lint boundary、AI workflowが同じ分類を共有していない。
 
-その結果、次のリファクタリングを評価するときに、次の問いへ一貫して答えられない。
+そのため、次の問いへ一貫して答えにくい。
 
 - 変更してはいけない利用者向けcontractは何か
 - どのtestがそのcontractを証明しているか
-- testが失敗したとき、production bug、runner bug、fixture driftのどれか
-- browser testとElectron testのどちらが正本か
-- `test:all`が本当に全必要Evidenceを含むか
-- lint ruleが現在のdirectory boundaryを表しているか
-- AIが設計前に何を調べるべきか
+- test failureがproduction bug、runner bug、fixture driftのどれか
+- BrowserとElectronのどちらが何の正本か
+- `test:all`が何を意味するか
+- lint / format / typecheckが実際にどのfileを覆うか
+- AIが実装前に何を調べるべきか
 
-これは「コードが綺麗でない」という問題ではなく、変更判定baselineが不完全という問題である。
+問題はrunner数やclass数ではなく、**変更判定baselineが不完全なこと**である。
 
-## 4. Evidence state
+## 3. Audit artifacts
 
-### Confirmed observations
+詳細は目的別の文書へ分離する。
 
-#### O-001: `test:all`は名前と実行内容が一致しない
+| Artifact | Purpose |
+|---|---|
+| [Capability catalog](capability-catalog.md) | public capability、cross-cutting guarantee、delivery capabilityを一覧化する |
+| [Spec / test trace](spec-test-trace.md) | contractからimplementation、test、runtime、gapを追跡する |
+| [Test runtime inventory](test-runtime-inventory.md) | current runnerとcontractually required runtimeを分ける |
+| [CI Evidence map](ci-evidence-map.md) | Check、Test、Playwright、ReleaseのEvidenceとgateを整理する |
+| [Tooling file coverage](tooling-file-coverage.md) | Oxlint、Oxfmt、TypeScript、Vitest、Lefthookの対象driftを整理する |
+| [External tooling research](../research/v1-test-tooling-2026-07.md) | Playwright Electron、VS Code test、Oxlintの外部仕様を記録する |
 
-`package.json`の`test:all`は`test:vscode`とBrowser Playwrightだけを実行する。
+このfileは判断用indexであり、上記の詳細を重複して正本化しない。
+
+## 4. Confirmed observations
+
+### O-001: `test:all`は全Evidenceを意味しない
+
+現在の`test:all`はVS Code Extension Host testとBrowser Playwrightを実行する。
 
 含まれないもの:
 
@@ -81,163 +91,155 @@
 - Vitest
 - cross-platform package test
 
-`test:all`を「全てのrequired test」と解釈することはできない。
+したがって、名前だけから「全required test」と解釈できない。
 
-#### O-002: PRのrequired checkは静的checkだけである
+### O-002: PRにはruntime Evidenceが存在する
 
-`.github/workflows/check.yml`は`pnpm run check:all`だけを実行する。
+初稿では`.github/workflows/check.yml`だけを確認し、「通常PRはruntime testへ接続されていない」と記録した。これは誤りだった。
 
-現在の`check:all`はlint、format、TypeScript typecheck、NLS checkであり、runtime testを含まない。
+実際には:
 
-したがって、通常PRがmerge可能かどうかと、実VS Codeまたは変換処理のruntime Evidenceは直接接続されていない。
+- `check.yml`: static check
+- `test.yml`: Linux、macOS、WindowsのVS Code test。LinuxではElectron projectも実行
+- `playwright.yml`: Linux、macOS、WindowsのBrowser Playwright
 
-#### O-003: release時に初めてcross-platform packaged smokeが実行される
+がPRで起動する。
 
-`.github/workflows/release.yml`はtag push時にLinux、macOS、WindowsでVSIXをpackageし、Playwright Electronの単一specをpackaged VSIX smokeとして実行する。
+問題はruntime testが存在しないことではない。
 
-release前のPRでは同じmatrixがrequiredではない。
+- workflowとlocal scriptの意味が分散している
+- VS Code suiteへNode-only contractとHost integrationが混在する
+- branch protection上のrequired statusは未確認
+- packaged smokeはrelease時まで実行されない
 
-#### O-004: `test/`直下に複数runtimeのtestが混在する
+ことが問題である。
 
-`.vscode-test.mjs`は`out/test/**/*.test.js`をExtension Development Host内のMochaで実行する。
+### O-003: packaged artifactの3 OS Evidenceはrelease時に取得する
 
-`test/`には少なくとも次の性質のtestが混在している。
+`release.yml`はtag push時にLinux、macOS、WindowsでVSIXをpackageし、installed VSIXをElectronで実行する。
+
+通常PRでは3 OS packaged smokeを実行しない。
+
+これは必ずしも誤りではないが、release前に初めてpackage regressionが判明するriskとCI costを比較する必要がある。
+
+### O-004: test pathからruntimeとoracleを判断しにくい
+
+`.vscode-test.mjs`は`out/test/**/*.test.js`をExtension Hostへ入れる。
+
+その中には少なくとも次が混在する。
 
 - pure data / protocol
-- filesystem operation
+- Node filesystem safety
 - conversion operation
-- VS Code command
-- provider
-- extension manifest
-- security boundary
-- integration helper
-- Playwright Browser
-- Playwright Electron
+- VS Code command / provider
+- manifest / NLS
 
-file pathだけでは、必要runtimeとoracleが判断しづらい。
+BrowserとElectronは`test/playwright/`配下にあるが、各spec内でも複数責務が混在する。
 
-#### O-005: Browser Playwrightの1 specへ複数責務が集約されている
+### O-005: Nodeへ移せる可能性が高い安全性testがある
 
-`test/playwright/webview-pdf-rendering.spec.ts`は、独自HTTP server、PDF fixture生成、Host message simulation、PDF.js canvas、lazy rendering、high-DPI、layout、zoom、crop入力を扱う。
+直接`vscode`を必要としない代表例:
 
-Browser runnerの必要性と、現在のspec分割が適切かは別問題である。
+- source format
+- Crop protocol
+- streaming file hash
+- external tool runner
+- staged batch
+- commit / rollback
+- artifact cleanup
+- PNG→PDF operation
+- Draw.io path boundary
+- merge operation
+- Clipboard save operation
 
-#### O-006: Electron specへUI、output、visual、packaging smokeが混在する
+これらは重要度が低いからNode候補なのではない。むしろ安全性criticalだから、VS Code起動failureから分離して高速に診断できる可能性がある。
 
-`test/playwright/electron/crop_pdf_configure.spec.ts`は、実VS Code起動、Webview操作、theme変更、visual snapshot、PDF出力、packaged VSIX確認、package内部moduleの直接importを1つのjourneyで扱う。
+移行可否はrepresentative experimentで判断する。
 
-package内部moduleの直接importは、利用者journeyのoracleとは異なるため、分離候補である。
+### O-006: Browser specへrenderer以外の責務も集まる
 
-#### O-007: test policyは段階移行を記述するが完了条件が十分に追跡されていない
+Browser PlaywrightにはPDF.js、canvas、DPI、lazy render、scroll、zoomを確認する価値がある。
 
-`docs/test-policy.md`は、実VS Code Webviewをvisualの正本とし、Electron側の同等coverageが安定した機能からBrowser runnerを削除すると記述する。
+一方、Host message simulationや大きなuser journeyはElectronと重複しやすい。
 
-一方で、機能ごとのcoverage対応表、安定判定、削除条件、ownerが一箇所に存在しない。
+Browser runnerの存在可否と、現在の1000行超specの分割可否は別の問題である。
 
-#### O-008: Oxlint configとlint対象にdriftがある
+### O-007: Electron specへ4種類のEvidenceが混在する
 
-`oxlint.config.ts`には`scripts/**/*.mjs`向けoverrideがあるが、`package.json`の`lint` scriptは`scripts/`を対象に含めない。
+現在のElectron specは次を一つのflowで扱う。
 
-次も明示的なlint対象に含まれない。
+- real VS Code critical journey
+- dark / light visual snapshot
+- installed VSIX / offline behavior
+- package内部module importとSharp native load
 
-- `.vscode-test.mjs`
-- `playwright.config.mjs`
-- package / release補助のroot-level JavaScript
+critical journey、visual、packaging smokeはfailure ownerと実行頻度が異なるため、分離候補である。
 
-また、`webview/apps/pdf-workbench`と`webview/apps/pdf-arranger`向けの専用overrideが残っており、現在のapp構成を表していない。
+### O-008: specは局所的に強いが横断catalogがなかった
 
-#### O-009: Vitestはdependencyと共通configがあるが正式scriptへ接続されていない
+workspace boundary、Safe Mode、rollback、scratch、Crop Configureなどの個別specは詳細である。
 
-`vitest`と`webview/vitest.config.ts`は存在するが、root `package.json`にVitestを実行する正式scriptがない。
+一方、各commandについて次を横断するrecordがなかった。
 
-これは次のどちらかである可能性がある。
-
-- 未完了の導入
-- 現在不要な残存tool
-
-現時点では判定できない。
-
-#### O-010: specは局所的には強いがcapability catalogがない
-
-`docs/specs/file-operation-security.md`はworkspace boundary、symlink、scratch、commit、rollback、backup、cleanupを具体的に定義している。
-
-一方、各commandについて次を横断できるcatalogがない。
-
-- input format
-- output format
-- required external tool
-- output naming
-- Safe Mode
-- Undo
-- cancellation
+- input / output
+- external tool
+- naming
+- Safe Mode / Undo / cancellation
 - failure guarantee
 - platform condition
-- corresponding test
+- test Evidence
 - unverified Evidence
 
-#### O-011: 一部specの対応済み一覧が現在の実装と同期していない可能性がある
+監査branchで[capability catalog](capability-catalog.md)と[spec / test trace](spec-test-trace.md)を作成した。
 
-`docs/specs/conversion-progress-and-cancellation.md`の「対応済み」は一部commandだけを列挙する。
+### O-009: 一部specの対象一覧が現行実装と同期していない
 
-現在のformat command全体との一致を、capability catalog作成時に確認する必要がある。
+- `safe-mode.md`の「初期対象」
+- `undo-last-conversion.md`の対象command
+- `conversion-progress-and-cancellation.md`の「対応済み」
 
-#### O-012: AGENTSは短くなったが、foundation auditへのroutingはない
+は、現在のgeneric output conversion command群を完全には表していない。
 
-現在の`AGENTS.md`はscope、implementation、test、安全性、refactoringの短い原則を持つ。
+履歴として残すのか、現行対象へ更新するのかを決める必要がある。
 
-しかし、仕様、test strategy、tooling選定の前提が不明なtaskで、どのread-only workflowを先に使うかは定義されていない。
+### O-010: Tooling configと実対象にdriftがある
 
-### Interpretations
+確認済みの例:
 
-#### I-001
+- Oxlintには`scripts/**/*.mjs` overrideがあるがroot lint scriptは`scripts/`を渡さない
+- `.vscode-test.mjs`と`playwright.config.mjs`がroot lint / format対象外
+- 旧Webview app名向けOxlint overrideが残る
+- production `tsconfig.json`のinclude / excludeに冗長な`test`指定がある
+- Webview test tsconfigのincludeが現在のapp layoutを表すか未確認
+- Vitest dependency / shared configはあるがformal root scriptがない
+- Lefthook pre-commitとCI formatの対象集合が異なる
 
-現在の主問題はrunner数ではなく、各runnerが証明するcontractとrelease gateが一致していないことである。
+rule強化より先にactual file coverageを正確にする。
 
-#### I-002
+### O-011: AGENTSは短いがfoundation workflowへのroutingはない
 
-Browser Playwrightを削除するか残すかは、Electronで置換できるかではなく、renderer固有oracleと実VS Code oracleを分けた後で判断すべきである。
+現在の`AGENTS.md`は短く、scope、安全性、test、refactoringの基本原則として妥当である。
 
-#### I-003
+ただし、仕様・test strategy・toolingの前提が不明なtaskで、実装前にread-only auditを選ぶroutingは定義されていない。
 
-pure testをExtension Hostから外すとfeedback speedとfailure isolationが改善する可能性がある。ただし、現状のtestが暗黙にVS Code runtimeへ依存している可能性があり、実測が必要である。
-
-#### I-004
-
-Oxlint ruleの強化より先に、現在lintしているfileとenforced boundaryを正確にする方が優先度が高い。
-
-#### I-005
-
-repository固有Skillは、コード生成手順よりも、problem framingとEvidence mappingに限定した方がハーネス肥大化を避けられる可能性がある。
-
-### Hypotheses
-
-- H-001: testをruntime別に分類すると、変更時に必要なtestだけを選びやすくなる
-- H-002: Browser Playwrightをrenderer contractへ縮小すると、Electronとの重複が減る
-- H-003: Electron specをcritical journey、visual、packaging smokeへ分けるとfailure diagnosisが改善する
-- H-004: capability catalogを作ると、specとtestの欠落がproduction refactoring前に見つかる
-- H-005: Oxlintのstale overrideと未lint fileを直すだけでも、設定の信頼性が改善する
-
-これらは未検証であり、採用判断ではない。
+AGENTSを再び巨大化せず、guideまたは最小Skillへの短いroutingを候補にする。
 
 ## 5. Quality portfolio
 
-### Primary quality
+### Primary
 
-1. **User data safety**
-   - 既存出力、入力、Undo backupを意図せず失わない
-   - workspace外へ書き込まない
-
-2. **Output correctness**
+1. User data safety
+   - 元入力、既存出力、Undo backupを意図せず失わない
+   - workspace境界を越えない
+2. Output correctness
    - format、page、size、crop、orientation、visual markerが期待と一致する
-
-3. **Release reproducibility**
+3. Release reproducibility
    - packageしたVSIXでnative dependencyと主要journeyが動く
    - required platformの未実行を隠さない
+4. Change reviewability
+   - contract、Evidence、未確認事項を短く追跡できる
 
-4. **Change reviewability**
-   - 変更したcontract、Evidence、未確認事項を短く追跡できる
-
-### Secondary quality
+### Secondary
 
 - local feedback speed
 - CI failure diagnosis
@@ -253,7 +255,7 @@ repository固有Skillは、コード生成手順よりも、problem framingとEv
 - Webviewはbrowser-like runtime、HostはNode / VS Code runtime
 - 一人maintainerで過剰な運用costを持てない
 
-### Intentionally not optimized in this audit
+### Intentionally not optimized now
 
 - runnerを1種類に統一すること
 - coverage percentage最大化
@@ -262,224 +264,187 @@ repository固有Skillは、コード生成手順よりも、problem framingとEv
 - 全testを最速化すること
 - schemaやvalidatorで文書を強制すること
 
-## 6. Proposed capability-to-evidence model
+## 6. Candidate Evidence model
 
-以下は採用前の候補baselineである。
+採用前の候補:
 
-| Evidence layer | 主な対象 | 正本にできるもの | 正本にしないもの |
-|---|---|---|---|
-| Node / Vitest | pure logic、protocol、path、format判定、hash、option normalization | 入出力と失敗contract | VS Code API、実Webview、native package |
-| VS Code Extension Host | activation、command、configuration、workspace、provider、notification、progress | Host integration | visual、実Webview theme、packaged VSIX |
-| Browser Playwright | PDF.js、canvas、DPI、lazy render、scroll、zoom | Chromium renderer contract | VS Code theme、Host integration、release package |
-| VS Code Electron | commandからWebview、theme、message bridge、critical journey | 実VS Code user journey | pure logicの全組合せ、package内部module API |
-| Packaging smoke | installed VSIX、native dependency、offline behavior | 配布artifactの実行可能性 | UI詳細、全変換組合せ |
-| Platform matrix | path、process、native dependency、package | required OS / architecture Evidence | 未実行platformの推測 |
+| Layer | Primary contract | Not source of truth for |
+|---|---|---|
+| Node / Vitest | pure logic、protocol、path、filesystem transaction、child process | VS Code API、actual Webview、package |
+| VS Code Extension Host | activation、command、configuration、workspace、provider、notification | visual、actual Webview theme、installed VSIX |
+| Browser Playwright | PDF.js、canvas、DPI、lazy render、scroll、zoom | VS Code theme、Host bridge、package |
+| VS Code Electron | commandからWebview、theme、message bridge、critical journey | pure logicの全組合せ、package内部module API |
+| Packaging smoke | installed VSIX、native dependency、offline behavior | UI詳細、全変換組合せ |
+| Platform matrix | path、process、native module、packageのnative OS Evidence | 未実行platformの推測 |
 
-## 7. Candidate test directory semantics
+## 7. Selection Gates
 
-候補:
-
-```text
-
-test/
-  fixtures/
-  node/
-  vscode/
-  browser/
-  electron/
-  packaging/
-  support/
-```
-
-代替案:
-
-- pure testは`src/**/*.test.ts`へco-locateする
-- Webview unit testは`webview/apps/<app>/src/**/*.test.tsx`へ置く
-- integrationとE2Eだけをroot `test/`へ置く
-
-選択基準:
-
-- file pathからruntimeが明確か
-- fixtureとsupport helperのownershipが明確か
-- compile設定が単純か
-- AIが無関係なtestを読み込まないか
-- migration中に二重正本を作らないか
-
-現時点ではdirectory名を採用しない。
-
-## 8. Runner options and Selection Gates
-
-### SG-001: Browser Playwrightを残すか
+### SG-001: Browser Playwright
 
 候補:
 
-- A: 全てElectronへ移行しBrowser projectを削除
-- B: renderer固有testだけBrowserへ残す
-- C: 現状維持
+- 全てElectronへ移行する
+- renderer固有contractだけBrowserへ残す
+- 現状維持
 
 必要Evidence:
 
-- Browser testごとのcontract inventory
-- Electronで同等oracleを実装した場合の実行時間
-- 20回程度のflake観測
-- failure時のdiagnostic比較
-- PDF.js / high-DPI / lazy renderでBrowser固有価値が残るか
+- Browser test caseごとのcontract inventory
+- Electronで同等oracleを実装した場合の時間
+- repeated runのflake
+- failure diagnostics
+- PDF.js / high-DPI / lazy renderのBrowser固有価値
 
-判断owner: maintainer
+暫定: `conditional`
 
-暫定状態: `conditional`
-
-### SG-002: Electron testをrequiredにする範囲
+### SG-002: Electron required scope
 
 候補:
 
-- critical journey 1件だけPR required
-- Webview変更時だけpath-filtered required
-- nightly / manual full suite
+- Linux critical journeyを全non-doc PRで実行
+- related path変更時だけ実行
+- full suiteはmanual / scheduled
 - releaseだけ
 
 必要Evidence:
 
 - CI時間
-- OSごとのflake
-- download cacheの効果
-- failure artifactの有用性
+- OS別flake
+- cache効果
+- artifactの診断価値
 
-判断owner: maintainer
+暫定: `conditional`
 
-暫定状態: `conditional`
-
-### SG-003: pure testをVS Code Hostから外すか
+### SG-003: Node test migration
 
 候補:
 
-- Node / Vitestへ段階移行
-- VS Code test-cliのlabelで分ける
+- representative 7 testをNode / Vitestへ移すexperiment
+- VS Code test-cli内でlabel分離
 - 現状維持
 
 必要Evidence:
 
-- `vscode` importのないtest inventory
-- 代表20〜30件の移行experiment
-- 実行時間とfailure差
-- hidden VS Code dependencyの有無
+- cold / warm実行時間
+- hidden VS Code dependency
+- 3 OS結果
+- assertion / fixture coverageを維持できるか
 
-判断owner: maintainer
+暫定: `conditional`
 
-暫定状態: `conditional`
+### SG-004: Oxlint type-aware
 
-### SG-004: Oxlint type-aware linting
+現行v1では候補外。
 
-現時点の阻害条件:
+- TypeScript version条件
+- 追加dependency
+- migration cost
 
-- repositoryはTypeScript 6.0.3
-- 公式資料ではTypeScript 7.0+が必要
-- 追加dependencyが必要
+があるため、TypeScript migration後または具体的な見逃しEvidenceが出た時に再評価する。
 
-したがって、v1 foundation変更としては採用候補外とする。
+暫定: `blocked`
 
-TypeScript 7 migration後に、別experimentとして再評価する。
-
-暫定状態: `blocked`
-
-### SG-005: repository固有Skill
+### SG-005: Repository-specific Skill
 
 候補:
 
-- A: Skillを作らず、task templateとguideだけを改善
-- B: read-only foundation audit Skillだけ作る
-- C: foundation audit、test strategy、technical researchの3 Skill
-- D: inspired-mino suiteをそのまま導入
+- Skillを作らずguide / task templateだけ改善
+- read-only foundation audit Skillを1つ作る
+- foundation audit、test strategy、technical researchを分ける
+- inspired-mino suite全体を導入する
 
-Dは、project scopeに対して過剰であり、参照suite自身もExperimentalであるため採用しない。
+suite全体導入はproject規模とmaintenance costに対して過剰なため候補から外す。
 
-BまたはCの判断に必要なEvidence:
+判断材料:
 
-- 同種taskが何回発生するか
-- AGENTSだけでは再現できない判断手順が何か
-- Skillのmaintenance cost
-- Skillなしのpromptで同等成果物を作れるか
+- 同種taskの反復回数
+- AGENTSだけでは再現できない判断手順
+- Skill maintenance cost
+- prompt / guideで同等成果物を作れるか
 
-判断owner: maintainer
+暫定: `conditional`
 
-暫定状態: `conditional`
+## 8. Current contradictions and gaps
 
-## 9. Contradictions and gaps
-
-| ID | Current records | Gap |
+| ID | Observation | Gap |
 |---|---|---|
-| C-001 | `test:all`という名前 | Electron、Vitest、packagingを含まない |
-| C-002 | PR `Check` workflow | runtime testを実行しない |
-| C-003 | test policyはElectronを実Webview正本とする | 機能別移行表とrequired gateがない |
-| C-004 | Oxlint configはscripts overrideを持つ | lint commandはscriptsを含まない |
-| C-005 | Oxlintに旧Webview app専用overrideがある | 現在のapp構成と一致しない |
-| C-006 | Vitest dependencyとconfigがある | 正式scriptと役割がない |
-| C-007 | specsは個別contractを持つ | capability横断catalogとtest traceがない |
-| C-008 | Electron specはuser journey | packaged module直接importも同じspecで行う |
-| C-009 | PROJECT_STATEはcross-platform verificationを最優先 | foundation auditがCurrent Taskへ反映されていない |
+| C-001 | `test:all`という名前 | Electron、package、Vitestを含まない |
+| C-002 | workflow EvidenceがCheck / Test / Playwrightへ分散 | local script名や初見の監査でPR gateを誤認しやすい |
+| C-003 | workflowはPRで起動する | branch protection上でrequiredかは未確認 |
+| C-004 | Electronをactual Webview正本とする | case別移行表と削除条件がない |
+| C-005 | Oxlint configにscripts overrideがある | root lint scriptはscriptsを含まない |
+| C-006 | Oxlintに旧Webview app overrideがある | current app構成と一致しない |
+| C-007 | Vitest dependency / configがある | formal scriptと役割がない |
+| C-008 | individual specsは詳細 | cross-capability対象一覧が同期していない |
+| C-009 | Electron specはuser journey | visual、package、内部module smokeも同居する |
+| C-010 | LefthookはMarkdown等をformat | CI formatは同じ集合をcheckしない |
 
-## 10. Recommended sequence
+## 9. Recommended sequence
 
 ### Phase 1: baseline completion
 
-production codeとtest配置を変えずに次を作る。
+作成済み:
 
-1. capability catalog
-2. spec / test trace matrix
-3. test inventory by runtime and oracle
-4. CI Evidence map
-5. tooling file coverage inventory
-6. unknown / contradiction list
+- capability catalog
+- spec / test trace
+- test runtime inventory
+- CI Evidence map
+- tooling file coverage
+
+残り:
+
+- repository treeによる全test fileの完全列挙
+- branch protection / rulesetのrequired status確認
+- Browser / Electron case単位の重複表
+- maintainerによるrequired platformとquality priority承認
 
 ### Phase 2: decisions
 
-個別ADRで次を決める。
+一つの巨大ADRではなく、必要な判断だけを分ける。
 
-1. required test Evidence policy
-2. test directory semantics
-3. Browser Playwrightの残存範囲
-4. Electron testのrequired範囲
-5. packaging smokeの責務
-6. Oxlint対象fileとboundary policy
-7. project Skill routing
+- required test Evidence policy
+- test directory semantics
+- Browser Playwright残存範囲
+- Electron required範囲
+- packaging smoke責務
+- tooling file coverage policy
+- project Skill routing
 
-一つのADRで全項目を決めない。
+### Phase 3: reversible experiments
 
-### Phase 3: reversible transition
-
-小さいtaskに分ける。
-
-1. script名と実行内容を一致させる
-2. Oxlintのstale overrideと未lint fileを修正する
-3. pure testの小規模移行experiment
-4. Browser specをrenderer contract単位へ分割する
-5. Electron specをcritical journey、visual、packagingへ分割する
-6. 機能単位でBrowser coverageの削除可否を判断する
-7. required CIを段階的に変更する
+- Node testの代表移行
+- stale Oxlint overrideと未lint fileのdry-run
+- Browser specのcontract単位分割
+- Electron specのjourney / visual / package分割
+- script名と実行内容の同期
 
 ### Phase 4: production refactoring reevaluation
 
-baselineとEvidence policyが決まった後に、class、factory object、operation boundary、directory構造などproduction codeの設計を再評価する。
+baselineとEvidence policyが決まった後に、class、factory object、operation boundary、production directoryを再評価する。
 
-## 11. Audit readiness
+## 10. Readiness
 
 ### Subject verdict
 
 `conditional`
 
-### Ready
+### Completed in this audit
 
-- 問題と候補手段を分離した
-- 現在の主要なtest runnerとtooling driftを記録した
-- quality portfolioを仮定として明示した
-- 即時に全面移行しない理由を記録した
+- problemとcandidate meansを分離した
+- initial CI audit errorを訂正した
+- capability catalogを作成した
+- spec / test traceを作成した
+- representative testをruntime / oracleで分類した
+- CI workflowをEvidence classで整理した
+- tooling file coverageのdriftを記録した
+- runner全面置換を即決しないSelection Gateを作成した
 
 ### Remaining obligations
 
-- capability catalogを実装とmanifestから作る
-- 全test fileをruntime / oracle / contractでinventoryする
-- CI workflow全体をrequired / release / manualへ分類する
-- BrowserとElectronの重複coverageをtest case単位で比較する
-- maintainerがrequired platformとquality priorityを承認する
+- test treeの完全inventory
+- branch protectionの確認
+- Browser / Electronのcase単位比較
+- required platformとquality priorityの人間承認
+- ADRへ移す判断の選択
 
 これらが完了するまで、test runnerの全面置換やproduction architectureの大規模変更を開始しない。
