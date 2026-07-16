@@ -38,7 +38,7 @@ AI開発ハーネスの情報を、次の責務へ分ける。
 
 当初の設計ではStop hookを検証専用としたが、v1ではStop hook自体を使用しない。検証はLefthookとCIの正式commandで行い、runtime stagingへハーネスログを保存しない。
 
-project共通のAIルールとhook定義は`.rulesync/`、taskは`docs/tasks/`、設計判断はADR、機能仕様はspec、外部調査はresearch noteを正本とする。
+project共通のAIルールは手書きの`AGENTS.md`、taskは`docs/tasks/`、設計判断はADR、機能仕様はspec、外部調査はresearch noteを正本とする。repository固有のCodex/Stop hookは使用せず、Git hookはLefthook、共有検証はCIを使用する。
 
 repositoryのCodex設定にはproject全体で必要な機能だけを置く。承認頻度、既定model、利用量、個人環境の実行許可は個人設定とし、repositoryへ固定しない。危険操作を無条件に許可する設定は共有しない。
 

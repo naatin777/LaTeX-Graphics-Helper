@@ -48,18 +48,6 @@
 
 ## Items
 
-### RuleSyncの履歴ファイルを整理する
-
-- Area: AI harness
-- Type: Readability
-- Concrete problem: `.rulesync/`と過去taskには、現在は必須でない生成・Stop hook運用の記述が残っている。
-- Evidence: ADR-0016で`AGENTS.md`をv1の正本に変更し、package/CIからRuleSync必須checkを外した。
-- Trigger: 次majorでRuleSyncを再導入するか、履歴ファイルを削除・archiveする判断をするとき。
-- Why not now: 現在削除すると過去taskとADRの参照履歴を大きく変更し、v1の構造整理と混ざる。
-- Related files: `.rulesync/**`, `rulesync.jsonc`, `docs/adr/0001-use-agents-md-for-codex-rules.md`, `docs/adr/0016-use-handwritten-agents-for-v1.md`
-- Expected test impact: RuleSyncを再導入する場合は生成物とCI導線の確認が必要。
-- Reversibility: `AGENTS.md`を正本として維持したまま履歴ファイルを段階的にarchiveできる。
-
 ### 形式別operationの残る引数列
 
 - Area: conversion operations

@@ -35,7 +35,7 @@ ADRには、判断を理解するために必要な次の情報を残す。
 | 利用者から見た機能仕様               | `docs/specs/`                   |
 | 現在行う変更、変更可能file、完了条件 | `docs/tasks/`                   |
 | 外部仕様やdependencyの調査結果       | `docs/research/`                |
-| AIが常に守る短いproject rule         | `.rulesync/`                    |
+| AIが常に守る短いproject rule         | `AGENTS.md`                     |
 | 反復する操作手順                     | skillまたは専用guide            |
 | test fixture、runner、確認観点の詳細 | `docs/test-policy.md`またはtask |
 | 一時的なbranch、PR、導入順、roadmap  | taskまたはproject rule          |
