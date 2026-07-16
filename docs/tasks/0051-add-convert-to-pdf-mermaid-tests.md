@@ -44,7 +44,7 @@ Mermaid専用コマンドは作らず、他の画像形式と同じように`変
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0047-design-mermaid-file-conversion.md`
 - `docs/tasks/0050-implement-convert-to-svg-mermaid.md`
 

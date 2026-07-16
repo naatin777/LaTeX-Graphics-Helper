@@ -58,5 +58,5 @@
 
 ## 関連
 
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`
 - `docs/tasks/0126-design-real-fixture-and-visual-testing.md`

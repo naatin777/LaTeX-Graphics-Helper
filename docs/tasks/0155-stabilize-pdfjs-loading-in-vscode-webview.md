@@ -57,7 +57,7 @@ Done
 
 - [0154: Crop PDF ConfigureのElectron E2Eとtheme snapshotを追加する](0154-add-crop-pdf-configure-electron-e2e.md)
 - [ADR-0013: VS Code ElectronをWebview visual testに使う](../adr/0013-use-vscode-electron-for-webview-visual-tests.md)
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 
 ## 確認方法
 

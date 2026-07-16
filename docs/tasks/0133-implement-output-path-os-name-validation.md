@@ -39,7 +39,7 @@ Done
 
 ## 関連
 
-- [outputPath検証仕様](../specs/output-path-validation.md)
+- [outputPath検証仕様](../specs/internal/output-path-validation.md)
 - [0132: outputPathのOS禁止名失敗テストを追加する](0132-add-output-path-os-name-validation-tests.md)
 
 ## 確認方法

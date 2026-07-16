@@ -44,9 +44,9 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
-- `docs/specs/safe-mode.md`
+- `docs/specs/internal/output-format-conversion.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/safe-mode.md`
 - `docs/research/2026-06-28-mermaid-cli.md`
 - `docs/tasks/0049-add-convert-to-svg-mermaid-tests.md`
 

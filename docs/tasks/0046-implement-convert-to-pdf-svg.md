@@ -30,7 +30,7 @@ Done
 - `pnpm-lock.yaml`
 - `package.nls.json`
 - `package.nls.ja.json`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0046-implement-convert-to-pdf-svg.md`
 - `docs/research/`
@@ -45,7 +45,7 @@ Done
 ## 関連
 
 - `docs/tasks/0045-add-convert-to-pdf-svg-tests.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/research/2026-06-27-puppeteer-core-svg-pdf.md`
 
 ## 確認方法

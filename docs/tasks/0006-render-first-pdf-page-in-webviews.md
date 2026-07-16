@@ -41,7 +41,7 @@ Done
 ## 関連
 
 - `docs/tasks/0005-add-failing-webview-pdf-rendering-tests.md`
-- `docs/specs/product.md`
+- `docs/specs/product/product.md`
 
 ## 確認方法
 

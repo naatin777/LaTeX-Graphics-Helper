@@ -106,8 +106,8 @@ PDF操作・画像変換・Draw.io・Mermaid変換を開始する前に、入力
 
 - [PDF処理バックエンドの予備調査](../research/2026-07-10-pdf-processing-backends.md)
 - [0127: PDF処理バックエンドを比較評価する](0127-evaluate-pdf-processing-backends.md)
-- [出力形式基準の変換仕様](../specs/output-format-conversion.md)
-- [ファイル操作security仕様](../specs/file-operation-security.md)
+- [出力形式基準の変換仕様](../specs/internal/output-format-conversion.md)
+- [ファイル操作security仕様](../specs/internal/file-operation-security.md)
 
 ## 確認方法
 

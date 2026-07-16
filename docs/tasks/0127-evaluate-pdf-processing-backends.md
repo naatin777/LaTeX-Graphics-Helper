@@ -46,7 +46,7 @@ Todo
 ## 関連
 
 - [PDF処理バックエンドの予備調査](../research/2026-07-10-pdf-processing-backends.md)
-- [テスト方針](../test-policy.md)
+- [テスト方針](../specs/internal/test-policy.md)
 - [0126: 実fixtureと画像比較を使うテスト方針を決める](0126-design-real-fixture-and-visual-testing.md)
 
 ## 確認方法

@@ -31,7 +31,7 @@ Windows GhostscriptへUnicode pathを直接渡さず、OS一時directoryのASCII
 
 ## 関連
 
-- [外部コマンド用ASCII scratch仕様](../specs/external-tool-ascii-scratch.md)
+- [外部コマンド用ASCII scratch仕様](../specs/internal/external-tool-ascii-scratch.md)
 - [ADR-0012](../adr/0012-use-os-temp-for-incompatible-windows-tools.md)
 - [OS別path互換性調査](../research/2026-07-11-external-tool-path-compatibility.md)
 

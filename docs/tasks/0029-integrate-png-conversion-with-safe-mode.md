@@ -24,7 +24,7 @@ Done
 - `src/commands/convert_png_to_pdf.ts`
 - `src/operations/convert_png_to_pdf.ts`
 - Safe ModeとUndoの既存module（必要な最小変更のみ）
-- `docs/specs/safe-mode.md`
+- `docs/specs/internal/safe-mode.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0029-integrate-png-conversion-with-safe-mode.md`
@@ -39,7 +39,7 @@ Done
 
 ## 関連
 
-- `docs/specs/safe-mode.md`
+- `docs/specs/internal/safe-mode.md`
 - `docs/adr/0006-use-workspace-staging-for-file-operations.md`
 - `docs/tasks/0028-add-png-safe-mode-tests.md`
 

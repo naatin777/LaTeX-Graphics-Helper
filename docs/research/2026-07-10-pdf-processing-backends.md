@@ -95,4 +95,4 @@
 
 - `docs/tasks/0127-evaluate-pdf-processing-backends.md`
 - `docs/tasks/0128-design-input-preflight-validation.md`
-- `docs/test-policy.md`
+- `docs/specs/internal/test-policy.md`

@@ -19,7 +19,7 @@ Done
 ## 変更可能なファイル
 
 - `test/crop_pdf_auto.test.ts`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0016-add-conversion-cancellation-tests.md`
@@ -33,8 +33,8 @@ Done
 
 ## 関連
 
-- `docs/specs/auto-crop.md`
-- `docs/specs/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/auto-crop.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
 
 ## 確認方法
 

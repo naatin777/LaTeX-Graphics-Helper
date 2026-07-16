@@ -1,4 +1,59 @@
-# Test Policy
+# Test policy
+
+## Principle
+
+test runtimeはdirectory名やrunner統一ではなく、検証するcontractと必要なoracleから選択する。
+
+## Node runtime
+
+候補:
+
+- pure logic
+- Node filesystem
+- injected platform behavior
+- process abstraction
+
+正式採用範囲はtask 0201で決定する。
+
+## VS Code Extension Host
+
+次をoracleとするtestはHostに残す。
+
+- command registry
+- configuration
+- workspace
+- globalState
+- provider API
+- notification / progress
+
+## Browser
+
+次をoracleとするtestで使用する。
+
+- PDF.js worker
+- canvas pixels
+- layout
+- DPI
+- IntersectionObserver
+- scroll / zoom
+
+## VS Code Electron
+
+次をoracleとするtestで使用する。
+
+- actual VS Code window
+- Webview frame
+- Host message bridge
+- critical user journey
+- installed VSIX behavior
+
+## Pending decision
+
+- tested Node subsetの正式採用
+- Node CI jobの維持
+- Hostとの重複期間
+- required status
+- Mocha / Vitest
 
 このプロジェクトでは、テストを「仕様を守るための安全網」として扱う。
 

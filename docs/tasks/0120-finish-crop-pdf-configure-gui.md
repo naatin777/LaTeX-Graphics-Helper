@@ -26,7 +26,7 @@ Done
 - `src/presentation/webview/`
 - `test/`
 - `test/playwright/`
-- `docs/specs/crop-pdf-configure.md`
+- `docs/specs/internal/crop-pdf-configure.md`
 - `docs/tasks/0120-finish-crop-pdf-configure-gui.md`
 
 ## 対象外
@@ -42,7 +42,7 @@ Done
 - [0103: cropPdf.configure GUIの仕様を決める](0103-design-crop-pdf-configure-gui.md)
 - [0104: cropPdf.configure GUIの失敗テストを追加する](0104-add-crop-pdf-configure-gui-tests.md)
 - [0105: cropPdf.configure GUIを実装する](0105-implement-crop-pdf-configure-gui.md)
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
 
 ## 確認方法
 

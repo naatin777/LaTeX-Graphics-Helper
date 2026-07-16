@@ -34,8 +34,8 @@ Done
 ## 関連
 
 - [outputPathのOS別ファイル名制限調査](../research/2026-07-11-output-path-os-filename-restrictions.md)
-- [PDF configure crop仕様](../specs/crop-pdf-configure.md)
-- [outputPath検証仕様](../specs/output-path-validation.md)
+- [PDF configure crop仕様](../specs/internal/crop-pdf-configure.md)
+- [outputPath検証仕様](../specs/internal/output-path-validation.md)
 
 ## 確認方法
 

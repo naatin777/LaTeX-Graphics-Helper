@@ -43,8 +43,8 @@ Todo
 ## 関連
 
 - [0102: PDF configure GUI機能の未実装範囲を整理する](0102-track-pdf-manual-gui-backlog.md)
-- [split-pdf-all-pages.md](../specs/split-pdf-all-pages.md)
-- [pdf-operation-command-modes.md](../specs/pdf-operation-command-modes.md)
+- [split-pdf-all-pages.md](../specs/internal/split-pdf-all-pages.md)
+- [pdf-operation-command-modes.md](../specs/internal/pdf-operation-command-modes.md)
 
 ## 確認方法
 

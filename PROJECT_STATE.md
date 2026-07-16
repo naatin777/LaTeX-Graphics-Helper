@@ -8,9 +8,9 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Current priority
 
-- Node/Mochaのtested subsetをLinux・macOS・Windowsで検証する
-- 3 OSでのcorrectness、実行時間、failure owner、CI costを記録する
-- remote Evidenceを基に、Node runtime正式採用を別Selection Gateで判断する
+- Node-level testの実行基盤を決定する
+- 3 OS CI Evidenceを取得し、tested subsetのNode runtime採否を判断する
+- 判断をinternal test policy、local scripts、CIへ反映する
 
 ## Implemented
 
@@ -25,7 +25,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- [0201: Node testを3 OS CIで検証する](docs/tasks/0201-experiment-node-test-ci-matrix.md)
+- [0201: Node-level testの実行基盤を決定する](docs/tasks/0201-decide-node-test-runtime.md)
 
 ## Non-goals
 

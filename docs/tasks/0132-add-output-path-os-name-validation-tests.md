@@ -67,7 +67,7 @@ Done
 
 ## 関連
 
-- [outputPath検証仕様](../specs/output-path-validation.md)
+- [outputPath検証仕様](../specs/internal/output-path-validation.md)
 - [0131: outputPathのOS禁止名検証を設計する](0131-design-output-path-os-name-validation.md)
 
 ## 確認方法

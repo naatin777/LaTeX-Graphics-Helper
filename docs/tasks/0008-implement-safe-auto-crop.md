@@ -52,7 +52,7 @@ Done
 
 ## 関連
 
-- `docs/specs/product.md`
+- `docs/specs/product/product.md`
 - `docs/adr/0005-limit-codex-change-scope.md`
 - `docs/adr/0006-use-workspace-staging-for-file-operations.md`
 

@@ -42,7 +42,7 @@ GitHub Actions、pnpm lockfile、staging package、native Sharp、VSIX target ma
 - `docs/tasks/0193-harden-webview-boundaries-and-performance.md`
 - `docs/tasks/0194-harden-ci-release-and-vsix.md`
 - `docs/tasks/README.md`
-- `docs/specs/packaging.md`
+- `docs/specs/internal/packaging.md`
 - `docs/adr/0015-reproducible-vsix-packaging.md`
 
 ### Evidence matrix
@@ -112,7 +112,7 @@ tagからVSIXまでの検証・依存・target・native moduleの経路を、loc
 
 ## 関連
 
-- [VSIX packaging仕様](../specs/packaging.md)
+- [VSIX packaging仕様](../specs/internal/packaging.md)
 - [再現可能なVSIX packaging ADR](../adr/0015-reproducible-vsix-packaging.md)
 
 ## 確認方法

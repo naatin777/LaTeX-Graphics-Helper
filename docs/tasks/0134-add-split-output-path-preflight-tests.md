@@ -41,5 +41,5 @@ Todo
 
 ## 関連
 
-- [outputPath検証仕様](../specs/output-path-validation.md)
+- [outputPath検証仕様](../specs/internal/output-path-validation.md)
 - [0133: outputPathのOS禁止名検証を実装する](0133-implement-output-path-os-name-validation.md)

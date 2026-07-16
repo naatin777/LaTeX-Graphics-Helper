@@ -37,7 +37,7 @@ Done
 ## 関連
 
 - `docs/adr/0006-use-workspace-staging-for-file-operations.md`
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/file-operation-security.md`
 - `docs/tasks/0012-add-workspace-boundary-tests.md`
 - `docs/tasks/0008-implement-safe-auto-crop.md`
 

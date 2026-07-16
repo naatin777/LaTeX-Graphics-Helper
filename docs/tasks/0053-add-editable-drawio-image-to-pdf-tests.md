@@ -37,7 +37,7 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0048-track-unimplemented-work.md`
 
 ## 確認方法

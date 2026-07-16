@@ -40,14 +40,14 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 - `AGENTS.md`
 - `test/convert_to_*_command.test.ts`
 - `test/convert_to_pdf_command.test.ts`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0190-reduce-conversion-command-review-surface.md`
 - `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/README.md`
 
 ### Related
 
-- [出力形式変換仕様](../specs/output-format-conversion.md)
+- [出力形式変換仕様](../specs/internal/output-format-conversion.md)
 
 ### Evidence matrix
 

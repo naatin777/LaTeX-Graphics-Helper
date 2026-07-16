@@ -10,14 +10,14 @@ Done
 
 ## 完了条件
 
-- `docs/specs/output-format-conversion.md` にoutputPathテンプレート変数の入力基準を記録する
+- `docs/specs/internal/output-format-conversion.md` にoutputPathテンプレート変数の入力基準を記録する
 - editable Draw.io画像の論理入力パスをテストで固定する
 - 関数名を仕様に合わせて分かりやすくする
 - タスク一覧にこのタスクを追加する
 
 ## 変更可能なファイル
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0069-define-output-path-template-source-semantics.md`
 - `docs/tasks/README.md`
 - `src/commands/convert_png_to_pdf.ts`
@@ -33,7 +33,7 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0054-implement-editable-drawio-image-to-pdf.md`
 - `docs/tasks/0065-implement-convert-to-png.md`
 

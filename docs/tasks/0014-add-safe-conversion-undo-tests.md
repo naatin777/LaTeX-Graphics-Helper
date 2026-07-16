@@ -34,7 +34,7 @@ Done
 ## 関連
 
 - `docs/adr/0007-use-dedicated-command-to-undo-last-conversion.md`
-- `docs/specs/undo-last-conversion.md`
+- `docs/specs/internal/undo-last-conversion.md`
 
 ## 確認方法
 

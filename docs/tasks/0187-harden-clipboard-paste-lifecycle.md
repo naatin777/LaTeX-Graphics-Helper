@@ -34,8 +34,8 @@ Clipboard data、CancellationToken、staging、conversion、commit、Undo、LaTe
 - `src/operations/convert_png_to_pdf.ts`
 - `test/latex_paste_edit_provider.test.ts`
 - `test/undo_last_conversion.test.ts`
-- `docs/specs/conversion-progress-and-cancellation.md`
-- `docs/specs/undo-last-conversion.md`
+- `docs/specs/internal/conversion-progress-and-cancellation.md`
+- `docs/specs/internal/undo-last-conversion.md`
 - `docs/tasks/0187-harden-clipboard-paste-lifecycle.md`
 - `docs/tasks/README.md`
 

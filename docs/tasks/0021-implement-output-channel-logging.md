@@ -30,7 +30,7 @@ Done
 
 ## 関連
 
-- `docs/specs/file-operation-security.md`
+- `docs/specs/internal/file-operation-security.md`
 
 ## 確認方法
 

@@ -54,7 +54,7 @@ Done
 
 - [ADR-0013: VS Code ElectronをWebview visual testに使う](../adr/0013-use-vscode-electron-for-webview-visual-tests.md)
 - [0152: VS Code Electron E2EでWebview visual testを設計する](0152-design-vscode-electron-e2e.md)
-- [テスト方針](../test-policy.md)
+- [テスト方針](../specs/internal/test-policy.md)
 
 ## 確認方法
 

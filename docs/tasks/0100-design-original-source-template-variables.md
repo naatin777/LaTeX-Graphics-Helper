@@ -17,7 +17,7 @@ editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`
 
 ## 変更可能なファイル
 
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0100-design-original-source-template-variables.md`
 - 必要なら `docs/tasks/README.md`
 
@@ -30,7 +30,7 @@ editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`
 ## 関連
 
 - [0069: outputPathテンプレート変数の入力基準を整理する](0069-define-output-path-template-source-semantics.md)
-- [output-format-conversion.md](../specs/output-format-conversion.md)
+- [output-format-conversion.md](../specs/internal/output-format-conversion.md)
 
 ## 確認方法
 

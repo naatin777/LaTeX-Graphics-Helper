@@ -41,7 +41,7 @@ Done
 ## 関連
 
 - `docs/tasks/0053-add-editable-drawio-image-to-pdf-tests.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 
 ## 確認方法
 

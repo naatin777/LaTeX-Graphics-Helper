@@ -26,7 +26,7 @@ Done
 - `package.nls.ja.json`
 - `docs/tasks/0052-implement-convert-to-pdf-mermaid.md`
 - `docs/tasks/README.md`
-- 必要なら `docs/specs/output-format-conversion.md`
+- 必要なら `docs/specs/internal/output-format-conversion.md`
 
 ## 対象外
 
@@ -40,7 +40,7 @@ Done
 
 - `docs/tasks/0051-add-convert-to-pdf-mermaid-tests.md`
 - `docs/tasks/0050-implement-convert-to-svg-mermaid.md`
-- `docs/specs/output-format-conversion.md`
+- `docs/specs/internal/output-format-conversion.md`
 - `docs/research/2026-06-28-mermaid-cli.md`
 
 ## 確認方法

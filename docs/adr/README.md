@@ -30,16 +30,16 @@ ADRには、判断を理解するために必要な次の情報を残す。
 
 ## ADRに記録しないもの
 
-| 情報                                 | 正本                            |
-| ------------------------------------ | ------------------------------- |
-| 利用者から見た機能仕様               | `docs/specs/`                   |
-| 現在行う変更、変更可能file、完了条件 | `docs/tasks/`                   |
-| 外部仕様やdependencyの調査結果       | `docs/research/`                |
-| AIが常に守る短いproject rule         | `AGENTS.md`                     |
-| 反復する操作手順                     | skillまたは専用guide            |
-| test fixture、runner、確認観点の詳細 | `docs/test-policy.md`またはtask |
-| 一時的なbranch、PR、導入順、roadmap  | taskまたはproject rule          |
-| 個人のmodel、承認頻度、認証情報      | 個人設定                        |
+| 情報                                 | 正本                                           |
+| ------------------------------------ | ---------------------------------------------- |
+| 利用者から見た機能仕様               | `docs/specs/`                                  |
+| 現在行う変更、変更可能file、完了条件 | `docs/tasks/`                                  |
+| 外部仕様やdependencyの調査結果       | `docs/research/`                               |
+| AIが常に守る短いproject rule         | `AGENTS.md`                                    |
+| 反復する操作手順                     | skillまたは専用guide                           |
+| test fixture、runner、確認観点の詳細 | `docs/specs/internal/test-policy.md`またはtask |
+| 一時的なbranch、PR、導入順、roadmap  | taskまたはproject rule                         |
+| 個人のmodel、承認頻度、認証情報      | 個人設定                                       |
 
 実装手順、command一覧、チェックリスト、設定項目一覧を、設計判断の代わりにADRへ置かない。これらが判断理由の理解に必要な場合は要点だけを書き、詳細の正本へlinkする。
 

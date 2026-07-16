@@ -47,8 +47,8 @@ Done
 
 ## 関連
 
-- `docs/specs/output-format-conversion.md`
-- `docs/test-policy.md`
+- `docs/specs/internal/output-format-conversion.md`
+- `docs/specs/internal/test-policy.md`
 
 ## 確認方法
 

@@ -28,8 +28,8 @@ Done
 - `package.json`
 - `package.nls.json`
 - `package.nls.ja.json`
-- `docs/specs/auto-crop.md`
-- `docs/specs/undo-last-conversion.md`
+- `docs/specs/internal/auto-crop.md`
+- `docs/specs/internal/undo-last-conversion.md`
 - `docs/test-matrix.md`
 - `docs/tasks/README.md`
 - `docs/tasks/0015-implement-safe-conversion-undo.md`
@@ -44,7 +44,7 @@ Done
 ## 関連
 
 - `docs/adr/0007-use-dedicated-command-to-undo-last-conversion.md`
-- `docs/specs/undo-last-conversion.md`
+- `docs/specs/internal/undo-last-conversion.md`
 - `docs/tasks/0014-add-safe-conversion-undo-tests.md`
 
 ## 確認方法
