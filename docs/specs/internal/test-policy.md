@@ -6,14 +6,24 @@ test runtimeはdirectory名やrunner統一ではなく、検証するcontractと
 
 ## Node runtime
 
-候補:
+次のtested subsetはNode runtimeを正式なownerとする。
+
+- `test/source_format.test.ts`
+- `test/crop_pdf_protocol.test.ts`
+- `test/resolve_output_path.test.ts`
+- `test/file_content_hash.test.ts`
+- `test/safe_mode.test.ts`
+
+Node 22 + Mochaで、既存のtest source、case、assertionをそのまま実行する。
+
+このsubsetでNodeがoracleを提供できるcontractは次のとおり。
 
 - pure logic
 - Node filesystem
 - injected platform behavior
 - process abstraction
 
-正式採用範囲はtask 0201で決定する。
+Node対象はこの5 filesから拡大しない。別のtestが次のVS Code oracleを必要とする場合はExtension Hostで実行する。
 
 ## VS Code Extension Host
 
@@ -25,6 +35,8 @@ test runtimeはdirectory名やrunner統一ではなく、検証するcontractと
 - globalState
 - provider API
 - notification / progress
+
+上記5 filesはNodeへ移管済みのため、Extension Hostでは実行しない。その他のHost testは引き続きExtension Hostで実行する。
 
 ## Browser
 
@@ -47,13 +59,16 @@ test runtimeはdirectory名やrunner統一ではなく、検証するcontractと
 - critical user journey
 - installed VSIX behavior
 
-## Pending decision
+BrowserとVS Code Electronの既存の境界は変更しない。
 
-- tested Node subsetの正式採用
-- Node CI jobの維持
-- Hostとの重複期間
-- required status
-- Mocha / Vitest
+## Decision
+
+- tested subsetではNode 22 + Mochaを正式採用する。
+- Node CIはLinux、macOS、Windowsの3 OSで恒久的に維持する。
+- Hostとの重複実行は終了し、選定5 filesをHostから除外する。
+- required statusは今回設定しない。
+- Mochaを維持し、Vitest comparisonは今回行わない。
+- Node subset expansionは今回行わない。
 
 このプロジェクトでは、テストを「仕様を守るための安全網」として扱う。
 

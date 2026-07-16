@@ -26,8 +26,8 @@ jobs:
               env:
                   EVENT_BEFORE: ${{ github.event.before }}
 
-    node-test-experiment:
-        name: node-test-experiment (${{ matrix.label }})
+    node-test:
+        name: node-test (${{ matrix.label }})
         needs: changes
         if: needs.changes.outputs.docs_only != 'true'
         runs-on: ${{ matrix.os }}
@@ -57,7 +57,7 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - run: pnpm run test:node:experiment
+            - run: pnpm run test:node
               shell: bash
 
     vscode-test:
