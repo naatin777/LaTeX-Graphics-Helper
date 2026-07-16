@@ -1,0 +1,90 @@
+# v1 spec / test trace
+
+- 状態: 監査用draft
+- 目的: spec、実装境界、test oracle、platform Evidenceの接続状態を確認する
+- 判定:
+  - `covered`: contractと直接対応するtestが観測できる
+  - `partial`: 一部条件または一部runtimeだけを確認する
+  - `missing-spec`: 実装・testはあるが正式specがない
+  - `missing-test`: specはあるが対応testを確認できない
+  - `contradictory`: 現行実装 / READMEとspec記述が一致しない
+  - `unknown`: repository全体のfile inventory不足により未判定
+
+## 1. Cross-cutting contract trace
+
+| Trace ID | Contract | Canonical / candidate record | Implementation boundary | Test Evidence | Runtime / oracle | Status | Gap |
+|---|---|---|---|---|---|---|---|
+| TR-SAFE-001 | workspace外のuser fileを読み書きしない | `file-operation-security.md` | `security/workspace_path`, staged operations | `cleanup_conversion_artifacts.test.ts`, `commit_conversion_outputs.test.ts`, `undo_last_conversion.test.ts`, `save_clipboard_image.test.ts` | Node filesystem + realpath / symlink oracle | `covered` | commandごとの適用一覧がない |
+| TR-SAFE-002 | tool scratch例外をworkspace境界へ拡張しない | `external-tool-ascii-scratch.md`, `file-operation-security.md` | ASCII scratch helper、Ghostscript / pdftocairo / rsvg route | `run_external_tool.test.ts`はrunner/logのみ。scratch専用test fileは今回未取得 | Node / platform simulation | `partial` | scratch base、ASCII、symlink、成功時cleanupのtest traceを列挙する必要がある |
+| TR-SAFE-003 | 競合判断をbatchへ1回適用する | `safe-mode.md` | `commitConversionOutputs` | `commit_conversion_outputs.test.ts` | Node filesystem + injected decision | `covered` | VS Code dialogの表示自体は対象外 |
+| TR-SAFE-004 | overwrite前backupとpartial rollback | `safe-mode.md`, `file-operation-security.md` | `commitConversionOutputs` | `commit_conversion_outputs.test.ts`, `save_clipboard_image.test.ts` | Node filesystem + failure injection | `covered` | rollback failure後のmanual recovery手順は未文書化 |
+| TR-SAFE-005 | current operation rootだけcleanupする | `file-operation-security.md`, `safe-mode.md` | `cleanupConversionArtifacts`, staged batch | `cleanup_conversion_artifacts.test.ts`, `run_staged_conversion_batch.test.ts` | Node filesystem / symlink oracle | `covered` | crash残骸は意図的に自動削除しないが利用者向けguideがない |
+| TR-SAFE-006 | cancel後に新しいfinal outputをcommitしない | `conversion-progress-and-cancellation.md` | `runOutputConversion`, operation AbortSignal, commit | commit cancel test、merge cancel test、paste cancel test、drop provider cancel test | Node + VS Code Extension Host | `partial` | 対象command一覧が古く、全output format commandへのtraceがない |
+| TR-SAFE-007 | 生成後に変更されたoutputをUndoしない | `undo-last-conversion.md`, `safe-mode.md` | `createConversionUndoRecord`, `undoConversionOutputs` | `undo_last_conversion.test.ts` | Node filesystem + streaming hash | `covered` | spec対象一覧がgeneric conversion commandを列挙しない |
+| TR-DIAG-001 | 外部tool argsを配列で実行し、必要情報をOutput Channelへ残す | `external-tool-ascii-scratch.md`, README | `runExternalTool` | `run_external_tool.test.ts` | Node child process + log oracle | `covered` | 各tool固有のredaction / error mapping traceがない |
+
+## 2. PDF capability trace
+
+| Trace ID | Capability contract | Spec | Operation Evidence | Host Evidence | Browser / Electron Evidence | Status | Gap |
+|---|---|---|---|---|---|---|---|
+| TR-PDF-001 | Quick crop: margin選択を全ページへ適用 | configure spec内の役割分担、README | 共通transaction Evidence。専用operation testは今回未取得 | 専用command testは未取得 | 対象外 | `unknown` | dedicated specとtest inventoryが必要 |
+| TR-PDF-002 | Configure crop: 単一PDF、共通bbox、all / selected page | `crop-pdf-configure.md` | `crop_pdf_protocol.test.ts`, `crop_pdf_configure_operation.test.ts` | command / Webview host接続はElectron journeyで間接確認 | Browser: PDF.js / input / lazy render。Electron: real VS Code Apply / theme / output | `covered` | BrowserとElectronで重複するcase、visual正本、CSP / offline oracleを分離する |
+| TR-PDF-003 | Split: 全ページを単一ページPDFへ出力 | README、Safe Mode / Undo / cancel spec | 専用operation testは今回未取得 | 専用command testは今回未取得 | 対象外 | `unknown` | dedicated behavior specとtest traceが必要 |
+| TR-PDF-004 | Merge: 選択順を維持して1 PDFへ結合 | README。専用specは確認できない | `merge_pdf_operation.test.ts` | `merge_pdf_command.test.ts` | command test内でrasterized page comparison | `missing-spec` | 入力件数、順序、save dialog、output naming、failure guaranteeを正式spec化するか判断する |
+
+## 3. Conversion trace
+
+| Trace ID | Contract | Formal spec | Operation / pure Evidence | Host Evidence | Packaging / platform Evidence | Status | Gap |
+|---|---|---|---|---|---|---|---|
+| TR-CONV-001 | supported inputを入力ごとのPDFへ変換する | README、scratch / safety spec。conversion matrixの正式specなし | `convert_png_to_pdf.test.ts`, `convert_to_pdf_drawio_path.test.ts` | `convert_to_pdf_command.test.ts` | package smokeはPNG→JPEG中心 | `missing-spec` | input別page / size、backend選択、mixed batch、failure atomicityを1つのcontractへまとめる必要がある |
+| TR-CONV-002 | PDF / image / diagramをPNGへ変換する | README、scratch spec | shared staged batch / transaction test | command wiringを確認。専用command test inventoryは未完了 | release smokeでは直接確認しない | `partial` | source別output correctnessとplatform tool Evidenceを列挙する |
+| TR-CONV-003 | supported inputをJPEGへ変換する | README、scratch / packaging spec | shared staged batch / transaction test | 専用command test inventoryは未完了 | packaged VSIXでPNG→JPEGとSharp load | `partial` | PDF / SVG / Mermaid / Draw.io routeのEvidenceが未整理 |
+| TR-CONV-004 | supported inputをWebPへ変換する | README、scratch spec | `output_conversion_messages.test.ts`はmessageだけ。operation test inventory未完了 | command wiringを確認 | native codec platform Evidence未整理 | `partial` | effort設定とoutput quality oracleが未整理 |
+| TR-CONV-005 | supported inputをAVIFへ変換する | README、scratch spec | `convert_to_pdf_command.test.ts`はAVIF入力を確認。AVIF出力testは未整理 | command wiringを確認 | native codec platform Evidence未整理 | `partial` | effort設定、encode/decode platform差、output correctness oracleが必要 |
+| TR-CONV-006 | PDF / Mermaid / Draw.ioをSVGへ変換する | README、scratch spec | shared transaction test | command / manifest registration | platform tool Evidence未整理 | `partial` | PDF page SVG、Mermaid、Draw.io各routeのtest traceが必要 |
+| TR-CONV-007 | output format commandはprogress / cancel / Undoを共通適用する | `conversion-progress-and-cancellation.md`, `undo-last-conversion.md` | `run_output_conversion.ts`, message pure test | output format commandsがshared runnerを使用 | ElectronはCrop中心 | `contradictory` | 実装はgeneric command群へ広がっているがspecの対象一覧が古い |
+
+## 4. LaTeX insertion trace
+
+| Trace ID | Contract | Spec | Pure / operation Evidence | Host Evidence | Status | Gap |
+|---|---|---|---|---|---|---|
+| TR-LATEX-001 | PDF URI-listをall-or-nothingでparseしrelative path snippetを生成 | `latex-insertion.md` | `latex_snippet.test.ts`（今回内容未再取得） | `latex_drop_edit_provider.test.ts` | `covered` | URI parsing / snippet pure logicとVS Code provider integrationの境界整理候補 |
+| TR-LATEX-002 | Clipboard imageをimageまたはPDFとして保存しsnippetを返す | `latex-insertion.md`, cancellation / safety spec | `save_clipboard_image.test.ts` | `latex_paste_edit_provider.test.ts` | `covered` | provider testにUI choice、file commit、Undo、snippetが集中する |
+| TR-LATEX-003 | provider cancel時にsnippetと新規final outputを返さない | `latex-insertion.md`, `conversion-progress-and-cancellation.md` | save / commit cancel paths | Drop / Paste provider tests | `covered` | cancellation phaseごとの一覧をspecへ集約する余地がある |
+
+## 5. Presentation and manifest trace
+
+| Trace ID | Contract | Record | Test | Runtime | Status | Gap |
+|---|---|---|---|---|---|---|
+| TR-PRES-001 | public command ID、manifest、menu、extension registrationが一致する | `package.json`, `extension.ts` | `package_manifest.test.ts`, `extension.test.ts` | 現在はExtension Host | `covered` | manifest static testは`extension.ts` importのためHost依存。定数所有を変えればNode化可能 |
+| TR-PRES-002 | Webview HTMLに必要CSP / nonce / localeを含める | crop spec、security hardening task | `webview_html.test.ts` | 現在はExtension Host fake Webview | `covered` | pure HTML builderにできるかはimplementation decisionであり本監査では未決 |
+| TR-PRES-003 | Browser rendererでPDF.js canvas、DPI、lazy render、zoomを成立させる | `docs/test-policy.md`, crop spec | `webview-pdf-rendering.spec.ts` | Browser Playwright | `covered` | Host simulationを含むためrenderer-only contractへの分割候補 |
+| TR-PRES-004 | 実VS Code theme、message bridge、Apply outputを成立させる | `docs/test-policy.md`, crop spec | Electron crop spec | VS Code Electron | `covered` | visual、journey、packaging smokeが同じspecに混在 |
+
+## 6. Packaging and release trace
+
+| Trace ID | Contract | Spec / workflow | Test Evidence | Status | Gap |
+|---|---|---|---|---|---|
+| TR-REL-001 | lockfileからproduction dependencyをdeployする | `packaging.md`, `package-vsix.mjs` | packaged VSIX install / execution | `covered` | package scriptのisolated testは今回未整理 |
+| TR-REL-002 | current runnerと一致するtargetだけpackageする | `packaging.md`, release matrix | Linux/macOS/Windows runnerで各target作成 | `covered` at release | PR段階で3 OS packaged smokeはrequiredではない |
+| TR-REL-003 | installed VSIXでCrop ConfigureとSharpを確認する | `packaging.md`, release workflow | Electron packaged mode | `covered` | package内部module直接importをuser journeyから分離する必要がある |
+
+## 7. Immediate document corrections indicated by the trace
+
+採用判断を変えずに、事実同期として修正候補になるもの:
+
+1. `safe-mode.md`の「初期対象」を現行状態として扱わない。履歴なら「初期対象」と明示したまま、現行対象へのlinkを追加する。
+2. `undo-last-conversion.md`の対象command一覧を現行generic conversion commandと同期するか、共通staged output operationを対象とする表現へ変更する。
+3. `conversion-progress-and-cancellation.md`の「対応済み」を実装から再生成せず、現行public commandとの手動traceを追加する。
+4. Merge / Split / Conversion matrixの正式specが必要かをmaintainerが決める。
+5. Browser / Electron testの正本関係は`docs/test-policy.md`だけでなく、case単位のtransition tableを持つ。
+
+## 8. Remaining unknowns
+
+- repository内の全test fileをtreeから列挙した完全inventory
+- Quick cropとSplitの専用test coverage
+- PNG/JPEG/WebP/AVIF/SVG各output commandのsource別test coverage
+- ASCII scratch専用test fileの全一覧
+- branch protection上で実際にrequiredに設定されているcheck名
+
+unknownをmissingと断定せず、次のinventoryまたはGitHub branch protection確認で解消する。
