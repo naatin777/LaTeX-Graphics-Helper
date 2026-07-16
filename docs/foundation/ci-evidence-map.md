@@ -7,27 +7,27 @@
 
 ## 1. Workflow map
 
-| Workflow            | Trigger              | Docs-only behavior                           | Platform                | Main command / Evidence                        | Failure artifact                 | Evidence class                                                                   |
-| ------------------- | -------------------- | -------------------------------------------- | ----------------------- | ---------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------- |
-| Check               | PR、main push        | skipしない                                   | Linux                   | `pnpm run check:all`                           | なし                             | lint、format、TypeScript、NLS静的整合                                            |
-| Test                | PR、main push        | runtime jobsをskip                           | Linux / macOS / Windows | `pnpm run test` = VS Code Extension Host tests | `test-results/`                  | activation、command、workspace、operation、filesystem、external tool integration |
-| Test: Electron step | Test workflow内      | docs-only時はjob自体skip                     | Linuxのみ               | `test:playwright:electron`                     | `test-results/`                  | development extensionのreal VS Code journey                                      |
-| Playwright          | PR、main push        | browser matrixをskipし、gateがskip結果を検証 | Linux / macOS / Windows | `test:playwright`                              | Playwright report / test results | Browser renderer / PDF.js / canvas                                               |
-| Release verify      | tag                  | 対象外                                       | Linux                   | `check:all`, build                             | なし                             | release source static verification                                               |
-| Release package     | tag                  | 対象外                                       | Linux / macOS / Windows | target VSIX package + packaged Electron smoke  | `test-results/`, VSIX            | installed artifact、Sharp native load、offline / external tool boundary          |
-| Release publish     | tag、package全成功後 | 対象外                                       | Linux                   | GitHub Release、Marketplace、Open VSX          | registry response                | distribution action                                                              |
+| Workflow            | Trigger              | Docs-only behavior                           | Platform                | Main command / Evidence                        | Failure artifact                 | Evidence class                                                                            |
+| ------------------- | -------------------- | -------------------------------------------- | ----------------------- | ---------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------- |
+| Check               | PR、main push        | skipしない                                   | Linux                   | `pnpm run check:all`                           | なし                             | lint、format、TypeScript、NLS静的整合                                                     |
+| Test                | PR、main push        | runtime jobsをskip                           | Linux / macOS / Windows | `pnpm run test` = VS Code Extension Host tests | `test-results/`                  | activation、command、workspace、operation、filesystem、external tool integration          |
+| Test: Electron step | Test workflow内      | docs-only時はjob自体skip                     | Linuxのみ               | `test:playwright:electron`                     | `test-results/`                  | development extensionのreal VS Code journey                                               |
+| Playwright          | PR、main push        | browser matrixをskipし、gateがskip結果を検証 | Linux / macOS / Windows | `test:playwright`                              | Playwright report / test results | Browser renderer / PDF.js / canvas                                                        |
+| Release verify      | tag                  | 対象外                                       | Linux                   | `check:all`, build                             | なし                             | release source static verification                                                        |
+| Release package     | tag                  | 対象外                                       | Linux / macOS / Windows | target VSIX package + packaged Electron smoke  | `test-results/`, VSIX            | installed artifact、Sharp native load、controlled external-fetch / external tool boundary |
+| Release publish     | tag、package全成功後 | 対象外                                       | Linux                   | GitHub Release、Marketplace、Open VSX          | registry response                | distribution action                                                                       |
 
 ## 2. Local command semantics
 
-| Command                             | Includes                                                | Excludes                                        | Recommended interpretation before rename                   |
-| ----------------------------------- | ------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
-| `pnpm run check:all`                | lint、format、extension / test / Webview typecheck、NLS | runtime tests、package、Markdown docs           | static verification                                        |
-| `pnpm run test`                     | `test:vscode`                                           | Browser、Electron、package                      | Extension Host suite                                       |
-| `pnpm run test:vscode`              | build:test + fixed VS Code test-cli                     | Browser、Electron                               | Host / operation integration                               |
-| `pnpm run test:playwright`          | build + Browser project                                 | Electron                                        | renderer suite                                             |
-| `pnpm run test:playwright:electron` | build + Electron project                                | Browser                                         | real VS Code journey。`LGH_VSIX_PATH`設定時はpackaged mode |
-| `pnpm run test:all`                 | VS Code 207 cases + Browser 18 cases = 225 cases        | Electron 1 case、packaged smoke、Vitest 0 cases | historical aggregate。全required Evidenceを意味しない      |
-| `pnpm run package:vsix`             | target package                                          | installed execution                             | artifact creation only                                     |
+| Command                             | Includes                                                            | Excludes                                        | Recommended interpretation before rename                   |
+| ----------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `pnpm run check:all`                | lint、format、extension / test / Webview typecheck、NLS             | runtime tests、package、Markdown docs           | static verification                                        |
+| `pnpm run test`                     | `test:vscode`                                                       | Browser、Electron、package                      | Extension Host suite                                       |
+| `pnpm run test:vscode`              | build:test + fixed VS Code test-cli                                 | Browser、Electron                               | Host / operation integration                               |
+| `pnpm run test:playwright`          | build + Browser project                                             | Electron                                        | renderer suite                                             |
+| `pnpm run test:playwright:electron` | build + Electron project                                            | Browser                                         | real VS Code journey。`LGH_VSIX_PATH`設定時はpackaged mode |
+| `pnpm run test:all`                 | configured VS Code 207 + Browser 18 = 225 statically declared cases | Electron 1 case、packaged smoke、Vitest 0 cases | historical aggregate。全required Evidenceを意味しない      |
+| `pnpm run package:vsix`             | target package                                                      | installed execution                             | artifact creation only                                     |
 
 ## 3. PR Evidence currently available
 
@@ -95,7 +95,7 @@ release package jobは各native runnerで次を実行する。
 - production dependency deployment
 - native Sharp binary
 - installed extension discovery
-- network block下のpackaged Webview
+- controlled external-fetch failureを確認するpackaged Webview
 
 ## 5. Gaps and misleading names
 
@@ -143,7 +143,7 @@ release package jobは各native runnerで次を実行する。
 - 3 OS package
 - 3 OS installed VSIX smoke
 - native dependency
-- offline Webview
+- complete offline behaviorの未証明
 - external tool missing behavior
 
 ### Tag publish gate

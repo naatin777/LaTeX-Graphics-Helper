@@ -11,15 +11,15 @@ Done
 ## Confirmed Evidence
 
 - Git管理下のtest implementationは47 files: root Mocha/Extension Host 45、Browser Playwright 1、Electron Playwright 1。
-- 宣言されたcaseは226: Host 207、Browser 18、Electron 1。Vitestのcurrent caseは0。
+- statically declared caseは226: configured Host 207、Browser 18、Electron 1。Vitest configured scopeは0。
 - `.vscode-test.mjs`の`out/test/**/*.test.js`により、rootのNode-level contractも現在はExtension Hostで実行される。
 - source dependency graphとhelperを追うと、Node-level候補23 files、transitive/current VS Code dependencyを持つ22 filesとなる。後者には`split_pdf_all_pages`のvisual helper、`merge_pdf_operation`/`undo_last_conversion`のcommand-layer import、`latex_snippet`の`SnippetString`、`output_conversion_messages`のlocale環境が含まれる。
 - Browser specは18の異なるrenderer/browser/message-simulation oracleを持つ。PDF.js、canvas pixels、DPI、lazy render、scroll、zoomはBrowser固有の価値があるが、fake `acquireVsCodeApi`によるmessage caseはactual Host bridgeではない。
-- Electron specは1 caseだが、critical journey、actual Webview、theme/computed style、visual snapshot、final PDF、packaged offline、internal module import、Sharp native、missing external CLI、test harness diagnosticsを混在させる。
-- `test:all`はHost + Browserの225 caseだけで、Electron、packaged VSIX、Vitestを含まない。
+- Electron specは1 caseだが、critical journey、actual Webview、theme/computed style、visual snapshot、final PDF、packaged controlled external-fetch failure、internal module import、Sharp native、missing external CLI、test harness diagnosticsを混在させる。
+- `test:all`のconfigured scopeはHost + Browserの225 statically declared caseで、Electron、packaged VSIX、Vitestを含まない。actual executed countはinventoryから断定しない。
 - `test.yml`は3 OS HostとLinux development Electron、`playwright.yml`は3 OS Browser、`release.yml`は3 OS packaged VSIX smokeを実行する。workflow trigger/job successとbranch protection required statusは別であり、後者はauthenticated GitHub accessがなくunknownとした。
 - `run_external_tool.test.ts`のcase名はsignalを掲げるが、実際のcallにAbortSignalはなく、cancellation Evidenceとは扱えない。
-- ASCII scratchのtest fileは存在する。既存foundationの「scratch専用test file未取得」は訂正対象である。
+- ASCII scratchのtest fileは存在する。既存foundationの「scratch専用test file未取得」という記録は誤りであり、存在を確認済みである。
 - 要求された`pnpm run format:check`は現行`package.json`に存在しない。既存の`format` scriptもMarkdown docsを対象にしないため、検証結果と別task候補へ記録する。
 
 詳細は以下を参照する。
@@ -76,15 +76,16 @@ Done
 
 No production code, test, fixture, screenshot, package script, config, workflow, dependency, Skill, or `AGENTS.md` was changed.
 
-## Verification plan
+## Verification result
 
-Required docs-only checks:
+整合修正後に実行した結果を記録する。`pnpm run format:check`は現行`package.json`に存在しないため、changed Markdownにはinstalled Oxfmtを明示実行する。
 
-```bash
-git status --short
-git diff --check
-pnpm run format:check  # current repositoryではscript missingが観測される
-pnpm run check:nls
-```
-
-Optional `pnpm run check:all` may be run to detect whether documentation changes interact with repository-wide static checks. Runtime tests are not required for this documentation-only task because production/test/config/CI are unchanged.
+| Command                       | Result      | Notes                                                                                                      |
+| ----------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------- |
+| `git status --short`          | pass        | 変更対象は10個のMarkdownだけだった                                                                         |
+| `git diff --check`            | pass        | whitespace/errorなし                                                                                       |
+| `pnpm run check:nls`          | pass        | NLS consistency OK (220 keys)                                                                              |
+| `pnpm run check:all`          | pass        | lint warningは既存コード由来。lint、format、typecheck、NLSを完了                                           |
+| `pnpm run format:check`       | unavailable | repositoryにscriptが存在しない                                                                             |
+| explicit Markdown Oxfmt check | pass        | changed Markdown 10 filesに`pnpm exec oxfmt --check`を実行                                                 |
+| docs-only workflow behavior   | confirmed   | detector実行結果は`docs_only=true`。`docs/*`変更はtest/playwright runtime jobをskipし、Check jobは実行する |

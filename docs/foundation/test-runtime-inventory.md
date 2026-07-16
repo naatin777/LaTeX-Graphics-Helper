@@ -3,20 +3,20 @@
 - 状態: 監査用draft
 - 対象: `origin/next/v1` at `75ca52a`のlocal Git tree、test、runner config、package script、workflow
 - 方法: `git ls-files`、test構文抽出、relative import graph、helper / fixture / snapshot列挙でrepository内を再確認した。
-- 訂正: 以前の「GitHub connectorではdirectory treeを直接列挙できず、inventory未完了」という注意書きは、この監査でlocal treeを正本に完全列挙したため無効である。
+- 訂正: 以前の「GitHub connectorではdirectory treeを直接列挙できない」という注意書きは、この監査でlocal treeを正本に完全列挙したため無効である。
 
 ## 0. Complete inventory counts
 
 詳細なfile単位表とcase indexは[test-file-inventory](test-file-inventory.md)にある。
 
-| Scope                 |  Files |   Cases | Current execution              |
-| --------------------- | -----: | ------: | ------------------------------ |
-| Root `test/*.test.ts` |     45 |     207 | VS Code Extension Host / Mocha |
-| Browser Playwright    |      1 |      18 | Chromium                       |
-| Electron Playwright   |      1 |       1 | VS Code Electron               |
-| **Total**             | **47** | **226** | Vitest current cases: 0        |
+| Scope                 |  Files |   Cases | Current execution                               |
+| --------------------- | -----: | ------: | ----------------------------------------------- |
+| Root `test/*.test.ts` |     45 |     207 | configured VS Code Extension Host / Mocha       |
+| Browser Playwright    |      1 |      18 | configured Chromium                             |
+| Electron Playwright   |      1 |       1 | configured VS Code Electron                     |
+| **Total**             | **47** | **226** | statically declared; Vitest configured scope: 0 |
 
-`test:all`はroot Host 207 + Browser 18 = 225 casesであり、Electron、packaged VSIX、Vitestを含まない。
+`test:all`はconfigured Host 207 + Browser 18 = 225 statically declared casesであり、Electron、packaged VSIX、Vitestを含まない。actual executed countはこのinventoryから断定しない。
 
 ## 1. Runtime definitions
 
@@ -26,7 +26,7 @@
 | RT-VSCODE   | VS Code Extension Host / Mocha | `vscode` command registry、workspace、configuration、TextDocument、DataTransfer、globalState、notification / progress | production moduleが偶然`vscode`をtop-level importすること |
 | RT-BROWSER  | Browser Playwright             | Chromium canvas、PDF.js worker、layout、DPI、IntersectionObserver、scroll                                             | Webviewという名前が付いていること                         |
 | RT-ELECTRON | Real VS Code Electron          | VS Code window、actual Webview frame、theme CSS variables、Host message bridge、critical user journey                 | pure operationやpackage内部moduleの全組合せ               |
-| RT-PACKAGE  | Installed VSIX smoke           | packaged artifact、native dependency、offline installation / execution                                                | development extension pathの動作                          |
+| RT-PACKAGE  | Installed VSIX smoke           | packaged artifact、native dependency、controlled external-fetch failure / installation / execution                    | development extension pathの動作                          |
 | RT-PLATFORM | Native OS matrix               | path、shell、external process、native module、file lock等のOS差                                                       | 1 OSのsimulationだけ                                      |
 
 ## 2. Runner and script inventory
@@ -42,11 +42,11 @@
 | Test workflow              | VS Code test 3 OS + Electron Linux                          | PR / main push、docs-only skip                           | runtime Evidenceを提供する。初稿監査では見落としていた  |
 | Playwright workflow        | Browser Playwright 3 OS + gate                              | PR / main push、docs-only skip                           | renderer Evidenceを提供する                             |
 | Release workflow           | static verify + VSIX package / packaged Electron smoke 3 OS | tag                                                      | distribution Evidenceを提供する                         |
-| Vitest config              | `webview/vitest.config.ts`                                  | formal root scriptなし                                   | 未完了導入か残存toolか未決                              |
+| Vitest config              | `webview/vitest.config.ts`                                  | formal root scriptなし                                   | current test execution scopeなし。formal adoptionは未決 |
 
 ## 3. Tests whose contract is Node-level
 
-### 3.1 Strong Node candidates
+### 3.1 P0: strong Node candidates
 
 次は現在のtest/source/helper graphを確認した範囲で、直接・推移的に`vscode`を必要とせず、contract上もVS Code runtimeを必要としないNode-level候補である。移行を実施した結果ではない。
 
@@ -55,27 +55,39 @@
 | `test/source_format.test.ts`                | extension / compound extension判定                     | RT-VSCODE      | RT-NODE                | pure synchronous logic                                     |
 | `test/crop_pdf_protocol.test.ts`            | Webview message payload validation                     | RT-VSCODE      | RT-NODE                | browser / Host双方が共有するprotocol contract              |
 | `test/file_content_hash.test.ts`            | streaming SHA-256 / content equality                   | RT-VSCODE      | RT-NODE                | Node filesystemだけを使用                                  |
-| `test/run_external_tool.test.ts`            | argument array、redaction、stdout                      | RT-VSCODE      | RT-NODE                | Node child processだけを使用                               |
 | `test/run_staged_conversion_batch.test.ts`  | stage / commit / operation-root cleanup                | RT-VSCODE      | RT-NODE                | filesystem transaction test                                |
 | `test/commit_conversion_outputs.test.ts`    | Keep Both、overwrite、rollback、cancel、race detection | RT-VSCODE      | RT-NODE                | safety-critical。runner移行時もfailure injectionを維持する |
 | `test/cleanup_conversion_artifacts.test.ts` | preserve backup、symlink、別session保護                | RT-VSCODE      | RT-NODE                | safety-critical filesystem test                            |
-| `test/convert_png_to_pdf.test.ts`           | real PNG→PDF operation                                 | RT-VSCODE      | RT-NODE                | VS Code UIを対象外と明記済み                               |
-| `test/convert_to_pdf_drawio_path.test.ts`   | Draw.io runner boundary、Unicode path、PDF result      | RT-VSCODE      | RT-NODE                | external CLIはfake、file / PDF oracleはreal                |
-| `test/save_clipboard_image.test.ts`         | Clipboard save operationのrollback artifact ownership  | RT-VSCODE      | RT-NODE                | clipboard UIではなくBuffer / filesystem contract           |
+| `test/resolve_output_path.test.ts`          | output template/path resolution                        | RT-VSCODE      | RT-NODE                | platform option is injected; no Host setting/helper        |
+| `test/workspace_path.test.ts`               | workspace logical/realpath boundary                    | RT-VSCODE      | RT-NODE                | real filesystem and symlink oracle                         |
+| `test/safe_mode.test.ts`                    | Safe Mode state and persistence adapter                | RT-VSCODE      | RT-NODE                | in-memory globalState fake; no VS Code graph               |
 
-### 3.2 Node contractだがtransitive / convenience dependencyがあるもの
+### 3.2 P1: Node experiment candidates
 
-| Test file                                   | Current dependency                                                           | Contractually needed runtime            | Migration prerequisite                                                                             |
-| ------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `test/undo_last_conversion.test.ts`         | command moduleの`rememberLastConversion`をimport                             | 主contractはRT-NODE                     | memory record ownerとVS Code notification commandを分離するか、operation部分だけ先に移す           |
-| `test/output_conversion_messages.test.ts`   | command message helper / locale helper                                       | RT-NODEで可能                           | locale helperがVS Code APIへ依存しないことを確認する                                               |
-| `test/crop_pdf_configure_operation.test.ts` | `vscode` importとworkspace setting helperが混在                              | crop operation oracleはRT-NODE          | output path setting testとoperation visual testを分ける                                            |
-| `test/package_manifest.test.ts`             | `PUBLIC_COMMAND_IDS`を`extension.ts`からimportし、transitively`vscode`へ依存 | manifest consistencyはRT-NODEで可能     | command ID constantsのownerをVS Code activation moduleから分離するか、manifestだけをstatic検証する |
-| `test/check_nls.test.ts`                    | extension APIからextensionPathを取得                                         | NLS script contractはRT-NODE            | repository rootを直接解決してscriptを実行する                                                      |
-| `test/webview_html.test.ts`                 | fake `vscode.Webview` / `Uri`                                                | HTML / CSP contractはNodeでも可能性あり | VS Code URI semanticsをどこまでcontractに含めるか決める                                            |
-| `test/merge_pdf_operation.test.ts`          | `rememberLastConversion`をcommand moduleからimport                           | RT-NODE候補                             | record ownerと通知commandの境界確認が前提。現状はtransitiveに`vscode`を持つ                        |
+These are Node-level operation candidates, but native dependency、external process、platform simulation、またはfixture/harness調整の比較が必要である。
 
-`split_pdf_all_pages.test.ts`もoperation自体はNode-level候補だが、現状はpdftocairo設定を読む`pdf_visual_assertions` helper経由でExtension Hostへ入る。`latex_snippet.test.ts`は`SnippetString`、`output_conversion_messages.test.ts`はlocale module、`package_manifest.test.ts`はactivation moduleを経由するため、import有無だけで移行可とは判定しない。
+| Test file                                                                                                                                                                                                       | Why P1                                                          | Required experiment                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `test/run_external_tool.test.ts`                                                                                                                                                                                | real child process and redaction boundary                       | add a separate AbortSignal case; compare teardown and diagnostics on 3 OS             |
+| `test/convert_png_to_pdf.test.ts`, `test/png_safe_mode.test.ts`                                                                                                                                                 | Sharp/native conversion and transaction safety                  | verify ABI, fixture path, timeout and failure injection on 3 OS                       |
+| `test/convert_to_pdf_drawio_path.test.ts`, `test/convert_to_png_operation.test.ts`, `test/convert_to_svg_operation.test.ts`, `test/convert_to_avif_operation.test.ts`, `test/convert_to_webp_operation.test.ts` | injected external runner plus real PDF/image oracle             | preserve fake-runner failure semantics; separate CLI probe from operation contract    |
+| `test/crop_pdf_auto.test.ts`                                                                                                                                                                                    | Ghostscript/process/cancellation and operation preflight        | compare tool injection, AbortSignal, platform setup, and command boundary             |
+| `test/convert_pdftocairo_ascii_scratch.test.ts`, `test/convert_rsvg_ascii_scratch.test.ts`, `test/crop_pdf_ghostscript_ascii_scratch.test.ts`                                                                   | Windows scratch/platform safety                                 | keep simulation and real-tool probe separate; verify scratch fallback/symlink/cleanup |
+| `test/save_clipboard_image.test.ts`                                                                                                                                                                             | filesystem artifact ownership with conversion failure injection | keep clipboard/provider UI out; compare native/PDF fixture behavior                   |
+
+### 3.3 P2: production boundary prerequisites
+
+These are not current Node migration candidates. They require a production or ownership boundary decision before any runner experiment.
+
+| Test file                                                                       | Boundary prerequisite                                                  | Why not P0/P1                                        |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| `test/merge_pdf_operation.test.ts`, `test/undo_last_conversion.test.ts`         | move conversion record owner away from command notification module     | command-layer import is transitive `vscode`          |
+| `test/output_conversion_messages.test.ts`                                       | inject locale/environment instead of module-scope VS Code state        | `vscode.env.language` is current dependency          |
+| `test/latex_snippet.test.ts`                                                    | decide whether `SnippetString` belongs to Host adapter or pure builder | source constructs `vscode.SnippetString`             |
+| `test/package_manifest.test.ts`                                                 | separate manifest/public ID constants from activation module           | static contract currently imports `extension.ts`     |
+| `test/check_nls.test.ts`                                                        | separate extensionPath discovery from repository NLS script            | current test uses Extension API to find path         |
+| `test/crop_pdf_configure_operation.test.ts`, `test/split_pdf_all_pages.test.ts` | inject configured renderer/path without Host helper                    | visual helper reads `vscode.workspace` configuration |
+| `test/webview_html.test.ts`                                                     | define VS Code URI semantics versus generated-string contract          | fake Webview/URI currently mixes both                |
 
 ## 4. Tests that should remain VS Code Host candidates
 
@@ -124,31 +136,33 @@
 - visual snapshot
 - Apply後のPDF MediaBox / CropBox
 - success notification
-- packaged modeのnetwork block
+- packaged modeのcontrolled external-fetch failure
 - packaged extension directoryからoperation moduleを直接import
 - Sharpを使うPNG→JPEGとmissing external CLI error
 
 判定:
 
-| Group                                   | Proper evidence layer              | Current issue                          |
-| --------------------------------------- | ---------------------------------- | -------------------------------------- |
-| open command → Webview → Apply → output | RT-ELECTRON                        | critical journeyとして妥当             |
-| dark / light visual snapshot            | RT-ELECTRON                        | journeyと同一caseでfailure原因が広い   |
-| installed VSIX / offline                | RT-PACKAGE                         | development journeyとmode switchで共存 |
-| package内部module直接import             | RT-PACKAGEまたはNode package smoke | 利用者journeyのpublic boundaryではない |
-| Sharp native load                       | RT-PACKAGE + RT-PLATFORM           | release artifact Evidenceとして妥当    |
+| Group                                      | Proper evidence layer              | Current issue                          |
+| ------------------------------------------ | ---------------------------------- | -------------------------------------- |
+| open command → Webview → Apply → output    | RT-ELECTRON                        | critical journeyとして妥当             |
+| dark / light visual snapshot               | RT-ELECTRON                        | journeyと同一caseでfailure原因が広い   |
+| installed VSIX / controlled external-fetch | RT-PACKAGE                         | development journeyとmode switchで共存 |
+| package内部module直接import                | RT-PACKAGEまたはNode package smoke | 利用者journeyのpublic boundaryではない |
+| Sharp native load                          | RT-PACKAGE + RT-PLATFORM           | release artifact Evidenceとして妥当    |
 
 ## 7. Proposed first migration experiment
 
-全面移行ではなく、次の小さい集合でRT-NODE experimentを行う候補:
+全面移行ではなく、まずP0集合でRT-NODE experimentを行う候補:
 
 1. `source_format.test.ts`
 2. `crop_pdf_protocol.test.ts`
 3. `file_content_hash.test.ts`
-4. `run_external_tool.test.ts`
-5. `run_staged_conversion_batch.test.ts`
-6. `commit_conversion_outputs.test.ts`
-7. `cleanup_conversion_artifacts.test.ts`
+4. `resolve_output_path.test.ts`
+5. `workspace_path.test.ts`
+6. `safe_mode.test.ts`
+7. `run_staged_conversion_batch.test.ts`
+8. `commit_conversion_outputs.test.ts`
+9. `cleanup_conversion_artifacts.test.ts`
 
 比較するEvidence:
 
