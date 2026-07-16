@@ -2,7 +2,10 @@
 
 ## Status
 
-In Progress
+Blocked
+
+構造とハーネスの簡素化を先に行うため、一時停止する。
+既に実施済みの検証結果は保持する。
 
 ## Change Contract
 

@@ -37,7 +37,7 @@ pre-push:
   commands:
     typecheck:
       # extension runtime / extension test / webview / webview test をまとめて確認する。
-      run: pnpm run check:test
+      run: pnpm run check:all
 
     build:
       # package 前に壊れていないか見る。

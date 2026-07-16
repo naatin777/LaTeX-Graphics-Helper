@@ -13,8 +13,6 @@ concurrency:
 jobs:
     check:
         runs-on: ubuntu-latest
-        env:
-            LGH_TASK_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         steps:
             - uses: actions/checkout@v7
 

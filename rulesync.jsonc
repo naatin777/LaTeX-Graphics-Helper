@@ -1,9 +1,10 @@
 {
   "$schema": "https://github.com/dyoshikawa/rulesync/releases/latest/download/config-schema.json",
   "targets": ["codexcli", "claudecode", "cursor", "copilot"],
-  "features": ["rules", "hooks"],
+  // Retained as historical tooling only. AGENTS.md is the hand-written source of truth.
+  "features": ["rules"],
   "outputRoots": ["."],
-  "delete": true,
+  "delete": false,
   "verbose": false,
   "silent": false,
   "global": false,
