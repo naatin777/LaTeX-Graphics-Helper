@@ -4,7 +4,7 @@
 
 In Progress
 
-3 OSのremote GitHub Actions Evidence待ち。0201はCI結果の記録だけでなく、Node-level testの実行基盤を決定し、正本文書へ反映するまでを扱う。
+3 OSのremote GitHub Actions Evidenceを確認済み。tested subsetのNode runtime採否、CI jobの恒久化、Hostとの重複期間、required statusは未決定のため、0201はIn Progressを維持する。
 
 ## Goal
 
@@ -31,10 +31,21 @@ Node-level contractをどのruntimeで実行するか決定し、local script、
 
 ### Phase 2: Cross-platform CI
 
-- [ ] Linux結果を取得
-- [ ] macOS結果を取得
-- [ ] Windows結果を取得
-- [ ] duration、case数、skip数を記録
+- [x] Linux結果を取得
+- [x] macOS結果を取得
+- [x] Windows結果を取得
+- [x] case数とskip数を記録
+- [x] job durationの未取得を記録し、推測しない
+
+#### Remote Evidence
+
+PR #356のTest workflow run [#444](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29506886218)で、各OSの`node-test-experiment` jobがNode 22でsuccessした。job durationは取得できるEvidenceに含まれていない。
+
+| OS      | Result | Cases | Skipped | Node |
+| ------- | ------ | ----: | ------: | ---: |
+| Linux   | Pass   |    18 |       0 |   22 |
+| macOS   | Pass   |    18 |       0 |   22 |
+| Windows | Pass   |    18 |       0 |   22 |
 
 ### Phase 3: Decision
 

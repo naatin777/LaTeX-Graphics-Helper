@@ -83,7 +83,7 @@ Full Host `test:vscode` warmは26.44s / 26.71s / 28.83s（median 26.71s、211 pa
 | `pnpm run test:node:experiment`  | pass   | 18 passing / 0 skipped               |
 | `pnpm run test:vscode`           | pass   | 211 passing; selected scope 18 cases |
 
-Local experimentの判定は**Successful experiment**だが、これはtested subsetのlocal Evidenceに限る。overall decision statusはcross-platformとmaintainer判断が未完了のためPendingとする。
+Local experimentの判定は**Successful experiment**だが、これはtested subsetのlocal Evidenceに限る。3 OSのremote Evidenceを追加しても、overall decision statusはmaintainer判断が未完了のためPendingとする。
 
 ## CI matrix experiment
 
@@ -100,13 +100,13 @@ Local experimentの判定は**Successful experiment**だが、これはtested su
 
 ### Remote results
 
-この整理時点ではGitHub Actions remote Evidenceを取得していない。
+PR #356のTest workflow run [#444](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29506886218)で、独立した`node-test-experiment` jobの結果を確認した。各jobは`pnpm run test:node:experiment`を実行し、Node 22で完了した。job durationは取得できるEvidenceに含まれていないため、推測しない。
 
-| OS      | Workflow result | Cases | Skipped | Duration | Node version |
-| ------- | --------------- | ----: | ------: | -------: | ------------ |
-| Linux   | Pending         |       |         |          |              |
-| macOS   | Pending         |       |         |          |              |
-| Windows | Pending         |       |         |          |              |
+| OS      | Workflow result | Cases | Skipped | Node version | Duration     |
+| ------- | --------------- | ----: | ------: | ------------ | ------------ |
+| Linux   | Pass            |    18 |       0 | 22           | Not captured |
+| macOS   | Pass            |    18 |       0 | 22           | Not captured |
+| Windows | Pass            |    18 |       0 | 22           | Not captured |
 
 ## Observations
 
@@ -114,7 +114,7 @@ Local experimentの判定は**Successful experiment**だが、これはtested su
 - selected test-onlyの中央値はHost 2.70s、Node 0.10sだった。
 - Node側はWebview compileと全Host suiteを含めないため、build+testの差はruntimeだけの比較ではない。
 - Node実行ではVS Code startup noiseがなく、source-mapによりTypeScript lineを表示できた。
-- CIの3 OS結果はまだ観測していない。
+- CIの3 OSで、同じ18 casesが0 skippedでpassした。Node runtimeの正式採用判断はまだ行っていない。
 
 ## Interpretation
 
@@ -122,7 +122,7 @@ tested subsetについては、Node runtime分離がlocal feedbackとfailure dia
 
 ## Unknowns
 
-- Linux・macOS・Windowsのremote correctness、case数、skip数、duration
+- Linux・macOS・Windowsのjob duration
 - Windows filesystem / permission差とCI cacheの影響
 - tested subsetを拡張した場合のhidden dependency
 - required status化の価値
