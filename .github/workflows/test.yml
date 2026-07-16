@@ -26,6 +26,40 @@ jobs:
               env:
                   EVENT_BEFORE: ${{ github.event.before }}
 
+    node-test-experiment:
+        name: node-test-experiment (${{ matrix.label }})
+        needs: changes
+        if: needs.changes.outputs.docs_only != 'true'
+        runs-on: ${{ matrix.os }}
+        timeout-minutes: 10
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      label: Linux
+                    - os: macos-latest
+                      label: macOS
+                    - os: windows-latest
+                      label: Windows
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.8.0
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - run: pnpm run test:node:experiment
+              shell: bash
+
     vscode-test:
         name: vscode-test (${{ matrix.label }})
         needs: changes
