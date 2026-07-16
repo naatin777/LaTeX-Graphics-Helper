@@ -3,30 +3,31 @@
 - 状態: 監査用draft
 - 対象: `check.yml`, `test.yml`, `playwright.yml`, `release.yml`, root package scripts
 - 重要: workflowが`pull_request`で起動することと、GitHub branch protectionでmerge必須に設定されていることは別である。後者はこの文書では`unknown`。
+- test file / caseの完全列挙は[test-file-inventory](test-file-inventory.md)、Browser / Electronのcase対応は[browser-electron-overlap](browser-electron-overlap.md)を参照する。
 
 ## 1. Workflow map
 
-| Workflow | Trigger | Docs-only behavior | Platform | Main command / Evidence | Failure artifact | Evidence class |
-|---|---|---|---|---|---|---|
-| Check | PR、main push | skipしない | Linux | `pnpm run check:all` | なし | lint、format、TypeScript、NLS静的整合 |
-| Test | PR、main push | runtime jobsをskip | Linux / macOS / Windows | `pnpm run test` = VS Code Extension Host tests | `test-results/` | activation、command、workspace、operation、filesystem、external tool integration |
-| Test: Electron step | Test workflow内 | docs-only時はjob自体skip | Linuxのみ | `test:playwright:electron` | `test-results/` | development extensionのreal VS Code journey |
-| Playwright | PR、main push | browser matrixをskipし、gateがskip結果を検証 | Linux / macOS / Windows | `test:playwright` | Playwright report / test results | Browser renderer / PDF.js / canvas |
-| Release verify | tag | 対象外 | Linux | `check:all`, build | なし | release source static verification |
-| Release package | tag | 対象外 | Linux / macOS / Windows | target VSIX package + packaged Electron smoke | `test-results/`, VSIX | installed artifact、Sharp native load、offline / external tool boundary |
-| Release publish | tag、package全成功後 | 対象外 | Linux | GitHub Release、Marketplace、Open VSX | registry response | distribution action |
+| Workflow            | Trigger              | Docs-only behavior                           | Platform                | Main command / Evidence                        | Failure artifact                 | Evidence class                                                                            |
+| ------------------- | -------------------- | -------------------------------------------- | ----------------------- | ---------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------- |
+| Check               | PR、main push        | skipしない                                   | Linux                   | `pnpm run check:all`                           | なし                             | lint、format、TypeScript、NLS静的整合                                                     |
+| Test                | PR、main push        | runtime jobsをskip                           | Linux / macOS / Windows | `pnpm run test` = VS Code Extension Host tests | `test-results/`                  | activation、command、workspace、operation、filesystem、external tool integration          |
+| Test: Electron step | Test workflow内      | docs-only時はjob自体skip                     | Linuxのみ               | `test:playwright:electron`                     | `test-results/`                  | development extensionのreal VS Code journey                                               |
+| Playwright          | PR、main push        | browser matrixをskipし、gateがskip結果を検証 | Linux / macOS / Windows | `test:playwright`                              | Playwright report / test results | Browser renderer / PDF.js / canvas                                                        |
+| Release verify      | tag                  | 対象外                                       | Linux                   | `check:all`, build                             | なし                             | release source static verification                                                        |
+| Release package     | tag                  | 対象外                                       | Linux / macOS / Windows | target VSIX package + packaged Electron smoke  | `test-results/`, VSIX            | installed artifact、Sharp native load、controlled external-fetch / external tool boundary |
+| Release publish     | tag、package全成功後 | 対象外                                       | Linux                   | GitHub Release、Marketplace、Open VSX          | registry response                | distribution action                                                                       |
 
 ## 2. Local command semantics
 
-| Command | Includes | Excludes | Recommended interpretation before rename |
-|---|---|---|---|
-| `pnpm run check:all` | lint、format、extension / test / Webview typecheck、NLS | runtime tests、package | static verification |
-| `pnpm run test` | `test:vscode` | Browser、Electron、package | Extension Host suite |
-| `pnpm run test:vscode` | build:test + fixed VS Code test-cli | Browser、Electron | Host / operation integration |
-| `pnpm run test:playwright` | build + Browser project | Electron | renderer suite |
-| `pnpm run test:playwright:electron` | build + Electron project | Browser | real VS Code journey。`LGH_VSIX_PATH`設定時はpackaged mode |
-| `pnpm run test:all` | VS Code + Browser | Electron、packaged smoke、Vitest | historical aggregate。全required Evidenceを意味しない |
-| `pnpm run package:vsix` | target package | installed execution | artifact creation only |
+| Command                             | Includes                                                            | Excludes                                        | Recommended interpretation before rename                   |
+| ----------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `pnpm run check:all`                | lint、format、extension / test / Webview typecheck、NLS             | runtime tests、package、Markdown docs           | static verification                                        |
+| `pnpm run test`                     | `test:vscode`                                                       | Browser、Electron、package                      | Extension Host suite                                       |
+| `pnpm run test:vscode`              | build:test + fixed VS Code test-cli                                 | Browser、Electron                               | Host / operation integration                               |
+| `pnpm run test:playwright`          | build + Browser project                                             | Electron                                        | renderer suite                                             |
+| `pnpm run test:playwright:electron` | build + Electron project                                            | Browser                                         | real VS Code journey。`LGH_VSIX_PATH`設定時はpackaged mode |
+| `pnpm run test:all`                 | configured VS Code 207 + Browser 18 = 225 statically declared cases | Electron 1 case、packaged smoke、Vitest 0 cases | historical aggregate。全required Evidenceを意味しない      |
+| `pnpm run package:vsix`             | target package                                                      | installed execution                             | artifact creation only                                     |
 
 ## 3. PR Evidence currently available
 
@@ -94,19 +95,20 @@ release package jobは各native runnerで次を実行する。
 - production dependency deployment
 - native Sharp binary
 - installed extension discovery
-- network block下のpackaged Webview
+- controlled external-fetch failureを確認するpackaged Webview
 
 ## 5. Gaps and misleading names
 
-| ID | Observation | Risk | Correction candidate |
-|---|---|---|---|
-| CI-GAP-001 | `test:all`にElectron / package / Vitestが含まれない | 人間・AIが「全test完了」と誤認 | 採用後に`test:host-and-browser`等へrename、または`test:required` / `test:full`を定義 |
-| CI-GAP-002 | VS Code suiteへpure / operation / Host testが混在 | failure diagnosisとlocal feedbackが重い | Node experiment後にjobを分離 |
-| CI-GAP-003 | Electron development journeyはPRでLinuxのみ | macOS / Windows UI / Electron差はreleaseまで未実行 | required qualityとflake costを比較してscope決定 |
-| CI-GAP-004 | packaged smokeはtag release時 | release直前にpackage regressionが初発見される可能性 | manual / scheduled / path-filtered pre-release jobを候補化 |
-| CI-GAP-005 | Browser projectは3 OS、visual goldenはLinuxだけ | runner costと得るEvidenceの対応が不明瞭 | test caseごとに3 OSが必要か分類 |
-| CI-GAP-006 | branch protectionのrequired statusが未確認 | workflow定義とmerge gateを混同 | repository ruleset / branch protectionを別途確認 |
-| CI-GAP-007 | docs-only判定がTest / PlaywrightにありCheckにはない | docs PRでもstatic checkは実行、runtimeはskip | 意図として妥当か明文化 |
+| ID         | Observation                                                                        | Risk                                                                                 | Correction candidate                                                                 |
+| ---------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| CI-GAP-001 | `test:all`にElectron / package / Vitestが含まれない                                | 人間・AIが「全test完了」と誤認                                                       | 採用後に`test:host-and-browser`等へrename、または`test:required` / `test:full`を定義 |
+| CI-GAP-002 | VS Code suiteへpure / operation / Host testが混在                                  | failure diagnosisとlocal feedbackが重い                                              | Node experiment後にjobを分離                                                         |
+| CI-GAP-003 | Electron development journeyはPRでLinuxのみ                                        | macOS / Windows UI / Electron差はreleaseまで未実行                                   | required qualityとflake costを比較してscope決定                                      |
+| CI-GAP-004 | packaged smokeはtag release時                                                      | release直前にpackage regressionが初発見される可能性                                  | manual / scheduled / path-filtered pre-release jobを候補化                           |
+| CI-GAP-005 | Browser projectは3 OS、visual goldenはLinuxだけ                                    | runner costと得るEvidenceの対応が不明瞭                                              | test caseごとに3 OSが必要か分類                                                      |
+| CI-GAP-006 | branch protectionのrequired statusが未確認                                         | workflow定義とmerge gateを混同                                                       | repository ruleset / branch protectionを別途確認                                     |
+| CI-GAP-007 | docs-only判定がTest / PlaywrightにありCheckにはない                                | docs PRでもstatic checkは実行、runtimeはskip                                         | 意図として妥当か明文化                                                               |
+| CI-GAP-008 | `package.json`に`format:check` scriptはなく、`format`もMarkdown docsを対象にしない | 要求されたdocs format checkを同名commandで再現できず、Markdown driftをCIが検出しない | script追加・docs formatter対象化は別taskで判断                                       |
 
 ## 6. Candidate gate model
 
@@ -141,7 +143,7 @@ release package jobは各native runnerで次を実行する。
 - 3 OS package
 - 3 OS installed VSIX smoke
 - native dependency
-- offline Webview
+- complete offline behaviorの未証明
 - external tool missing behavior
 
 ### Tag publish gate
