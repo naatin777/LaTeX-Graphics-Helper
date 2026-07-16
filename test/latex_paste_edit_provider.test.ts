@@ -1,7 +1,7 @@
 /* oxlint-disable vitest/expect-expect */
 
 import assert from "node:assert/strict";
-import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,6 +10,10 @@ import { createSandbox } from "sinon";
 import * as vscode from "vscode";
 
 import { LatexPasteEditProvider } from "../src/edit_provider/latex_paste_edit_provider.js";
+import {
+  rememberLastConversion,
+  undoLastConversion,
+} from "../src/commands/undo_last_conversion.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDirectory = path.join(testDirectory, "..", "..", "test", "fixtures");
@@ -144,7 +148,10 @@ suite("LaTeXクリップボード画像挿入", () => {
       const documentUri = vscode.Uri.file(path.join(directory, "main.tex"));
       await vscode.workspace.fs.writeFile(documentUri, Buffer.from("", "utf8"));
       const existingImagePath = path.join(directory, "pasted.png");
+      const existingPdfPath = path.join(directory, "pasted.pdf");
       await writeFile(existingImagePath, "existing clipboard image");
+      const existingPdf = await createPdfBytes("old PDF");
+      await writeFile(existingPdfPath, existingPdf);
       sandbox.stub(vscode.window, "showQuickPick").resolves({
         label: "PDF形式で貼り付け",
         detail: "PDFをfigure環境に配置",
@@ -152,9 +159,24 @@ suite("LaTeXクリップボード画像挿入", () => {
         pasteKind: "pdf",
       } as vscode.QuickPickItem & { pasteKind: "pdf" });
       sandbox.stub(vscode.window, "showInputBox").resolves(path.join(directory, "pasted"));
+      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
 
       const document = await vscode.workspace.openTextDocument(documentUri);
-      const provider = new LatexPasteEditProvider();
+      const outputLines: string[] = [];
+      let conversionRoot: string | undefined;
+      const provider = new LatexPasteEditProvider({
+        resolveOutputConflicts: async () => "overwrite",
+        outputChannel: { appendLine: (line) => outputLines.push(line) },
+        rememberLastConversion: async (outputs) => {
+          assert.ok(outputs[0]?.previousFilePath);
+          conversionRoot = outputs[0]?.stagingRootPath;
+          const id = await rememberLastConversion(outputs, {
+            appendLine: (line) => outputLines.push(line),
+          });
+          await assert.doesNotReject(access(outputs[0]?.previousFilePath ?? ""));
+          return id;
+        },
+      });
       const tokenSource = new vscode.CancellationTokenSource();
 
       try {
@@ -180,6 +202,43 @@ suite("LaTeXクリップボード画像挿入", () => {
         const pdf = await PDFDocument.load(await readFile(path.join(directory, "pasted.pdf")));
         assert.strictEqual(pdf.getPageCount(), 1);
         assert.strictEqual(await readFile(existingImagePath, "utf8"), "existing clipboard image");
+        assert.notDeepStrictEqual(await readFile(existingPdfPath), existingPdf);
+
+        assert.ok(conversionRoot);
+        const backupPaths = await findFiles(conversionRoot, (filePath) =>
+          filePath.endsWith(".previous"),
+        );
+        assert.strictEqual(backupPaths.length, 1, outputLines.join("\n"));
+        assert.deepStrictEqual(await readFile(backupPaths[0] ?? ""), existingPdf);
+        await assert.rejects(access(stagedRootFromLines(outputLines)));
+
+        await undoLastConversion();
+        assert.deepStrictEqual(await readFile(existingPdfPath), existingPdf);
+        await assert.rejects(access(conversionRoot));
+
+        const keepBothProvider = new LatexPasteEditProvider({
+          resolveOutputConflicts: async () => "keep-both",
+          outputChannel: {
+            appendLine: (line) => outputLines.push(`keep-both: ${line}`),
+          },
+        });
+        const keepBothEdits = await keepBothProvider.provideDocumentPasteEdits(
+          document,
+          [new vscode.Range(0, 0, 0, 0)],
+          pngDataTransfer(),
+          {} as vscode.DocumentPasteEditContext,
+          tokenSource.token,
+          {
+            ...testAppConfig(),
+            outputPathClipboardImage: path.join(directory, "pasted"),
+          },
+        );
+        assert.ok(keepBothEdits);
+        assert.ok(await readFile(path.join(directory, "pasted-1.pdf")));
+        await assert.rejects(access(stagedRootFromLines(outputLines, "keep-both: ")));
+        await undoLastConversion();
+        await assert.rejects(access(path.join(directory, "pasted-1.pdf")));
+        assert.deepStrictEqual(await readFile(existingPdfPath), existingPdf);
       } finally {
         tokenSource.dispose();
       }
@@ -375,4 +434,45 @@ function testAppConfig() {
 
 function normalizeSnippetValue(value: string): string {
   return value.replace(/\\\\/g, "\\").replace(/\\([{}])/g, "$1");
+}
+
+async function createPdfBytes(text: string): Promise<Buffer> {
+  const document = await PDFDocument.create();
+  const page = document.addPage([200, 100]);
+  page.drawText(text);
+  return Buffer.from(await document.save());
+}
+
+async function findFiles(
+  rootPath: string,
+  predicate: (filePath: string) => boolean,
+): Promise<string[]> {
+  try {
+    const entries = await readdir(rootPath, { withFileTypes: true });
+    const files: string[] = [];
+
+    for (const entry of entries) {
+      const entryPath = path.join(rootPath, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...(await findFiles(entryPath, predicate)));
+      } else if (predicate(entryPath)) {
+        files.push(entryPath);
+      }
+    }
+
+    return files;
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
+}
+
+function stagedRootFromLines(lines: readonly string[], prefix = ""): string {
+  const marker = `${prefix}[clipboard-paste] staged input: `;
+  const line = lines.find((value) => value.startsWith(marker));
+
+  assert.ok(line);
+  return path.dirname(line.slice(marker.length));
 }

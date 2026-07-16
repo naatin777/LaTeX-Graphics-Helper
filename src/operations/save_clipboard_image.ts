@@ -9,6 +9,7 @@ import {
 } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
+  type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
   type PreparedConversionOutput,
 } from "./commit_conversion_outputs.js";
@@ -35,16 +36,23 @@ export interface SavedClipboardImage {
   artifact: ConversionArtifactRoot;
 }
 
+export interface SaveClipboardImageTestOverrides {
+  commit?: Pick<CommitConversionOutputsOptions, "copyFile" | "rm">;
+}
+
 /** Saves one clipboard payload through the same staging and commit boundary as conversions. */
 export async function saveClipboardImage(
   request: SaveClipboardImageRequest,
   runtime: ConversionRuntime,
+  testOverrides: SaveClipboardImageTestOverrides = {},
 ): Promise<SavedClipboardImage> {
   const runId = request.runId ?? randomUUID();
   const artifact: ConversionArtifactRoot = {
     rootPath: clipboardStagingRoot(request.workspacePath, runId),
     workspacePath: request.workspacePath,
   };
+
+  let commitOwnsClipboardArtifact = false;
 
   try {
     runtime.signal?.throwIfAborted();
@@ -54,28 +62,34 @@ export async function saveClipboardImage(
       `[clipboard-paste] staged input: ${stagedImage.stagedOutputPath}`,
     );
 
-    const outputs =
-      request.kind === "pdf"
-        ? await saveClipboardImageAsPdf(request, stagedImage, runId, runtime)
-        : await commitConversionOutputs([stagedImage], {
-            ...(runtime.resolveConflicts !== undefined && {
-              resolveConflicts: runtime.resolveConflicts,
-            }),
-            ...(runtime.signal !== undefined && { signal: runtime.signal }),
-            operationName: "clipboard-paste",
-            ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-          });
+    let outputs: CommittedConversionOutput[];
 
-    runtime.signal?.throwIfAborted();
+    if (request.kind === "pdf") {
+      outputs = await saveClipboardImageAsPdf(request, stagedImage, runId, runtime);
+    } else {
+      commitOwnsClipboardArtifact = true;
+      outputs = await commitConversionOutputs([stagedImage], {
+        ...(runtime.resolveConflicts !== undefined && {
+          resolveConflicts: runtime.resolveConflicts,
+        }),
+        ...(runtime.signal !== undefined && { signal: runtime.signal }),
+        operationName: "clipboard-paste",
+        ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+        ...testOverrides.commit,
+      });
+    }
+
     return { outputs, artifact };
   } catch (error) {
-    await cleanupSavedClipboardImage({ outputs: [], artifact }, false, runtime);
+    if (!commitOwnsClipboardArtifact) {
+      await cleanupClipboardSourceArtifact({ outputs: [], artifact }, false, runtime);
+    }
     throw error;
   }
 }
 
 /** Finishes the operation after optional Undo registration. */
-export async function cleanupSavedClipboardImage(
+export async function cleanupClipboardSourceArtifact(
   saved: SavedClipboardImage,
   undoRecorded: boolean,
   runtime: Pick<ConversionRuntime, "outputChannel"> = {},
@@ -87,13 +101,24 @@ export async function cleanupSavedClipboardImage(
         ...(undoRecorded
           ? {
               preservePaths: saved.outputs.flatMap((output) =>
-                output.previousFilePath ? [output.previousFilePath] : [],
+                output.previousFilePath &&
+                isWithin(output.previousFilePath, saved.artifact.rootPath)
+                  ? [output.previousFilePath]
+                  : [],
               ),
             }
           : {}),
       },
     ],
     runtime.outputChannel,
+  );
+}
+
+function isWithin(targetPath: string, parentPath: string): boolean {
+  const relativePath = path.relative(path.resolve(parentPath), path.resolve(targetPath));
+  return (
+    relativePath === "" ||
+    (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`))
   );
 }
 

@@ -12,7 +12,7 @@ import type { CommittedConversionOutput } from "../operations/commit_conversion_
 import type { OutputConflictDecision } from "../operations/commit_conversion_outputs.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
-  cleanupSavedClipboardImage,
+  cleanupClipboardSourceArtifact,
   saveClipboardImage,
   type ClipboardImageData,
   type ClipboardPasteKind,
@@ -164,7 +164,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             ),
           ];
         } finally {
-          await cleanupSavedClipboardImage(
+          await cleanupClipboardSourceArtifact(
             saved,
             undoRecorded,
             this.outputChannel === undefined ? undefined : { outputChannel: this.outputChannel },

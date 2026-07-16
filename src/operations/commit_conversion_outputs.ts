@@ -245,6 +245,12 @@ async function commitResolvedOutputs(
         options.outputChannel?.appendLine(
           `[${options.operationName ?? "conversion"}] rollback failed for ${failure.outputPath}: ${failure.error.message}`,
         );
+        const output = outputs.find((item) => item.outputPath === failure.outputPath);
+        if (output?.previousFilePath !== undefined) {
+          options.outputChannel?.appendLine(
+            `[${options.operationName ?? "conversion"}] preserving recovery backup for ${failure.outputPath}: ${output.previousFilePath}`,
+          );
+        }
       }
       throw new CommitRollbackError(error, rollbackErrors);
     }
