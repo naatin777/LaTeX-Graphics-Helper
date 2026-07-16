@@ -17,7 +17,7 @@ import {
   type MermaidPuppeteerOptions,
 } from "../operations/convert_to_svg.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 import type { CommandDependencies } from "./command_dependencies.js";
 
@@ -59,19 +59,7 @@ export async function convertToSvgCommand(
       operationName: "convert-to-svg",
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: {
-        progressTitle: userMessage(
-          "message.progress.convertToOutput.title",
-          sourceUris.length,
-          "SVG",
-        ),
-        prepareMessage: userMessage("message.progress.prepareConversion", "SVG"),
-        successMessage: (count) => userMessage("message.convertToOutput.success", count, "SVG"),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
-        cancelledMessage: userMessage("message.convertToOutput.cancelled", "SVG"),
-        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "SVG", reason),
-      },
+      messages: createOutputConversionMessages("SVG", sourceUris.length),
       run: (runtime) =>
         convertToSvgFiles({
           jobs,

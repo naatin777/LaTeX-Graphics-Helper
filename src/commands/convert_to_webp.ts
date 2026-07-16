@@ -20,7 +20,7 @@ import {
   type WebpOutputOptions,
 } from "../operations/convert_to_webp.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
@@ -63,19 +63,7 @@ export async function convertToWebpCommand(
       operationName: "convert-to-webp",
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: {
-        progressTitle: userMessage(
-          "message.progress.convertToOutput.title",
-          sourceUris.length,
-          "WebP",
-        ),
-        prepareMessage: userMessage("message.progress.prepareConversion", "WebP"),
-        successMessage: (count) => userMessage("message.convertToOutput.success", count, "WebP"),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
-        cancelledMessage: userMessage("message.convertToOutput.cancelled", "WebP"),
-        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "WebP", reason),
-      },
+      messages: createOutputConversionMessages("WebP", sourceUris.length),
       run: (runtime) =>
         convertToWebpFiles({
           jobs,

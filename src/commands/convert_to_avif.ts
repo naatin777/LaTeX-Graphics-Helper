@@ -20,7 +20,7 @@ import {
   type DrawioToAvifOptions,
 } from "../operations/convert_to_avif.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
@@ -63,19 +63,7 @@ export async function convertToAvifCommand(
       operationName: "convert-to-avif",
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: {
-        progressTitle: userMessage(
-          "message.progress.convertToOutput.title",
-          sourceUris.length,
-          "AVIF",
-        ),
-        prepareMessage: userMessage("message.progress.prepareConversion", "AVIF"),
-        successMessage: (count) => userMessage("message.convertToOutput.success", count, "AVIF"),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
-        cancelledMessage: userMessage("message.convertToOutput.cancelled", "AVIF"),
-        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "AVIF", reason),
-      },
+      messages: createOutputConversionMessages("AVIF", sourceUris.length),
       run: (runtime) =>
         convertToAvifFiles({
           jobs,

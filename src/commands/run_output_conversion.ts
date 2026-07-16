@@ -16,6 +16,23 @@ export interface ConversionCommandMessages {
   failedMessage: (reason: string) => string;
 }
 
+export type OutputConversionFormat = "PNG" | "JPEG" | "WebP" | "AVIF" | "SVG";
+
+export function createOutputConversionMessages(
+  format: OutputConversionFormat,
+  sourceCount: number,
+): ConversionCommandMessages {
+  return {
+    progressTitle: userMessage("message.progress.convertToOutput.title", sourceCount, format),
+    prepareMessage: userMessage("message.progress.prepareConversion", format),
+    successMessage: (count) => userMessage("message.convertToOutput.success", count, format),
+    undoUnavailableMessage: (success, reason) =>
+      userMessage("message.undoUnavailable", success, reason),
+    cancelledMessage: userMessage("message.convertToOutput.cancelled", format),
+    failedMessage: (reason) => userMessage("message.convertToOutput.failed", format, reason),
+  };
+}
+
 /** Owns progress, cancellation, Undo registration, and user notifications for output conversion. */
 export async function runOutputConversion(options: {
   operationName: string;

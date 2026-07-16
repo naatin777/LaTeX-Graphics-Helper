@@ -17,7 +17,7 @@ import {
 } from "../operations/convert_to_png.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 import type { CommandDependencies } from "./command_dependencies.js";
@@ -60,19 +60,7 @@ export async function convertToPngCommand(
       operationName: "convert-to-png",
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: {
-        progressTitle: userMessage(
-          "message.progress.convertToOutput.title",
-          sourceUris.length,
-          "PNG",
-        ),
-        prepareMessage: userMessage("message.progress.prepareConversion", "PNG"),
-        successMessage: (count) => userMessage("message.convertToOutput.success", count, "PNG"),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
-        cancelledMessage: userMessage("message.convertToOutput.cancelled", "PNG"),
-        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "PNG", reason),
-      },
+      messages: createOutputConversionMessages("PNG", sourceUris.length),
       run: (runtime) => {
         return convertToPngFiles({
           jobs,

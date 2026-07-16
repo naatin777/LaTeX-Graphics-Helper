@@ -19,7 +19,7 @@ import {
   type DrawioToJpegOptions,
 } from "../operations/convert_to_jpeg.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
+import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
 import { userMessage } from "./user_messages.js";
 
 export const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
@@ -60,19 +60,7 @@ export async function convertToJpegCommand(
       operationName: "convert-to-jpeg",
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: {
-        progressTitle: userMessage(
-          "message.progress.convertToOutput.title",
-          sourceUris.length,
-          "JPEG",
-        ),
-        prepareMessage: userMessage("message.progress.prepareConversion", "JPEG"),
-        successMessage: (count) => userMessage("message.convertToOutput.success", count, "JPEG"),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
-        cancelledMessage: userMessage("message.convertToOutput.cancelled", "JPEG"),
-        failedMessage: (reason) => userMessage("message.convertToOutput.failed", "JPEG", reason),
-      },
+      messages: createOutputConversionMessages("JPEG", sourceUris.length),
       run: (runtime) =>
         convertToJpegFiles({
           jobs,
