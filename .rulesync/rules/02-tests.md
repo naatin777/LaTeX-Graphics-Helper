@@ -44,9 +44,9 @@ globs:
 - GitHub ActionsではGitHubが設定する`CI`環境変数を利用し、workflowや通常の確認commandで`CI=true`を重複指定しない。
 - CI依存の失敗を調査するときは、`CI=true`を付ける理由と対象commandをタスクまたは作業メモへ記録する。
 
-## Test / Implementation Separation
+## Test / Implementation Planning
 
-テスト追加と実装変更を同じタスクで行わない。
+期待する挙動を実装前に決める。必要な回帰テストを先に追加または更新し、同じtask内でテストと最小実装を行ってよい。可能ならコミットを論理的に分ける。taskを分ける基準は、テストか実装かではなく目的の違いにする。
 
 ### Test Planning Phase
 

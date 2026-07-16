@@ -2,64 +2,24 @@
 
 ## Status
 
-Todo
-
-## Change Contract
-
-### Problem
-
-### Allowed behaviors
-
-- B-001:
-- B-002:
-
-### Unresolved
-
-### Affected boundaries
-
-### Allowed files
-
-### Evidence matrix
-
-| Behavior | Test / verification | Evidence type |
-| -------- | ------------------- | ------------- |
-| B-001    |                     |               |
-
-### Dependencies
-
-- Blocked by:
-- Blocks:
-- Can run in parallel with:
-
-### Not changing
+Todo | In Progress | Blocked | Done
 
 ## 目的
 
-このタスクで達成することを書く。
+このtaskで解決する1つの問題を書く。
 
-## 完了条件
+## 変更内容
 
-- 完了を判断できる条件を書く
-
-## Completion criteria
-
-## Verification results
-
-| Command | Result | Notes |
-| ------- | ------ | ----- |
-
-## 変更可能なファイル
-
-- 変更してよいファイルを書く
+変更する内容を書く。
 
 ## 対象外
 
-- このタスクで行わないことを書く
-
-## 関連
-
-- 関連する `docs/specs/` または `docs/adr/` をリンクする
+今回変更しないものを書く。
 
 ## 確認方法
 
-- 変更を確認する方法を書く
+実行するテストや確認を書く。
+
+## 結果
+
+完了後に実測結果を書く。
