@@ -5,16 +5,18 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
-import pLimit from "p-limit";
 import sharp from "sharp";
 
 import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
-  commitConversionOutputs,
+  isEditableDrawioImagePath,
+  isMermaidPath,
+  sourceFormatForPath,
+} from "../application/source_format.js";
+import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
@@ -26,16 +28,9 @@ import {
   type PdfToolScratchOptions,
 } from "./run_pdftocairo_with_ascii_scratch.js";
 import { runExternalTool } from "./run_external_tool.js";
+import { runRasterConversionPipeline } from "./raster_conversion_pipeline.js";
 
-const CONVERSION_CONCURRENCY = 2;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
 const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".avif"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToWebpJob {
@@ -75,43 +70,29 @@ export async function convertToWebpFiles(
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-to-webp", runId);
-
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(CONVERSION_CONCURRENCY);
-      const stagedOutputs = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() =>
-            stageWebpConversion(
-              job,
-              index,
-              runId,
-              options.pdftocairoPath,
-              options.mermaid,
-              options.drawio,
-              options.webp,
-              options.runPdfToPng,
-              options,
-              options.signal,
-            ),
-          ),
-        ),
-      );
-
-      options.signal?.throwIfAborted();
-      return commitConversionOutputs(stagedOutputs, {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: "convert-to-webp",
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      });
-    },
-    options.outputChannel,
-  );
+  return runRasterConversionPipeline({
+    jobs: options.jobs,
+    operationName: "convert-to-webp",
+    runId,
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && {
+      resolveOutputConflicts: options.resolveOutputConflicts,
+    }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+    stage: (job, index, stageRunId, signal) =>
+      stageWebpConversion(
+        job,
+        index,
+        stageRunId,
+        options.pdftocairoPath,
+        options.mermaid,
+        options.drawio,
+        options.webp,
+        options.runPdfToPng,
+        options,
+        signal,
+      ),
+  });
 }
 
 async function stageWebpConversion(
@@ -208,7 +189,7 @@ async function writeSourceAsWebp(
     return;
   }
 
-  if (MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number])) {
+  if (isMermaidPath(job.sourcePath)) {
     await writeMermaidAsWebp(
       job.sourcePath,
       outputPath,
@@ -406,15 +387,10 @@ function isSupportedSourcePath(sourcePath: string): boolean {
   return (
     extension === ".pdf" ||
     extension === ".svg" ||
-    MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number]) ||
+    sourceFormatForPath(sourcePath) === "mermaid" ||
     RASTER_IMAGE_EXTENSIONS.includes(extension as (typeof RASTER_IMAGE_EXTENSIONS)[number]) ||
     isEditableDrawioImagePath(sourcePath)
   );
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function asPngOutputPath(outputPath: string): `${string}.png` {

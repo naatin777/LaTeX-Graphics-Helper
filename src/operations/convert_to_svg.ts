@@ -10,6 +10,7 @@ import {
   assertExistingPathInWorkspace,
   assertWritablePathInWorkspace,
 } from "../security/workspace_path.js";
+import { isEditableDrawioImagePath, sourceFormatForPath } from "../application/source_format.js";
 import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
 import {
   commitConversionOutputs,
@@ -27,13 +28,6 @@ import { runExternalTool } from "./run_external_tool.js";
 export type { MermaidPuppeteerOptions };
 
 const CONVERSION_CONCURRENCY = 2;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToSvgJob {
@@ -338,14 +332,9 @@ function isSupportedSourcePath(sourcePath: string): boolean {
 
   return (
     extension === ".pdf" ||
-    MERMAID_EXTENSIONS.includes(extension as (typeof MERMAID_EXTENSIONS)[number]) ||
+    sourceFormatForPath(sourcePath) === "mermaid" ||
     isEditableDrawioImagePath(sourcePath)
   );
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function asSvgOutputPath(outputPath: string): `${string}.svg` {

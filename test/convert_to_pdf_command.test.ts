@@ -37,7 +37,7 @@ import * as vscode from "vscode";
 
 import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
 import { withWorkspaceSettings } from "./helpers/workspace_settings.js";
-import { logicalSourcePathForOutputTemplate } from "../src/commands/convert_png_to_pdf.js";
+import { logicalSourcePathForOutputTemplate } from "../src/application/source_format.js";
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");

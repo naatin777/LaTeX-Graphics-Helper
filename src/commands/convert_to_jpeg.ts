@@ -6,6 +6,10 @@ import * as vscode from "vscode";
 
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import {
+  isEditableDrawioImagePath,
+  logicalSourcePathForOutputTemplate,
+} from "../application/source_format.js";
 import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
@@ -14,7 +18,6 @@ import {
   type ConvertToJpegJob,
   type DrawioToJpegOptions,
 } from "../operations/convert_to_jpeg.js";
-import { logicalSourcePathForOutputTemplate } from "./convert_png_to_pdf.js";
 import { resolveOutputConflicts } from "./safe_mode.js";
 import { runConversionCommand } from "./run_conversion_command.js";
 import { userMessage } from "./user_messages.js";
@@ -251,10 +254,6 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
 
   return [...uniqueUris.values()];
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  return /\.(drawio|dio)\.(png|svg)$/i.test(sourcePath);
 }
 
 function isAbortError(error: unknown): boolean {

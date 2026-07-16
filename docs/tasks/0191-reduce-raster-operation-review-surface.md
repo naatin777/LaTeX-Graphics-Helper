@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## Change Contract
 
@@ -32,10 +32,19 @@ raster operations、source format、output path、Sharp encoder、Draw.io/Mermai
 - `src/operations/convert_to_jpeg.ts`
 - `src/operations/convert_to_webp.ts`
 - `src/operations/convert_to_avif.ts`
+- `src/operations/convert_to_svg.ts`
+- `src/operations/convert_png_to_pdf.ts`
+- `src/operations/raster_conversion_pipeline.ts`
 - `src/application/source_format.ts`
+- `src/commands/convert_to_*.ts`
+- `src/commands/convert_png_to_pdf.ts`
 - `src/config/resolve_output_path.ts`
 - `test/convert_to_*_operation.test.ts`
+- `test/convert_to_pdf_command.test.ts`
 - `test/resolve_output_path.test.ts`
+- `test/raster_conversion_pipeline.test.ts`
+- `test/source_format.test.ts`
+- `AGENTS.md`
 - `docs/specs/output-format-conversion.md`
 - `docs/tasks/0191-reduce-raster-operation-review-surface.md`
 - `docs/tasks/README.md`
@@ -76,3 +85,7 @@ raster operations、source format、output path、Sharp encoder、Draw.io/Mermai
 
 | Command | Result | Notes |
 | ------- | ------ | ----- |
+| `pnpm run check:all` | Passed | lint, format, runtime/test/Webview typecheck, RuleSync, task preflight, NLS |
+| `pnpm run build:test` | Passed | TypeScript and Crop Webview production build |
+| `pnpm exec vscode-test --run out/test/convert_to_png_operation.test.js --run out/test/convert_to_avif_operation.test.js --run out/test/convert_to_webp_operation.test.js --run out/test/convert_to_svg_operation.test.js --run out/test/raster_conversion_pipeline.test.js --run out/test/source_format.test.js --forbid-only` | Passed | 8 tests, including fixed-fixture Draw.io conversion and pipeline/source-format tests |
+| `git diff --check` | Passed | no whitespace errors |

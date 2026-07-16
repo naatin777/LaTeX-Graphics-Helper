@@ -4,6 +4,10 @@ import * as vscode from "vscode";
 
 import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import {
+  isEditableDrawioImagePath,
+  logicalSourcePathForOutputTemplate,
+} from "../application/source_format.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import {
   convertPngToPdfFiles,
@@ -22,13 +26,6 @@ export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
 
 const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
 const PNG_EXTENSIONS = [".png"] as const;
-const MERMAID_EXTENSIONS = [".mmd", ".mermaid"] as const;
-const EDITABLE_DRAWIO_IMAGE_EXTENSIONS = [
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
-] as const;
 const PDF_IMAGE_EXTENSIONS = [
   ".png",
   ".jpg",
@@ -36,8 +33,12 @@ const PDF_IMAGE_EXTENSIONS = [
   ".webp",
   ".avif",
   ".svg",
-  ...MERMAID_EXTENSIONS,
-  ...EDITABLE_DRAWIO_IMAGE_EXTENSIONS,
+  ".mmd",
+  ".mermaid",
+  ".drawio.png",
+  ".dio.png",
+  ".drawio.svg",
+  ".dio.svg",
 ] as const;
 
 export async function convertPngToPdfCommand(
@@ -199,14 +200,6 @@ function outputTemplateForSource(
   }
 }
 
-export function logicalSourcePathForOutputTemplate(sourcePath: string): string {
-  if (!isEditableDrawioImagePath(sourcePath)) {
-    return sourcePath;
-  }
-
-  return sourcePath.replace(/\.(drawio|dio)\.(png|svg)$/i, "");
-}
-
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
   const executablePath = configuration
     .get<string>("convertToPdf.svg.puppeteer.executablePath", "")
@@ -288,11 +281,6 @@ function createJob(
       workspaceName: workspace.name,
     }),
   };
-}
-
-function isEditableDrawioImagePath(sourcePath: string): boolean {
-  const lowerSourcePath = sourcePath.toLowerCase();
-  return EDITABLE_DRAWIO_IMAGE_EXTENSIONS.some((extension) => lowerSourcePath.endsWith(extension));
 }
 
 function isAbortError(error: unknown): boolean {
