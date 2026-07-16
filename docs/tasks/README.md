@@ -2,10 +2,11 @@
 
 ## Current Task
 
-なし
+- [0198: v1開発基盤の前提を監査する](0198-audit-v1-development-foundation.md)（進行中）
 
 ## Planned
 
+- 0198の監査結果から、test Evidence policy、test directory、Browser / Electronの役割、Oxlint、Skill routingの判断taskを分離する
 - [0197: cross-platform VSIX release verification](0197-verify-cross-platform-vsix-release.md)（未着手）
 - [0195: README・NLS・設定・task archiveを同期する](0195-sync-docs-settings-and-task-archive.md)（未着手）
 
