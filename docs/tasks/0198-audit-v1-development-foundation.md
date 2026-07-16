@@ -40,7 +40,49 @@ v1の追加リファクタリングへ進む前に、仕様の正本、テスト
 - capabilityからEvidenceまで追跡できない項目を列挙する。
 - 現在の文書と実装で矛盾する記述を列挙する。
 - 各候補手段について、採用条件、反証条件、必要Evidence、判断ownerを記録する。
+- 初期調査と異なるEvidenceを発見した場合は、既存記録とPR説明を訂正する。
 
 ## 結果
 
-監査中。成果物は `docs/foundation/v1-development-foundation-audit.md` と `docs/research/v1-test-tooling-2026-07.md` に記録する。
+### 作成済みbaseline
+
+- `docs/foundation/v1-development-foundation-audit.md`
+- `docs/foundation/capability-catalog.md`
+- `docs/foundation/spec-test-trace.md`
+- `docs/foundation/test-runtime-inventory.md`
+- `docs/foundation/ci-evidence-map.md`
+- `docs/foundation/tooling-file-coverage.md`
+- `docs/research/v1-test-tooling-2026-07.md`
+
+### 確認済みの主要事項
+
+- `test:all`はVS Code testとBrowser Playwrightだけで、Electron、packaging、Vitestを含まない。
+- PRでは`check.yml`だけでなく、`test.yml`が3 OSのVS Code testとLinux Electronを実行し、`playwright.yml`が3 OSのBrowser testを実行する。
+- 初稿の「通常PRにはruntime testがない」という判断は誤りだったため訂正した。
+- Nodeだけで証明できる可能性が高いpure / filesystem safety testが複数ある。
+- Browser PlaywrightにはPDF.js / canvas固有の価値がある一方、Host simulationがElectronと重複する。
+- Electron specにはcritical journey、visual、packaging smoke、package内部module検査が混在する。
+- Safe Mode、Undo、cancellationの一部spec対象一覧がgeneric output conversion command群と同期していない。
+- Oxlint configとroot lint対象、OxfmtとLefthook / CI、TypeScript configとactual layoutにdriftがある。
+- Vitestはdependencyとconfigがあるがformal root scriptと確定した役割がない。
+
+### 未決事項
+
+- v1でrequiredとするplatformとEvidenceの種類
+- Browser Playwrightをrenderer contractへ限定して残すか
+- Linux Electronを全non-doc PRでrequiredにするか
+- Node test migration experimentを採用するか
+- test directoryをruntime別にするかsource co-locationにするか
+- packaged smokeをtag前に実行する導線が必要か
+- tooling対象fileをどこまでCIでenforceするか
+- repository固有Skillを作るかguideだけにするか
+
+### Remaining obligations
+
+- repository treeから全test fileを完全列挙する
+- branch protection / ruleset上のrequired statusを確認する
+- Browser / Electronのtest case単位重複表を作る
+- maintainerがrequired platformとquality priorityを承認する
+- 採用判断を個別ADRまたはtest policyへ移す
+
+production code、test、CI、dependencyはこのtaskでは変更していない。
