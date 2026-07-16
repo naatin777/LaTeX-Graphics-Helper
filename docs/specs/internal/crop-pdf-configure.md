@@ -21,7 +21,7 @@ configure operationの作業fileはworkspace内の次のstaging rootで管理す
 <workspace>/.latex-graphics-helper/crop-pdf-configure/<一意ID>/
 ```
 
-入力コピーと完成artifactはoperation単位で管理し、final pathへのcommitはstaging処理と分離する。staging寿命とcommit失敗時のrollbackは共通のfile operation contractに従う。
+入力コピーと完成artifactはoperation単位で管理し、成功後もstagingを削除しない。final pathへのcommitはstaging処理と分離し、commit失敗時のrollbackは共通のfile operation contractに従う。
 
 ## Commit integration
 

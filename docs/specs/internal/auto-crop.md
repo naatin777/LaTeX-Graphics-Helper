@@ -23,7 +23,7 @@ operationごとのstaging rootは次の形式とする。
 <workspace>/.latex-graphics-helper/crop-pdf/<一意ID>/<入力ごとのディレクトリ>/
 ```
 
-元PDFのコピーと完成artifactはstagingで管理する。全入力の処理が成功するまでfinal pathへcommitせず、commit途中の失敗ではそのoperationで反映済みのartifactをrollbackする。成功後のstaging寿命は、共通のcleanup方針に従う。
+元PDFのコピーと完成artifactはstagingで管理し、成功後もstagingを削除しない。全入力の処理が成功するまでfinal pathへcommitせず、commit途中の失敗ではそのoperationで反映済みのartifactをrollbackする。
 
 ## Cancellation boundary
 
