@@ -2,7 +2,9 @@
 
 ## ステータス
 
-採用
+置き換え済み
+
+> v1では、RuleSyncを必須導線から外し、手書き`AGENTS.md`を正本にする判断へ置き換えた。現在の判断は[ADR-0016](0016-use-handwritten-agents-for-v1.md)を参照する。
 
 ## 日付
 

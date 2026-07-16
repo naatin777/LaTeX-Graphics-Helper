@@ -8,11 +8,11 @@ Done
 
 ### Problem
 
-PNG/JPEG/WebP/AVIF operationにstaging、source dispatch、concurrency、cancel、commit、cleanupが重複している。
+PNG/JPEG/WebP/AVIF operationにstaging、concurrency、commit、cleanupが重複している。source dispatchとencoderは形式固有差分として残す。
 
 ### Allowed behaviors
 
-- B-001: raster共通pipelineがjob validation、staging、dispatch、cancel、commit、cleanupを担う。
+- B-001: staged batchがstaging、concurrency、cancel、commit、cleanupを担う。job validation、source dispatch、encoderは形式別operationに残す。
 - B-002: encoder、拡張子、quality、same-format拒否は形式別specに残す。
 - B-003: PDF/SVGをraster abstractionへ押し込まない。
 - B-004: 形式別テストsuiteと実変換結果検証を維持する。
@@ -34,7 +34,7 @@ raster operations、source format、output path、Sharp encoder、Draw.io/Mermai
 - `src/operations/convert_to_avif.ts`
 - `src/operations/convert_to_svg.ts`
 - `src/operations/convert_png_to_pdf.ts`
-- `src/operations/raster_conversion_pipeline.ts`
+- `src/operations/run_staged_conversion_batch.ts`
 - `src/application/source_format.ts`
 - `src/commands/convert_to_*.ts`
 - `src/commands/convert_png_to_pdf.ts`
@@ -83,9 +83,13 @@ raster operations、source format、output path、Sharp encoder、Draw.io/Mermai
 
 ## Verification results
 
-| Command | Result | Notes |
-| ------- | ------ | ----- |
-| `pnpm run check:all` | Passed | lint, format, runtime/test/Webview typecheck, RuleSync, task preflight, NLS |
-| `pnpm run build:test` | Passed | TypeScript and Crop Webview production build |
+| Command                                                                                                                                                                                                                                                                                                                        | Result | Notes                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------ |
+| `pnpm run check:all`                                                                                                                                                                                                                                                                                                           | Passed | lint, format, runtime/test/Webview typecheck, RuleSync, task preflight, NLS          |
+| `pnpm run build:test`                                                                                                                                                                                                                                                                                                          | Passed | TypeScript and Crop Webview production build                                         |
 | `pnpm exec vscode-test --run out/test/convert_to_png_operation.test.js --run out/test/convert_to_avif_operation.test.js --run out/test/convert_to_webp_operation.test.js --run out/test/convert_to_svg_operation.test.js --run out/test/raster_conversion_pipeline.test.js --run out/test/source_format.test.js --forbid-only` | Passed | 8 tests, including fixed-fixture Draw.io conversion and pipeline/source-format tests |
-| `git diff --check` | Passed | no whitespace errors |
+| `git diff --check`                                                                                                                                                                                                                                                                                                             | Passed | no whitespace errors                                                                 |
+
+### Implementation note
+
+最終実装では`runStagedConversionBatch`へ改名し、staged artifactの寿命、同時実行数、commit、cleanupだけを共有した。PDF/SVGやsource format dispatch、Sharp encoderをraster共通層へ押し込んでいない。

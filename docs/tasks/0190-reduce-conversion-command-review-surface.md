@@ -12,7 +12,7 @@ Done
 
 ### Allowed behaviors
 
-- B-001: 共通command runnerはselection・progress・cancel・success/errorの境界だけを担う。
+- B-001: 共通command runnerはprogress・cancel・Undo・success/error通知の境界だけを担う。selectionとjob生成は形式別commandに残す。
 - B-002: 形式固有のjob生成・設定・encoderはcallback/specに残す。
 - B-003: PDF/SVG固有処理を無理に同じ抽象化へ入れない。
 - B-004: 既存の外部挙動と形式別テストsuiteを維持する。
@@ -30,7 +30,7 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 
 - `src/commands/convert_to_*.ts`
 - `src/commands/convert_png_to_pdf.ts`
-- `src/commands/run_conversion_command.ts`
+- `src/commands/run_output_conversion.ts`
 - `src/commands/progress_cancellation.ts`
 - `src/operations/external_tool_*.ts`
 - `src/operations/convert_to_*.ts`
@@ -84,3 +84,7 @@ convert PNG/JPEG/WebP/AVIF/SVG/PDF command、external tool runner。
 | `pnpm run check:all`                                                                                                                                                            | PASS   | runtime/test/Webview typechecks, RuleSync, task preflight, NLS |
 | `./node_modules/.bin/vscode-test --grep "PNGに変換コマンド\|JPEGに変換コマンド\|WebPに変換コマンド\|AVIFに変換コマンド\|SVGに変換コマンド\|PDFに変換コマンド\|外部tool runner"` | PASS   | 50 tests                                                       |
 | `git diff --check`                                                                                                                                                              | PASS   | no whitespace errors                                           |
+
+### Implementation note
+
+最終実装では責務を小さく保つため、runnerはprogress、CancellationToken bridge、Undo登録、通知に限定した。selection、configuration読込み、形式固有job生成は各commandに残し、runnerをgeneric workflowへ拡張していない。
