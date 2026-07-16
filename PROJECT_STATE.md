@@ -8,10 +8,8 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Current priority
 
-- v1安全性修正後の構造簡素化
-- repository内AIハーネスの縮小
-- command/operation依存の明確化
-- release作業は簡素化完了後に再開
+- cross-platform VSIX verification
+- README・NLS・設定同期
 
 ## Implemented
 
@@ -26,7 +24,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- なし。0194はBlocked、0195は未着手。
+- なし。0194はBlocked、0195と0197は未着手。
 
 ## Non-goals
 

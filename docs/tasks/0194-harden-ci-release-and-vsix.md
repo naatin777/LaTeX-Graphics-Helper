@@ -4,25 +4,19 @@
 
 Blocked
 
-構造とハーネスの簡素化を先に行うため、一時停止する。
-既に実施済みの検証結果は保持する。
+他OS runnerでのpackageおよびpackaged VSIX smokeが未確認。
+既に実施済みの検証結果は保持する。RuleSyncとtask preflightはv1正式導線ではない。
 
 ## Change Contract
 
 ### Problem
 
-通常CIはRuleSyncと通常checkだけで、task/NLS/harnessを正式導線へ含めていない。releaseはtag時の正式checkを保証せず、VSIX stagingでnpmがsemver rangeを再解決し、Windowsでは`shell:true`、CLI公開では`npm exec --yes`を使っている。packaged smokeもSharp native loadを確認していない。
+Linux、Windows、macOSの提供targetについて、lockfileベースのpackageとpackaged VSIX smokeをrelease matrixで確認する必要がある。lockfileベースのstaging、Sharp native smoke、target一致検証など、localで実施済みの結果は維持する。
 
 ### Allowed behaviors
 
-- B-001: check workflowが`check:all`、RuleSync、task preflight、NLSをPR/pushとdocs-onlyで実行する。
-- B-002: task preflightはCIでPR baseとの差分を検証し、localではworktree/staged filesを検証する。
-- B-003: release tagがpackage前に正式checkとbuildを通過する。
-- B-004: VSIX stagingはpnpm-lock.yamlを使うproduction deployでruntime dependencyを再解決しない。dev dependencyはstaging packageへ含めない。
-- B-005: packagingとrelease publishはインストール済みpnpm CLIを使い、`npm install`、`npm exec --yes`、shell command stringを使わない。
-- B-006: package scriptはcurrent runner platform/archとtargetを一致させ、release matrixが実際に生成するtargetだけを提供する。
-- B-007: packaged VSIX smokeが各targetでSharpをloadするraster conversionを実行する。
-- B-008: integration testのVS Code versionを固定し、必要ならlatest compatibilityは別導線にする。
+- B-001: release matrixが提供targetごとにlockfileベースのVSIX packageとpackaged smokeを実行する。
+- B-002: package target、runner platform/arch、Sharp native binaryの組合せが実測で一致する。
 
 ### Unresolved
 
@@ -36,7 +30,6 @@ GitHub Actions、pnpm lockfile、staging package、native Sharp、VSIX target ma
 ### Allowed files
 
 - `scripts/package-vsix.mjs`
-- `scripts/validate-current-task.mjs`
 - `.github/workflows/check.yml`
 - `.github/workflows/test.yml`
 - `.github/workflows/playwright.yml`
@@ -54,16 +47,10 @@ GitHub Actions、pnpm lockfile、staging package、native Sharp、VSIX target ma
 
 ### Evidence matrix
 
-| Behavior | Test / verification                              | Evidence type             |
-| -------- | ------------------------------------------------ | ------------------------- |
-| B-001    | workflow/static script checks                    | CI configuration evidence |
-| B-002    | task preflight base-mode test                    | harness test              |
-| B-003    | release workflow verification job                | CI configuration evidence |
-| B-004    | package staging manifest/node_modules inspection | packaging test            |
-| B-005    | package script and workflow command search       | static check              |
-| B-006    | target mismatch test and runner matrix           | packaging test            |
-| B-007    | packaged VSIX PNG-to-JPEG smoke                  | Electron integration test |
-| B-008    | fixed version config and test run                | integration test          |
+| Behavior | Test / verification                       | Evidence type             |
+| -------- | ----------------------------------------- | ------------------------- |
+| B-001    | release matrix package and smoke          | CI configuration evidence |
+| B-002    | target and native dependency verification | packaging test            |
 
 ### Dependencies
 
@@ -84,8 +71,7 @@ tagからVSIXまでの検証・依存・target・native moduleの経路を、loc
 
 ## 完了条件
 
-- B-001からB-008のEvidence matrixが成功している。
-- package targetの実runner smokeが完了する。
+- B-001とB-002のrelease matrix evidenceが成功している。
 - taskのVerification resultsを実測値で埋める。
 
 ## Completion criteria
@@ -94,6 +80,8 @@ tagからVSIXまでの検証・依存・target・native moduleの経路を、loc
 - 実行できなかったOS/targetはDoneにせずUnresolvedまたはBlockedへ記録する。
 
 ## Verification results
+
+以下は実装済み部分の履歴である。RuleSync、task preflight、harness checkの結果は当時の実測値として保持するが、現行の正式checkには含めない。
 
 | Command                                                                                                                                                    | Result          | Notes                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------- |

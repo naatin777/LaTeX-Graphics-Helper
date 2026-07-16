@@ -6,11 +6,12 @@
 
 ## Planned
 
-- [0195: README・NLS・設定・task archiveを同期する](0195-sync-docs-settings-and-task-archive.md)（未着手。0196完了後に再評価）
+- [0197: cross-platform VSIX release verification](0197-verify-cross-platform-vsix-release.md)（未着手）
+- [0195: README・NLS・設定・task archiveを同期する](0195-sync-docs-settings-and-task-archive.md)（未着手）
 
 ## Blocked
 
-- [0194: CI・release・VSIX packagingを再現可能にする](0194-harden-ci-release-and-vsix.md)（構造とハーネスの簡素化を先行）
+- [0194: CI・release・VSIX packagingを再現可能にする](0194-harden-ci-release-and-vsix.md)（他OS runnerでのpackageおよびpackaged VSIX smokeが未確認）
 
 ## Recent Completed
 
