@@ -277,6 +277,34 @@ export default defineConfig({
     },
 
     {
+      // 実在する各 Webview app のfrontend source。
+      // app固有の共有を避け、browser環境とpure shared moduleだけに依存させる。
+      files: ["webview/apps/*/src/**/*.ts", "webview/apps/*/src/**/*.tsx"],
+      env: {
+        browser: true,
+        node: false,
+      },
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: webviewFrontendForbiddenPaths,
+            patterns: [
+              {
+                group: ["../../src/*", "../../../src/*", "../../../../src/*"],
+                message: "Webview frontend must not import extension runtime modules.",
+              },
+              {
+                group: ["../*/src/*", "../../*/src/*"],
+                message: "Webview frontend must not import another app's source directly.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+
+    {
       // webview/shared は frontend shared。
       // app 固有コードや extension runtime に依存させない。
       files: ["webview/shared/**/*.ts"],

@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0192: LaTeX Drop/Pasteの入力仕様を明確化する](0192-harden-latex-drop-and-paste.md)
+- [0193: Webviewのprotocol・CSP・i18n・性能を改善する](0193-harden-webview-boundaries-and-performance.md)
 
 ## Planned v1 Safety Path
 

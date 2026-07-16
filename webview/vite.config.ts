@@ -29,6 +29,12 @@ export function defineWebviewConfig(config: WebviewBuildConfig): UserConfig {
     resolve: {
       alias: {
         "@webview-shared": resolve(webviewRoot, "shared"),
+        "@lgh-crop-pdf-protocol": resolve(
+          projectRoot,
+          "src",
+          "application",
+          "crop_pdf_protocol.ts",
+        ),
       },
     },
 

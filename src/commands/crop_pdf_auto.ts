@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import path from "node:path";
 
 import { resolveOutputPath } from "../config/resolve_output_path.js";
+import { localeMap } from "../locale_map.js";
 import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
 import { cropPdfFiles, type CropPdfJob } from "../operations/crop_pdf_auto.js";
 import { withCancellationSignal } from "./progress_cancellation.js";
@@ -145,12 +146,14 @@ async function selectMargin(options: number[]): Promise<number | undefined> {
   const items = options.map((margin) => ({
     label: `${margin} pt`,
     description:
-      margin === 0 ? "Crop to the detected content bounds" : `Keep ${margin} pt around the content`,
+      margin === 0
+        ? localeMap("quickPick.cropPdf.margin.detectedBounds")
+        : localeMap("quickPick.cropPdf.margin.keepAroundContent").replace("{0}", margin.toString()),
     margin,
   }));
   const selected = await vscode.window.showQuickPick(items, {
-    title: "Select PDF crop margin",
-    placeHolder: "The selected margin is applied to all PDF files.",
+    title: localeMap("quickPick.cropPdf.margin.title"),
+    placeHolder: localeMap("quickPick.cropPdf.margin.placeholder"),
   });
 
   return selected?.margin;

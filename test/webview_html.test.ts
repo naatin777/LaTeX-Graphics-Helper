@@ -20,12 +20,15 @@ suite("Webview HTML生成", () => {
       extensionUri: vscode.Uri.file("/extension"),
       title: "Crop PDF",
       appName: "crop_pdf",
+      locale: "en-US",
     });
 
     assert.match(html, /connect-src vscode-resource: data: blob:/);
     assert.match(html, /font-src vscode-resource: data: blob:/);
     assert.match(html, /img-src vscode-resource: data: blob:/);
-    assert.match(html, /script-src 'nonce-[^']+' vscode-resource:/);
+    assert.match(html, /<html lang="en-US">/);
+    assert.match(html, /script-src 'nonce-[^']+';/);
+    assert.doesNotMatch(html, /script-src 'nonce-[^']+' vscode-resource:/);
     assert.match(html, /style-src vscode-resource: 'unsafe-inline'/);
     assert.match(html, /worker-src vscode-resource: blob:/);
   });
