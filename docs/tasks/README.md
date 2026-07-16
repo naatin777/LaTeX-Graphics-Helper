@@ -6,7 +6,7 @@
 
 ## Current Task
 
-- [0193: Webviewのprotocol・CSP・i18n・性能を改善する](0193-harden-webview-boundaries-and-performance.md)
+- [0194: CI・release・VSIX packagingを再現可能にする](0194-harden-ci-release-and-vsix.md)
 
 ## Planned v1 Safety Path
 

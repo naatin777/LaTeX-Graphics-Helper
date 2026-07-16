@@ -6,8 +6,41 @@ on:
             - 'v*.*.*'
 
 jobs:
+    verify:
+        name: Verify release source
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.8.0
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - run: pnpm run check:all
+              shell: bash
+
+            - run: pnpm run rulesync:check
+              shell: bash
+
+            - run: pnpm run harness:check
+              shell: bash
+
+            - run: pnpm run build
+              shell: bash
+
     package:
         name: Package (${{ matrix.os }})
+        needs: verify
         runs-on: ${{ matrix.os }}
         permissions:
             contents: read
@@ -84,9 +117,19 @@ jobs:
         permissions:
             contents: write
         steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.8.0
+
             - uses: actions/setup-node@v6
               with:
                   node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
 
             - uses: actions/download-artifact@v4
               with:
@@ -119,7 +162,7 @@ jobs:
                   VSCE_PAT: ${{ secrets.VSCE_PAT }}
               run: |
                   for vsix in ./*.vsix; do
-                    npm exec --yes @vscode/vsce@3.9.2 -- publish --packagePath "$vsix" --pat "$VSCE_PAT"
+                    pnpm exec vsce publish --packagePath "$vsix" --pat "$VSCE_PAT"
                   done
 
             - name: Publish to Open VSX
@@ -128,5 +171,5 @@ jobs:
                   OVSX_PAT: ${{ secrets.OVSX_PAT }}
               run: |
                   for vsix in ./*.vsix; do
-                    npm exec --yes ovsx@1.0.1 -- publish "$vsix" --pat "$OVSX_PAT"
+                    pnpm exec ovsx publish "$vsix" --pat "$OVSX_PAT"
                   done

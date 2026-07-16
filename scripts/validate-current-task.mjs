@@ -22,7 +22,9 @@ function parseArguments(argv) {
     } else if (argument === "--base") {
       options.base = argv[++index];
     } else if (argument === "--help") {
-      console.log("Usage: node scripts/validate-current-task.mjs [--root path] [--files path,...] [--base ref]");
+      console.log(
+        "Usage: node scripts/validate-current-task.mjs [--root path] [--files path,...] [--base ref]",
+      );
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${argument}`);
@@ -32,12 +34,18 @@ function parseArguments(argv) {
 }
 
 function runGit(root, args) {
-  return execFileSync("git", args, { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  return execFileSync("git", args, {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
 }
 
 function changedFiles(root, options) {
   if (options.files?.length > 0) {
-    return [...new Set(options.files.map((file) => file.replaceAll("\\", "/").replace(/^\.\//, "")))];
+    return [
+      ...new Set(options.files.map((file) => file.replaceAll("\\", "/").replace(/^\.\//, ""))),
+    ];
   }
 
   const commands = options.base
@@ -58,7 +66,9 @@ function changedFiles(root, options) {
 }
 
 function section(markdown, heading) {
-  const headingStart = markdown.search(new RegExp(`^### ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m"));
+  const headingStart = markdown.search(
+    new RegExp(`^### ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m"),
+  );
   if (headingStart < 0) return "";
   const bodyStart = markdown.indexOf("\n", headingStart) + 1;
   const remainder = markdown.slice(bodyStart);
@@ -108,8 +118,16 @@ function isAllowed(file, patterns) {
 }
 
 function linkedDocuments(root, markdown) {
-  const links = [...markdown.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)].map((match) => match[1].split("#", 1)[0]);
-  const relevant = links.filter((link) => link.startsWith("../specs/") || link.startsWith("../adr/") || link.startsWith("docs/specs/") || link.startsWith("docs/adr/"));
+  const links = [...markdown.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)].map(
+    (match) => match[1].split("#", 1)[0],
+  );
+  const relevant = links.filter(
+    (link) =>
+      link.startsWith("../specs/") ||
+      link.startsWith("../adr/") ||
+      link.startsWith("docs/specs/") ||
+      link.startsWith("docs/adr/"),
+  );
   return relevant.filter((link) => existsSync(path.resolve(root, "docs/tasks", link)));
 }
 
@@ -117,15 +135,23 @@ export function validateCurrentTask({ root = process.cwd(), files = [], base } =
   const errors = [];
   const readmePath = path.join(root, "docs/tasks/README.md");
   if (!existsSync(readmePath)) {
-    return { ok: false, errors: ["docs/tasks/README.md does not exist"], currentTaskPath: undefined, changedFiles: [] };
+    return {
+      ok: false,
+      errors: ["docs/tasks/README.md does not exist"],
+      currentTaskPath: undefined,
+      changedFiles: [],
+    };
   }
 
   const readme = readFileSync(readmePath, "utf8");
   const currentStart = readme.search(/^## Current Task\s*$/m);
   const currentBody = currentStart < 0 ? "" : readme.slice(readme.indexOf("\n", currentStart) + 1);
   const currentNextHeading = currentBody.search(/^## /m);
-  const currentSection = currentNextHeading < 0 ? currentBody : currentBody.slice(0, currentNextHeading);
-  const currentLinks = [...currentSection.matchAll(/^- \[[^\]]+\]\(([^)]+)\)/gm)].map((match) => match[1]);
+  const currentSection =
+    currentNextHeading < 0 ? currentBody : currentBody.slice(0, currentNextHeading);
+  const currentLinks = [...currentSection.matchAll(/^- \[[^\]]+\]\(([^)]+)\)/gm)].map(
+    (match) => match[1],
+  );
   if (currentLinks.length !== 1) {
     errors.push(`Current Task must contain exactly one link (found ${currentLinks.length})`);
     return { ok: false, errors, currentTaskPath: undefined, changedFiles: [] };
@@ -144,7 +170,11 @@ export function validateCurrentTask({ root = process.cwd(), files = [], base } =
   }
   for (const heading of REQUIRED_HEADINGS) {
     const level = heading === "Change Contract" ? "##" : "###";
-    if (!new RegExp(`^${level} ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(task)) {
+    if (
+      !new RegExp(`^${level} ${heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`, "m").test(
+        task,
+      )
+    ) {
       errors.push(`Current Task is missing required section: ${level} ${heading}`);
     }
   }
@@ -164,8 +194,24 @@ export function validateCurrentTask({ root = process.cwd(), files = [], base } =
   }
 
   const taskRelativePath = path.relative(root, currentTaskPath).replaceAll("\\", "/");
-  const currentFiles = [...new Set([...files, taskRelativePath].map((file) => file.replaceAll("\\", "/").replace(/^\.\//, "")))];
-  const actualChangedFiles = files.length > 0 || base ? currentFiles : changedFiles(root, {});
+  const currentFiles = [
+    ...new Set(
+      [...files, taskRelativePath].map((file) => file.replaceAll("\\", "/").replace(/^\.\//, "")),
+    ),
+  ];
+  let actualChangedFiles;
+  if (files.length > 0) {
+    actualChangedFiles = currentFiles;
+  } else if (base) {
+    actualChangedFiles = [
+      taskRelativePath,
+      ...runGit(root, ["diff", "--name-only", `${base}...HEAD`])
+        .split("\n")
+        .filter(Boolean),
+    ];
+  } else {
+    actualChangedFiles = changedFiles(root, {});
+  }
   for (const file of actualChangedFiles) {
     if (file === taskRelativePath) continue;
     if (!isAllowed(file, allowedPatterns)) {
@@ -173,17 +219,30 @@ export function validateCurrentTask({ root = process.cwd(), files = [], base } =
     }
   }
 
-  const sourceChanged = actualChangedFiles.some((file) => /^(src|webview|scripts|test)\//.test(file) || file === "package.json");
+  const sourceChanged = actualChangedFiles.some(
+    (file) => /^(src|webview|scripts|test)\//.test(file) || file === "package.json",
+  );
   if (sourceChanged && !hasEvidence(task)) {
     errors.push("Source/config changes require a non-empty Evidence matrix");
   }
-  return { ok: errors.length === 0, errors, currentTaskPath, changedFiles: actualChangedFiles, status };
+  return {
+    ok: errors.length === 0,
+    errors,
+    currentTaskPath,
+    changedFiles: actualChangedFiles,
+    status,
+  };
 }
 
 function main() {
   try {
     const options = parseArguments(process.argv.slice(2));
-    const result = validateCurrentTask({ ...options, root: options.root, files: options.files, base: options.base });
+    const result = validateCurrentTask({
+      ...options,
+      root: options.root,
+      files: options.files,
+      base: options.base,
+    });
     console.log(JSON.stringify(result, null, 2));
     if (!result.ok) process.exitCode = 1;
   } catch (error) {

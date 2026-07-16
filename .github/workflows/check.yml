@@ -13,6 +13,8 @@ concurrency:
 jobs:
     check:
         runs-on: ubuntu-latest
+        env:
+            LGH_TASK_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         steps:
             - uses: actions/checkout@v7
 
@@ -30,8 +32,5 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - run: pnpm run rulesync:check
-              shell: bash
-
-            - run: pnpm run check
+            - run: pnpm run check:all
               shell: bash
