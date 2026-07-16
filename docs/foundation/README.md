@@ -12,6 +12,9 @@
 - [capability catalog](capability-catalog.md): public capability、cross-cutting guarantee、delivery capability
 - [spec / test trace](spec-test-trace.md): contract、implementation boundary、test、runtime、gap
 - [test runtime inventory](test-runtime-inventory.md): Node、VS Code Host、Browser、Electron、packaging、platformの役割
+- [test file inventory](test-file-inventory.md): repository treeから列挙した全test file / case、current runner、required runtime仮説
+- [Browser / Electron overlap](browser-electron-overlap.md): Browser 18 caseとElectron case groupのoracle差・重複度
+- [Evidence gaps](evidence-gaps.md): capability、spec、test、CI、platform、packagingの未接続
 - [CI Evidence map](ci-evidence-map.md): Check、Test、Playwright、Release workflowとlocal scriptの意味
 - [tooling file coverage](tooling-file-coverage.md): Oxlint、Oxfmt、TypeScript、Vitest、Lefthookの対象範囲
 - [関連task 0198](../tasks/0198-audit-v1-development-foundation.md)

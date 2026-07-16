@@ -16,6 +16,7 @@
 
 ## Recent Completed
 
+- [0199: v1 test Evidence inventoryを完了する](0199-complete-test-evidence-inventory.md)
 - [0196: v1構造とハーネスを簡素化する](0196-simplify-v1-architecture-and-harness.md)
 - [0193: Webviewのprotocol・CSP・i18n・性能を改善する](0193-harden-webview-boundaries-and-performance.md)
 - [0192: LaTeX Drop/Pasteの入力仕様を明確化する](0192-harden-latex-drop-and-paste.md)
