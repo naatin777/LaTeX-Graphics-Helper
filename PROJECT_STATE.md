@@ -8,11 +8,9 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Current priority
 
-- v1で保証するcapability、仕様、test Evidence、toolingのbaseline監査
-- Browser Playwright、VS Code Electron、Extension Host、Node / Vitestの役割整理
-- test directory、package script、CI、Oxlint、project Skillの前提確認
-
-cross-platform VSIX verificationとREADME・NLS・設定同期は、foundation auditで必要Evidenceと作業順を整理した後に再開する。
+- P0 testを使ったNode runtime分離実験
+- Extension Host / Nodeの実行時間・診断性・依存差の比較
+- 実験結果に基づくrunnerとdirectory方針のSelection Gate
 
 ## Implemented
 
@@ -27,11 +25,11 @@ cross-platform VSIX verificationとREADME・NLS・設定同期は、foundation a
 
 ## In progress
 
-- [0198: v1開発基盤の前提を監査する](docs/tasks/0198-audit-v1-development-foundation.md)
+- [0200: Node test runtimeを小規模検証する](docs/tasks/0200-experiment-node-test-runtime.md)
 
 ## Non-goals
 
-foundation audit中は次を行わない。
+foundation audit後のSelection Gate検討中は次を行わない。
 
 - production codeのリファクタリング
 - test directoryの全面移動
@@ -48,7 +46,7 @@ foundation audit中は次を行わない。
 - 観測、解釈、仮説、unknown、contradictionを分離してから判断する。
 - test runnerは、runner統一ではなく、守るcontractとoracleから選ぶ。
 - required platform、quality priority、不可逆な変更はmaintainerが決める。
-- foundation auditが完了するまで、大規模なproduction architecture変更を開始しない。
+- Selection Gateが決まるまで、大規模なproduction architecture変更を開始しない。
 - 作業中は `docs/tasks/README.md` からリンクされた1つのtaskに限定する。作業がない場合はCurrent Taskを空にする。
 - 気になるリファクタは、すぐ直さず `docs/refactor-backlog.md` に書く。
 - 採用した永続判断は `docs/adr/` に記録する。未決案をADRで確定扱いしない。
