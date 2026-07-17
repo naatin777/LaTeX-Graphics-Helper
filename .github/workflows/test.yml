@@ -11,8 +11,8 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    node-test:
-        name: node-test (${{ matrix.label }})
+    test:
+        name: test (${{ matrix.label }})
         runs-on: ${{ matrix.os }}
         timeout-minutes: 10
         strategy:
@@ -21,44 +21,13 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       label: Linux
+                      test_command: xvfb-run pnpm run test
                     - os: macos-latest
                       label: macOS
+                      test_command: pnpm run test
                     - os: windows-latest
                       label: Windows
-        steps:
-            - uses: actions/checkout@v7
-
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.8.0
-
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: '22'
-                  cache: pnpm
-
-            - run: pnpm install --frozen-lockfile
-              shell: bash
-
-            - run: pnpm run test:node
-              shell: bash
-
-    vscode-test:
-        name: vscode-test (${{ matrix.label }})
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      label: Linux
-                      test_command: xvfb-run pnpm run test:vscode
-                    - os: macos-latest
-                      label: macOS
-                      test_command: pnpm run test:vscode
-                    - os: windows-latest
-                      label: Windows
-                      test_command: pnpm run test:vscode
+                      test_command: pnpm run test
         steps:
             - uses: actions/checkout@v7
 
@@ -94,5 +63,6 @@ jobs:
               run: .github/scripts/verify-image-tools-windows.ps1
               shell: pwsh
 
-            - run: ${{ matrix.test_command }}
+            - name: Run Node and VS Code Extension Host tests
+              run: ${{ matrix.test_command }}
               shell: bash
