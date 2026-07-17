@@ -93,9 +93,11 @@ async function copyRuntimeFiles(stageDirectory) {
 
 function runCommand(command, args, options) {
   return new Promise((resolve, reject) => {
+    // Windows exposes pnpm through a .cmd shim, which Node cannot spawn with shell:false.
+    const useShell = process.platform === "win32" && command.toLowerCase().endsWith(".cmd");
     const child = spawn(command, args, {
       ...options,
-      shell: false,
+      shell: useShell,
       stdio: "inherit",
     });
     child.once("error", reject);

@@ -60,7 +60,7 @@ jobs:
                   LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ steps.target.outputs.value }}.vsix
                   LGH_VSIX_TARGET: ${{ steps.target.outputs.value }}
               run: |
-                  node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+                  node <<'NODE' | tee -a "$GITHUB_STEP_SUMMARY"
                   const { createHash } = require("node:crypto");
                   const { createReadStream, statSync } = require("node:fs");
                   const { execFileSync } = require("node:child_process");
