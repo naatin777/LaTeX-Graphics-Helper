@@ -34,6 +34,7 @@ PDF の結合、分割、トリミング、画像形式の相互変換、Draw.io
 ### 画像・Draw.io 操作
 *   **PDF 変換**: PNG, JPEG, SVG ファイルを PDF 形式に変換します。
 *   **Draw.io から PDF 変換**: Draw.io ファイル (.drawio, .dio) を PDF に変換します。各タブは個別の PDF としてエクスポートされます。
+*   **Draw.io から直接 PDF 変換**: Draw.io ファイルの全タブを含む単一の PDF に変換します。デフォルトでは元ファイルと同じ場所に保存され、`latex-graphics-helper.outputPath.convertDrawioToPdfDirectly` で出力パスを変更できます。
 
 ### LaTeX コード生成
 *   **PDF から挿入**: PDF ファイルを LaTeX ドキュメントにドラッグ&ドロップすると、対応する LaTeX コードが自動挿入されます。

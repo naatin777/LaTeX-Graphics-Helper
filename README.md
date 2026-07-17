@@ -34,6 +34,7 @@ It offers a variety of features, including PDF merging, splitting, and trimming,
 ### Image & Draw.io Operations
 *   **Convert to PDF**: Converts PNG, JPEG, or SVG files to PDF format.
 *   **Convert Draw.io to PDF**: Converts Draw.io files (.drawio, .dio) to PDF. Each tab is exported as a separate PDF.
+*   **Convert Draw.io Directly to PDF**: Converts a Draw.io file into one PDF containing all tabs. By default, it is saved beside the source file; customize the path with `latex-graphics-helper.outputPath.convertDrawioToPdfDirectly`.
 
 ### LaTeX Code Generation
 *   **Insert from PDF**: Drag and drop a PDF file into a LaTeX document to automatically insert the corresponding LaTeX code.

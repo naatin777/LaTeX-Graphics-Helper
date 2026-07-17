@@ -22,6 +22,7 @@ export interface AppConfig {
     outputPathCropPdf: PdfTemplatePath;
     outputPathSplitPdf: PdfTemplatePath;
     outputPathConvertDrawioToPdf: PdfTemplatePath;
+    outputPathConvertDrawioToPdfDirectly: PdfTemplatePath;
     outputPathConvertPdfToPng: PngTemplatePath;
     outputPathConvertPdfToJpeg: JpegTemplatePath;
     outputPathConvertPdfToSvg: SvgTemplatePath;
@@ -48,6 +49,7 @@ export function getAppConfig(): AppConfig {
         outputPathCropPdf: getOutputPathCropPdf(),
         outputPathSplitPdf: getOutputPathSplitPdf(),
         outputPathConvertDrawioToPdf: getOutputPathConvertDrawioToPdf(),
+        outputPathConvertDrawioToPdfDirectly: getOutputPathConvertDrawioToPdfDirectly(),
         outputPathConvertPdfToPng: getOutputPathConvertPdfToPng(),
         outputPathConvertPdfToJpeg: getOutputPathConvertPdfToJpeg(),
         outputPathConvertPdfToSvg: getOutputPathConvertPdfToSvg(),
@@ -116,6 +118,11 @@ function getOutputPathSplitPdf(): PdfTemplatePath {
 function getOutputPathConvertDrawioToPdf(): PdfTemplatePath {
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     return configuration.get<string>('outputPath.convertDrawioToPdf') as PdfTemplatePath;
+}
+
+function getOutputPathConvertDrawioToPdfDirectly(): PdfTemplatePath {
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    return configuration.get<string>('outputPath.convertDrawioToPdfDirectly') as PdfTemplatePath;
 }
 
 function getOutputPathConvertPdfToPng(): PngTemplatePath {
