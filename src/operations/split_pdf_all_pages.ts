@@ -1,21 +1,19 @@
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import pLimit from "p-limit";
-import { PDFDocument } from "pdf-lib";
+import pLimit from 'p-limit';
+import { PDFDocument } from 'pdf-lib';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+} from './commit_conversion_outputs.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 const SPLIT_CONCURRENCY = 2;
 
@@ -42,7 +40,7 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, "split-pdf", runId);
+  const artifacts = stagingArtifactsForJobs(options.jobs, 'split-pdf', runId);
 
   return withStagingCleanup(
     artifacts,
@@ -64,7 +62,7 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: "split-pdf",
+        operationName: 'split-pdf',
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
@@ -82,14 +80,8 @@ async function splitPdf(params: {
   signal?.throwIfAborted();
 
   const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
-  const workDirectory = path.join(
-    job.workspacePath,
-    ".latex-graphics-helper",
-    "split-pdf",
-    runId,
-    itemName,
-  );
-  const pagesDirectory = path.join(workDirectory, "pages");
+  const workDirectory = path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf', runId, itemName);
+  const pagesDirectory = path.join(workDirectory, 'pages');
   const copiedSourcePath = path.join(workDirectory, path.basename(job.sourcePath));
 
   await assertExistingPathInWorkspace(job.sourcePath, job.workspacePath);
@@ -132,7 +124,7 @@ async function splitPdf(params: {
       stagedOutputPath,
       outputPath: job.outputPathForPage(page),
       workspacePath: job.workspacePath,
-      stagingRootPath: path.join(job.workspacePath, ".latex-graphics-helper", "split-pdf", runId),
+      stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf', runId),
     });
   }
 
@@ -144,7 +136,7 @@ async function validateInputPaths(jobs: SplitPdfJob[]): Promise<void> {
     jobs.flatMap((job) => [
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "split-pdf"),
+        path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf'),
         job.workspacePath,
       ),
     ]),
@@ -153,16 +145,16 @@ async function validateInputPaths(jobs: SplitPdfJob[]): Promise<void> {
 
 function validateJobs(jobs: SplitPdfJob[]): void {
   if (jobs.length === 0) {
-    throw new Error("No PDF files were selected.");
+    throw new Error('No PDF files were selected.');
   }
 
   for (const job of jobs) {
-    if (path.extname(job.sourcePath).toLowerCase() !== ".pdf") {
+    if (path.extname(job.sourcePath).toLowerCase() !== '.pdf') {
       throw new Error(`Only PDF files can be split: ${job.sourcePath}`);
     }
   }
 }
 
 function safeName(value: string): string {
-  return value.replace(/[^a-zA-Z0-9._-]/g, "_") || "pdf";
+  return value.replace(/[^a-zA-Z0-9._-]/g, '_') || 'pdf';
 }

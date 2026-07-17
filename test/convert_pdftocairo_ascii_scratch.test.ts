@@ -14,61 +14,44 @@
 // - VS Code command UI、Safe Modeの選択肢、Undo
 // - Ghostscriptとrsvg-convert
 
-import assert from "node:assert/strict";
-import { constants } from "node:fs";
-import {
-  access,
-  copyFile,
-  mkdir,
-  mkdtemp,
-  readFile,
-  realpath,
-  rm,
-  stat,
-  writeFile,
-} from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { constants } from 'node:fs';
+import { access, copyFile, mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import sharp from "sharp";
+import sharp from 'sharp';
 
-import { convertToAvifFiles } from "../src/operations/convert_to_avif.js";
-import { convertToJpegFiles } from "../src/operations/convert_to_jpeg.js";
-import { convertToPngFiles } from "../src/operations/convert_to_png.js";
-import { convertToSvgFiles } from "../src/operations/convert_to_svg.js";
-import { convertToWebpFiles } from "../src/operations/convert_to_webp.js";
+import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
+import { convertToJpegFiles } from '../src/operations/convert_to_jpeg.js';
+import { convertToPngFiles } from '../src/operations/convert_to_png.js';
+import { convertToSvgFiles } from '../src/operations/convert_to_svg.js';
+import { convertToWebpFiles } from '../src/operations/convert_to_webp.js';
 
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const pdfFixturePath = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "pdf-operations",
-  "user-files",
-  " 薔薇🌹.pdf",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'pdf-operations',
+  'user-files',
+  ' 薔薇🌹.pdf',
 );
-const pngFixturePath = path.resolve(
-  compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "test.png",
-);
+const pngFixturePath = path.resolve(compiledTestDirectory, '..', '..', 'test', 'fixtures', 'test.png');
 const svgFixturePath = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "path-compatibility",
-  "source.svg",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'path-compatibility',
+  'source.svg',
 );
 const complexSourceFileName =
-  "　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf";
+  '　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf';
 
 interface WindowsScratchOptions {
   platform: NodeJS.Platform;
@@ -98,12 +81,7 @@ const convertToWebpFilesWithScratch = convertToWebpFiles as ConvertToWebpFilesWi
 const convertToAvifFilesWithScratch = convertToAvifFiles as ConvertToAvifFilesWithScratch;
 const convertToSvgFilesWithScratch = convertToSvgFiles as ConvertToSvgFilesWithScratch;
 
-type RunPdfTool = (
-  sourcePath: string,
-  outputPath: string,
-  page: number,
-  signal?: AbortSignal,
-) => Promise<void>;
+type RunPdfTool = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
 
 interface ConversionContext {
   sourcePath: string;
@@ -115,99 +93,99 @@ interface ConversionContext {
 interface PdfConversionRoute {
   label: string;
   outputExtension: string;
-  toolOutputFileName: "output.png" | "output.svg";
+  toolOutputFileName: 'output.png' | 'output.svg';
   convert: (context: ConversionContext, runPdfTool: RunPdfTool) => Promise<void>;
   assertOutput: (outputPath: string) => Promise<void>;
 }
 
 const routes: readonly PdfConversionRoute[] = [
   {
-    label: "PNG",
-    outputExtension: ".png",
-    toolOutputFileName: "output.png",
+    label: 'PNG',
+    outputExtension: '.png',
+    toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
       await convertToPngFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoPath: "pdftocairo",
-        mermaid: { browserChannel: "chrome" },
-        drawio: { drawioPath: "drawio" },
+        pdftocairoPath: 'pdftocairo',
+        mermaid: { browserChannel: 'chrome' },
+        drawio: { drawioPath: 'drawio' },
         runPdfToPng: runPdfTool,
-        runId: "windows-pdftocairo-png",
-        platform: "win32",
+        runId: 'windows-pdftocairo-png',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
-    assertOutput: (outputPath) => assertRasterFormat(outputPath, "png"),
+    assertOutput: (outputPath) => assertRasterFormat(outputPath, 'png'),
   },
   {
-    label: "JPEG",
-    outputExtension: ".jpeg",
-    toolOutputFileName: "output.png",
+    label: 'JPEG',
+    outputExtension: '.jpeg',
+    toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
       await convertToJpegFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoPath: "pdftocairo",
-        mermaid: { browserChannel: "chrome" },
-        drawio: { drawioPath: "drawio" },
+        pdftocairoPath: 'pdftocairo',
+        mermaid: { browserChannel: 'chrome' },
+        drawio: { drawioPath: 'drawio' },
         runPdfToPng: runPdfTool,
-        runId: "windows-pdftocairo-jpeg",
-        platform: "win32",
+        runId: 'windows-pdftocairo-jpeg',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
-    assertOutput: (outputPath) => assertRasterFormat(outputPath, "jpeg"),
+    assertOutput: (outputPath) => assertRasterFormat(outputPath, 'jpeg'),
   },
   {
-    label: "WebP",
-    outputExtension: ".webp",
-    toolOutputFileName: "output.png",
+    label: 'WebP',
+    outputExtension: '.webp',
+    toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
       await convertToWebpFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoPath: "pdftocairo",
-        mermaid: { browserChannel: "chrome" },
-        drawio: { drawioPath: "drawio" },
+        pdftocairoPath: 'pdftocairo',
+        mermaid: { browserChannel: 'chrome' },
+        drawio: { drawioPath: 'drawio' },
         webp: { effort: 0 },
         runPdfToPng: runPdfTool,
-        runId: "windows-pdftocairo-webp",
-        platform: "win32",
+        runId: 'windows-pdftocairo-webp',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
-    assertOutput: (outputPath) => assertRasterFormat(outputPath, "webp"),
+    assertOutput: (outputPath) => assertRasterFormat(outputPath, 'webp'),
   },
   {
-    label: "AVIF",
-    outputExtension: ".avif",
-    toolOutputFileName: "output.png",
+    label: 'AVIF',
+    outputExtension: '.avif',
+    toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
       await convertToAvifFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoPath: "pdftocairo",
-        mermaid: { browserChannel: "chrome" },
-        drawio: { drawioPath: "drawio" },
+        pdftocairoPath: 'pdftocairo',
+        mermaid: { browserChannel: 'chrome' },
+        drawio: { drawioPath: 'drawio' },
         avif: { effort: 0 },
         runPdfToPng: runPdfTool,
-        runId: "windows-pdftocairo-avif",
-        platform: "win32",
+        runId: 'windows-pdftocairo-avif',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
-    assertOutput: (outputPath) => assertRasterFormat(outputPath, "heif"),
+    assertOutput: (outputPath) => assertRasterFormat(outputPath, 'heif'),
   },
   {
-    label: "SVG",
-    outputExtension: ".svg",
-    toolOutputFileName: "output.svg",
+    label: 'SVG',
+    outputExtension: '.svg',
+    toolOutputFileName: 'output.svg',
     convert: async (context, runPdfTool) => {
       await convertToSvgFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoPath: "pdftocairo",
-        mermaid: { browserChannel: "chrome" },
-        drawio: { drawioPath: "drawio" },
+        pdftocairoPath: 'pdftocairo',
+        mermaid: { browserChannel: 'chrome' },
+        drawio: { drawioPath: 'drawio' },
         runPdfToSvg: runPdfTool,
-        runId: "windows-pdftocairo-svg",
-        platform: "win32",
+        runId: 'windows-pdftocairo-svg',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
@@ -215,7 +193,7 @@ const routes: readonly PdfConversionRoute[] = [
   },
 ];
 
-suite("Windows pdftocairo ASCII scratch", () => {
+suite('Windows pdftocairo ASCII scratch', () => {
   for (const route of routes) {
     test(`Unicode論理pathを維持して${route.label}へ変換し、成功後にscratchを削除する`, async () => {
       const paths = await prepareFixedFixtureWorkspace(route.outputExtension);
@@ -234,8 +212,8 @@ suite("Windows pdftocairo ASCII scratch", () => {
           await writeToolFixture(outputPath);
         });
 
-        const requiredInputPath = requiredPath(toolInputPath, "tool入力path");
-        const requiredOutputPath = requiredPath(toolOutputPath, "tool出力path");
+        const requiredInputPath = requiredPath(toolInputPath, 'tool入力path');
+        const requiredOutputPath = requiredPath(toolOutputPath, 'tool出力path');
         await route.assertOutput(paths.outputPath);
         assert.deepStrictEqual(await readFile(paths.sourcePath), sourceBytes);
         await assertFileDoesNotExist(requiredInputPath);
@@ -246,20 +224,20 @@ suite("Windows pdftocairo ASCII scratch", () => {
     });
   }
 
-  test("期待pathと異なる別名PNGを成功扱いせず、論理出力を作らない", async () => {
-    const paths = await prepareFixedFixtureWorkspace(".png");
+  test('期待pathと異なる別名PNGを成功扱いせず、論理出力を作らない', async () => {
+    const paths = await prepareFixedFixtureWorkspace('.png');
     let unexpectedOutputPath: string | undefined;
 
     try {
       await assert.rejects(
         routes[0]!.convert(paths, async (sourcePath, outputPath) => {
-          assert.strictEqual(path.extname(sourcePath), ".pdf");
-          unexpectedOutputPath = path.join(path.dirname(outputPath), "output-garbled.png");
+          assert.strictEqual(path.extname(sourcePath), '.pdf');
+          unexpectedOutputPath = path.join(path.dirname(outputPath), 'output-garbled.png');
           await copyFile(pngFixturePath, unexpectedOutputPath);
         }),
       );
 
-      const requiredUnexpectedPath = requiredPath(unexpectedOutputPath, "別名tool出力path");
+      const requiredUnexpectedPath = requiredPath(unexpectedOutputPath, '別名tool出力path');
       assert.strictEqual(isPathInside(paths.scratchBasePath, requiredUnexpectedPath), true);
       await access(requiredUnexpectedPath, constants.F_OK);
       await assertFileDoesNotExist(paths.outputPath);
@@ -268,20 +246,20 @@ suite("Windows pdftocairo ASCII scratch", () => {
     }
   });
 
-  test("期待pathの0 byte PNGを成功扱いせず、論理出力を作らない", async () => {
-    const paths = await prepareFixedFixtureWorkspace(".png");
+  test('期待pathの0 byte PNGを成功扱いせず、論理出力を作らない', async () => {
+    const paths = await prepareFixedFixtureWorkspace('.png');
     let toolOutputPath: string | undefined;
 
     try {
       await assert.rejects(
         routes[0]!.convert(paths, async (sourcePath, outputPath) => {
           toolOutputPath = outputPath;
-          assert.strictEqual(path.extname(sourcePath), ".pdf");
+          assert.strictEqual(path.extname(sourcePath), '.pdf');
           await writeFile(outputPath, Buffer.alloc(0));
         }),
       );
 
-      const requiredOutputPath = requiredPath(toolOutputPath, "0 byte tool出力path");
+      const requiredOutputPath = requiredPath(toolOutputPath, '0 byte tool出力path');
       assert.strictEqual((await stat(requiredOutputPath)).size, 0);
       await assertFileDoesNotExist(paths.outputPath);
     } finally {
@@ -294,19 +272,14 @@ interface FixedFixtureWorkspace extends ConversionContext {
   testRootPath: string;
 }
 
-async function prepareFixedFixtureWorkspace(
-  outputExtension: string,
-): Promise<FixedFixtureWorkspace> {
-  const testRootPath = await mkdtemp(path.join(os.tmpdir(), "lgh-pdftocairo-scratch-test-"));
-  const workspacePath = path.join(testRootPath, "workspace 日本語 हिन्दी 🌹");
-  const scratchBasePath = path.join(testRootPath, "scratch");
+async function prepareFixedFixtureWorkspace(outputExtension: string): Promise<FixedFixtureWorkspace> {
+  const testRootPath = await mkdtemp(path.join(os.tmpdir(), 'lgh-pdftocairo-scratch-test-'));
+  const workspacePath = path.join(testRootPath, 'workspace 日本語 हिन्दी 🌹');
+  const scratchBasePath = path.join(testRootPath, 'scratch');
   const sourcePath = path.join(workspacePath, complexSourceFileName);
   const outputPath = path.join(workspacePath, `結果 한국어 العربية 🌹　ＡＢＣ①${outputExtension}`);
 
-  await Promise.all([
-    mkdir(workspacePath, { recursive: true }),
-    mkdir(scratchBasePath, { recursive: true }),
-  ]);
+  await Promise.all([mkdir(workspacePath, { recursive: true }), mkdir(scratchBasePath, { recursive: true })]);
   await copyFile(pdfFixturePath, sourcePath);
 
   return {
@@ -330,10 +303,10 @@ function createJob(context: ConversionContext) {
 function assertAsciiToolPaths(
   toolInputPath: string,
   toolOutputPath: string,
-  expectedOutputFileName: "output.png" | "output.svg",
+  expectedOutputFileName: 'output.png' | 'output.svg',
   paths: FixedFixtureWorkspace,
 ): void {
-  assert.strictEqual(path.basename(toolInputPath), "input.pdf");
+  assert.strictEqual(path.basename(toolInputPath), 'input.pdf');
   assert.strictEqual(path.basename(toolOutputPath), expectedOutputFileName);
   assert.match(toolInputPath, /^[\x20-\x7e]+$/u);
   assert.match(toolOutputPath, /^[\x20-\x7e]+$/u);
@@ -343,14 +316,14 @@ function assertAsciiToolPaths(
   assert.strictEqual(isPathInside(paths.workspacePath, toolInputPath), false);
   assert.strictEqual(isPathInside(paths.workspacePath, toolOutputPath), false);
 
-  if (expectedOutputFileName === "output.png") {
+  if (expectedOutputFileName === 'output.png') {
     const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
-    assert.strictEqual(path.basename(outputPrefix), "output");
+    assert.strictEqual(path.basename(outputPrefix), 'output');
   }
 }
 
 async function writeToolFixture(outputPath: string): Promise<void> {
-  if (path.extname(outputPath) === ".svg") {
+  if (path.extname(outputPath) === '.svg') {
     await copyFile(svgFixturePath, outputPath);
     return;
   }
@@ -369,7 +342,7 @@ async function assertRasterFormat(filePath: string, expectedFormat: string): Pro
 }
 
 async function assertSvgOutput(filePath: string): Promise<void> {
-  assert.match(await readFile(filePath, "utf8"), /<svg[\s>]/u);
+  assert.match(await readFile(filePath, 'utf8'), /<svg[\s>]/u);
 }
 
 function requiredPath(filePath: string | undefined, label: string): string {
@@ -380,15 +353,13 @@ function requiredPath(filePath: string | undefined, label: string): string {
 function isPathInside(parentPath: string, childPath: string): boolean {
   const relativePath = path.relative(parentPath, childPath);
   return (
-    relativePath === "" ||
-    (relativePath !== ".." &&
-      !relativePath.startsWith(`..${path.sep}`) &&
-      !path.isAbsolute(relativePath))
+    relativePath === '' ||
+    (relativePath !== '..' && !relativePath.startsWith(`..${path.sep}`) && !path.isAbsolute(relativePath))
   );
 }
 
 async function assertFileDoesNotExist(filePath: string): Promise<void> {
   await assert.rejects(access(filePath, constants.F_OK), (error) => {
-    return error instanceof Error && "code" in error && error.code === "ENOENT";
+    return error instanceof Error && 'code' in error && error.code === 'ENOENT';
   });
 }

@@ -9,69 +9,66 @@
 // Mocked:
 // - Draw.io CLIの実行。CIにDraw.io Desktopを必須化せず、CLI境界へ渡すpathと出力の反映を検証する。
 
-import assert from "node:assert/strict";
-import { copyFile, mkdtemp, mkdir, readFile, rm } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { copyFile, mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument } from 'pdf-lib';
 
-import {
-  convertPngToPdfFiles,
-  type DrawioToPdfOptions,
-} from "../src/operations/convert_png_to_pdf.js";
+import { convertPngToPdfFiles, type DrawioToPdfOptions } from '../src/operations/convert_png_to_pdf.js';
 
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const drawioFixturePath = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "pdf-operations",
-  "user-files",
-  " 薔薇🌹.dio",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'pdf-operations',
+  'user-files',
+  ' 薔薇🌹.dio',
 );
 const pdfFixturePath = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "pdf-operations",
-  "user-files",
-  " 薔薇🌹.pdf",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'pdf-operations',
+  'user-files',
+  ' 薔薇🌹.pdf',
 );
 
-suite("Draw.ioの複雑なpath変換", () => {
-  test("ページ名・フォルダ名・ファイル名に空白とUnicodeがあっても3ページPDFへ変換する", async () => {
-    const testRootPath = await mkdtemp(path.join(os.tmpdir(), "lgh-drawio-complex-path-"));
+suite('Draw.ioの複雑なpath変換', () => {
+  test('ページ名・フォルダ名・ファイル名に空白とUnicodeがあっても3ページPDFへ変換する', async () => {
+    const testRootPath = await mkdtemp(path.join(os.tmpdir(), 'lgh-drawio-complex-path-'));
     const workspacePath = path.join(
       testRootPath,
-      "workspace 日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹　ＡＢＣ",
+      'workspace 日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹　ＡＢＣ',
     );
-    const inputDirectory = path.join(workspacePath, "入力 フォルダ　図面 العربية");
-    const outputDirectory = path.join(workspacePath, "出力 フォルダ　結果 한국어");
-    const sourcePath = path.join(inputDirectory, "　設計図 Drawio 日本語🌹　ＡＢＣ.dio.png");
-    const outputPath = path.join(outputDirectory, "結果 ページ名　日本語🌹.pdf");
+    const inputDirectory = path.join(workspacePath, '入力 フォルダ　図面 العربية');
+    const outputDirectory = path.join(workspacePath, '出力 フォルダ　結果 한국어');
+    const sourcePath = path.join(inputDirectory, '　設計図 Drawio 日本語🌹　ＡＢＣ.dio.png');
+    const outputPath = path.join(outputDirectory, '結果 ページ名　日本語🌹.pdf');
 
     try {
       await mkdir(inputDirectory, { recursive: true });
       await mkdir(outputDirectory, { recursive: true });
       await copyFile(drawioFixturePath, sourcePath);
       const originalSourceBytes = await readFile(sourcePath);
-      const sourceText = originalSourceBytes.toString("utf8");
+      const sourceText = originalSourceBytes.toString('utf8');
       assert.match(sourceText, /name="　ページ1 "/u);
       assert.match(sourceText, /name="ページ2🐶"/u);
       assert.match(sourceText, /name="ページ3"/u);
 
       const drawioCalls: { executable: string; args: string[] }[] = [];
       const drawio: DrawioToPdfOptions = {
-        drawioPath: "drawio",
+        drawioPath: 'drawio',
         runDrawio: async (executable, args) => {
           drawioCalls.push({ executable, args });
-          const outputFlagIndex = args.indexOf("-o");
+          const outputFlagIndex = args.indexOf('-o');
           assert.strictEqual(outputFlagIndex, 3);
           const toolOutputPath = args[outputFlagIndex + 1];
           assert.ok(toolOutputPath);
@@ -91,8 +88,8 @@ suite("Draw.ioの複雑なpath変換", () => {
           },
         ],
         drawio,
-        resolveOutputConflicts: async () => "overwrite",
-        runId: "drawio-complex-path",
+        resolveOutputConflicts: async () => 'overwrite',
+        runId: 'drawio-complex-path',
       });
 
       assert.deepStrictEqual(outputs, [
@@ -101,15 +98,15 @@ suite("Draw.ioの複雑なpath変換", () => {
           workspacePath,
           stagingRootPath: path.join(
             workspacePath,
-            ".latex-graphics-helper",
-            "convert-png-to-pdf",
-            "drawio-complex-path",
+            '.latex-graphics-helper',
+            'convert-png-to-pdf',
+            'drawio-complex-path',
           ),
         },
       ]);
       assert.strictEqual(drawioCalls.length, 1);
-      assert.strictEqual(drawioCalls[0]?.executable, "drawio");
-      assert.deepStrictEqual(drawioCalls[0]?.args.slice(0, 4), ["-x", "-f", "pdf", "-o"]);
+      assert.strictEqual(drawioCalls[0]?.executable, 'drawio');
+      assert.deepStrictEqual(drawioCalls[0]?.args.slice(0, 4), ['-x', '-f', 'pdf', '-o']);
       assert.strictEqual(drawioCalls[0]?.args[5], sourcePath);
       assert.deepStrictEqual(await readFile(sourcePath), originalSourceBytes);
 

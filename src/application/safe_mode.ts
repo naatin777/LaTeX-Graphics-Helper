@@ -1,4 +1,4 @@
-export const SAFE_MODE_STATE_KEY = "safeMode.enabled";
+export const SAFE_MODE_STATE_KEY = 'safeMode.enabled';
 
 export interface StateStorage {
   get<T>(key: string, defaultValue?: T): T | undefined;

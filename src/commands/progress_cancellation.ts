@@ -1,4 +1,4 @@
-import type * as vscode from "vscode";
+import type * as vscode from 'vscode';
 
 export async function withCancellationSignal<T>(
   token: vscode.CancellationToken,

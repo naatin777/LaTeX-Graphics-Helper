@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export interface LatexSnippetConfig {
   figurePlacementOptions: string[];
@@ -53,9 +53,9 @@ export class LatexSnippet {
       option();
     }
     if (argument) {
-      this.snippet.appendText("{");
+      this.snippet.appendText('{');
       argument();
-      this.snippet.appendText("}");
+      this.snippet.appendText('}');
     }
     return this;
   }
@@ -72,17 +72,17 @@ export class LatexSnippet {
   }
 
   lineBreak(): this {
-    this.snippet.appendText("\n\t");
+    this.snippet.appendText('\n\t');
     return this;
   }
 
   lineEnd(): this {
-    this.snippet.appendText("\n");
+    this.snippet.appendText('\n');
     return this;
   }
 
   convertToLatexPath(filePath: string): string {
-    return filePath.split(/[\\/]+/).join("/");
+    return filePath.split(/[\\/]+/).join('/');
   }
 
   private appendOption(options: string[]): this {
@@ -92,7 +92,7 @@ export class LatexSnippet {
       return this;
     }
 
-    this.snippet.appendText(options[0] ?? "");
+    this.snippet.appendText(options[0] ?? '');
     return this;
   }
 }

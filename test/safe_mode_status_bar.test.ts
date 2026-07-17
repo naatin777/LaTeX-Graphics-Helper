@@ -19,14 +19,14 @@
 // - VS Code再起動そのもの
 // - crop、split、PNG変換の実ファイル処理
 
-import assert from "node:assert/strict";
+import assert from 'node:assert/strict';
 
-import sinon from "sinon";
-import * as vscode from "vscode";
+import sinon from 'sinon';
+import * as vscode from 'vscode';
 
-import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from "../src/commands/safe_mode.js";
+import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from '../src/commands/safe_mode.js';
 
-suite("Safe Modeステータスバー", () => {
+suite('Safe Modeステータスバー', () => {
   let sandbox: sinon.SinonSandbox;
   let storage: MemoryState;
   let statusBarItem: FakeStatusBarItem;
@@ -40,11 +40,9 @@ suite("Safe Modeステータスバー", () => {
     subscriptions = [];
     registeredCommand = undefined;
 
+    sandbox.stub(vscode.window, 'createStatusBarItem').returns(statusBarItem as unknown as vscode.StatusBarItem);
     sandbox
-      .stub(vscode.window, "createStatusBarItem")
-      .returns(statusBarItem as unknown as vscode.StatusBarItem);
-    sandbox
-      .stub(vscode.commands, "registerCommand")
+      .stub(vscode.commands, 'registerCommand')
       .callsFake((command: string, callback: (...args: never[]) => unknown) => {
         assert.strictEqual(command, TOGGLE_SAFE_MODE_COMMAND);
         registeredCommand = callback as () => Promise<void>;
@@ -56,38 +54,38 @@ suite("Safe Modeステータスバー", () => {
     sandbox.restore();
   });
 
-  test("初期状態ではSafe Mode ONのステータスバー項目を作成して表示する", () => {
+  test('初期状態ではSafe Mode ONのステータスバー項目を作成して表示する', () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
-    assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: ON");
+    assert.strictEqual(statusBarItem.text, '$(shield) Safe Mode: ON');
     assert.strictEqual(statusBarItem.command, TOGGLE_SAFE_MODE_COMMAND);
-    assert.strictEqual(statusBarItem.tooltip, "Toggle Safe Mode");
+    assert.strictEqual(statusBarItem.tooltip, 'Toggle Safe Mode');
     assert.strictEqual(statusBarItem.showCallCount, 1);
   });
 
-  test("切り替えコマンド実行時に表示文言と永続化状態を更新する", async () => {
+  test('切り替えコマンド実行時に表示文言と永続化状態を更新する', async () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
     await registeredCommand?.();
 
-    assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: OFF");
-    assert.strictEqual(storage.get("safeMode.enabled"), false);
+    assert.strictEqual(statusBarItem.text, '$(shield) Safe Mode: OFF');
+    assert.strictEqual(storage.get('safeMode.enabled'), false);
 
     await registeredCommand?.();
 
-    assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: ON");
-    assert.strictEqual(storage.get("safeMode.enabled"), true);
+    assert.strictEqual(statusBarItem.text, '$(shield) Safe Mode: ON');
+    assert.strictEqual(storage.get('safeMode.enabled'), true);
   });
 
-  test("初期化時にglobalStateからSafe Mode OFF状態を復元する", async () => {
-    await storage.update("safeMode.enabled", false);
+  test('初期化時にglobalStateからSafe Mode OFF状態を復元する', async () => {
+    await storage.update('safeMode.enabled', false);
 
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
-    assert.strictEqual(statusBarItem.text, "$(shield) Safe Mode: OFF");
+    assert.strictEqual(statusBarItem.text, '$(shield) Safe Mode: OFF');
   });
 
-  test("ステータスバー項目とコマンドのdisposableをsubscriptionsに登録する", () => {
+  test('ステータスバー項目とコマンドのdisposableをsubscriptionsに登録する', () => {
     initializeSafeMode(createExtensionContext(storage, subscriptions));
 
     assert.strictEqual(subscriptions.length, 2);
@@ -96,10 +94,7 @@ suite("Safe Modeステータスバー", () => {
   });
 });
 
-function createExtensionContext(
-  globalState: MemoryState,
-  subscriptions: vscode.Disposable[],
-): vscode.ExtensionContext {
+function createExtensionContext(globalState: MemoryState, subscriptions: vscode.Disposable[]): vscode.ExtensionContext {
   return {
     globalState,
     subscriptions,
@@ -120,8 +115,8 @@ class MemoryState {
 
 class FakeStatusBarItem {
   command: string | undefined;
-  text = "";
-  tooltip = "";
+  text = '';
+  tooltip = '';
   showCallCount = 0;
 
   show(): void {

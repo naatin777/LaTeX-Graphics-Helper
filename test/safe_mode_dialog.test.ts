@@ -17,14 +17,14 @@
 // - status barの描画
 // - ファイルの実際の反映処理
 
-import assert from "node:assert/strict";
+import assert from 'node:assert/strict';
 
-import sinon from "sinon";
-import * as vscode from "vscode";
+import sinon from 'sinon';
+import * as vscode from 'vscode';
 
-import { initializeSafeMode, resolveOutputConflicts } from "../src/commands/safe_mode.js";
+import { initializeSafeMode, resolveOutputConflicts } from '../src/commands/safe_mode.js';
 
-suite("Safe Modeダイアログの判断", () => {
+suite('Safe Modeダイアログの判断', () => {
   let sandbox: sinon.SinonSandbox;
   let storage: MemoryState;
   let showWarningMessageStub: sinon.SinonStub;
@@ -32,13 +32,9 @@ suite("Safe Modeダイアログの判断", () => {
   setup(() => {
     sandbox = sinon.createSandbox();
     storage = new MemoryState();
-    showWarningMessageStub = sandbox.stub(vscode.window, "showWarningMessage") as sinon.SinonStub;
-    sandbox
-      .stub(vscode.window, "createStatusBarItem")
-      .returns(new FakeStatusBarItem() as vscode.StatusBarItem);
-    sandbox
-      .stub(vscode.commands, "registerCommand")
-      .returns(new FakeDisposable() as vscode.Disposable);
+    showWarningMessageStub = sandbox.stub(vscode.window, 'showWarningMessage') as sinon.SinonStub;
+    sandbox.stub(vscode.window, 'createStatusBarItem').returns(new FakeStatusBarItem() as vscode.StatusBarItem);
+    sandbox.stub(vscode.commands, 'registerCommand').returns(new FakeDisposable() as vscode.Disposable);
     initializeSafeMode(createExtensionContext(storage));
   });
 
@@ -46,72 +42,65 @@ suite("Safe Modeダイアログの判断", () => {
     sandbox.restore();
   });
 
-  test("Keep Bothを選択した場合はkeep-bothを返す", async () => {
-    showWarningMessageStub.resolves({ title: "Keep Both" });
+  test('Keep Bothを選択した場合はkeep-bothを返す', async () => {
+    showWarningMessageStub.resolves({ title: 'Keep Both' });
 
-    assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "keep-both");
+    assert.strictEqual(await resolveOutputConflicts(['/workspace/sample.pdf']), 'keep-both');
   });
 
-  test("Do Not Overwriteを選択した場合はcancelを返す", async () => {
-    showWarningMessageStub.resolves({ title: "Do Not Overwrite" });
+  test('Do Not Overwriteを選択した場合はcancelを返す', async () => {
+    showWarningMessageStub.resolves({ title: 'Do Not Overwrite' });
 
-    assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "cancel");
+    assert.strictEqual(await resolveOutputConflicts(['/workspace/sample.pdf']), 'cancel');
   });
 
-  test("Overwriteを選択した場合はoverwriteを返す", async () => {
-    showWarningMessageStub.resolves({ title: "Overwrite" });
+  test('Overwriteを選択した場合はoverwriteを返す', async () => {
+    showWarningMessageStub.resolves({ title: 'Overwrite' });
 
-    assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "overwrite");
+    assert.strictEqual(await resolveOutputConflicts(['/workspace/sample.pdf']), 'overwrite');
   });
 
-  test("ダイアログを閉じた場合はcancelを返す", async () => {
+  test('ダイアログを閉じた場合はcancelを返す', async () => {
     showWarningMessageStub.resolves(undefined);
 
-    assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "cancel");
+    assert.strictEqual(await resolveOutputConflicts(['/workspace/sample.pdf']), 'cancel');
   });
 
-  test("Do Not Overwriteを閉じる操作として扱い、単独のCancel項目は渡さない", async () => {
-    showWarningMessageStub.resolves({ title: "Do Not Overwrite" });
+  test('Do Not Overwriteを閉じる操作として扱い、単独のCancel項目は渡さない', async () => {
+    showWarningMessageStub.resolves({ title: 'Do Not Overwrite' });
 
-    await resolveOutputConflicts(["/workspace/sample.pdf"]);
+    await resolveOutputConflicts(['/workspace/sample.pdf']);
 
     const items = showWarningMessageStub.firstCall.args.slice(2) as vscode.MessageItem[];
     assert.deepStrictEqual(
       items.map((item) => item.title),
-      ["Keep Both", "Do Not Overwrite", "Overwrite"],
+      ['Keep Both', 'Do Not Overwrite', 'Overwrite'],
     );
+    assert.strictEqual(items.find((item) => item.title === 'Do Not Overwrite')?.isCloseAffordance, true);
     assert.strictEqual(
-      items.find((item) => item.title === "Do Not Overwrite")?.isCloseAffordance,
-      true,
-    );
-    assert.strictEqual(
-      items.some((item) => item.title === "Cancel"),
+      items.some((item) => item.title === 'Cancel'),
       false,
     );
   });
 
-  test("Safe Modeが無効な場合はダイアログを出さずoverwriteを返す", async () => {
-    await storage.update("safeMode.enabled", false);
+  test('Safe Modeが無効な場合はダイアログを出さずoverwriteを返す', async () => {
+    await storage.update('safeMode.enabled', false);
     initializeSafeMode(createExtensionContext(storage));
 
-    assert.strictEqual(await resolveOutputConflicts(["/workspace/sample.pdf"]), "overwrite");
+    assert.strictEqual(await resolveOutputConflicts(['/workspace/sample.pdf']), 'overwrite');
     assert.strictEqual(showWarningMessageStub.callCount, 0);
   });
 
-  test("複数競合でもダイアログは1回だけ表示し、競合数を含める", async () => {
-    showWarningMessageStub.resolves({ title: "Overwrite" });
+  test('複数競合でもダイアログは1回だけ表示し、競合数を含める', async () => {
+    showWarningMessageStub.resolves({ title: 'Overwrite' });
 
     assert.strictEqual(
-      await resolveOutputConflicts([
-        "/workspace/one.pdf",
-        "/workspace/two.pdf",
-        "/workspace/three.pdf",
-      ]),
-      "overwrite",
+      await resolveOutputConflicts(['/workspace/one.pdf', '/workspace/two.pdf', '/workspace/three.pdf']),
+      'overwrite',
     );
 
     assert.strictEqual(showWarningMessageStub.callCount, 1);
-    assert.strictEqual(showWarningMessageStub.firstCall.args[0], "3 output file(s) already exist.");
+    assert.strictEqual(showWarningMessageStub.firstCall.args[0], '3 output file(s) already exist.');
   });
 });
 
@@ -136,8 +125,8 @@ class MemoryState {
 
 class FakeStatusBarItem {
   command: string | undefined;
-  text = "";
-  tooltip = "";
+  text = '';
+  tooltip = '';
 
   show(): void {}
 

@@ -1,14 +1,10 @@
-import path from "node:path";
+import path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import {
-  isEditableDrawioImagePath,
-  logicalSourcePathForOutputTemplate,
-} from "../application/source_format.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
@@ -16,30 +12,32 @@ import {
   type MermaidPuppeteerOptions,
   type SvgToPdfEngine,
   type SvgToPdfOptions,
-} from "../operations/convert_png_to_pdf.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { runOutputConversion } from "./run_output_conversion.js";
-import { userMessage } from "./user_messages.js";
-import type { CommandDependencies } from "./command_dependencies.js";
+} from '../operations/convert_png_to_pdf.js';
+import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
 
-export const CONVERT_PNG_TO_PDF_COMMAND = "latex-graphics-helper.convertPngToPdf";
-export const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+import type { CommandDependencies } from './command_dependencies.js';
+import { runOutputConversion } from './run_output_conversion.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { userMessage } from './user_messages.js';
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.pdf";
-const PNG_EXTENSIONS = [".png"] as const;
+export const CONVERT_PNG_TO_PDF_COMMAND = 'latex-graphics-helper.convertPngToPdf';
+export const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
+
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
+const PNG_EXTENSIONS = ['.png'] as const;
 const PDF_IMAGE_EXTENSIONS = [
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".webp",
-  ".avif",
-  ".svg",
-  ".mmd",
-  ".mermaid",
-  ".drawio.png",
-  ".dio.png",
-  ".drawio.svg",
-  ".dio.svg",
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.avif',
+  '.svg',
+  '.mmd',
+  '.mermaid',
+  '.drawio.png',
+  '.dio.png',
+  '.drawio.svg',
+  '.dio.svg',
 ] as const;
 
 export async function convertPngToPdfCommand(
@@ -50,11 +48,11 @@ export async function convertPngToPdfCommand(
   const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PNG_EXTENSIONS,
-    titleKey: "message.progress.convertPngToPdf.title",
-    successKey: "message.convertPngToPdf.success",
-    failedKey: "message.convertPngToPdf.failed",
-    cancelledKey: "message.convertPngToPdf.cancelled",
-    operationName: "convert-png-to-pdf",
+    titleKey: 'message.progress.convertPngToPdf.title',
+    successKey: 'message.convertPngToPdf.success',
+    failedKey: 'message.convertPngToPdf.failed',
+    cancelledKey: 'message.convertPngToPdf.cancelled',
+    operationName: 'convert-png-to-pdf',
     ...(outputChannel !== undefined && { outputChannel }),
   });
 }
@@ -67,12 +65,12 @@ export async function convertToPdfCommand(
   const outputChannel = dependencies?.outputChannel;
   await convertSelectedPngFilesToPdf(uri, uris, {
     supportedExtensions: PDF_IMAGE_EXTENSIONS,
-    titleKey: "message.progress.convertToPdf.title",
-    successKey: "message.convertToPdf.success",
-    failedKey: "message.convertToPdf.failed",
-    cancelledKey: "message.convertToPdf.cancelled",
-    outputFormatOutputPathKey: "outputPath.convertToPdf",
-    operationName: "convert-to-pdf",
+    titleKey: 'message.progress.convertToPdf.title',
+    successKey: 'message.convertToPdf.success',
+    failedKey: 'message.convertToPdf.failed',
+    cancelledKey: 'message.convertToPdf.cancelled',
+    outputFormatOutputPathKey: 'outputPath.convertToPdf',
+    operationName: 'convert-to-pdf',
     ...(outputChannel !== undefined && { outputChannel }),
   });
 }
@@ -82,11 +80,11 @@ async function convertSelectedPngFilesToPdf(
   uris: vscode.Uri[] | undefined,
   messages: {
     supportedExtensions: readonly string[];
-    titleKey: "message.progress.convertPngToPdf.title" | "message.progress.convertToPdf.title";
-    successKey: "message.convertPngToPdf.success" | "message.convertToPdf.success";
-    failedKey: "message.convertPngToPdf.failed" | "message.convertToPdf.failed";
-    cancelledKey: "message.convertPngToPdf.cancelled" | "message.convertToPdf.cancelled";
-    outputFormatOutputPathKey?: "outputPath.convertToPdf";
+    titleKey: 'message.progress.convertPngToPdf.title' | 'message.progress.convertToPdf.title';
+    successKey: 'message.convertPngToPdf.success' | 'message.convertToPdf.success';
+    failedKey: 'message.convertPngToPdf.failed' | 'message.convertToPdf.failed';
+    cancelledKey: 'message.convertPngToPdf.cancelled' | 'message.convertToPdf.cancelled';
+    outputFormatOutputPathKey?: 'outputPath.convertToPdf';
     operationName: string;
     outputChannel?: LineOutputChannel;
   },
@@ -95,14 +93,11 @@ async function convertSelectedPngFilesToPdf(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
-      throw new Error("No files were selected.");
+      throw new Error('No files were selected.');
     }
 
-    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
-    const outputTemplate = configuration.get<string>(
-      "outputPath.convertPngToPdf",
-      DEFAULT_OUTPUT_PATH,
-    );
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const outputTemplate = configuration.get<string>('outputPath.convertPngToPdf', DEFAULT_OUTPUT_PATH);
     const outputFormatOutputTemplate =
       messages.outputFormatOutputPathKey === undefined
         ? undefined
@@ -113,12 +108,7 @@ async function convertSelectedPngFilesToPdf(
     const jobs = sourceUris.map((sourceUri) =>
       createJob(
         sourceUri,
-        outputTemplateForSource(
-          sourceUri,
-          configuration,
-          outputTemplate,
-          outputFormatOutputTemplate,
-        ),
+        outputTemplateForSource(sourceUri, configuration, outputTemplate, outputFormatOutputTemplate),
         logicalSourcePathForOutputTemplate(sourceUri.fsPath),
         messages.supportedExtensions,
       ),
@@ -129,10 +119,9 @@ async function convertSelectedPngFilesToPdf(
       resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(messages.titleKey, jobs.length),
-        prepareMessage: userMessage("message.progress.prepareConversion", "PDF"),
+        prepareMessage: userMessage('message.progress.prepareConversion', 'PDF'),
         successMessage: (count) => userMessage(messages.successKey, count),
-        undoUnavailableMessage: (success, reason) =>
-          userMessage("message.undoUnavailable", success, reason),
+        undoUnavailableMessage: (success, reason) => userMessage('message.undoUnavailable', success, reason),
         cancelledMessage: userMessage(messages.cancelledKey),
         failedMessage: (reason) => userMessage(messages.failedKey, reason),
       },
@@ -176,29 +165,29 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>("outputPath.convertDrawioToPdf", DEFAULT_OUTPUT_PATH);
+    return configuration.get<string>('outputPath.convertDrawioToPdf', DEFAULT_OUTPUT_PATH);
   }
 
   switch (extension) {
-    case ".png": {
+    case '.png': {
       return pngOutputTemplate;
     }
-    case ".jpg":
-    case ".jpeg": {
-      return configuration.get<string>("outputPath.convertJpegToPdf", DEFAULT_OUTPUT_PATH);
+    case '.jpg':
+    case '.jpeg': {
+      return configuration.get<string>('outputPath.convertJpegToPdf', DEFAULT_OUTPUT_PATH);
     }
-    case ".webp": {
-      return configuration.get<string>("outputPath.convertWebpToPdf", DEFAULT_OUTPUT_PATH);
+    case '.webp': {
+      return configuration.get<string>('outputPath.convertWebpToPdf', DEFAULT_OUTPUT_PATH);
     }
-    case ".avif": {
-      return configuration.get<string>("outputPath.convertAvifToPdf", DEFAULT_OUTPUT_PATH);
+    case '.avif': {
+      return configuration.get<string>('outputPath.convertAvifToPdf', DEFAULT_OUTPUT_PATH);
     }
-    case ".svg": {
-      return configuration.get<string>("outputPath.convertSvgToPdf", DEFAULT_OUTPUT_PATH);
+    case '.svg': {
+      return configuration.get<string>('outputPath.convertSvgToPdf', DEFAULT_OUTPUT_PATH);
     }
-    case ".mmd":
-    case ".mermaid": {
-      return configuration.get<string>("outputPath.convertMermaidToPdf", DEFAULT_OUTPUT_PATH);
+    case '.mmd':
+    case '.mermaid': {
+      return configuration.get<string>('outputPath.convertMermaidToPdf', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;
@@ -207,39 +196,27 @@ function outputTemplateForSource(
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
-  const executablePath = configuration
-    .get<string>("convertToPdf.svg.puppeteer.executablePath", "")
-    .trim();
+  const executablePath = configuration.get<string>('convertToPdf.svg.puppeteer.executablePath', '').trim();
 
   return {
-    engine: configuration.get<SvgToPdfEngine>("convertToPdf.svg.engine", "puppeteer"),
-    rsvgConvertPath: configuration.get<string>("execPath.rsvgConvert", "rsvg-convert"),
-    puppeteerBrowserChannel: configuration.get(
-      "convertToPdf.svg.puppeteer.browserChannel",
-      "chrome",
-    ),
+    engine: configuration.get<SvgToPdfEngine>('convertToPdf.svg.engine', 'puppeteer'),
+    rsvgConvertPath: configuration.get<string>('execPath.rsvgConvert', 'rsvg-convert'),
+    puppeteerBrowserChannel: configuration.get('convertToPdf.svg.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),
   };
 }
 
-function readMermaidPuppeteerOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): MermaidPuppeteerOptions {
-  const executablePath = configuration
-    .get<string>("convertToPdf.mermaid.puppeteer.executablePath", "")
-    .trim();
+function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
+  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
 
   return {
-    browserChannel: configuration.get<string>(
-      "convertToPdf.mermaid.puppeteer.browserChannel",
-      "chrome",
-    ),
+    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { executablePath } : {}),
   };
 }
 
 function readDrawioToPdfOptions(configuration: vscode.WorkspaceConfiguration): DrawioToPdfOptions {
-  const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
+  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
 
   return {
     drawioPath: configuredPath || defaultDrawioPath(),
@@ -247,7 +224,7 @@ function readDrawioToPdfOptions(configuration: vscode.WorkspaceConfiguration): D
 }
 
 function defaultDrawioPath(): string {
-  return process.platform === "win32" ? "drawio.exe" : "drawio";
+  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
@@ -263,7 +240,7 @@ function createJob(
   templateSourcePath: string,
   supportedExtensions: readonly string[],
 ): ConvertPngToPdfJob {
-  if (sourceUri.scheme !== "file") {
+  if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
   }
 
@@ -290,5 +267,5 @@ function createJob(
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }

@@ -5,7 +5,7 @@ export interface CropBox {
   top: number;
 }
 
-export type CropTarget = { type: "all" } | { type: "selected"; pages: number[] };
+export type CropTarget = { type: 'all' } | { type: 'selected'; pages: number[] };
 
 export interface CropPdfLabels {
   title: string;
@@ -44,7 +44,7 @@ export interface CropPdfLabels {
 
 export type CropConfigureHostToWebview =
   | {
-      type: "init";
+      type: 'init';
       payload: {
         pdfSrc: string;
         workerSrc?: string;
@@ -60,80 +60,80 @@ export type CropConfigureHostToWebview =
       };
     }
   | {
-      type: "error";
+      type: 'error';
       payload: { message: string };
     };
 
 export type CropConfigureWebviewToHost =
-  | { type: "ready" }
+  | { type: 'ready' }
   | {
-      type: "apply";
+      type: 'apply';
       payload: { cropBox: CropBox; target: CropTarget };
     }
-  | { type: "cancel" }
+  | { type: 'cancel' }
   | {
-      type: "previewLoadFailed";
+      type: 'previewLoadFailed';
       payload: { message: string };
     };
 
 export function isCropConfigureMessage(value: unknown): value is CropConfigureWebviewToHost {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
     return false;
   }
 
-  if (value.type === "ready" || value.type === "cancel") {
+  if (value.type === 'ready' || value.type === 'cancel') {
     return true;
   }
 
-  if (value.type === "previewLoadFailed") {
+  if (value.type === 'previewLoadFailed') {
     return (
-      "payload" in value &&
-      typeof value.payload === "object" &&
+      'payload' in value &&
+      typeof value.payload === 'object' &&
       value.payload !== null &&
-      "message" in value.payload &&
-      typeof value.payload.message === "string"
+      'message' in value.payload &&
+      typeof value.payload.message === 'string'
     );
   }
 
-  if (value.type !== "apply" || !("payload" in value)) {
+  if (value.type !== 'apply' || !('payload' in value)) {
     return false;
   }
 
-  if (typeof value.payload !== "object" || value.payload === null) {
+  if (typeof value.payload !== 'object' || value.payload === null) {
     return false;
   }
 
   return (
-    "cropBox" in value.payload &&
+    'cropBox' in value.payload &&
     isCropBox(value.payload.cropBox) &&
-    "target" in value.payload &&
+    'target' in value.payload &&
     isCropTarget(value.payload.target)
   );
 }
 
 function isCropBox(value: unknown): value is CropBox {
-  if (typeof value !== "object" || value === null) {
+  if (typeof value !== 'object' || value === null) {
     return false;
   }
 
   const record = value as Record<string, unknown>;
-  return ["left", "bottom", "right", "top"].every(
-    (key) => typeof record[key] === "number" && Number.isFinite(record[key]),
+  return ['left', 'bottom', 'right', 'top'].every(
+    (key) => typeof record[key] === 'number' && Number.isFinite(record[key]),
   );
 }
 
 function isCropTarget(value: unknown): value is CropTarget {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
+  if (typeof value !== 'object' || value === null || !('type' in value)) {
     return false;
   }
 
-  if (value.type === "all") {
+  if (value.type === 'all') {
     return true;
   }
 
   return (
-    value.type === "selected" &&
-    "pages" in value &&
+    value.type === 'selected' &&
+    'pages' in value &&
     Array.isArray(value.pages) &&
     value.pages.every((page) => Number.isInteger(page) && page > 0)
   );

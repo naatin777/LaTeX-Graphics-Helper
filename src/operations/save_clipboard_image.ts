@@ -1,27 +1,25 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { randomUUID } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { convertPngToPdfFiles } from "./convert_png_to_pdf.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-} from "./cleanup_conversion_artifacts.js";
+import { assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { ConversionRuntime } from "./conversion_runtime.js";
-import { assertWritablePathInWorkspace } from "../security/workspace_path.js";
+} from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
+import { convertPngToPdfFiles } from './convert_png_to_pdf.js';
 
 export interface ClipboardImageData {
   type: { ext: string };
   buffer: Buffer;
 }
 
-export type ClipboardPasteKind = "pdf" | "image";
+export type ClipboardPasteKind = 'pdf' | 'image';
 
 export interface SaveClipboardImageRequest {
   data: ClipboardImageData;
@@ -37,7 +35,7 @@ export interface SavedClipboardImage {
 }
 
 export interface SaveClipboardImageTestOverrides {
-  commit?: Pick<CommitConversionOutputsOptions, "copyFile" | "rm">;
+  commit?: Pick<CommitConversionOutputsOptions, 'copyFile' | 'rm'>;
 }
 
 /** Saves one clipboard payload through the same staging and commit boundary as conversions. */
@@ -58,13 +56,11 @@ export async function saveClipboardImage(
     runtime.signal?.throwIfAborted();
     const stagedImage = await stageClipboardImage(request, runId);
     runtime.signal?.throwIfAborted();
-    runtime.outputChannel?.appendLine(
-      `[clipboard-paste] staged input: ${stagedImage.stagedOutputPath}`,
-    );
+    runtime.outputChannel?.appendLine(`[clipboard-paste] staged input: ${stagedImage.stagedOutputPath}`);
 
     let outputs: CommittedConversionOutput[];
 
-    if (request.kind === "pdf") {
+    if (request.kind === 'pdf') {
       outputs = await saveClipboardImageAsPdf(request, stagedImage, runId, runtime);
     } else {
       commitOwnsClipboardArtifact = true;
@@ -73,7 +69,7 @@ export async function saveClipboardImage(
           resolveConflicts: runtime.resolveConflicts,
         }),
         ...(runtime.signal !== undefined && { signal: runtime.signal }),
-        operationName: "clipboard-paste",
+        operationName: 'clipboard-paste',
         ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         ...testOverrides.commit,
       });
@@ -92,7 +88,7 @@ export async function saveClipboardImage(
 export async function cleanupClipboardSourceArtifact(
   saved: SavedClipboardImage,
   undoRecorded: boolean,
-  runtime: Pick<ConversionRuntime, "outputChannel"> = {},
+  runtime: Pick<ConversionRuntime, 'outputChannel'> = {},
 ): Promise<void> {
   await cleanupConversionArtifacts(
     [
@@ -101,8 +97,7 @@ export async function cleanupClipboardSourceArtifact(
         ...(undoRecorded
           ? {
               preservePaths: saved.outputs.flatMap((output) =>
-                output.previousFilePath &&
-                isWithin(output.previousFilePath, saved.artifact.rootPath)
+                output.previousFilePath && isWithin(output.previousFilePath, saved.artifact.rootPath)
                   ? [output.previousFilePath]
                   : [],
               ),
@@ -116,10 +111,7 @@ export async function cleanupClipboardSourceArtifact(
 
 function isWithin(targetPath: string, parentPath: string): boolean {
   const relativePath = path.relative(path.resolve(parentPath), path.resolve(targetPath));
-  return (
-    relativePath === "" ||
-    (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`))
-  );
+  return relativePath === '' || (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`));
 }
 
 async function saveClipboardImageAsPdf(
@@ -132,7 +124,7 @@ async function saveClipboardImageAsPdf(
     jobs: [
       {
         sourcePath: stagedImage.stagedOutputPath,
-        outputPath: appendExtension(request.outputBasePath, "pdf"),
+        outputPath: appendExtension(request.outputBasePath, 'pdf'),
         workspacePath: request.workspacePath,
       },
     ],
@@ -147,7 +139,7 @@ async function saveClipboardImageAsPdf(
 }
 
 function clipboardStagingRoot(workspacePath: string, runId: string): string {
-  return path.join(workspacePath, ".latex-graphics-helper", "clipboard-paste", runId);
+  return path.join(workspacePath, '.latex-graphics-helper', 'clipboard-paste', runId);
 }
 
 async function stageClipboardImage(
@@ -156,8 +148,8 @@ async function stageClipboardImage(
 ): Promise<PreparedConversionOutput> {
   const stagedOutputPath = path.join(
     request.workspacePath,
-    ".latex-graphics-helper",
-    "clipboard-paste",
+    '.latex-graphics-helper',
+    'clipboard-paste',
     runId,
     `source.${request.data.type.ext}`,
   );
@@ -176,13 +168,10 @@ async function stageClipboardImage(
 }
 
 function appendExtension(outputPath: string, extension: string): string {
-  const normalizedExtension = extension.startsWith(".") ? extension : `.${extension}`;
+  const normalizedExtension = extension.startsWith('.') ? extension : `.${extension}`;
   const currentExtension = path.extname(outputPath).toLowerCase();
 
-  if (
-    currentExtension === normalizedExtension ||
-    (normalizedExtension === ".jpeg" && currentExtension === ".jpg")
-  ) {
+  if (currentExtension === normalizedExtension || (normalizedExtension === '.jpeg' && currentExtension === '.jpg')) {
     return outputPath;
   }
 

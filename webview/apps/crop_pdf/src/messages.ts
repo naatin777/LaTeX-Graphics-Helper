@@ -4,4 +4,4 @@ export type {
   CropConfigureWebviewToHost as WebviewToExtensionMessage,
   CropPdfLabels,
   CropTarget,
-} from "@lgh-crop-pdf-protocol";
+} from '@lgh-crop-pdf-protocol';

@@ -1,8 +1,7 @@
 export const cropConfigureFixture = {
-  fileName: "q a.pdf",
-  expectedCroppedPageFileName: "a a-1-crop.pdf",
-  complexUnicodeFileName:
-    "　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf",
+  fileName: 'q a.pdf',
+  expectedCroppedPageFileName: 'a a-1-crop.pdf',
+  complexUnicodeFileName: '　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf',
   cropBox: {
     left: 55,
     bottom: 12,

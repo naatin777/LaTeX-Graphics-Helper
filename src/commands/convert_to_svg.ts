@@ -1,31 +1,30 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { PDFDocument } from "pdf-lib";
-import * as vscode from "vscode";
-import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import {
-  isEditableDrawioImagePath,
-  logicalSourcePathForOutputTemplate,
-} from "../application/source_format.js";
-import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
+import { PDFDocument } from 'pdf-lib';
+import * as vscode from 'vscode';
+
+import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
 import {
   convertToSvgFiles,
   type ConvertToSvgJob,
   type DrawioToSvgOptions,
   type MermaidPuppeteerOptions,
-} from "../operations/convert_to_svg.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
-import { userMessage } from "./user_messages.js";
-import type { CommandDependencies } from "./command_dependencies.js";
+} from '../operations/convert_to_svg.js';
+import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
-export const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
+import type { CommandDependencies } from './command_dependencies.js';
+import { createOutputConversionMessages, runOutputConversion } from './run_output_conversion.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { userMessage } from './user_messages.js';
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.svg";
-const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.svg";
-const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.svg";
+export const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
+
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.svg';
+const DEFAULT_PDF_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.svg';
+const DEFAULT_DRAWIO_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.svg';
 
 export async function convertToSvgCommand(
   uri?: vscode.Uri,
@@ -37,29 +36,22 @@ export async function convertToSvgCommand(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
-      throw new Error("No files were selected.");
+      throw new Error('No files were selected.');
     }
 
-    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(
-      configuration,
-      "outputPath.convertToSvg",
-    );
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToSvg');
     const jobs = (
-      await Promise.all(
-        sourceUris.map((sourceUri) =>
-          createJobs(sourceUri, configuration, outputFormatOutputTemplate),
-        ),
-      )
+      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const puppeteer = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToSvgOptions(configuration);
-    const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
+    const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
     await runOutputConversion({
-      operationName: "convert-to-svg",
+      operationName: 'convert-to-svg',
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: createOutputConversionMessages("SVG", sourceUris.length),
+      messages: createOutputConversionMessages('SVG', sourceUris.length),
       run: (runtime) =>
         convertToSvgFiles({
           jobs,
@@ -76,16 +68,12 @@ export async function convertToSvgCommand(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(
-        userMessage("message.convertToOutput.cancelled", "SVG"),
-      );
+      await vscode.window.showInformationMessage(userMessage('message.convertToOutput.cancelled', 'SVG'));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(
-      userMessage("message.convertToOutput.failed", "SVG", message),
-    );
+    await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'SVG', message));
   }
 }
 
@@ -94,7 +82,7 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToSvgJob[]> {
-  if (sourceUri.scheme !== "file") {
+  if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
   }
 
@@ -107,21 +95,17 @@ async function createJobs(
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 
-  if (extension === ".svg" && !isEditableDrawioImagePath(sourcePath)) {
+  if (extension === '.svg' && !isEditableDrawioImagePath(sourcePath)) {
     throw new Error(`Unsupported input for SVG conversion: ${sourcePath}`);
   }
 
-  if (extension === ".pdf") {
+  if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 
-  const page = isEditableDrawioImagePath(sourcePath) ? "1" : undefined;
-  const outputTemplate = outputTemplateForSource(
-    sourcePath,
-    configuration,
-    outputFormatOutputTemplate,
-  );
+  const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
   const outputPath = resolveOutputPath(outputTemplate, {
     sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
     workspacePath: workspace.uri.fsPath,
@@ -153,8 +137,7 @@ async function createPdfJobs(
   }
 
   const outputTemplate =
-    outputFormatOutputTemplate ??
-    configuration.get<string>("outputPath.convertPdfToSvg", DEFAULT_PDF_OUTPUT_PATH);
+    outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToSvg', DEFAULT_PDF_OUTPUT_PATH);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
@@ -184,13 +167,13 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>("outputPath.convertDrawioToSvg", DEFAULT_DRAWIO_OUTPUT_PATH);
+    return configuration.get<string>('outputPath.convertDrawioToSvg', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
-    case ".mmd":
-    case ".mermaid": {
-      return configuration.get<string>("outputPath.convertMermaidToSvg", DEFAULT_OUTPUT_PATH);
+    case '.mmd':
+    case '.mermaid': {
+      return configuration.get<string>('outputPath.convertMermaidToSvg', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;
@@ -198,24 +181,17 @@ function outputTemplateForSource(
   }
 }
 
-function readMermaidPuppeteerOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): MermaidPuppeteerOptions {
-  const executablePath = configuration
-    .get<string>("convertToSvg.mermaid.puppeteer.executablePath", "")
-    .trim();
+function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
+  const executablePath = configuration.get<string>('convertToSvg.mermaid.puppeteer.executablePath', '').trim();
 
   return {
-    browserChannel: configuration.get<string>(
-      "convertToSvg.mermaid.puppeteer.browserChannel",
-      "chrome",
-    ),
+    browserChannel: configuration.get<string>('convertToSvg.mermaid.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { executablePath } : {}),
   };
 }
 
 function readDrawioToSvgOptions(configuration: vscode.WorkspaceConfiguration): DrawioToSvgOptions {
-  const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
+  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
 
   return {
     drawioPath: configuredPath || defaultDrawioPath(),
@@ -223,7 +199,7 @@ function readDrawioToSvgOptions(configuration: vscode.WorkspaceConfiguration): D
 }
 
 function defaultDrawioPath(): string {
-  return process.platform === "win32" ? "drawio.exe" : "drawio";
+  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
@@ -234,5 +210,5 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }

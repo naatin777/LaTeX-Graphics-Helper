@@ -1,14 +1,14 @@
-import { createServer, type Server } from "node:http";
-import { readFile } from "node:fs/promises";
-import { extname, isAbsolute, join, normalize, relative } from "node:path";
+import { readFile } from 'node:fs/promises';
+import { createServer, type Server } from 'node:http';
+import { extname, isAbsolute, join, normalize, relative } from 'node:path';
 
-import { expect, test, type Locator } from "@playwright/test";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
+import { expect, test, type Locator } from '@playwright/test';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
-import { cropConfigureFixture } from "../helpers/crop_configure_fixture.js";
+import { cropConfigureFixture } from '../helpers/crop_configure_fixture.js';
 
 const projectRoot = process.cwd();
-const webviewRoot = join(projectRoot, "media", "webview");
+const webviewRoot = join(projectRoot, 'media', 'webview');
 
 let server: Server;
 let baseUrl: string;
@@ -20,41 +20,34 @@ test.beforeAll(async () => {
   pdfBytes = await createTestPdf();
   largePdfBytes = await createLargeTestPdf();
   cropOperationPdfBytes = await readFile(
-    join(
-      projectRoot,
-      "test",
-      "fixtures",
-      "pdf-operations",
-      "user-files",
-      cropConfigureFixture.fileName,
-    ),
+    join(projectRoot, 'test', 'fixtures', 'pdf-operations', 'user-files', cropConfigureFixture.fileName),
   );
 
   server = createServer(async (request, response) => {
-    const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
+    const requestUrl = new URL(request.url ?? '/', 'http://127.0.0.1');
 
-    if (requestUrl.pathname === "/fixture.pdf") {
+    if (requestUrl.pathname === '/fixture.pdf') {
       response.writeHead(200, {
-        "Content-Type": "application/pdf",
-        "Content-Length": pdfBytes.byteLength,
+        'Content-Type': 'application/pdf',
+        'Content-Length': pdfBytes.byteLength,
       });
       response.end(pdfBytes);
       return;
     }
 
-    if (requestUrl.pathname === "/large-fixture.pdf") {
+    if (requestUrl.pathname === '/large-fixture.pdf') {
       response.writeHead(200, {
-        "Content-Type": "application/pdf",
-        "Content-Length": largePdfBytes.byteLength,
+        'Content-Type': 'application/pdf',
+        'Content-Length': largePdfBytes.byteLength,
       });
       response.end(largePdfBytes);
       return;
     }
 
-    if (requestUrl.pathname === "/crop-operation-fixture.pdf") {
+    if (requestUrl.pathname === '/crop-operation-fixture.pdf') {
       response.writeHead(200, {
-        "Content-Type": "application/pdf",
-        "Content-Length": cropOperationPdfBytes.byteLength,
+        'Content-Type': 'application/pdf',
+        'Content-Length': cropOperationPdfBytes.byteLength,
       });
       response.end(cropOperationPdfBytes);
       return;
@@ -64,31 +57,31 @@ test.beforeAll(async () => {
 
     if (!filePath) {
       response.writeHead(404);
-      response.end("Not found");
+      response.end('Not found');
       return;
     }
 
     try {
       const file = await readFile(filePath);
       response.writeHead(200, {
-        "Content-Type": contentType(filePath),
-        "Content-Length": file.byteLength,
+        'Content-Type': contentType(filePath),
+        'Content-Length': file.byteLength,
       });
       response.end(file);
     } catch {
       response.writeHead(404);
-      response.end("Not found");
+      response.end('Not found');
     }
   });
 
   await new Promise<void>((resolve) => {
-    server.listen(0, "127.0.0.1", resolve);
+    server.listen(0, '127.0.0.1', resolve);
   });
 
   const address = server.address();
 
-  if (!address || typeof address === "string") {
-    throw new Error("Could not determine the Playwright test server address.");
+  if (!address || typeof address === 'string') {
+    throw new Error('Could not determine the Playwright test server address.');
   }
 
   baseUrl = `http://127.0.0.1:${address.port}`;
@@ -107,15 +100,15 @@ test.afterAll(async () => {
   });
 });
 
-for (const appName of ["crop_pdf"]) {
+for (const appName of ['crop_pdf']) {
   test(`${appName} renders the first PDF page`, async ({ page }) => {
     await page.goto(`${baseUrl}/${appName}/index.html`);
 
     await page.evaluate((pdfSrc) => {
       (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-        new MessageEvent("message", {
+        new MessageEvent('message', {
           data: {
-            type: "init",
+            type: 'init',
             payload: {
               pdfSrc,
             },
@@ -127,17 +120,15 @@ for (const appName of ["crop_pdf"]) {
     const canvas = page.locator('canvas[data-pdf-page="1"]');
 
     await expect(canvas).toBeVisible();
-    await expect
-      .poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0))
-      .toBe(true);
+    await expect.poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0)).toBe(true);
 
     await expect
       .poll(() =>
         canvas.evaluate((element) => {
-          const context = element.getContext("2d");
+          const context = element.getContext('2d');
 
           if (!context) {
-            throw new Error("PDF canvas does not have a 2D rendering context.");
+            throw new Error('PDF canvas does not have a 2D rendering context.');
           }
 
           const sample = (xRatio: number, yRatio: number) => {
@@ -165,17 +156,17 @@ for (const appName of ["crop_pdf"]) {
   });
 }
 
-test("crop_pdf accepts configure init payload and renders the first PDF page", async ({ page }) => {
+test('crop_pdf accepts configure init payload and renders the first PDF page', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -187,22 +178,20 @@ test("crop_pdf accepts configure init payload and renders the first PDF page", a
   const canvas = page.locator('canvas[data-pdf-page="1"]');
 
   await expect(canvas).toBeVisible();
-  await expect
-    .poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0))
-    .toBe(true);
+  await expect.poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0)).toBe(true);
 });
 
-test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
+test('crop_pdf renders all PDF pages as a list', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -211,37 +200,37 @@ test("crop_pdf renders all PDF pages as a list", async ({ page }) => {
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  const pages = page.locator("canvas[data-pdf-page]");
+  const pages = page.locator('canvas[data-pdf-page]');
   await expect(pages).toHaveCount(2);
 
   await expect
     .poll(() =>
       pages.evaluateAll((elements) =>
         elements.map((element) => ({
-          page: element.getAttribute("data-pdf-page"),
-          width: Number(element.getAttribute("width")),
-          height: Number(element.getAttribute("height")),
+          page: element.getAttribute('data-pdf-page'),
+          width: Number(element.getAttribute('width')),
+          height: Number(element.getAttribute('height')),
         })),
       ),
     )
     .toEqual([
-      { page: "1", width: 320, height: 180 },
-      { page: "2", width: 200, height: 120 },
+      { page: '1', width: 320, height: 180 },
+      { page: '2', width: 200, height: 120 },
     ]);
 });
 
-test("crop_pdf renders distant pages lazily and Apply does not wait for them", async ({ page }) => {
+test('crop_pdf renders distant pages lazily and Apply does not wait for them', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "large-fixture.pdf",
+            fileName: 'large-fixture.pdf',
             pageCount: 8,
             initialPage: 1,
           },
@@ -252,27 +241,21 @@ test("crop_pdf renders distant pages lazily and Apply does not wait for them", a
 
   const firstPage = page.locator('canvas[data-pdf-page="1"]');
   const lastPage = page.locator('canvas[data-pdf-page="8"]');
-  await expect(firstPage).toHaveAttribute("data-pdf-width", "320");
-  await expect(lastPage).not.toHaveAttribute("data-pdf-width");
+  await expect(firstPage).toHaveAttribute('data-pdf-width', '320');
+  await expect(lastPage).not.toHaveAttribute('data-pdf-width');
 
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByRole('button', { name: 'Apply' }).click();
   await expect
-    .poll(() =>
-      page.evaluate(() =>
-        (globalThis as { __vscodeMessages?: unknown[] }).__vscodeMessages?.at(-1),
-      ),
-    )
-    .toMatchObject({ type: "apply" });
+    .poll(() => page.evaluate(() => (globalThis as { __vscodeMessages?: unknown[] }).__vscodeMessages?.at(-1)))
+    .toMatchObject({ type: 'apply' });
 
   await lastPage.scrollIntoViewIfNeeded();
-  await expect(lastPage).toHaveAttribute("data-pdf-width", "320");
+  await expect(lastPage).toHaveAttribute('data-pdf-width', '320');
 });
 
-test("crop_pdf renders high-DPI canvases without changing preview layout size", async ({
-  page,
-}) => {
+test('crop_pdf renders high-DPI canvases without changing preview layout size', async ({ page }) => {
   await page.addInitScript(() => {
-    Object.defineProperty(globalThis, "devicePixelRatio", {
+    Object.defineProperty(globalThis, 'devicePixelRatio', {
       configurable: true,
       value: 2,
     });
@@ -281,12 +264,12 @@ test("crop_pdf renders high-DPI canvases without changing preview layout size", 
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -309,24 +292,22 @@ test("crop_pdf renders high-DPI canvases without changing preview layout size", 
     .toEqual({
       pixelWidth: 640,
       pixelHeight: 360,
-      layoutWidth: "320px",
-      layoutHeight: "180px",
+      layoutWidth: '320px',
+      layoutHeight: '180px',
     });
 });
 
-test("crop_pdf keeps the preview canvas-only without text or annotation layers", async ({
-  page,
-}) => {
+test('crop_pdf keeps the preview canvas-only without text or annotation layers', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -335,38 +316,38 @@ test("crop_pdf keeps the preview canvas-only without text or annotation layers",
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  await expect(page.locator("canvas[data-pdf-page]")).toHaveCount(2);
-  await expect(page.locator(".textLayer")).toHaveCount(0);
-  await expect(page.locator(".annotationLayer")).toHaveCount(0);
+  await expect(page.locator('canvas[data-pdf-page]')).toHaveCount(2);
+  await expect(page.locator('.textLayer')).toHaveCount(0);
+  await expect(page.locator('.annotationLayer')).toHaveCount(0);
   await expect(page.locator('span[role="presentation"]')).toHaveCount(0);
   await expect
     .poll(() =>
-      page.locator(".pdf-preview__pages").evaluate((element) =>
+      page.locator('.pdf-preview__pages').evaluate((element) =>
         [...element.children].map((child) => ({
           tagName: child.tagName,
-          page: child.getAttribute("data-pdf-page"),
-          canvasCount: child.querySelectorAll("canvas").length,
-          footer: child.querySelector(".pdf-page__footer")?.textContent?.trim(),
+          page: child.getAttribute('data-pdf-page'),
+          canvasCount: child.querySelectorAll('canvas').length,
+          footer: child.querySelector('.pdf-page__footer')?.textContent?.trim(),
         })),
       ),
     )
     .toEqual([
-      { tagName: "FIGURE", page: "1", canvasCount: 1, footer: "Page 1 / 2" },
-      { tagName: "FIGURE", page: "2", canvasCount: 1, footer: "Page 2 / 2" },
+      { tagName: 'FIGURE', page: '1', canvasCount: 1, footer: 'Page 1 / 2' },
+      { tagName: 'FIGURE', page: '2', canvasCount: 1, footer: 'Page 2 / 2' },
     ]);
 });
 
-test("crop_pdf uses a two-column layout with preview zoom controls", async ({ page }) => {
+test('crop_pdf uses a two-column layout with preview zoom controls', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -375,28 +356,26 @@ test("crop_pdf uses a two-column layout with preview zoom controls", async ({ pa
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  await expect(page.getByRole("region", { name: "PDF preview" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Crop settings" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Zoom in" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Zoom out" })).toBeVisible();
-  await expect(page.getByText("100%")).toBeVisible();
-  await expect(page.locator(".pdf-page__footer").first()).toHaveText("Page 1 / 2");
+  await expect(page.getByRole('region', { name: 'PDF preview' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Crop settings' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Zoom in' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Zoom out' })).toBeVisible();
+  await expect(page.getByText('100%')).toBeVisible();
+  await expect(page.locator('.pdf-page__footer').first()).toHaveText('Page 1 / 2');
 });
 
-test("crop_pdf zooms preview display size without changing PDF point crop values", async ({
-  page,
-}) => {
+test('crop_pdf zooms preview display size without changing PDF point crop values', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -407,25 +386,24 @@ test("crop_pdf zooms preview display size without changing PDF point crop values
 
   const firstPage = page.locator('canvas[data-pdf-page="1"]');
   await expect(firstPage).toBeVisible();
-  await expect(firstPage).toHaveCSS("width", "320px");
+  await expect(firstPage).toHaveCSS('width', '320px');
 
-  await page.getByRole("button", { name: "Zoom in" }).click();
-  await expect(page.getByText("125%")).toBeVisible();
-  await expect(firstPage).toHaveCSS("width", "400px");
+  await page.getByRole('button', { name: 'Zoom in' }).click();
+  await expect(page.getByText('125%')).toBeVisible();
+  await expect(firstPage).toHaveCSS('width', '400px');
 
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByRole('button', { name: 'Apply' }).click();
 
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
-          .__vscodeMessages;
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
 
         return messages?.at(-1);
       }),
     )
     .toEqual({
-      type: "apply",
+      type: 'apply',
       payload: {
         cropBox: {
           left: 0,
@@ -434,23 +412,23 @@ test("crop_pdf zooms preview display size without changing PDF point crop values
           top: 180,
         },
         target: {
-          type: "all",
+          type: 'all',
         },
       },
     });
 });
 
-test("crop_pdf zooms with modified wheel events and clamps the zoom range", async ({ page }) => {
+test('crop_pdf zooms with modified wheel events and clamps the zoom range', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -459,21 +437,21 @@ test("crop_pdf zooms with modified wheel events and clamps the zoom range", asyn
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  const preview = page.getByRole("region", { name: "PDF preview" });
+  const preview = page.getByRole('region', { name: 'PDF preview' });
   const firstPage = page.locator('canvas[data-pdf-page="1"]');
   await expect(firstPage).toBeVisible();
 
-  await preview.dispatchEvent("wheel", {
+  await preview.dispatchEvent('wheel', {
     deltaY: -100,
     ctrlKey: true,
     bubbles: true,
     cancelable: true,
   });
-  await expect(page.getByText("110%")).toBeVisible();
-  await expect(firstPage).toHaveCSS("width", "352px");
+  await expect(page.getByText('110%')).toBeVisible();
+  await expect(firstPage).toHaveCSS('width', '352px');
 
   for (let index = 0; index < 60; index += 1) {
-    await preview.dispatchEvent("wheel", {
+    await preview.dispatchEvent('wheel', {
       deltaY: -100,
       ctrlKey: true,
       bubbles: true,
@@ -481,11 +459,11 @@ test("crop_pdf zooms with modified wheel events and clamps the zoom range", asyn
     });
   }
 
-  await expect(page.getByText("400%")).toBeVisible();
-  await expect(firstPage).toHaveCSS("width", "1280px");
+  await expect(page.getByText('400%')).toBeVisible();
+  await expect(firstPage).toHaveCSS('width', '1280px');
 
   for (let index = 0; index < 80; index += 1) {
-    await preview.dispatchEvent("wheel", {
+    await preview.dispatchEvent('wheel', {
       deltaY: 100,
       metaKey: true,
       bubbles: true,
@@ -493,22 +471,22 @@ test("crop_pdf zooms with modified wheel events and clamps the zoom range", asyn
     });
   }
 
-  await expect(page.getByText("25%")).toBeVisible();
-  await expect(firstPage).toHaveCSS("width", "80px");
+  await expect(page.getByText('25%')).toBeVisible();
+  await expect(firstPage).toHaveCSS('width', '80px');
 });
 
-test("crop_pdf keeps the PDF point under the pointer while zooming", async ({ page }) => {
+test('crop_pdf keeps the PDF point under the pointer while zooming', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 520 });
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -517,14 +495,14 @@ test("crop_pdf keeps the PDF point under the pointer while zooming", async ({ pa
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  const preview = page.getByRole("region", { name: "PDF preview" });
+  const preview = page.getByRole('region', { name: 'PDF preview' });
   const firstPage = page.locator('canvas[data-pdf-page="1"]');
   await expect(firstPage).toBeVisible();
 
   for (let index = 0; index < 4; index += 1) {
-    await page.getByRole("button", { name: "Zoom in" }).click();
+    await page.getByRole('button', { name: 'Zoom in' }).click();
   }
-  await expect(page.getByText("200%")).toBeVisible();
+  await expect(page.getByText('200%')).toBeVisible();
 
   await preview.evaluate((element) => {
     element.scrollLeft = 100;
@@ -533,27 +511,23 @@ test("crop_pdf keeps the PDF point under the pointer while zooming", async ({ pa
 
   const pointer = await firstPage.evaluate((canvas) => {
     const canvasBounds = canvas.getBoundingClientRect();
-    const previewBounds = canvas.closest(".pdf-preview")?.getBoundingClientRect();
+    const previewBounds = canvas.closest('.pdf-preview')?.getBoundingClientRect();
 
     if (!previewBounds) {
-      throw new Error("PDF preview bounds are unavailable.");
+      throw new Error('PDF preview bounds are unavailable.');
     }
 
     return {
       clientX:
-        (Math.max(canvasBounds.left, previewBounds.left) +
-          Math.min(canvasBounds.right, previewBounds.right)) /
-        2,
+        (Math.max(canvasBounds.left, previewBounds.left) + Math.min(canvasBounds.right, previewBounds.right)) / 2,
       clientY:
-        (Math.max(canvasBounds.top, previewBounds.top) +
-          Math.min(canvasBounds.bottom, previewBounds.bottom)) /
-        2,
+        (Math.max(canvasBounds.top, previewBounds.top) + Math.min(canvasBounds.bottom, previewBounds.bottom)) / 2,
     };
   });
 
   const pointBeforeZoom = await pdfPointAtViewportPosition(firstPage, pointer);
 
-  await firstPage.dispatchEvent("wheel", {
+  await firstPage.dispatchEvent('wheel', {
     clientX: pointer.clientX,
     clientY: pointer.clientY,
     deltaY: -100,
@@ -562,32 +536,29 @@ test("crop_pdf keeps the PDF point under the pointer while zooming", async ({ pa
     cancelable: true,
   });
 
-  await expect(page.getByText("210%")).toBeVisible();
+  await expect(page.getByText('210%')).toBeVisible();
   await expect
     .poll(async () => {
       const pointAfterZoom = await pdfPointAtViewportPosition(firstPage, pointer);
 
-      return Math.max(
-        Math.abs(pointAfterZoom.x - pointBeforeZoom.x),
-        Math.abs(pointAfterZoom.y - pointBeforeZoom.y),
-      );
+      return Math.max(Math.abs(pointAfterZoom.x - pointBeforeZoom.x), Math.abs(pointAfterZoom.y - pointBeforeZoom.y));
     })
     .toBeLessThan(0.001);
   await expect(preview).toBeVisible();
 });
 
-test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ page }) => {
+test('crop_pdf keeps PDF page scrolling inside the left preview pane', async ({ page }) => {
   await page.setViewportSize({ width: 900, height: 360 });
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -596,11 +567,11 @@ test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ 
     );
   }, `${baseUrl}/fixture.pdf`);
 
-  const preview = page.getByRole("region", { name: "PDF preview" });
-  const documentElement = page.locator("html");
-  const root = page.locator("#root");
-  const body = page.locator("body");
-  const panel = page.locator(".panel");
+  const preview = page.getByRole('region', { name: 'PDF preview' });
+  const documentElement = page.locator('html');
+  const root = page.locator('#root');
+  const body = page.locator('body');
+  const panel = page.locator('.panel');
   await expect(page.locator('canvas[data-pdf-page="2"]')).toBeVisible();
 
   await expect
@@ -609,15 +580,13 @@ test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ 
       rootOverflow: await overflowValue(root),
       previewOverflow: await overflowValue(preview),
       panelOverflow: await overflowValue(panel),
-      previewCanScroll: await preview.evaluate(
-        (element) => element.scrollHeight > element.clientHeight,
-      ),
+      previewCanScroll: await preview.evaluate((element) => element.scrollHeight > element.clientHeight),
     }))
     .toEqual({
-      bodyOverflow: "hidden",
-      rootOverflow: "hidden",
-      previewOverflow: "auto",
-      panelOverflow: "visible",
+      bodyOverflow: 'hidden',
+      rootOverflow: 'hidden',
+      previewOverflow: 'auto',
+      panelOverflow: 'visible',
       previewCanScroll: true,
     });
 
@@ -629,26 +598,26 @@ test("crop_pdf keeps PDF page scrolling inside the left preview pane", async ({ 
   await expect.poll(() => body.evaluate((element) => element.scrollTop)).toBe(0);
 });
 
-test("crop_pdf ships PDF.js auxiliary assets for text rendering", async () => {
+test('crop_pdf ships PDF.js auxiliary assets for text rendering', async () => {
   await Promise.all([
-    readFile(join(webviewRoot, "crop_pdf", "standard_fonts", "LiberationSans-Regular.ttf")),
-    readFile(join(webviewRoot, "crop_pdf", "cmaps", "Adobe-Japan1-UCS2.bcmap")),
-    readFile(join(webviewRoot, "crop_pdf", "wasm", "openjpeg.wasm")),
+    readFile(join(webviewRoot, 'crop_pdf', 'standard_fonts', 'LiberationSans-Regular.ttf')),
+    readFile(join(webviewRoot, 'crop_pdf', 'cmaps', 'Adobe-Japan1-UCS2.bcmap')),
+    readFile(join(webviewRoot, 'crop_pdf', 'wasm', 'openjpeg.wasm')),
   ]);
 });
 
-test("crop_pdf renders a text PDF with PDF.js auxiliary asset URLs", async ({ page }) => {
+test('crop_pdf renders a text PDF with PDF.js auxiliary asset URLs', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate(
     ({ pdfSrc, assetBaseUrl }) => {
       (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-        new MessageEvent("message", {
+        new MessageEvent('message', {
           data: {
-            type: "init",
+            type: 'init',
             payload: {
               pdfSrc,
-              fileName: "fixture.pdf",
+              fileName: 'fixture.pdf',
               pageCount: 2,
               initialPage: 1,
               cMapUrl: `${assetBaseUrl}/crop_pdf/cmaps/`,
@@ -666,10 +635,10 @@ test("crop_pdf renders a text PDF with PDF.js auxiliary asset URLs", async ({ pa
   await expect
     .poll(() =>
       page.locator('canvas[data-pdf-page="1"]').evaluate((element) => {
-        const context = element.getContext("2d");
+        const context = element.getContext('2d');
 
         if (!context) {
-          throw new Error("PDF canvas does not have a 2D rendering context.");
+          throw new Error('PDF canvas does not have a 2D rendering context.');
         }
 
         const image = context.getImageData(0, 0, element.width, element.height).data;
@@ -691,16 +660,16 @@ test("crop_pdf renders a text PDF with PDF.js auxiliary asset URLs", async ({ pa
     .toBe(true);
 });
 
-test("crop_pdfが固定fixtureのcrop範囲と選択ページを送信する", async ({ page }) => {
+test('crop_pdfが固定fixtureのcrop範囲と選択ページを送信する', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate(
     ({ pdfSrc, fileName }) => {
       (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-        new MessageEvent("message", {
+        new MessageEvent('message', {
           data: {
-            type: "init",
+            type: 'init',
             payload: {
               pdfSrc,
               fileName,
@@ -718,45 +687,44 @@ test("crop_pdfが固定fixtureのcrop範囲と選択ページを送信する", a
   );
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
-  await page.getByLabel("Left").fill(cropConfigureFixture.cropBox.left.toString());
-  await page.getByLabel("Bottom").fill(cropConfigureFixture.cropBox.bottom.toString());
-  await page.getByLabel("Right").fill(cropConfigureFixture.cropBox.right.toString());
-  await page.getByLabel("Top").fill(cropConfigureFixture.cropBox.top.toString());
-  await page.getByLabel("Selected pages").check();
-  await page.getByRole("textbox", { name: "Pages" }).fill("1");
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByLabel('Left').fill(cropConfigureFixture.cropBox.left.toString());
+  await page.getByLabel('Bottom').fill(cropConfigureFixture.cropBox.bottom.toString());
+  await page.getByLabel('Right').fill(cropConfigureFixture.cropBox.right.toString());
+  await page.getByLabel('Top').fill(cropConfigureFixture.cropBox.top.toString());
+  await page.getByLabel('Selected pages').check();
+  await page.getByRole('textbox', { name: 'Pages' }).fill('1');
+  await page.getByRole('button', { name: 'Apply' }).click();
 
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
-          .__vscodeMessages;
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
 
         return messages?.at(-1);
       }),
     )
     .toEqual({
-      type: "apply",
+      type: 'apply',
       payload: {
         cropBox: cropConfigureFixture.cropBox,
         target: {
-          type: "selected",
+          type: 'selected',
           pages: [1],
         },
       },
     });
 });
 
-test("crop_pdfが固定fixtureの操作をキャンセルする", async ({ page }) => {
+test('crop_pdfが固定fixtureの操作をキャンセルする', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate(
     ({ pdfSrc, fileName }) => {
       (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-        new MessageEvent("message", {
+        new MessageEvent('message', {
           data: {
-            type: "init",
+            type: 'init',
             payload: {
               pdfSrc,
               fileName,
@@ -774,32 +742,31 @@ test("crop_pdfが固定fixtureの操作をキャンセルする", async ({ page 
   );
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
-  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole('button', { name: 'Cancel' }).click();
 
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
-          .__vscodeMessages;
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
 
         return messages?.at(-1);
       }),
     )
-    .toEqual({ type: "cancel" });
+    .toEqual({ type: 'cancel' });
 });
 
-test("crop_pdf rejects empty crop input and non-numeric selected pages", async ({ page }) => {
+test('crop_pdf rejects empty crop input and non-numeric selected pages', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -809,53 +776,45 @@ test("crop_pdf rejects empty crop input and non-numeric selected pages", async (
   }, `${baseUrl}/fixture.pdf`);
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
-  await expect(page.getByLabel("Right")).toHaveValue("320");
-  await expect(page.getByLabel("Top")).toHaveValue("180");
-  await page.getByLabel("Left").fill("");
-  await page.getByRole("button", { name: "Apply" }).click();
-  await expect(page.getByRole("alert")).toHaveText("left must be a number.");
+  await expect(page.getByLabel('Right')).toHaveValue('320');
+  await expect(page.getByLabel('Top')).toHaveValue('180');
+  await page.getByLabel('Left').fill('');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByRole('alert')).toHaveText('left must be a number.');
 
-  await page.getByLabel("Left").fill("0");
-  await page.getByLabel("Bottom").fill("0");
-  await page.getByLabel("Right").fill("320");
-  await page.getByLabel("Top").fill("180");
-  await page.getByLabel("Selected pages").check();
-  await page.getByRole("textbox", { name: "Pages" }).fill("abc");
-  await page.getByRole("button", { name: "Apply" }).click();
-  await expect(page.getByRole("alert")).toHaveText("Page must be a whole number: abc");
+  await page.getByLabel('Left').fill('0');
+  await page.getByLabel('Bottom').fill('0');
+  await page.getByLabel('Right').fill('320');
+  await page.getByLabel('Top').fill('180');
+  await page.getByLabel('Selected pages').check();
+  await page.getByRole('textbox', { name: 'Pages' }).fill('abc');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Page must be a whole number: abc');
 
   const hasApplyMessage = await page.evaluate(() => {
     const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
 
     return messages?.some((message) => {
-      return (
-        typeof message === "object" &&
-        message !== null &&
-        "type" in message &&
-        message.type === "apply"
-      );
+      return typeof message === 'object' && message !== null && 'type' in message && message.type === 'apply';
     });
   });
 
   expect(hasApplyMessage).toBe(false);
 });
 
-test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertComputed", async ({
-  page,
-}) => {
+test('crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertComputed', async ({ page }) => {
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate((pdfSrc) => {
-    delete (Map.prototype as Map<unknown, unknown> & { getOrInsertComputed?: unknown })
-      .getOrInsertComputed;
+    delete (Map.prototype as Map<unknown, unknown> & { getOrInsertComputed?: unknown }).getOrInsertComputed;
 
     (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-      new MessageEvent("message", {
+      new MessageEvent('message', {
         data: {
-          type: "init",
+          type: 'init',
           payload: {
             pdfSrc,
-            fileName: "fixture.pdf",
+            fileName: 'fixture.pdf',
             pageCount: 2,
             initialPage: 1,
           },
@@ -867,21 +826,19 @@ test("crop_pdf renders the first PDF page when Chromium lacks Map getOrInsertCom
   const canvas = page.locator('canvas[data-pdf-page="1"]');
 
   await expect(canvas).toBeVisible();
-  await expect
-    .poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0))
-    .toBe(true);
+  await expect.poll(() => canvas.evaluate((element) => element.width > 0 && element.height > 0)).toBe(true);
 });
 
-test("crop_pdfが固定fixtureの全ページcropを送信する", async ({ page }) => {
+test('crop_pdfが固定fixtureの全ページcropを送信する', async ({ page }) => {
   await installVsCodeMessageRecorder(page);
   await page.goto(`${baseUrl}/crop_pdf/index.html`);
 
   await page.evaluate(
     ({ pdfSrc, fileName }) => {
       (globalThis as unknown as { dispatchEvent(event: MessageEvent): boolean }).dispatchEvent(
-        new MessageEvent("message", {
+        new MessageEvent('message', {
           data: {
-            type: "init",
+            type: 'init',
             payload: {
               pdfSrc,
               fileName,
@@ -899,23 +856,22 @@ test("crop_pdfが固定fixtureの全ページcropを送信する", async ({ page
   );
 
   await expect(page.locator('canvas[data-pdf-page="1"]')).toBeVisible();
-  await page.getByRole("button", { name: "Apply" }).click();
+  await page.getByRole('button', { name: 'Apply' }).click();
 
   await expect
     .poll(() =>
       page.evaluate(() => {
-        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] })
-          .__vscodeMessages;
+        const messages = (globalThis as unknown as { __vscodeMessages?: unknown[] }).__vscodeMessages;
 
         return messages?.at(-1);
       }),
     )
     .toEqual({
-      type: "apply",
+      type: 'apply',
       payload: {
         cropBox: cropConfigureFixture.fullPageBox,
         target: {
-          type: "all",
+          type: 'all',
         },
       },
     });
@@ -936,9 +892,7 @@ async function pdfPointAtViewportPosition(
 }
 
 async function overflowValue(element: Locator): Promise<string> {
-  return element.evaluate(
-    (target) => target.ownerDocument.defaultView?.getComputedStyle(target).overflow ?? "",
-  );
+  return element.evaluate((target) => target.ownerDocument.defaultView?.getComputedStyle(target).overflow ?? '');
 }
 
 async function createTestPdf(): Promise<Uint8Array> {
@@ -974,7 +928,7 @@ async function createTestPdf(): Promise<Uint8Array> {
     height: 90,
     color: rgb(1, 1, 0),
   });
-  page.drawText("LaTeX Graphics Helper", {
+  page.drawText('LaTeX Graphics Helper', {
     x: 24,
     y: 78,
     size: 24,
@@ -1012,11 +966,11 @@ async function createLargeTestPdf(): Promise<Uint8Array> {
 }
 
 function resolveWebviewFile(pathname: string): string | undefined {
-  const relativePath = pathname.replace(/^\/+/, "");
+  const relativePath = pathname.replace(/^\/+/, '');
   const resolvedPath = normalize(join(webviewRoot, relativePath));
   const resolvedRelativePath = relative(webviewRoot, resolvedPath);
 
-  if (resolvedRelativePath.startsWith("..") || isAbsolute(resolvedRelativePath)) {
+  if (resolvedRelativePath.startsWith('..') || isAbsolute(resolvedRelativePath)) {
     return undefined;
   }
 
@@ -1025,17 +979,17 @@ function resolveWebviewFile(pathname: string): string | undefined {
 
 function contentType(filePath: string): string {
   switch (extname(filePath)) {
-    case ".css":
-      return "text/css; charset=utf-8";
-    case ".html":
-      return "text/html; charset=utf-8";
-    case ".js":
-    case ".mjs":
-      return "text/javascript; charset=utf-8";
-    case ".map":
-      return "application/json; charset=utf-8";
+    case '.css':
+      return 'text/css; charset=utf-8';
+    case '.html':
+      return 'text/html; charset=utf-8';
+    case '.js':
+    case '.mjs':
+      return 'text/javascript; charset=utf-8';
+    case '.map':
+      return 'application/json; charset=utf-8';
     default:
-      return "application/octet-stream";
+      return 'application/octet-stream';
   }
 }
 
@@ -1045,12 +999,12 @@ async function installVsCodeMessageRecorder(page: {
   await page.addInitScript(() => {
     const messages: unknown[] = [];
 
-    Object.defineProperty(globalThis, "__vscodeMessages", {
+    Object.defineProperty(globalThis, '__vscodeMessages', {
       value: messages,
       configurable: true,
     });
 
-    Object.defineProperty(globalThis, "acquireVsCodeApi", {
+    Object.defineProperty(globalThis, 'acquireVsCodeApi', {
       value: () => ({
         postMessage(message: unknown) {
           messages.push(message);

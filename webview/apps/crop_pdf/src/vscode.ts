@@ -1,4 +1,4 @@
-import type { WebviewToExtensionMessage } from "./messages";
+import type { WebviewToExtensionMessage } from './messages';
 
 type VsCodeApi = {
   postMessage(message: WebviewToExtensionMessage): void;
@@ -9,14 +9,14 @@ type VsCodeApi = {
 declare const acquireVsCodeApi: (() => VsCodeApi) | undefined;
 
 function createVsCodeApi(): VsCodeApi {
-  if (typeof acquireVsCodeApi === "function") {
+  if (typeof acquireVsCodeApi === 'function') {
     return acquireVsCodeApi();
   }
 
   // ブラウザで Vite dev / unit test するとき用の fallback。
   return {
     postMessage(message) {
-      console.log("[webview mock postMessage]", message);
+      console.log('[webview mock postMessage]', message);
     },
     getState() {
       return undefined;

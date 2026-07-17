@@ -1,7 +1,7 @@
-import { readdir, readFile } from "node:fs/promises";
-import path from "node:path";
+import { readdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { runVSCodeCommand } from "@vscode/test-electron";
+import { runVSCodeCommand } from '@vscode/test-electron';
 
 interface PackagedVsixOptions {
   extensionsDir: string;
@@ -14,14 +14,12 @@ export interface InstalledExtension {
   extensionPath: string;
 }
 
-export async function installPackagedVsix(
-  options: PackagedVsixOptions,
-): Promise<InstalledExtension> {
+export async function installPackagedVsix(options: PackagedVsixOptions): Promise<InstalledExtension> {
   await runVSCodeCommand(
     [
-      "--install-extension",
+      '--install-extension',
       options.vsixPath,
-      "--force",
+      '--force',
       `--extensions-dir=${options.extensionsDir}`,
       `--user-data-dir=${options.userDataDir}`,
     ],
@@ -39,7 +37,7 @@ async function findInstalledExtension(extensionsDir: string): Promise<InstalledE
         .filter((entry) => entry.isDirectory())
         .map(async (entry) => {
           const extensionPath = path.join(extensionsDir, entry.name);
-          const manifest = await readManifest(path.join(extensionPath, "package.json"));
+          const manifest = await readManifest(path.join(extensionPath, 'package.json'));
 
           if (!manifest?.name || !manifest.publisher) {
             return undefined;
@@ -51,22 +49,18 @@ async function findInstalledExtension(extensionsDir: string): Promise<InstalledE
   ).filter((match): match is InstalledExtension => match !== undefined);
 
   if (matches.length !== 1) {
-    throw new Error(
-      `Expected one installed LaTeX Graphics Helper extension, found ${matches.length}.`,
-    );
+    throw new Error(`Expected one installed LaTeX Graphics Helper extension, found ${matches.length}.`);
   }
 
   return matches[0]!;
 }
 
-async function readManifest(
-  manifestPath: string,
-): Promise<{ name?: string; publisher?: string } | undefined> {
-  return readFile(manifestPath, "utf8")
+async function readManifest(manifestPath: string): Promise<{ name?: string; publisher?: string } | undefined> {
+  return readFile(manifestPath, 'utf8')
     .then((contents) => JSON.parse(contents) as { name?: unknown; publisher?: unknown })
     .then((manifest) => ({
-      ...(typeof manifest.name === "string" ? { name: manifest.name } : {}),
-      ...(typeof manifest.publisher === "string" ? { publisher: manifest.publisher } : {}),
+      ...(typeof manifest.name === 'string' ? { name: manifest.name } : {}),
+      ...(typeof manifest.publisher === 'string' ? { publisher: manifest.publisher } : {}),
     }))
     .catch(() => undefined);
 }

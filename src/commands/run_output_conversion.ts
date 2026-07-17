@@ -1,11 +1,12 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import type { CommittedConversionOutput } from "../operations/commit_conversion_outputs.js";
-import type { ConversionRuntime } from "../operations/conversion_runtime.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
-import { userMessage } from "./user_messages.js";
+import type { CommittedConversionOutput } from '../operations/commit_conversion_outputs.js';
+import type { ConversionRuntime } from '../operations/conversion_runtime.js';
+import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
+
+import { withCancellationSignal } from './progress_cancellation.js';
+import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './undo_last_conversion.js';
+import { userMessage } from './user_messages.js';
 
 export interface ConversionCommandMessages {
   progressTitle: string;
@@ -16,20 +17,19 @@ export interface ConversionCommandMessages {
   failedMessage: (reason: string) => string;
 }
 
-export type OutputConversionFormat = "PNG" | "JPEG" | "WebP" | "AVIF" | "SVG";
+export type OutputConversionFormat = 'PNG' | 'JPEG' | 'WebP' | 'AVIF' | 'SVG';
 
 export function createOutputConversionMessages(
   format: OutputConversionFormat,
   sourceCount: number,
 ): ConversionCommandMessages {
   return {
-    progressTitle: userMessage("message.progress.convertToOutput.title", sourceCount, format),
-    prepareMessage: userMessage("message.progress.prepareConversion", format),
-    successMessage: (count) => userMessage("message.convertToOutput.success", count, format),
-    undoUnavailableMessage: (success, reason) =>
-      userMessage("message.undoUnavailable", success, reason),
-    cancelledMessage: userMessage("message.convertToOutput.cancelled", format),
-    failedMessage: (reason) => userMessage("message.convertToOutput.failed", format, reason),
+    progressTitle: userMessage('message.progress.convertToOutput.title', sourceCount, format),
+    prepareMessage: userMessage('message.progress.prepareConversion', format),
+    successMessage: (count) => userMessage('message.convertToOutput.success', count, format),
+    undoUnavailableMessage: (success, reason) => userMessage('message.undoUnavailable', success, reason),
+    cancelledMessage: userMessage('message.convertToOutput.cancelled', format),
+    failedMessage: (reason) => userMessage('message.convertToOutput.failed', format, reason),
   };
 }
 
@@ -38,7 +38,7 @@ export async function runOutputConversion(options: {
   operationName: string;
   messages: ConversionCommandMessages;
   outputChannel?: LineOutputChannel;
-  resolveConflicts?: ConversionRuntime["resolveConflicts"];
+  resolveConflicts?: ConversionRuntime['resolveConflicts'];
   run: (runtime: ConversionRuntime) => Promise<CommittedConversionOutput[]>;
 }): Promise<void> {
   try {
@@ -68,13 +68,11 @@ export async function runOutputConversion(options: {
     } catch (error) {
       const reason = errorMessage(error);
       options.outputChannel?.appendLine(`[${options.operationName}] Undo record failed: ${reason}`);
-      await vscode.window.showWarningMessage(
-        options.messages.undoUnavailableMessage(successMessage, reason),
-      );
+      await vscode.window.showWarningMessage(options.messages.undoUnavailableMessage(successMessage, reason));
       return;
     }
 
-    const undoAction = userMessage("message.action.undo");
+    const undoAction = userMessage('message.action.undo');
     const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
     if (selectedAction === undoAction) {
       await vscode.commands.executeCommand(UNDO_LAST_CONVERSION_COMMAND, undoId);
@@ -93,7 +91,7 @@ export async function runOutputConversion(options: {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function errorMessage(error: unknown): string {

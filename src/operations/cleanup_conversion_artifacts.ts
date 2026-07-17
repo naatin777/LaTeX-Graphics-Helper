@@ -1,8 +1,9 @@
-import { lstat, readdir, rm } from "node:fs/promises";
-import path from "node:path";
+import { lstat, readdir, rm } from 'node:fs/promises';
+import path from 'node:path';
 
-import { assertWritablePathInWorkspace } from "../security/workspace_path.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+import { assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 export interface ConversionArtifactRoot {
   rootPath: string;
@@ -18,7 +19,7 @@ export function stagingArtifactsForJobs(
   return [
     ...new Map(
       jobs.map((job) => {
-        const rootPath = path.join(job.workspacePath, ".latex-graphics-helper", operation, runId);
+        const rootPath = path.join(job.workspacePath, '.latex-graphics-helper', operation, runId);
         return [rootPath, { rootPath, workspacePath: job.workspacePath }];
       }),
     ).values(),
@@ -95,11 +96,7 @@ async function removePath(
 
   await assertWritablePathInWorkspace(normalizedPath, workspacePath);
 
-  if (
-    !stat.isDirectory() ||
-    stat.isSymbolicLink() ||
-    !hasPreservedDescendant(normalizedPath, preservePaths)
-  ) {
+  if (!stat.isDirectory() || stat.isSymbolicLink() || !hasPreservedDescendant(normalizedPath, preservePaths)) {
     await rm(normalizedPath, {
       recursive: stat.isDirectory() && !stat.isSymbolicLink(),
       force: true,
@@ -120,9 +117,7 @@ async function removePath(
   }
 }
 
-function deduplicateArtifacts(
-  artifacts: readonly ConversionArtifactRoot[],
-): ConversionArtifactRoot[] {
+function deduplicateArtifacts(artifacts: readonly ConversionArtifactRoot[]): ConversionArtifactRoot[] {
   const byRoot = new Map<string, ConversionArtifactRoot>();
 
   for (const artifact of artifacts) {
@@ -136,9 +131,7 @@ function deduplicateArtifacts(
 
     byRoot.set(rootPath, {
       ...current,
-      preservePaths: [
-        ...new Set([...(current.preservePaths ?? []), ...(artifact.preservePaths ?? [])]),
-      ],
+      preservePaths: [...new Set([...(current.preservePaths ?? []), ...(artifact.preservePaths ?? [])])],
     });
   }
 
@@ -151,12 +144,9 @@ function hasPreservedDescendant(targetPath: string, preservePaths: ReadonlySet<s
 
 function isWithin(targetPath: string, parentPath: string): boolean {
   const relativePath = path.relative(parentPath, targetPath);
-  return (
-    relativePath === "" ||
-    (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`))
-  );
+  return relativePath === '' || (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`));
 }
 
 function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
 }

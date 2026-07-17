@@ -1,37 +1,28 @@
-import { execFile } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
-import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
-import sharp from "sharp";
+import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
+import sharp from 'sharp';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import {
-  isEditableDrawioImagePath,
-  isMermaidPath,
-  sourceFormatForPath,
-} from "../application/source_format.js";
+import { isEditableDrawioImagePath, isMermaidPath, sourceFormatForPath } from '../application/source_format.js';
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
 import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
-import type { RunPdfToPng } from "./convert_to_png.js";
-import {
-  runPdftocairoWithAsciiScratch,
-  type PdfToolScratchOptions,
-} from "./run_pdftocairo_with_ascii_scratch.js";
-import { runExternalTool } from "./run_external_tool.js";
-import type { ConversionRuntime } from "./conversion_runtime.js";
-import { runStagedConversionBatch } from "./run_staged_conversion_batch.js";
+} from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
+import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
+import type { RunPdfToPng } from './convert_to_png.js';
+import { runExternalTool } from './run_external_tool.js';
+import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
+import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
 
-const RASTER_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".avif"] as const;
+const RASTER_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.avif'] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToWebpJob {
@@ -71,7 +62,7 @@ interface WebpStageTools {
 
 interface WebpStageContext {
   runId: string;
-  runtime: Pick<ConversionRuntime, "signal">;
+  runtime: Pick<ConversionRuntime, 'signal'>;
   tools: WebpStageTools;
   scratch: PdfToolScratchOptions;
   output: WebpOutputOptions;
@@ -91,9 +82,7 @@ interface WebpRenderRequest {
   page?: number;
 }
 
-export async function convertToWebpFiles(
-  options: ConvertToWebpFilesOptions,
-): Promise<CommittedConversionOutput[]> {
+export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateJobPaths(options.jobs);
@@ -122,7 +111,7 @@ export async function convertToWebpFiles(
   };
   return runStagedConversionBatch({
     jobs: options.jobs,
-    operationName: "convert-to-webp",
+    operationName: 'convert-to-webp',
     runId,
     runtime,
     stage: (job, index, stageRunId, stageRuntime) =>
@@ -147,25 +136,20 @@ async function stageWebpConversion(
   const paths: WebpStagePaths = {
     stageDirectory: path.join(
       job.workspacePath,
-      ".latex-graphics-helper",
-      "convert-to-webp",
+      '.latex-graphics-helper',
+      'convert-to-webp',
       context.runId,
       `${index + 1}`,
     ),
     stagedOutputPath: path.join(
       job.workspacePath,
-      ".latex-graphics-helper",
-      "convert-to-webp",
+      '.latex-graphics-helper',
+      'convert-to-webp',
       context.runId,
       `${index + 1}`,
-      "result.webp",
+      'result.webp',
     ),
-    stagingRootPath: path.join(
-      job.workspacePath,
-      ".latex-graphics-helper",
-      "convert-to-webp",
-      context.runId,
-    ),
+    stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'convert-to-webp', context.runId),
   };
 
   await writeSourceAsWebp(job, paths, context);
@@ -199,7 +183,7 @@ async function writeSourceAsWebp(
     ...(job.page !== undefined && { page: job.page }),
   };
 
-  if (extension === ".pdf") {
+  if (extension === '.pdf') {
     await writePdfPageAsWebp(request, context);
     return;
   }
@@ -218,14 +202,14 @@ async function writeDrawioAsWebp(
   context: WebpStageContext,
 ): Promise<void> {
   context.runtime.signal?.throwIfAborted();
-  const pdfPath = path.join(paths.stageDirectory, "drawio.pdf");
+  const pdfPath = path.join(paths.stageDirectory, 'drawio.pdf');
   await assertWritablePathInWorkspace(pdfPath, job.workspacePath);
   await mkdir(path.dirname(pdfPath), { recursive: true });
   context.runtime.signal?.throwIfAborted();
 
   await (context.tools.drawio.runDrawio ?? executeDrawio)(
     context.tools.drawio.drawioPath,
-    ["-x", "-f", "pdf", "-o", pdfPath, job.sourcePath],
+    ['-x', '-f', 'pdf', '-o', pdfPath, job.sourcePath],
     context.runtime.signal,
   );
   await writePdfPageAsWebp(
@@ -240,14 +224,8 @@ async function writeDrawioAsWebp(
   );
 }
 
-async function writePdfPageAsWebp(
-  request: WebpRenderRequest,
-  context: WebpStageContext,
-): Promise<void> {
-  const pngPath = path.join(
-    request.stageDirectory ?? path.dirname(request.outputPath),
-    "source.png",
-  );
+async function writePdfPageAsWebp(request: WebpRenderRequest, context: WebpStageContext): Promise<void> {
+  const pngPath = path.join(request.stageDirectory ?? path.dirname(request.outputPath), 'source.png');
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
@@ -256,17 +234,12 @@ async function writePdfPageAsWebp(
   await runPdftocairoWithAsciiScratch({
     sourcePath: request.sourcePath,
     outputPath: pngPath,
-    scratchOutputFileName: "output.png",
+    scratchOutputFileName: 'output.png',
     scratch: context.scratch,
     ...(context.runtime.signal !== undefined && { signal: context.runtime.signal }),
     run: async (toolSourcePath, toolOutputPath) => {
       if (context.tools.runPdfToPng) {
-        await context.tools.runPdfToPng(
-          toolSourcePath,
-          toolOutputPath,
-          request.page ?? 1,
-          context.runtime.signal,
-        );
+        await context.tools.runPdfToPng(toolSourcePath, toolOutputPath, request.page ?? 1, context.runtime.signal);
         return;
       }
 
@@ -274,17 +247,17 @@ async function writePdfPageAsWebp(
       await execFileAsync(
         context.tools.pdftocairoPath,
         [
-          "-png",
-          "-singlefile",
-          "-f",
+          '-png',
+          '-singlefile',
+          '-f',
           String(request.page ?? 1),
-          "-l",
+          '-l',
           String(request.page ?? 1),
           toolSourcePath,
           outputPrefix,
         ],
         {
-          encoding: "utf8",
+          encoding: 'utf8',
           maxBuffer: 10 * 1024 * 1024,
           signal: context.runtime.signal,
         },
@@ -295,14 +268,8 @@ async function writePdfPageAsWebp(
   await writeImageAsWebp({ ...request, sourcePath: pngPath }, context);
 }
 
-async function writeMermaidAsWebp(
-  request: WebpRenderRequest,
-  context: WebpStageContext,
-): Promise<void> {
-  const pngPath = path.join(
-    request.stageDirectory ?? path.dirname(request.outputPath),
-    "mermaid.png",
-  );
+async function writeMermaidAsWebp(request: WebpRenderRequest, context: WebpStageContext): Promise<void> {
+  const pngPath = path.join(request.stageDirectory ?? path.dirname(request.outputPath), 'mermaid.png');
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(pngPath, request.workspacePath);
   await mkdir(path.dirname(pngPath), { recursive: true });
@@ -310,7 +277,7 @@ async function writeMermaidAsWebp(
 
   try {
     await runMermaidCli(request.sourcePath, asPngOutputPath(pngPath), {
-      outputFormat: "png",
+      outputFormat: 'png',
       puppeteerConfig: createMermaidPuppeteerConfig(context.tools.mermaid),
       quiet: true,
     });
@@ -325,10 +292,7 @@ async function writeMermaidAsWebp(
   await writeImageAsWebp({ ...request, sourcePath: pngPath }, context);
 }
 
-async function writeImageAsWebp(
-  request: WebpRenderRequest,
-  context: WebpStageContext,
-): Promise<void> {
+async function writeImageAsWebp(request: WebpRenderRequest, context: WebpStageContext): Promise<void> {
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(request.outputPath, request.workspacePath);
   await mkdir(path.dirname(request.outputPath), { recursive: true });
@@ -337,13 +301,9 @@ async function writeImageAsWebp(
   await sharp(sourceBuffer).webp({ effort: context.output.effort }).toFile(request.outputPath);
 }
 
-async function executeDrawio(
-  executable: string,
-  args: string[],
-  signal?: AbortSignal,
-): Promise<void> {
+async function executeDrawio(executable: string, args: string[], signal?: AbortSignal): Promise<void> {
   await runExternalTool({
-    toolName: "drawio",
+    toolName: 'drawio',
     executable,
     args,
     ...(signal !== undefined && { signal }),
@@ -356,7 +316,7 @@ async function validateJobPaths(jobs: ConvertToWebpJob[]): Promise<void> {
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "convert-to-webp"),
+        path.join(job.workspacePath, '.latex-graphics-helper', 'convert-to-webp'),
         job.workspacePath,
       ),
     ]),
@@ -365,7 +325,7 @@ async function validateJobPaths(jobs: ConvertToWebpJob[]): Promise<void> {
 
 function validateJobs(jobs: ConvertToWebpJob[]): void {
   if (jobs.length === 0) {
-    throw new Error("No files were selected.");
+    throw new Error('No files were selected.');
   }
 
   for (const job of jobs) {
@@ -379,16 +339,16 @@ function isSupportedSourcePath(sourcePath: string): boolean {
   const extension = path.extname(sourcePath).toLowerCase();
 
   return (
-    extension === ".pdf" ||
-    extension === ".svg" ||
-    sourceFormatForPath(sourcePath) === "mermaid" ||
+    extension === '.pdf' ||
+    extension === '.svg' ||
+    sourceFormatForPath(sourcePath) === 'mermaid' ||
     RASTER_IMAGE_EXTENSIONS.includes(extension as (typeof RASTER_IMAGE_EXTENSIONS)[number]) ||
     isEditableDrawioImagePath(sourcePath)
   );
 }
 
 function asPngOutputPath(outputPath: string): `${string}.png` {
-  if (!outputPath.toLowerCase().endsWith(".png")) {
+  if (!outputPath.toLowerCase().endsWith('.png')) {
     throw new Error(`PNG output path must end with .png: ${outputPath}`);
   }
 
@@ -410,12 +370,12 @@ function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) {
-    const stderr = "stderr" in error && typeof error.stderr === "string" ? error.stderr.trim() : "";
+    const stderr = 'stderr' in error && typeof error.stderr === 'string' ? error.stderr.trim() : '';
     return stderr ? `${error.message}\n${stderr}` : error.message;
   }
 

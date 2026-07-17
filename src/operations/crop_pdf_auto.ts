@@ -1,22 +1,20 @@
-import { execFile } from "node:child_process";
-import { access, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { access, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
-import pLimit from "p-limit";
-import { PDFDocument, type PDFPage } from "pdf-lib";
+import pLimit from 'p-limit';
+import { PDFDocument, type PDFPage } from 'pdf-lib';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
+} from './commit_conversion_outputs.js';
 import {
   createAsciiInputScratch,
   defaultWindowsScratchBaseCandidates,
@@ -24,7 +22,7 @@ import {
   validateAsciiScratchInput,
   type AsciiScratch,
   type LineOutputChannel,
-} from "./external_tool_ascii_scratch.js";
+} from './external_tool_ascii_scratch.js';
 
 const execFileAsync = promisify(execFile);
 const CONVERSION_CONCURRENCY = 2;
@@ -40,11 +38,7 @@ export interface GhostscriptResult {
   stderr: string;
 }
 
-export type RunGhostscript = (
-  executable: string,
-  args: string[],
-  signal?: AbortSignal,
-) => Promise<GhostscriptResult>;
+export type RunGhostscript = (executable: string, args: string[], signal?: AbortSignal) => Promise<GhostscriptResult>;
 
 export interface CropPdfOptions {
   jobs: CropPdfJob[];
@@ -81,9 +75,8 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
   const platform = options.platform ?? process.platform;
-  const scratchBaseCandidates =
-    options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
-  const artifacts = stagingArtifactsForJobs(options.jobs, "crop-pdf", runId);
+  const scratchBaseCandidates = options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
+  const artifacts = stagingArtifactsForJobs(options.jobs, 'crop-pdf', runId);
 
   return withStagingCleanup(
     artifacts,
@@ -116,7 +109,7 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: "crop-pdf-auto",
+        operationName: 'crop-pdf-auto',
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
@@ -150,15 +143,9 @@ async function convertPdf(params: {
   } = params;
   signal?.throwIfAborted();
   const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
-  const workDirectory = path.join(
-    job.workspacePath,
-    ".latex-graphics-helper",
-    "crop-pdf",
-    runId,
-    itemName,
-  );
+  const workDirectory = path.join(job.workspacePath, '.latex-graphics-helper', 'crop-pdf', runId, itemName);
   const copiedSourcePath = path.join(workDirectory, path.basename(job.sourcePath));
-  const stagedOutputPath = path.join(workDirectory, "result.pdf");
+  const stagedOutputPath = path.join(workDirectory, 'result.pdf');
 
   await assertExistingPathInWorkspace(job.sourcePath, job.workspacePath);
   await assertWritablePathInWorkspace(workDirectory, job.workspacePath);
@@ -175,10 +162,10 @@ async function convertPdf(params: {
     signal?.throwIfAborted();
     let ghostscriptInputPath = copiedSourcePath;
 
-    if (platform === "win32") {
+    if (platform === 'win32') {
       scratch = await createAsciiInputScratch({
         baseCandidates: scratchBaseCandidates,
-        inputFileName: "input.pdf",
+        inputFileName: 'input.pdf',
         ...(signal !== undefined && { signal }),
         ...(outputChannel !== undefined && { outputChannel }),
       });
@@ -231,7 +218,7 @@ async function convertPdf(params: {
       stagedOutputPath,
       outputPath: job.outputPath,
       workspacePath: job.workspacePath,
-      stagingRootPath: path.join(job.workspacePath, ".latex-graphics-helper", "crop-pdf", runId),
+      stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'crop-pdf', runId),
     };
   } catch (error) {
     if (scratch) {
@@ -251,7 +238,7 @@ async function readBoundingBoxes(
   try {
     const result = await runGhostscript(
       ghostscriptPath,
-      ["-dSAFER", "-dBATCH", "-dNOPAUSE", "-sDEVICE=bbox", sourcePath],
+      ['-dSAFER', '-dBATCH', '-dNOPAUSE', '-sDEVICE=bbox', sourcePath],
       signal,
     );
 
@@ -287,7 +274,7 @@ async function validateJobPaths(jobs: CropPdfJob[]): Promise<void> {
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "crop-pdf"),
+        path.join(job.workspacePath, '.latex-graphics-helper', 'crop-pdf'),
         job.workspacePath,
       ),
     ]),
@@ -296,11 +283,11 @@ async function validateJobPaths(jobs: CropPdfJob[]): Promise<void> {
 
 function validateJobs(jobs: CropPdfJob[]): void {
   if (jobs.length === 0) {
-    throw new Error("No PDF files were selected.");
+    throw new Error('No PDF files were selected.');
   }
 
   for (const job of jobs) {
-    if (path.extname(job.sourcePath).toLowerCase() !== ".pdf") {
+    if (path.extname(job.sourcePath).toLowerCase() !== '.pdf') {
       throw new Error(`Only PDF files can be cropped: ${job.sourcePath}`);
     }
   }
@@ -361,11 +348,11 @@ function isEmptyBox(box: Box): boolean {
 }
 
 function safeName(value: string): string {
-  return value.replace(/[^a-zA-Z0-9._-]/g, "_") || "pdf";
+  return value.replace(/[^a-zA-Z0-9._-]/g, '_') || 'pdf';
 }
 
 function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
 }
 
 async function executeGhostscript(
@@ -374,7 +361,7 @@ async function executeGhostscript(
   signal?: AbortSignal,
 ): Promise<GhostscriptResult> {
   const result = await execFileAsync(executable, args, {
-    encoding: "utf8",
+    encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024,
     signal,
   });

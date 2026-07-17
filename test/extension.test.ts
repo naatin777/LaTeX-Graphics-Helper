@@ -1,26 +1,26 @@
 /* oxlint-disable vitest/expect-expect */
 
-import assert from "node:assert/strict";
-import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { copyFile, mkdtemp, readFile, rm } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import sinon from "sinon";
-import * as vscode from "vscode";
+import sinon from 'sinon';
+import * as vscode from 'vscode';
 
-import { INTERNAL_COMMAND_IDS, PUBLIC_COMMAND_IDS } from "../src/extension.js";
+import { INTERNAL_COMMAND_IDS, PUBLIC_COMMAND_IDS } from '../src/extension.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 
-suite("拡張機能の基本動作", () => {
-  test("拡張機能が登録されている", () => {
-    const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
+suite('拡張機能の基本動作', () => {
+  test('拡張機能が登録されている', () => {
+    const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
 
     assert.ok(extension);
   });
 
-  test("拡張機能をactivateできる", async () => {
-    const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
+  test('拡張機能をactivateできる', async () => {
+    const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
 
     assert.ok(extension);
 
@@ -29,33 +29,33 @@ suite("拡張機能の基本動作", () => {
     assert.strictEqual(extension.isActive, true);
   });
 
-  test("自動cropコマンドが登録されている", async () => {
+  test('自動cropコマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
-    assert.ok(commands.includes("latex-graphics-helper.cropPdf.auto"));
+    assert.ok(commands.includes('latex-graphics-helper.cropPdf.auto'));
   });
 
-  test("configure cropコマンドが登録されている", async () => {
+  test('configure cropコマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
-    assert.ok(commands.includes("latex-graphics-helper.cropPdf.configure"));
-    assert.ok(!commands.includes("latex-graphics-helper.cropPdf.manual"));
+    assert.ok(commands.includes('latex-graphics-helper.cropPdf.configure'));
+    assert.ok(!commands.includes('latex-graphics-helper.cropPdf.manual'));
   });
 
-  test("全ページ分割コマンドが登録されている", async () => {
+  test('全ページ分割コマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
-    assert.ok(commands.includes("latex-graphics-helper.splitPdf.allPages"));
+    assert.ok(commands.includes('latex-graphics-helper.splitPdf.allPages'));
   });
 
-  test("PNGからPDFへの変換コマンドが登録されている", async () => {
+  test('PNGからPDFへの変換コマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
-    assert.ok(commands.includes("latex-graphics-helper.convertPngToPdf"));
+    assert.ok(commands.includes('latex-graphics-helper.convertPngToPdf'));
   });
 
-  test("manifestの公開commandと実際の登録commandが一致する", async () => {
-    const extension = vscode.extensions.getExtension("naatin777.latex-graphics-helper");
+  test('manifestの公開commandと実際の登録commandが一致する', async () => {
+    const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
     assert.ok(extension);
     await extension.activate();
 
@@ -66,31 +66,23 @@ suite("拡張機能の基本動作", () => {
     }
   });
 
-  test("PNGからPDFへの変換コマンドを実行してファイル変換できる", async () => {
+  test('PNGからPDFへの変換コマンドを実行してファイル変換できる', async () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspaceFolder);
 
     const sandbox = sinon.createSandbox();
-    const temporaryDirectory = await mkdtemp(
-      path.join(workspaceFolder.uri.fsPath, "lgh-extension-test-"),
-    );
+    const temporaryDirectory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, 'lgh-extension-test-'));
 
     try {
-      sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+      sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
 
-      const sourcePath = path.join(temporaryDirectory, "source.png");
-      const outputPath = path.join(temporaryDirectory, "source.pdf");
-      await copyFile(
-        path.join(testDirectory, "..", "..", "test", "fixtures", "test.png"),
-        sourcePath,
-      );
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const outputPath = path.join(temporaryDirectory, 'source.pdf');
+      await copyFile(path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png'), sourcePath);
 
-      await vscode.commands.executeCommand(
-        "latex-graphics-helper.convertPngToPdf",
-        vscode.Uri.file(sourcePath),
-      );
+      await vscode.commands.executeCommand('latex-graphics-helper.convertPngToPdf', vscode.Uri.file(sourcePath));
 
-      const { PDFDocument } = await import("pdf-lib");
+      const { PDFDocument } = await import('pdf-lib');
       const pdf = await PDFDocument.load(await readFile(outputPath));
       assert.strictEqual(pdf.getPageCount(), 1);
     } finally {

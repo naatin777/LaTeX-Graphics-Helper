@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import localeJa from "../package.nls.ja.json" with { type: "json" };
-import localeEn from "../package.nls.json" with { type: "json" };
+import localeJa from '../package.nls.ja.json' with { type: 'json' };
+import localeEn from '../package.nls.json' with { type: 'json' };
 
 export type LocaleKeyType = keyof typeof localeEn;
 

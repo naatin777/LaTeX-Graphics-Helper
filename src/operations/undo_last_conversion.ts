@@ -1,13 +1,11 @@
-import { copyFile, rm } from "node:fs/promises";
-import path from "node:path";
+import { copyFile, rm } from 'node:fs/promises';
+import path from 'node:path';
 
-import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-} from "./cleanup_conversion_artifacts.js";
-import { hashFile } from "./file_content_hash.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
+
+import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { hashFile } from './file_content_hash.js';
 
 export interface ConversionOutput {
   outputPath: string;
@@ -26,11 +24,9 @@ interface ConversionUndoOutput extends ConversionOutput {
   previousSha256?: string;
 }
 
-export async function createConversionUndoRecord(
-  outputs: ConversionOutput[],
-): Promise<ConversionUndoRecord> {
+export async function createConversionUndoRecord(outputs: ConversionOutput[]): Promise<ConversionUndoRecord> {
   if (outputs.length === 0) {
-    throw new Error("No conversion outputs were provided.");
+    throw new Error('No conversion outputs were provided.');
   }
 
   const uniquePaths = new Set<string>();
@@ -99,10 +95,7 @@ async function validateUnchangedOutput(output: ConversionUndoOutput): Promise<vo
   }
 }
 
-async function recordPreviousFile(
-  previousFilePath: string,
-  workspacePath: string,
-): Promise<string> {
+async function recordPreviousFile(previousFilePath: string, workspacePath: string): Promise<string> {
   await assertExistingPathInWorkspace(previousFilePath, workspacePath);
   return calculateSha256(previousFilePath);
 }
@@ -113,8 +106,6 @@ async function calculateSha256(filePath: string): Promise<string> {
 
 function toArtifactRoots(record: ConversionUndoRecord): ConversionArtifactRoot[] {
   return record.outputs.flatMap((output) =>
-    output.stagingRootPath
-      ? [{ rootPath: output.stagingRootPath, workspacePath: output.workspacePath }]
-      : [],
+    output.stagingRootPath ? [{ rootPath: output.stagingRootPath, workspacePath: output.workspacePath }] : [],
   );
 }

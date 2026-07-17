@@ -1,6 +1,6 @@
-import { randomBytes } from "node:crypto";
+import { randomBytes } from 'node:crypto';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export function getWebviewHtml(params: {
   webview: vscode.Webview;
@@ -11,13 +11,9 @@ export function getWebviewHtml(params: {
 }): string {
   const { webview, extensionUri, title, appName, locale = vscode.env.language } = params;
 
-  const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "media", "webview", appName, "index.js"),
-  );
+  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'webview', appName, 'index.js'));
 
-  const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "media", "webview", appName, "index.css"),
-  );
+  const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'webview', appName, 'index.css'));
 
   const nonce = getNonce();
 
@@ -54,22 +50,22 @@ export function getWebviewHtml(params: {
 }
 
 function getNonce(): string {
-  return randomBytes(16).toString("base64");
+  return randomBytes(16).toString('base64');
 }
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => {
     switch (char) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
       case '"':
-        return "&quot;";
+        return '&quot;';
       case "'":
-        return "&#39;";
+        return '&#39;';
       default:
         return char;
     }

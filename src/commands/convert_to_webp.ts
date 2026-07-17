@@ -1,33 +1,31 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { PDFDocument } from "pdf-lib";
-import * as vscode from "vscode";
+import { PDFDocument } from 'pdf-lib';
+import * as vscode from 'vscode';
 
-import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import {
-  isEditableDrawioImagePath,
-  logicalSourcePathForOutputTemplate,
-} from "../application/source_format.js";
-import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
-import type { CommandDependencies } from "./command_dependencies.js";
-import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
+import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
+import type { MermaidPuppeteerOptions } from '../operations/convert_png_to_pdf.js';
 import {
   convertToWebpFiles,
   type ConvertToWebpJob,
   type DrawioToWebpOptions,
   type WebpOutputOptions,
-} from "../operations/convert_to_webp.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
-import { userMessage } from "./user_messages.js";
+} from '../operations/convert_to_webp.js';
+import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
-export const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
+import type { CommandDependencies } from './command_dependencies.js';
+import { createOutputConversionMessages, runOutputConversion } from './run_output_conversion.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { userMessage } from './user_messages.js';
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.webp";
-const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.webp";
-const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.webp";
+export const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
+
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.webp';
+const DEFAULT_PDF_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.webp';
+const DEFAULT_DRAWIO_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.webp';
 const DEFAULT_WEBP_EFFORT = 4;
 
 export async function convertToWebpCommand(
@@ -40,30 +38,23 @@ export async function convertToWebpCommand(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
-      throw new Error("No files were selected.");
+      throw new Error('No files were selected.');
     }
 
-    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(
-      configuration,
-      "outputPath.convertToWebp",
-    );
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToWebp');
     const jobs = (
-      await Promise.all(
-        sourceUris.map((sourceUri) =>
-          createJobs(sourceUri, configuration, outputFormatOutputTemplate),
-        ),
-      )
+      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToWebpOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
-    const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
+    const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
     await runOutputConversion({
-      operationName: "convert-to-webp",
+      operationName: 'convert-to-webp',
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: createOutputConversionMessages("WebP", sourceUris.length),
+      messages: createOutputConversionMessages('WebP', sourceUris.length),
       run: (runtime) =>
         convertToWebpFiles({
           jobs,
@@ -81,16 +72,12 @@ export async function convertToWebpCommand(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(
-        userMessage("message.convertToOutput.cancelled", "WebP"),
-      );
+      await vscode.window.showInformationMessage(userMessage('message.convertToOutput.cancelled', 'WebP'));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(
-      userMessage("message.convertToOutput.failed", "WebP", message),
-    );
+    await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'WebP', message));
   }
 }
 
@@ -99,7 +86,7 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToWebpJob[]> {
-  if (sourceUri.scheme !== "file") {
+  if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
   }
 
@@ -112,21 +99,17 @@ async function createJobs(
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 
-  if (extension === ".webp" && !isEditableDrawioImagePath(sourcePath)) {
+  if (extension === '.webp' && !isEditableDrawioImagePath(sourcePath)) {
     throw new Error(`Unsupported input for WebP conversion: ${sourcePath}`);
   }
 
-  if (extension === ".pdf") {
+  if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 
-  const page = isEditableDrawioImagePath(sourcePath) ? "1" : undefined;
-  const outputTemplate = outputTemplateForSource(
-    sourcePath,
-    configuration,
-    outputFormatOutputTemplate,
-  );
+  const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
   const outputPath = resolveOutputPath(outputTemplate, {
     sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
     workspacePath: workspace.uri.fsPath,
@@ -158,8 +141,7 @@ async function createPdfJobs(
   }
 
   const outputTemplate =
-    outputFormatOutputTemplate ??
-    configuration.get<string>("outputPath.convertPdfToWebp", DEFAULT_PDF_OUTPUT_PATH);
+    outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToWebp', DEFAULT_PDF_OUTPUT_PATH);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
@@ -189,26 +171,26 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>("outputPath.convertDrawioToWebp", DEFAULT_DRAWIO_OUTPUT_PATH);
+    return configuration.get<string>('outputPath.convertDrawioToWebp', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
-    case ".png": {
-      return configuration.get<string>("outputPath.convertPngToWebp", DEFAULT_OUTPUT_PATH);
+    case '.png': {
+      return configuration.get<string>('outputPath.convertPngToWebp', DEFAULT_OUTPUT_PATH);
     }
-    case ".jpg":
-    case ".jpeg": {
-      return configuration.get<string>("outputPath.convertJpegToWebp", DEFAULT_OUTPUT_PATH);
+    case '.jpg':
+    case '.jpeg': {
+      return configuration.get<string>('outputPath.convertJpegToWebp', DEFAULT_OUTPUT_PATH);
     }
-    case ".avif": {
-      return configuration.get<string>("outputPath.convertAvifToWebp", DEFAULT_OUTPUT_PATH);
+    case '.avif': {
+      return configuration.get<string>('outputPath.convertAvifToWebp', DEFAULT_OUTPUT_PATH);
     }
-    case ".svg": {
-      return configuration.get<string>("outputPath.convertSvgToWebp", DEFAULT_OUTPUT_PATH);
+    case '.svg': {
+      return configuration.get<string>('outputPath.convertSvgToWebp', DEFAULT_OUTPUT_PATH);
     }
-    case ".mmd":
-    case ".mermaid": {
-      return configuration.get<string>("outputPath.convertMermaidToWebp", DEFAULT_OUTPUT_PATH);
+    case '.mmd':
+    case '.mermaid': {
+      return configuration.get<string>('outputPath.convertMermaidToWebp', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;
@@ -216,26 +198,17 @@ function outputTemplateForSource(
   }
 }
 
-function readMermaidPuppeteerOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): MermaidPuppeteerOptions {
-  const executablePath = configuration
-    .get<string>("convertToPdf.mermaid.puppeteer.executablePath", "")
-    .trim();
+function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
+  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
 
   return {
-    browserChannel: configuration.get<string>(
-      "convertToPdf.mermaid.puppeteer.browserChannel",
-      "chrome",
-    ),
+    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { executablePath } : {}),
   };
 }
 
-function readDrawioToWebpOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): DrawioToWebpOptions {
-  const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
+function readDrawioToWebpOptions(configuration: vscode.WorkspaceConfiguration): DrawioToWebpOptions {
+  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
 
   return {
     drawioPath: configuredPath || defaultDrawioPath(),
@@ -243,7 +216,7 @@ function readDrawioToWebpOptions(
 }
 
 function readWebpOutputOptions(configuration: vscode.WorkspaceConfiguration): WebpOutputOptions {
-  const effort = configuration.get<number>("convertToWebp.effort", DEFAULT_WEBP_EFFORT);
+  const effort = configuration.get<number>('convertToWebp.effort', DEFAULT_WEBP_EFFORT);
 
   if (!Number.isInteger(effort) || effort < 0 || effort > 6) {
     throw new Error(`convertToWebp.effort must be an integer between 0 and 6: ${effort}`);
@@ -253,7 +226,7 @@ function readWebpOutputOptions(configuration: vscode.WorkspaceConfiguration): We
 }
 
 function defaultDrawioPath(): string {
-  return process.platform === "win32" ? "drawio.exe" : "drawio";
+  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
@@ -264,5 +237,5 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }

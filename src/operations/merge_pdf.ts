@@ -1,22 +1,17 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument } from 'pdf-lib';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-} from "./cleanup_conversion_artifacts.js";
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
-} from "./commit_conversion_outputs.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+} from './commit_conversion_outputs.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 export interface MergePdfOptions {
   sourcePaths: string[];
@@ -31,21 +26,18 @@ export interface MergePdfOptions {
 export async function mergePdf(options: MergePdfOptions): Promise<CommittedConversionOutput[]> {
   const { sourcePaths, outputPath, workspacePath } = options;
 
-  options.outputChannel?.appendLine(`[merge-pdf] input paths: ${sourcePaths.join(", ")}`);
+  options.outputChannel?.appendLine(`[merge-pdf] input paths: ${sourcePaths.join(', ')}`);
   options.outputChannel?.appendLine(`[merge-pdf] requested output: ${outputPath}`);
 
   if (sourcePaths.length < 2) {
-    throw new Error("Select at least two PDF files.");
+    throw new Error('Select at least two PDF files.');
   }
 
   options.signal?.throwIfAborted();
   await Promise.all([
     ...sourcePaths.map((sourcePath) => assertExistingPathInWorkspace(sourcePath, workspacePath)),
     assertWritablePathInWorkspace(outputPath, workspacePath),
-    assertWritablePathInWorkspace(
-      path.join(workspacePath, ".latex-graphics-helper", "merge-pdf"),
-      workspacePath,
-    ),
+    assertWritablePathInWorkspace(path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf'), workspacePath),
   ]);
   options.signal?.throwIfAborted();
 
@@ -65,8 +57,8 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
 
   options.signal?.throwIfAborted();
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const stagingRootPath = path.join(workspacePath, ".latex-graphics-helper", "merge-pdf", runId);
-  const stagedOutputPath = path.join(stagingRootPath, "result.pdf");
+  const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', runId);
+  const stagedOutputPath = path.join(stagingRootPath, 'result.pdf');
 
   const artifacts: ConversionArtifactRoot[] = [{ rootPath: stagingRootPath, workspacePath }];
 
@@ -77,17 +69,14 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
     await writeFile(stagedOutputPath, await mergedDocument.save());
     options.signal?.throwIfAborted();
 
-    return commitConversionOutputs(
-      [{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }],
-      {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: "merge-pdf",
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      },
-    );
+    return commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }], {
+      ...(options.signal !== undefined && { signal: options.signal }),
+      ...(options.resolveOutputConflicts !== undefined && {
+        resolveConflicts: options.resolveOutputConflicts,
+      }),
+      operationName: 'merge-pdf',
+      ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+    });
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, options.outputChannel);
     throw error;

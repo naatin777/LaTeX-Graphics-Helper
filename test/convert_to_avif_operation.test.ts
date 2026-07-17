@@ -9,25 +9,25 @@
 // - pdftocairo実体での変換
 // - 画像内容のpixel完全一致
 
-import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
-import sharp from "sharp";
+import sharp from 'sharp';
 
-import { convertToAvifFiles } from "../src/operations/convert_to_avif.js";
+import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
 
-suite("AVIFに変換する処理", () => {
-  test("編集可能なDraw.io画像はPDFとPNGを経由してAVIFへ変換する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-convert-to-avif-operation-"));
+suite('AVIFに変換する処理', () => {
+  test('編集可能なDraw.io画像はPDFとPNGを経由してAVIFへ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-avif-operation-'));
 
     try {
-      const sourcePath = path.join(workspacePath, "source.drawio.png");
-      const outputPath = path.join(workspacePath, "source", "1.avif");
+      const sourcePath = path.join(workspacePath, 'source.drawio.png');
+      const outputPath = path.join(workspacePath, 'source', '1.avif');
       const drawioCalls: string[][] = [];
       const pdfToPngCalls: { sourcePath: string; outputPath: string; page: number }[] = [];
-      await writeFile(sourcePath, "editable drawio image placeholder");
+      await writeFile(sourcePath, 'editable drawio image placeholder');
 
       await convertToAvifFiles({
         jobs: [
@@ -38,17 +38,17 @@ suite("AVIFに変換する処理", () => {
             page: 1,
           },
         ],
-        pdftocairoPath: "pdftocairo",
+        pdftocairoPath: 'pdftocairo',
         mermaid: {
-          browserChannel: "chrome",
+          browserChannel: 'chrome',
         },
         drawio: {
-          drawioPath: "drawio",
+          drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);
-            const outputIndex = args.indexOf("-o") + 1;
+            const outputIndex = args.indexOf('-o') + 1;
             assert.ok(outputIndex > 0);
-            await writeFile(args[outputIndex]!, "%PDF-1.7\n");
+            await writeFile(args[outputIndex]!, '%PDF-1.7\n');
           },
         },
         avif: {
@@ -61,26 +61,26 @@ suite("AVIFに変換する処理", () => {
               width: 12,
               height: 8,
               channels: 4,
-              background: "#285078",
+              background: '#285078',
             },
           })
             .png()
             .toFile(pngPath);
         },
-        runId: "test-run",
+        runId: 'test-run',
       });
 
       assert.strictEqual(drawioCalls.length, 1);
       const drawioArgs = drawioCalls[0]!;
       const expectedPdfPath = path.join(
         workspacePath,
-        ".latex-graphics-helper",
-        "convert-to-avif",
-        "test-run",
-        "1",
-        "drawio.pdf",
+        '.latex-graphics-helper',
+        'convert-to-avif',
+        'test-run',
+        '1',
+        'drawio.pdf',
       );
-      assert.deepStrictEqual(drawioArgs.slice(0, 5), ["-x", "-f", "pdf", "-o", expectedPdfPath]);
+      assert.deepStrictEqual(drawioArgs.slice(0, 5), ['-x', '-f', 'pdf', '-o', expectedPdfPath]);
       assert.strictEqual(drawioArgs.at(-1), sourcePath);
 
       assert.deepStrictEqual(pdfToPngCalls, [
@@ -88,18 +88,18 @@ suite("AVIFに変換する処理", () => {
           sourcePath: expectedPdfPath,
           outputPath: path.join(
             workspacePath,
-            ".latex-graphics-helper",
-            "convert-to-avif",
-            "test-run",
-            "1",
-            "source.png",
+            '.latex-graphics-helper',
+            'convert-to-avif',
+            'test-run',
+            '1',
+            'source.png',
           ),
           page: 1,
         },
       ]);
 
       const metadata = await sharp(await readFile(outputPath)).metadata();
-      assert.strictEqual(metadata.format, "heif");
+      assert.strictEqual(metadata.format, 'heif');
       assert.ok(metadata.width);
       assert.ok(metadata.height);
     } finally {

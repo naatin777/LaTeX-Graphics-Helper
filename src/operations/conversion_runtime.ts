@@ -1,5 +1,5 @@
-import type { OutputConflictDecision } from "./commit_conversion_outputs.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+import type { OutputConflictDecision } from './commit_conversion_outputs.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 export type ConflictResolver = (conflicts: string[]) => Promise<OutputConflictDecision>;
 

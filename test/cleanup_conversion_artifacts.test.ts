@@ -1,19 +1,19 @@
 /* oxlint-disable vitest/expect-expect */
 
-import assert from "node:assert/strict";
-import { access, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
+import assert from 'node:assert/strict';
+import { access, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
-import { cleanupConversionArtifacts } from "../src/operations/cleanup_conversion_artifacts.js";
+import { cleanupConversionArtifacts } from '../src/operations/cleanup_conversion_artifacts.js';
 
-suite("変換artifactのライフサイクル", () => {
-  test("Undo用backupを残してstaging結果と入力コピーを削除する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-workspace-"));
-    const rootPath = path.join(workspacePath, ".latex-graphics-helper", "run");
-    const resultPath = path.join(rootPath, "result.pdf");
-    const sourcePath = path.join(rootPath, "source.pdf");
-    const backupPath = path.join(rootPath, "result.pdf.previous");
+suite('変換artifactのライフサイクル', () => {
+  test('Undo用backupを残してstaging結果と入力コピーを削除する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const rootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
+    const resultPath = path.join(rootPath, 'result.pdf');
+    const sourcePath = path.join(rootPath, 'source.pdf');
+    const backupPath = path.join(rootPath, 'result.pdf.previous');
 
     try {
       await writeFixture(resultPath);
@@ -30,11 +30,11 @@ suite("変換artifactのライフサイクル", () => {
     }
   });
 
-  test("workspace外へ解決するsymlinkをcleanupしない", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-workspace-"));
-    const outsidePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-outside-"));
-    const outsideFile = path.join(outsidePath, "keep.txt");
-    const symlinkPath = path.join(workspacePath, ".latex-graphics-helper", "run");
+  test('workspace外へ解決するsymlinkをcleanupしない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const outsidePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-outside-'));
+    const outsideFile = path.join(outsidePath, 'keep.txt');
+    const symlinkPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
 
     try {
       await writeFixture(outsideFile);
@@ -51,11 +51,11 @@ suite("変換artifactのライフサイクル", () => {
     }
   });
 
-  test("cleanup失敗を成功結果へ伝播させずworkspace内の出力を維持する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-workspace-"));
-    const outsidePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-outside-"));
-    const outputPath = path.join(workspacePath, "output.pdf");
-    const symlinkPath = path.join(workspacePath, ".latex-graphics-helper", "run");
+  test('cleanup失敗を成功結果へ伝播させずworkspace内の出力を維持する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const outsidePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-outside-'));
+    const outputPath = path.join(workspacePath, 'output.pdf');
+    const symlinkPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
 
     try {
       await writeFixture(outputPath);
@@ -71,29 +71,18 @@ suite("変換artifactのライフサイクル", () => {
     }
   });
 
-  test("operation cleanupは別session・未知directory・harness log・symlinkを削除しない", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-workspace-"));
-    const currentRoot = path.join(workspacePath, ".latex-graphics-helper", "merge-pdf", "current");
-    const activePath = path.join(
-      workspacePath,
-      ".latex-graphics-helper",
-      "merge-pdf",
-      "other-active",
-      "result.pdf",
-    );
-    const unknownPath = path.join(workspacePath, ".latex-graphics-helper", "unknown", "keep.txt");
-    const harnessLogPath = path.join(
-      workspacePath,
-      ".latex-graphics-helper",
-      "harness",
-      "stop.log",
-    );
-    const outsidePath = await mkdtemp(path.join(os.tmpdir(), "lgh-cleanup-outside-"));
-    const outsideFile = path.join(outsidePath, "keep.txt");
-    const symlinkPath = path.join(workspacePath, ".latex-graphics-helper", "link");
+  test('operation cleanupは別session・未知directory・harness log・symlinkを削除しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const currentRoot = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', 'current');
+    const activePath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', 'other-active', 'result.pdf');
+    const unknownPath = path.join(workspacePath, '.latex-graphics-helper', 'unknown', 'keep.txt');
+    const harnessLogPath = path.join(workspacePath, '.latex-graphics-helper', 'harness', 'stop.log');
+    const outsidePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-outside-'));
+    const outsideFile = path.join(outsidePath, 'keep.txt');
+    const symlinkPath = path.join(workspacePath, '.latex-graphics-helper', 'link');
 
     try {
-      await writeFixture(path.join(currentRoot, "result.pdf"));
+      await writeFixture(path.join(currentRoot, 'result.pdf'));
       await writeFixture(activePath);
       await writeFixture(unknownPath);
       await writeFixture(harnessLogPath);
@@ -103,7 +92,7 @@ suite("変換artifactのライフサイクル", () => {
 
       await cleanupConversionArtifacts([{ rootPath: currentRoot, workspacePath }]);
 
-      await assert.rejects(access(path.join(currentRoot, "result.pdf")));
+      await assert.rejects(access(path.join(currentRoot, 'result.pdf')));
       await assert.doesNotReject(access(activePath));
       await assert.doesNotReject(access(unknownPath));
       await assert.doesNotReject(access(harnessLogPath));
@@ -118,5 +107,5 @@ suite("変換artifactのライフサイクル", () => {
 
 async function writeFixture(filePath: string): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, "fixture");
+  await writeFile(filePath, 'fixture');
 }

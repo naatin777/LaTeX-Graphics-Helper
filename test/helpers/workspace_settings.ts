@@ -1,8 +1,8 @@
-import assert from "node:assert/strict";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
+import assert from 'node:assert/strict';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export async function withWorkspaceSettings(
   settings: Record<string, unknown>,
@@ -44,14 +44,14 @@ function getWorkspaceSettingsPath(): string {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   assert.ok(workspaceFolder);
 
-  return path.join(workspaceFolder.uri.fsPath, ".vscode", "settings.json");
+  return path.join(workspaceFolder.uri.fsPath, '.vscode', 'settings.json');
 }
 
 async function readWorkspaceSettings(settingsPath: string): Promise<string | undefined> {
   try {
-    return await readFile(settingsPath, "utf8");
+    return await readFile(settingsPath, 'utf8');
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
       return undefined;
     }
 
@@ -67,17 +67,11 @@ function parseWorkspaceSettings(settingsText: string | undefined): Record<string
   return JSON.parse(settingsText) as Record<string, unknown>;
 }
 
-async function writeWorkspaceSettings(
-  settingsPath: string,
-  settings: Record<string, unknown>,
-): Promise<void> {
+async function writeWorkspaceSettings(settingsPath: string, settings: Record<string, unknown>): Promise<void> {
   await writeFile(settingsPath, `${JSON.stringify(settings, undefined, 4)}\n`);
 }
 
-async function restoreWorkspaceSettings(
-  settingsPath: string,
-  originalSettingsText: string | undefined,
-): Promise<void> {
+async function restoreWorkspaceSettings(settingsPath: string, originalSettingsText: string | undefined): Promise<void> {
   if (originalSettingsText === undefined) {
     await rm(settingsPath, { force: true });
     return;

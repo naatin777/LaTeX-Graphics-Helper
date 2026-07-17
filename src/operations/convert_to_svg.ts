@@ -1,29 +1,24 @@
-import { execFile } from "node:child_process";
-import { mkdir } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
-import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
-import pLimit from "p-limit";
+import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
+import pLimit from 'p-limit';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import { isEditableDrawioImagePath, sourceFormatForPath } from "../application/source_format.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
+import { isEditableDrawioImagePath, sourceFormatForPath } from '../application/source_format.js';
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { MermaidPuppeteerOptions, RunDrawio } from "./convert_png_to_pdf.js";
-import {
-  runPdftocairoWithAsciiScratch,
-  type PdfToolScratchOptions,
-} from "./run_pdftocairo_with_ascii_scratch.js";
-import { runExternalTool } from "./run_external_tool.js";
+} from './commit_conversion_outputs.js';
+import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
+import { runExternalTool } from './run_external_tool.js';
+import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 
 export type { MermaidPuppeteerOptions };
 
@@ -42,12 +37,7 @@ export interface DrawioToSvgOptions {
   runDrawio?: RunDrawio;
 }
 
-export type RunPdfToSvg = (
-  sourcePath: string,
-  outputPath: string,
-  page: number,
-  signal?: AbortSignal,
-) => Promise<void>;
+export type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
 
 export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToSvgJob[];
@@ -60,16 +50,14 @@ export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   signal?: AbortSignal;
 }
 
-export async function convertToSvgFiles(
-  options: ConvertToSvgFilesOptions,
-): Promise<CommittedConversionOutput[]> {
+export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-to-svg", runId);
+  const artifacts = stagingArtifactsForJobs(options.jobs, 'convert-to-svg', runId);
 
   return withStagingCleanup(
     artifacts,
@@ -99,7 +87,7 @@ export async function convertToSvgFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: "convert-to-svg",
+        operationName: 'convert-to-svg',
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
@@ -121,35 +109,21 @@ async function stageSvgConversion(
   signal?.throwIfAborted();
   const stageDirectory = path.join(
     job.workspacePath,
-    ".latex-graphics-helper",
-    "convert-to-svg",
+    '.latex-graphics-helper',
+    'convert-to-svg',
     runId,
     `${index + 1}`,
   );
-  const stagedOutputPath = path.join(stageDirectory, "result.svg");
+  const stagedOutputPath = path.join(stageDirectory, 'result.svg');
 
-  await writeSourceAsSvg(
-    job,
-    stagedOutputPath,
-    pdftocairoPath,
-    mermaid,
-    drawio,
-    runPdfToSvg,
-    scratchOptions,
-    signal,
-  );
+  await writeSourceAsSvg(job, stagedOutputPath, pdftocairoPath, mermaid, drawio, runPdfToSvg, scratchOptions, signal);
   signal?.throwIfAborted();
 
   return {
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
-    stagingRootPath: path.join(
-      job.workspacePath,
-      ".latex-graphics-helper",
-      "convert-to-svg",
-      runId,
-    ),
+    stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'convert-to-svg', runId),
   };
 }
 
@@ -170,7 +144,7 @@ async function writeSourceAsSvg(
     return;
   }
 
-  if (extension === ".pdf") {
+  if (extension === '.pdf') {
     await writePdfPageAsSvg(
       job.sourcePath,
       outputPath,
@@ -202,7 +176,7 @@ async function writeDrawioAsSvg(
   try {
     await (drawio.runDrawio ?? executeDrawio)(
       drawio.drawioPath,
-      ["-x", "-f", "svg", "-o", outputPath, sourcePath],
+      ['-x', '-f', 'svg', '-o', outputPath, sourcePath],
       signal,
     );
   } catch (error) {
@@ -233,7 +207,7 @@ async function writePdfPageAsSvg(
     await runPdftocairoWithAsciiScratch({
       sourcePath,
       outputPath,
-      scratchOutputFileName: "output.svg",
+      scratchOutputFileName: 'output.svg',
       scratch: scratchOptions,
       ...(signal !== undefined && { signal }),
       run: async (toolSourcePath, toolOutputPath) => {
@@ -244,9 +218,9 @@ async function writePdfPageAsSvg(
 
         await execFileAsync(
           pdftocairoPath,
-          ["-svg", "-f", String(page), "-l", String(page), toolSourcePath, toolOutputPath],
+          ['-svg', '-f', String(page), '-l', String(page), toolSourcePath, toolOutputPath],
           {
-            encoding: "utf8",
+            encoding: 'utf8',
             maxBuffer: 10 * 1024 * 1024,
             signal,
           },
@@ -276,7 +250,7 @@ async function writeMermaidAsSvg(
 
   try {
     await runMermaidCli(sourcePath, asSvgOutputPath(outputPath), {
-      outputFormat: "svg",
+      outputFormat: 'svg',
       puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
       quiet: true,
     });
@@ -289,13 +263,9 @@ async function writeMermaidAsSvg(
   }
 }
 
-async function executeDrawio(
-  executable: string,
-  args: string[],
-  signal?: AbortSignal,
-): Promise<void> {
+async function executeDrawio(executable: string, args: string[], signal?: AbortSignal): Promise<void> {
   await runExternalTool({
-    toolName: "drawio",
+    toolName: 'drawio',
     executable,
     args,
     ...(signal !== undefined && { signal }),
@@ -308,7 +278,7 @@ async function validateJobPaths(jobs: ConvertToSvgJob[]): Promise<void> {
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "convert-to-svg"),
+        path.join(job.workspacePath, '.latex-graphics-helper', 'convert-to-svg'),
         job.workspacePath,
       ),
     ]),
@@ -317,7 +287,7 @@ async function validateJobPaths(jobs: ConvertToSvgJob[]): Promise<void> {
 
 function validateJobs(jobs: ConvertToSvgJob[]): void {
   if (jobs.length === 0) {
-    throw new Error("No files were selected.");
+    throw new Error('No files were selected.');
   }
 
   for (const job of jobs) {
@@ -330,15 +300,11 @@ function validateJobs(jobs: ConvertToSvgJob[]): void {
 function isSupportedSourcePath(sourcePath: string): boolean {
   const extension = path.extname(sourcePath).toLowerCase();
 
-  return (
-    extension === ".pdf" ||
-    sourceFormatForPath(sourcePath) === "mermaid" ||
-    isEditableDrawioImagePath(sourcePath)
-  );
+  return extension === '.pdf' || sourceFormatForPath(sourcePath) === 'mermaid' || isEditableDrawioImagePath(sourcePath);
 }
 
 function asSvgOutputPath(outputPath: string): `${string}.svg` {
-  if (!outputPath.toLowerCase().endsWith(".svg")) {
+  if (!outputPath.toLowerCase().endsWith('.svg')) {
     throw new Error(`SVG output path must end with .svg: ${outputPath}`);
   }
 
@@ -360,12 +326,12 @@ function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function errorMessage(error: unknown): string {
   if (error instanceof Error) {
-    const stderr = "stderr" in error && typeof error.stderr === "string" ? error.stderr.trim() : "";
+    const stderr = 'stderr' in error && typeof error.stderr === 'string' ? error.stderr.trim() : '';
     return stderr ? `${error.message}\n${stderr}` : error.message;
   }
 

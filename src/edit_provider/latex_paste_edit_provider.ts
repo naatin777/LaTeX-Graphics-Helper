@@ -1,29 +1,30 @@
-import path from "node:path";
+import path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import { resolveOutputConflicts } from "../commands/safe_mode.js";
-import { rememberLastConversion } from "../commands/undo_last_conversion.js";
-import { withCancellationSignal } from "../commands/progress_cancellation.js";
-import { localeMap } from "../locale_map.js";
-import { userMessage } from "../commands/user_messages.js";
-import type { CommittedConversionOutput } from "../operations/commit_conversion_outputs.js";
-import type { OutputConflictDecision } from "../operations/commit_conversion_outputs.js";
-import type { LineOutputChannel } from "../operations/external_tool_ascii_scratch.js";
+import { withCancellationSignal } from '../commands/progress_cancellation.js';
+import { resolveOutputConflicts } from '../commands/safe_mode.js';
+import { rememberLastConversion } from '../commands/undo_last_conversion.js';
+import { userMessage } from '../commands/user_messages.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { localeMap } from '../locale_map.js';
+import type { CommittedConversionOutput } from '../operations/commit_conversion_outputs.js';
+import type { OutputConflictDecision } from '../operations/commit_conversion_outputs.js';
+import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
 import {
   cleanupClipboardSourceArtifact,
   saveClipboardImage,
   type ClipboardImageData,
   type ClipboardPasteKind,
-} from "../operations/save_clipboard_image.js";
-import { escapeLatex, escapeLatexLabel } from "./latex_escape.js";
-import { readLatexInsertionConfig, type LatexInsertionConfig } from "./latex_config.js";
-import { LatexSnippet } from "./latex_snippet.js";
+} from '../operations/save_clipboard_image.js';
+
+import { readLatexInsertionConfig, type LatexInsertionConfig } from './latex_config.js';
+import { escapeLatex, escapeLatexLabel } from './latex_escape.js';
+import { LatexSnippet } from './latex_snippet.js';
 
 const CLIPBOARD_IMAGE_TYPES = [
-  { mime: "image/png", ext: "png" },
-  { mime: "image/jpeg", ext: "jpeg" },
+  { mime: 'image/png', ext: 'png' },
+  { mime: 'image/jpeg', ext: 'jpeg' },
 ] as const;
 
 type PasteKind = ClipboardPasteKind;
@@ -47,8 +48,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     this.resolveConflicts = options.resolveOutputConflicts ?? resolveOutputConflicts;
     this.outputChannel = options.outputChannel;
     this.rememberConversion =
-      options.rememberLastConversion ??
-      ((outputs) => rememberLastConversion(outputs, this.outputChannel));
+      options.rememberLastConversion ?? ((outputs) => rememberLastConversion(outputs, this.outputChannel));
   }
 
   async provideDocumentPasteEdits(
@@ -67,20 +67,20 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
 
     try {
       return await withCancellationSignal(token, async (signal) => {
-        const pasteAsPdfLabel = localeMap("pasteAsPdfLabel");
-        const pasteAsImageLabel = localeMap("pasteAsImageLabel");
+        const pasteAsPdfLabel = localeMap('pasteAsPdfLabel');
+        const pasteAsImageLabel = localeMap('pasteAsImageLabel');
         const pickedItem = await vscode.window.showQuickPick<PasteQuickPickItem>([
           {
             label: pasteAsPdfLabel,
-            detail: localeMap("pasteAsPdfDetail"),
-            description: `(${localeMap("builtIn")})`,
-            pasteKind: "pdf",
+            detail: localeMap('pasteAsPdfDetail'),
+            description: `(${localeMap('builtIn')})`,
+            pasteKind: 'pdf',
           },
           {
             label: pasteAsImageLabel,
-            detail: localeMap("pasteAsImageDetail"),
-            description: `(${localeMap("builtIn")})`,
-            pasteKind: "image",
+            detail: localeMap('pasteAsImageDetail'),
+            description: `(${localeMap('builtIn')})`,
+            pasteKind: 'image',
           },
         ]);
 
@@ -103,8 +103,8 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         });
         const inputOutputPath = await vscode.window.showInputBox(
           {
-            title: localeMap("pasteOutputPathTitle"),
-            prompt: localeMap("pasteOutputPathPrompt"),
+            title: localeMap('pasteOutputPathTitle'),
+            prompt: localeMap('pasteOutputPathPrompt'),
             value: defaultOutputPath,
             validateInput: (value) => validateOutputBasePath(value, workspaceFolder.uri.fsPath),
           },
@@ -140,29 +140,21 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             undoRecorded = true;
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            await vscode.window.showWarningMessage(
-              userMessage("message.clipboardPaste.undoUnavailable", message),
-            );
+            await vscode.window.showWarningMessage(userMessage('message.clipboardPaste.undoUnavailable', message));
           }
 
           signal.throwIfAborted();
           const outputFilePath = saved.outputs[0]?.outputPath;
 
           if (!outputFilePath) {
-            throw new Error("Clipboard paste did not produce an output file.");
+            throw new Error('Clipboard paste did not produce an output file.');
           }
 
           const relativeFilePath = path.relative(path.dirname(document.uri.fsPath), outputFilePath);
           const basename = path.basename(outputFilePath, path.extname(outputFilePath));
           const snippet = this.createSingleFileSnippet(config, basename, relativeFilePath);
 
-          return [
-            new vscode.DocumentPasteEdit(
-              snippet,
-              pickedItem.label,
-              vscode.DocumentDropOrPasteEditKind.Empty,
-            ),
-          ];
+          return [new vscode.DocumentPasteEdit(snippet, pickedItem.label, vscode.DocumentDropOrPasteEditKind.Empty)];
         } finally {
           await cleanupClipboardSourceArtifact(
             saved,
@@ -176,7 +168,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
         throw error;
       }
 
-      this.outputChannel?.appendLine("[clipboard-paste] cancellation requested");
+      this.outputChannel?.appendLine('[clipboard-paste] cancellation requested');
       return undefined;
     }
   }
@@ -188,20 +180,20 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
   ): vscode.SnippetString {
     const snippet = new LatexSnippet(config);
 
-    snippet.wrapEnvironment("figure", () => {
+    snippet.wrapEnvironment('figure', () => {
       snippet.appendFigurePlacement().lineBreak();
       snippet.appendFigureAlignment().lineBreak();
       snippet
         .appendCommand(
-          "includegraphics",
+          'includegraphics',
           () => snippet.appendGraphicsOptions(),
           () => snippet.appendText(snippet.convertToLatexPath(relativeFilePath)),
         )
         .lineBreak();
       snippet
-        .appendCommand("caption", undefined, () => snippet.appendPlaceholder(escapeLatex(fileName)))
-        .appendCommand("label", undefined, () => {
-          snippet.appendText("fig:").appendPlaceholder(escapeLatexLabel(fileName));
+        .appendCommand('caption', undefined, () => snippet.appendPlaceholder(escapeLatex(fileName)))
+        .appendCommand('label', undefined, () => {
+          snippet.appendText('fig:').appendPlaceholder(escapeLatexLabel(fileName));
         })
         .lineEnd();
     });
@@ -210,9 +202,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
   }
 }
 
-async function readClipboardImageData(
-  dataTransfer: vscode.DataTransfer,
-): Promise<ClipboardImageData | undefined> {
+async function readClipboardImageData(dataTransfer: vscode.DataTransfer): Promise<ClipboardImageData | undefined> {
   for (const type of CLIPBOARD_IMAGE_TYPES) {
     const file = dataTransfer.get(type.mime)?.asFile();
     const data = await file?.data();
@@ -227,32 +217,26 @@ async function readClipboardImageData(
 
 function resolveUserOutputBasePath(value: string, workspacePath: string): string {
   const trimmedValue = value.trim();
-  return path.isAbsolute(trimmedValue)
-    ? path.normalize(trimmedValue)
-    : path.resolve(workspacePath, trimmedValue);
+  return path.isAbsolute(trimmedValue) ? path.normalize(trimmedValue) : path.resolve(workspacePath, trimmedValue);
 }
 
 function validateOutputBasePath(value: string, workspacePath: string): string | undefined {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
-    return localeMap("pasteOutputPathEmpty");
+    return localeMap('pasteOutputPathEmpty');
   }
 
   const outputPath = resolveUserOutputBasePath(trimmedValue, workspacePath);
   const relativePath = path.relative(workspacePath, outputPath);
 
-  if (
-    relativePath === ".." ||
-    path.isAbsolute(relativePath) ||
-    relativePath.startsWith(`..${path.sep}`)
-  ) {
-    return localeMap("pasteOutputPathOutsideWorkspace");
+  if (relativePath === '..' || path.isAbsolute(relativePath) || relativePath.startsWith(`..${path.sep}`)) {
+    return localeMap('pasteOutputPathOutsideWorkspace');
   }
 
   return undefined;
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
