@@ -72,6 +72,31 @@ export async function openCropPdfConfigure(
   };
 }
 
+export async function convertPngToJpeg(vscodeWindow: Page, fileName: string): Promise<void> {
+  const explorer = vscodeWindow.getByRole("tree", { name: "Files Explorer" });
+  const pngEntry = explorer.getByRole("treeitem", { name: fileName });
+  await expect(pngEntry).toBeVisible();
+  await pngEntry.click();
+  await expect(pngEntry).toHaveAttribute("aria-selected", "true");
+  await pngEntry.press("Shift+F10");
+
+  const convertMenu = vscodeWindow.getByRole("menuitem", { name: "Convert" });
+  await expect(convertMenu).toBeVisible();
+  await convertMenu.hover();
+
+  const jpegMenu = vscodeWindow.getByRole("menuitem", { name: "JPEG" });
+  await expect(jpegMenu).toBeVisible();
+  await jpegMenu.hover();
+  await expect(jpegMenu).toBeFocused();
+  await vscodeWindow.keyboard.press("Enter");
+
+  const successNotification = vscodeWindow.getByText("Converted 1 file(s) to JPEG.", {
+    exact: true,
+  });
+  await expect(successNotification).toBeVisible();
+  await vscodeWindow.keyboard.press("Escape");
+}
+
 export async function expectPdfCanvasesReadable(
   canvases: Locator,
   message?: string,
