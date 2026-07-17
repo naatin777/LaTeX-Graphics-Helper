@@ -60,7 +60,7 @@
     "types": ["node"]
   },
   // 本番ソースだけを対象にする。
-  "include": ["src/**/*", "test"],
+  "include": ["src/**/*"],
   // ビルド成果物・依存・VS Code extension test の作業ディレクトリを除外する。
-  "exclude": ["out", "node_modules", ".vscode-test", "test"]
+  "exclude": ["out", "node_modules", ".vscode-test"]
 }

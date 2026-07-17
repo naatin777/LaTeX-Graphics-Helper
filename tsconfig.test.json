@@ -1,5 +1,5 @@
 {
-  // 本番用の厳格設定を継承する。
+  // 本番用の設定を継承する。
   "extends": "./tsconfig.json",
   "compilerOptions": {
     // test/ も含めるため、ルートをプロジェクト直下に広げる。

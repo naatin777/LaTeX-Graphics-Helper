@@ -1,10 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // src と test の両方を含める。
-    "rootDir": ".",
-    // Vitest と jsdom 用。
     "types": ["vite/client", "vitest/globals", "node"]
   },
-  "include": ["src/**/*", "test/**/*", "vite.config.ts"]
+  "exclude": ["dist", "node_modules"]
 }
