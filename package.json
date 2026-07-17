@@ -45,7 +45,7 @@
     "check:fix": "pnpm run lint:fix && pnpm run format:fix",
     "check:nls": "node scripts/check-nls.mjs",
     "clean": "node -e \"const fs = require('node:fs'); for (const p of ['out', 'media/webview']) fs.rmSync(p, { recursive: true, force: true })\"",
-    "test": "pnpm run build:test && node --enable-source-maps node_modules/mocha/bin/mocha.js --ui tdd --timeout 60000 --slow 5000 --reporter list --color out/test/source_format.test.js out/test/crop_pdf_protocol.test.js out/test/resolve_output_path.test.js out/test/file_content_hash.test.js out/test/safe_mode.test.js && vscode-test --ignore out/test/source_format.test.js --ignore out/test/crop_pdf_protocol.test.js --ignore out/test/resolve_output_path.test.js --ignore out/test/file_content_hash.test.js --ignore out/test/safe_mode.test.js",
+    "test": "pnpm run build:test && vscode-test",
     "test:playwright": "playwright test --project=vscode-electron",
     "package": "pnpm run build && pnpm run package:vsix",
     "package:vsix": "node scripts/package-vsix.mjs"

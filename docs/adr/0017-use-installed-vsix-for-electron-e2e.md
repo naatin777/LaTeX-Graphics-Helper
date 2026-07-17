@@ -8,6 +8,8 @@
 
 2026-07-17
 
+> 補足（2026-07-17）: Node / Extension Hostのtest allocationは[ADR-0018](0018-use-extension-host-for-pre-package-tests.md)に置き換えられた。配布済みVSIXのE2Eとrelease artifactに関する判断は引き続き有効である。
+
 ## 背景
 
 Browser Playwrightとsource directoryを読むExtension Development Hostは、Webviewや拡張機能の一部を速く確認できる。しかし、どちらも実際に公開するVSIXがruntime file、Webview asset、native dependencyを含み、VS Code上で動くことの証明にはならない。
@@ -65,6 +67,7 @@ Node testはprotocol、validation、状態変換などの純粋な契約を、Ex
 
 - [ADR-0013: VS Code ElectronをWebview visual testに使う](0013-use-vscode-electron-for-webview-visual-tests.md)（置き換え済み）
 - [ADR-0015: runtime stagingからOS別VSIXを生成する](0015-build-platform-specific-vsix-from-runtime-staging.md)
+- [ADR-0018: pre-package testはVS Code Extension Hostで実行する](0018-use-extension-host-for-pre-package-tests.md)（test allocation）
 - [test policy](../specs/internal/test-policy.md)
 - [VSIX packaging仕様](../specs/internal/packaging.md)
 - [0197: CI・Playwright・VSIX releaseを4 workflowへ整理する](../tasks/0197-verify-cross-platform-vsix-release.md)
