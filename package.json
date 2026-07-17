@@ -51,36 +51,36 @@
     "package:vsix": "node scripts/package-vsix.mjs"
   },
   "dependencies": {
-    "@mermaid-js/mermaid-cli": "^11.15.0",
+    "@mermaid-js/mermaid-cli": "^11.16.0",
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^6.0.227",
-    "puppeteer-core": "^25.2.1",
-    "sharp": "^0.34.5",
-    "solid-js": "^1.9.13",
+    "pdfjs-dist": "^6.1.200",
+    "puppeteer-core": "^25.3.0",
+    "sharp": "^0.35.3",
+    "solid-js": "^1.9.14",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.0",
+    "@playwright/test": "^1.61.1",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^22.19.21",
-    "@types/sinon": "^21.0.1",
+    "@types/node": "^22.20.0",
+    "@types/sinon": "^22.0.0",
     "@types/vscode": "^1.105.0",
     "@types/xml2js": "^0.4.14",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.2",
     "jsdom": "^29.1.1",
-    "lefthook": "^2.1.9",
+    "lefthook": "^2.1.10",
     "mocha": "^11.7.6",
-    "ovsx": "^1.0.1",
-    "oxfmt": "^0.36.0",
-    "oxlint": "^1.70.0",
+    "ovsx": "^1.0.2",
+    "oxfmt": "^0.59.0",
+    "oxlint": "^1.74.0",
     "sinon": "^22.0.0",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.16",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4",
     "vite-plugin-solid": "^2.11.12",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "contributes": {
     "commands": [
@@ -742,8 +742,8 @@
   "icon": "assets/icon.png",
   "engines": {
     "node": ">=22",
-    "pnpm": ">=11.8.0",
+    "pnpm": ">=11.13.1",
     "vscode": "^1.105.0"
   },
-  "packageManager": "pnpm@11.8.0"
+  "packageManager": "pnpm@11.13.1"
 }
