@@ -2,7 +2,7 @@
 
 ## ステータス
 
-採用
+置き換え済み（[ADR-0017](0017-use-installed-vsix-for-electron-e2e.md)）
 
 ## 日付
 

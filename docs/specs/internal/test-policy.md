@@ -38,17 +38,6 @@ Node対象はこの5 filesから拡大しない。別のtestが次のVS Code ora
 
 上記5 filesはNodeへ移管済みのため、Extension Hostでは実行しない。その他のHost testは引き続きExtension Hostで実行する。
 
-## Browser
-
-次をoracleとするtestで使用する。
-
-- PDF.js worker
-- canvas pixels
-- layout
-- DPI
-- IntersectionObserver
-- scroll / zoom
-
 ## VS Code Electron
 
 次をoracleとするtestで使用する。
@@ -59,13 +48,16 @@ Node対象はこの5 filesから拡大しない。別のtestが次のVS Code ora
 - critical user journey
 - installed VSIX behavior
 
-BrowserとVS Code Electronの既存の境界は変更しない。
+Electron Playwrightは、直前にpackageして隔離されたextensions directoryへinstallしたVSIXだけを対象にする。VSIX pathがない場合は失敗させ、Extension Development Hostとしてsource directoryを読み込まない。この境界とCIの責務分離は[ADR-0017](../../adr/0017-use-installed-vsix-for-electron-e2e.md)を正本とする。
+
+Browser Playwrightは使用しない。Webview protocol、validation、状態変換などBrowser実装を必要としない契約はNode testへ残す。実VS Codeで意味を持つWebview表示、操作、Host message bridgeはpackage済みVSIXのElectron Playwrightで確認する。browser DOMだけのlayout、zoom、mocked Host細部はVS Codeの配布物契約を証明しないため、独立した回帰対象にしない。
 
 ## Decision
 
 - tested subsetではNode 22 + Mochaを正式採用する。
 - Node CIはLinux、macOS、Windowsの3 OSで恒久的に維持する。
 - Hostとの重複実行は終了し、選定5 filesをHostから除外する。
+- Browser Playwrightは廃止し、配布物E2Eは3 OSのpackage済みVSIX Electron Playwrightへ統一する。
 - required statusは今回設定しない。
 - Mochaを維持し、Vitest comparisonは今回行わない。
 - Node subset expansionは今回行わない。

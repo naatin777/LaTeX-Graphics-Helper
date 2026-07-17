@@ -6,45 +6,27 @@ on:
             - 'v*.*.*'
 
 jobs:
-    verify:
-        name: Verify release source
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        steps:
-            - uses: actions/checkout@v7
-
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.8.0
-
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: '22'
-                  cache: pnpm
-
-            - run: pnpm install --frozen-lockfile
-              shell: bash
-
-            - run: pnpm run check:all
-              shell: bash
-
-            - run: pnpm run build
-              shell: bash
-
     package:
-        name: Package (${{ matrix.os }})
-        needs: verify
+        name: Package and test (${{ matrix.label }})
         runs-on: ${{ matrix.os }}
         permissions:
             contents: read
         strategy:
             fail-fast: false
             matrix:
-                os:
-                    - ubuntu-latest
-                    - macos-latest
-                    - windows-latest
+                include:
+                    - os: ubuntu-latest
+                      label: Linux
+                      test_command: xvfb-run pnpm run test:playwright
+                      artifact_suffix: linux
+                    - os: macos-latest
+                      label: macOS
+                      test_command: pnpm run test:playwright
+                      artifact_suffix: macos
+                    - os: windows-latest
+                      label: Windows
+                      test_command: pnpm run test:playwright
+                      artifact_suffix: windows
         steps:
             - uses: actions/checkout@v7
 
@@ -60,48 +42,34 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - name: Resolve VSIX target
-              id: target
-              shell: bash
-              run: |
-                  case "${RUNNER_OS}:${RUNNER_ARCH}" in
-                    Linux:X64) echo "value=linux-x64" >> "$GITHUB_OUTPUT" ;;
-                    Linux:ARM64) echo "value=linux-arm64" >> "$GITHUB_OUTPUT" ;;
-                    macOS:X64) echo "value=darwin-x64" >> "$GITHUB_OUTPUT" ;;
-                    macOS:ARM64) echo "value=darwin-arm64" >> "$GITHUB_OUTPUT" ;;
-                    Windows:X64) echo "value=win32-x64" >> "$GITHUB_OUTPUT" ;;
-                    Windows:ARM64) echo "value=win32-arm64" >> "$GITHUB_OUTPUT" ;;
-                    *) echo "Unsupported runner: ${RUNNER_OS}:${RUNNER_ARCH}" >&2; exit 1 ;;
-                  esac
-
-            - run: pnpm run build
+            - name: Build extension and Webview
+              run: pnpm run build
               shell: bash
 
-            - run: pnpm run package:vsix -- --target "${{ steps.target.outputs.value }}" --out "latex-graphics-helper-${{ steps.target.outputs.value }}.vsix"
+            - name: Package current runner VSIX
+              run: pnpm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
               shell: bash
 
-            - name: Run packaged VSIX offline smoke test
+            - name: Install VSIX and run Electron Playwright
+              run: ${{ matrix.test_command }}
               shell: bash
               env:
-                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ steps.target.outputs.value }}.vsix
-              run: |
-                  if [ "${RUNNER_OS}" = "Linux" ]; then
-                    xvfb-run pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
-                  else
-                    pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
-                  fi
+                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ matrix.label }}.vsix
 
             - if: failure()
               uses: actions/upload-artifact@v4
               with:
-                  name: packaged-smoke-results-${{ matrix.os }}
-                  path: test-results/
+                  name: packaged-electron-playwright-${{ matrix.artifact_suffix }}
+                  path: |
+                      playwright-report/
+                      test-results/
                   if-no-files-found: ignore
 
-            - uses: actions/upload-artifact@v4
+            - if: success()
+              uses: actions/upload-artifact@v4
               with:
-                  name: vsix-${{ matrix.os }}
-                  path: '*.vsix'
+                  name: vsix-${{ matrix.artifact_suffix }}
+                  path: latex-graphics-helper-${{ matrix.label }}.vsix
                   if-no-files-found: error
 
     publish:

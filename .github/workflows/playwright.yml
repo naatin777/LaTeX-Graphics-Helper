@@ -4,33 +4,15 @@ on:
     pull_request:
     push:
         branches:
-            - main
+            - '**'
 
 concurrency:
     group: playwright-${{ github.ref }}
     cancel-in-progress: true
 
 jobs:
-    changes:
-        name: changes
-        runs-on: ubuntu-latest
-        outputs:
-            docs_only: ${{ steps.detect.outputs.docs_only }}
-        steps:
-            - uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
-
-            - id: detect
-              run: bash .github/scripts/detect-docs-only.sh
-              shell: bash
-              env:
-                  EVENT_BEFORE: ${{ github.event.before }}
-
     playwright:
-        name: playwright (${{ matrix.label }})
-        needs: changes
-        if: needs.changes.outputs.docs_only != 'true'
+        name: packaged Electron Playwright (${{ matrix.label }})
         runs-on: ${{ matrix.os }}
         strategy:
             fail-fast: false
@@ -63,65 +45,25 @@ jobs:
             - run: pnpm install --frozen-lockfile
               shell: bash
 
-            - run: pnpm exec playwright install
+            - name: Build extension and Webview
+              run: pnpm run build
               shell: bash
 
-            - run: ${{ matrix.test_command }}
+            - name: Package current runner VSIX
+              run: pnpm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
               shell: bash
+
+            - name: Install VSIX and run Electron Playwright
+              run: ${{ matrix.test_command }}
+              shell: bash
+              env:
+                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ matrix.label }}.vsix
 
             - if: failure()
               uses: actions/upload-artifact@v7
               with:
-                  name: playwright-report-${{ matrix.artifact_suffix }}
+                  name: packaged-electron-playwright-${{ matrix.artifact_suffix }}
                   path: |
                       playwright-report/
                       test-results/
                   if-no-files-found: ignore
-
-    playwright_gate:
-        name: playwright-gate
-        needs:
-            - changes
-            - playwright
-        if: always()
-        runs-on: ubuntu-latest
-        steps:
-            - name: Summarize Playwright scope
-              shell: bash
-              env:
-                  CHANGES_RESULT: ${{ needs.changes.result }}
-                  PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
-                  DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
-              run: |
-                  {
-                    echo '### Playwright change scope'
-                    echo "- Docs only: \`${DOCS_ONLY:-unavailable}\`"
-                    echo "- Change detection result: \`${CHANGES_RESULT}\`"
-                    echo "- Playwright result: \`${PLAYWRIGHT_RESULT}\`"
-                  } >> "${GITHUB_STEP_SUMMARY}"
-
-            - name: Verify Playwright result
-              shell: bash
-              env:
-                  CHANGES_RESULT: ${{ needs.changes.result }}
-                  PLAYWRIGHT_RESULT: ${{ needs.playwright.result }}
-                  DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
-              run: |
-                  if [[ "${CHANGES_RESULT}" != 'success' ]]; then
-                    echo 'Change detection did not succeed.' >&2
-                    exit 1
-                  fi
-
-                  case "${DOCS_ONLY}" in
-                    true) expected_result='skipped' ;;
-                    false) expected_result='success' ;;
-                    *)
-                      echo 'Change detection returned an invalid docs_only flag.' >&2
-                      exit 1
-                      ;;
-                  esac
-
-                  if [[ "${PLAYWRIGHT_RESULT}" != "${expected_result}" ]]; then
-                    echo "Expected Playwright result ${expected_result}, got ${PLAYWRIGHT_RESULT}." >&2
-                    exit 1
-                  fi

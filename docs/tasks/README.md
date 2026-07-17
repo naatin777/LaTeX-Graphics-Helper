@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0197: cross-platform VSIX release verification](0197-verify-cross-platform-vsix-release.md)
+- [0197: CI・Playwright・VSIX releaseを4 workflowへ整理する](0197-verify-cross-platform-vsix-release.md)
 
 ## Task boundaries
 

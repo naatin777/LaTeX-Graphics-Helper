@@ -49,9 +49,7 @@
     "test:vscode": "pnpm run build:test && vscode-test --ignore out/test/source_format.test.js --ignore out/test/crop_pdf_protocol.test.js --ignore out/test/resolve_output_path.test.js --ignore out/test/file_content_hash.test.js --ignore out/test/safe_mode.test.js",
     "build:test:node": "pnpm run clean && pnpm run compile && pnpm run compile:test",
     "test:node": "pnpm run build:test:node && node --enable-source-maps node_modules/mocha/bin/mocha.js --ui tdd --timeout 60000 --slow 5000 --reporter list --color out/test/source_format.test.js out/test/crop_pdf_protocol.test.js out/test/resolve_output_path.test.js out/test/file_content_hash.test.js out/test/safe_mode.test.js",
-    "test:playwright": "pnpm run build && playwright test --project=webview-browser",
-    "test:playwright:electron": "pnpm run build && playwright test --project=vscode-electron",
-    "test:all": "pnpm run test && pnpm run test:playwright",
+    "test:playwright": "playwright test --project=vscode-electron",
     "package": "pnpm run build && pnpm run package:vsix",
     "package:vsix": "node scripts/package-vsix.mjs"
   },

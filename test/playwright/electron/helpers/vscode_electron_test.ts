@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
-import { access, rm, writeFile } from "node:fs/promises";
+import { access, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { promisify } from "node:util";
 
 import { type ElectronApplication, type Page, type TestInfo } from "@playwright/test";
@@ -19,10 +20,6 @@ interface ElectronDiagnostics extends ElectronTestPaths {
   error: unknown;
   testInfo: TestInfo;
   window: Page | undefined;
-}
-
-interface DisposeElectronTestOptions {
-  cleanupTemporaryRoot?: boolean;
 }
 
 export async function writeVscodeUserSettings(
@@ -113,15 +110,19 @@ export async function attachElectronDiagnostics({
     path: diagnosticsPath,
     contentType: "text/plain",
   });
+
+  const logsPath = testInfo.outputPath("vscode-extension-host-log.txt");
+  await writeFile(logsPath, await readVSCodeLogs(join(userDataDir, "logs")));
+  await testInfo.attach("vscode-extension-host-log", {
+    path: logsPath,
+    contentType: "text/plain",
+  });
 }
 
 export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
-  options: DisposeElectronTestOptions = {},
 ): Promise<void> {
-  const cleanupTemporaryRoot = options.cleanupTemporaryRoot ?? true;
-
   await Promise.resolve()
     .then(async () => {
       if (electronApp) {
@@ -135,21 +136,48 @@ export async function disposeElectronTest(
       }
     })
     .finally(() => {
-      if (!cleanupTemporaryRoot) {
-        return;
-      }
-
       return rm(temporaryRoot, {
         recursive: true,
         force: true,
-        maxRetries: 10,
-        retryDelay: 100,
+        maxRetries: 20,
+        retryDelay: 200,
       });
     });
 
-  if (cleanupTemporaryRoot && (await pathExists(temporaryRoot))) {
+  if (await pathExists(temporaryRoot)) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
+}
+
+async function readVSCodeLogs(logRoot: string): Promise<string> {
+  const entries = await readLogFiles(logRoot);
+
+  if (entries.length === 0) {
+    return `No VS Code logs were found in ${logRoot}.\n`;
+  }
+
+  return entries.join("\n\n");
+}
+
+async function readLogFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true }).catch(() => []);
+  const contents = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = join(directory, entry.name);
+
+      if (entry.isDirectory()) {
+        return readLogFiles(entryPath);
+      }
+      if (!entry.isFile()) {
+        return [];
+      }
+
+      const content = await readFile(entryPath, "utf8").catch(() => "<unreadable>");
+      return [`${entryPath}:\n${content.slice(0, 64_000)}`];
+    }),
+  );
+
+  return contents.flat();
 }
 
 async function terminateElectronProcess(
