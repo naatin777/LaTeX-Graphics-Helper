@@ -14,12 +14,12 @@ jobs:
     check:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v6
 
             - run: corepack enable
               shell: bash
 
-            - run: corepack prepare pnpm@11.8.0 --activate
+            - run: corepack prepare pnpm@11.13.1 --activate
               shell: bash
 
             - uses: actions/setup-node@v6
