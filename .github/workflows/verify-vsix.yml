@@ -1,0 +1,166 @@
+name: Verify Packaged VSIX
+
+on:
+    push:
+        branches:
+            - task/0197-verify-cross-platform-vsix-release
+    workflow_dispatch:
+
+jobs:
+    package:
+        name: Package and smoke (${{ matrix.os }})
+        runs-on: ${{ matrix.os }}
+        permissions:
+            contents: read
+        strategy:
+            fail-fast: false
+            matrix:
+                os:
+                    - ubuntu-latest
+                    - macos-latest
+                    - windows-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: pnpm/action-setup@v6
+              with:
+                  version: 11.8.0
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: pnpm
+
+            - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - name: Resolve VSIX target
+              id: target
+              shell: bash
+              run: |
+                  case "${RUNNER_OS}:${RUNNER_ARCH}" in
+                    Linux:X64) echo "value=linux-x64" >> "$GITHUB_OUTPUT" ;;
+                    Linux:ARM64) echo "value=linux-arm64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:X64) echo "value=darwin-x64" >> "$GITHUB_OUTPUT" ;;
+                    macOS:ARM64) echo "value=darwin-arm64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:X64) echo "value=win32-x64" >> "$GITHUB_OUTPUT" ;;
+                    Windows:ARM64) echo "value=win32-arm64" >> "$GITHUB_OUTPUT" ;;
+                    *) echo "Unsupported runner: ${RUNNER_OS}:${RUNNER_ARCH}" >&2; exit 1 ;;
+                  esac
+
+            - run: pnpm run build
+              shell: bash
+
+            - run: pnpm run package:vsix -- --target "${{ steps.target.outputs.value }}" --out "latex-graphics-helper-${{ steps.target.outputs.value }}.vsix"
+              shell: bash
+
+            - name: Record VSIX packaging evidence
+              shell: bash
+              env:
+                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ steps.target.outputs.value }}.vsix
+                  LGH_VSIX_TARGET: ${{ steps.target.outputs.value }}
+              run: |
+                  node <<'NODE' | tee -a "$GITHUB_STEP_SUMMARY"
+                  const { createHash } = require("node:crypto");
+                  const { createReadStream, statSync } = require("node:fs");
+                  const { execFileSync } = require("node:child_process");
+                  const path = require("node:path");
+                  const yauzl = require(require.resolve("yauzl", {
+                    paths: [path.dirname(require.resolve("@vscode/vsce/package.json"))],
+                  }));
+
+                  (async () => {
+                    const vsixPath = process.env.LGH_VSIX_PATH;
+                    const target = process.env.LGH_VSIX_TARGET;
+                    if (!vsixPath || !target) throw new Error("VSIX evidence environment is incomplete.");
+
+                    const sha256 = await new Promise((resolve, reject) => {
+                      const hash = createHash("sha256");
+                      createReadStream(vsixPath).on("error", reject).on("data", (chunk) => hash.update(chunk)).on("end", () => resolve(hash.digest("hex")));
+                    });
+                    const entries = await new Promise((resolve, reject) => {
+                      yauzl.open(vsixPath, { lazyEntries: true }, (error, zipFile) => {
+                        if (error || !zipFile) {
+                          reject(error ?? new Error("Could not open VSIX."));
+                          return;
+                        }
+                        const values = [];
+                        zipFile.readEntry();
+                        zipFile.on("entry", (entry) => {
+                          values.push(entry);
+                          zipFile.readEntry();
+                        });
+                        zipFile.on("end", () => resolve(values));
+                        zipFile.on("error", reject);
+                      });
+                    });
+                    const nativeEntries = entries.filter((entry) =>
+                      /\/node_modules\/@img\/(?:sharp|sharp-libvips)-[^/]+\/(?:lib|vendor)\/.*\.(?:node|dll|dylib|so)(?:\.\d+)*$/i.test(entry.fileName),
+                    );
+                    if (nativeEntries.length === 0) throw new Error("No packaged Sharp native binary was found.");
+                    const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+                    const pnpmVersion = execFileSync(pnpmCommand, ["--version"], {
+                      encoding: "utf8",
+                      shell: process.platform === "win32",
+                    }).trim();
+                    const size = statSync(vsixPath).size;
+                    console.log("## VSIX packaging evidence");
+                    console.log(`- Runner OS: ${process.env.RUNNER_OS}`);
+                    console.log(`- Runner architecture: ${process.env.RUNNER_ARCH}`);
+                    console.log(`- Workflow run: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`);
+                    console.log(`- Node: ${process.version}`);
+                    console.log(`- pnpm: ${pnpmVersion}`);
+                    console.log(`- process.platform: ${process.platform}`);
+                    console.log(`- process.arch: ${process.arch}`);
+                    console.log(`- Resolved VSIX target: ${target}`);
+                    console.log(`- VSIX file: ${path.basename(vsixPath)}`);
+                    console.log(`- VSIX size: ${size} bytes`);
+                    console.log(`- VSIX SHA-256: ${sha256}`);
+                    console.log("- Packaged Sharp native binaries:");
+                    for (const entry of nativeEntries) {
+                      console.log(`  - ${entry.fileName} (${entry.uncompressedSize} bytes uncompressed)`);
+                    }
+                  })().catch((error) => {
+                    console.error(error);
+                    process.exitCode = 1;
+                  });
+                  NODE
+
+            - name: Run packaged VSIX offline smoke test
+              shell: bash
+              env:
+                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ steps.target.outputs.value }}.vsix
+              run: |
+                  if [ "${RUNNER_OS}" = "Linux" ]; then
+                    xvfb-run pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
+                  else
+                    pnpm exec playwright test --project=vscode-electron test/playwright/electron/crop_pdf_configure.spec.ts
+                  fi
+
+            - name: Record packaged VSIX smoke evidence
+              if: success()
+              shell: bash
+              run: |
+                  {
+                    echo '## Packaged VSIX smoke evidence'
+                    echo '- Result: Pass'
+                    echo '- VSIX installation: Pass; the smoke installed the VSIX into an isolated extensions directory.'
+                    echo '- Extension startup: Pass; the packaged extension launched in VS Code Electron.'
+                    echo '- Sharp load: Pass; the packaged PNG-to-JPEG conversion produced a non-empty output.'
+                    echo '- Crop PDF smoke: Pass; the packaged Crop PDF Configure flow completed.'
+                    echo '- Worktree dependency isolation: Pass; smoke imports operation modules from the installed extension path with packaged production dependencies.'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: packaged-smoke-results-${{ matrix.os }}
+                  path: test-results/
+                  if-no-files-found: ignore
+
+            - if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: vsix-${{ matrix.os }}
+                  path: '*.vsix'
+                  if-no-files-found: ignore
