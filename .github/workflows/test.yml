@@ -16,7 +16,7 @@ jobs:
         outputs:
             docs_only: ${{ steps.detect.outputs.docs_only }}
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v6
               with:
                   fetch-depth: 0
 
@@ -43,11 +43,11 @@ jobs:
                     - os: windows-latest
                       label: Windows
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v6
 
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.8.0
+                  version: 11.13.1
 
             - uses: actions/setup-node@v6
               with:
@@ -79,11 +79,11 @@ jobs:
                       label: Windows
                       test_command: pnpm run test:vscode
         steps:
-            - uses: actions/checkout@v7
+            - uses: actions/checkout@v6
 
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.8.0
+                  version: 11.13.1
 
             - uses: actions/setup-node@v6
               with:
