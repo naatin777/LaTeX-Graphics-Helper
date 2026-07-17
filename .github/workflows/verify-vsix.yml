@@ -99,7 +99,10 @@ jobs:
                     );
                     if (nativeEntries.length === 0) throw new Error("No packaged Sharp native binary was found.");
                     const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-                    const pnpmVersion = execFileSync(pnpmCommand, ["--version"], { encoding: "utf8" }).trim();
+                    const pnpmVersion = execFileSync(pnpmCommand, ["--version"], {
+                      encoding: "utf8",
+                      shell: process.platform === "win32",
+                    }).trim();
                     const size = statSync(vsixPath).size;
                     console.log("## VSIX packaging evidence");
                     console.log(`- Runner OS: ${process.env.RUNNER_OS}`);
