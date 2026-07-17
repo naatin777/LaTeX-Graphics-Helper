@@ -57,8 +57,8 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
   playwright,
 }, testInfo) => {
   if (packagedVsixPath) {
-    // Windows also removes the packaged production dependency tree during teardown.
-    testInfo.setTimeout(process.platform === "win32" ? 600_000 : 240_000);
+    // Keep the timeout for packaged cleanup failures observable in the test report.
+    testInfo.setTimeout(240_000);
   }
 
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
@@ -267,7 +267,11 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
     });
     throw error;
   } finally {
-    await disposeElectronTest(electronApp, temporaryRoot);
+    // Windows can keep packaged native binaries locked after the process tree is terminated;
+    // the hosted runner discards this temporary directory after the smoke job.
+    await disposeElectronTest(electronApp, temporaryRoot, {
+      cleanupTemporaryRoot: process.platform !== "win32" || packagedVsixPath === undefined,
+    });
   }
 });
 

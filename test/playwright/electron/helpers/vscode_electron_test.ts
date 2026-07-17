@@ -21,6 +21,10 @@ interface ElectronDiagnostics extends ElectronTestPaths {
   window: Page | undefined;
 }
 
+interface DisposeElectronTestOptions {
+  cleanupTemporaryRoot?: boolean;
+}
+
 export async function writeVscodeUserSettings(
   settingsPath: string,
   colorTheme: string,
@@ -114,7 +118,10 @@ export async function attachElectronDiagnostics({
 export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
+  options: DisposeElectronTestOptions = {},
 ): Promise<void> {
+  const cleanupTemporaryRoot = options.cleanupTemporaryRoot ?? true;
+
   await Promise.resolve()
     .then(async () => {
       if (electronApp) {
@@ -127,16 +134,20 @@ export async function disposeElectronTest(
         await terminateElectronProcess(electronProcess);
       }
     })
-    .finally(() =>
-      rm(temporaryRoot, {
+    .finally(() => {
+      if (!cleanupTemporaryRoot) {
+        return;
+      }
+
+      return rm(temporaryRoot, {
         recursive: true,
         force: true,
         maxRetries: 10,
         retryDelay: 100,
-      }),
-    );
+      });
+    });
 
-  if (await pathExists(temporaryRoot)) {
+  if (cleanupTemporaryRoot && (await pathExists(temporaryRoot))) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
 }
