@@ -5,7 +5,9 @@ import { Parser } from 'xml2js';
 
 import type { AppConfig } from '../configuration';
 import type { DrawioPath, PdfPath, PdfTemplatePath } from '../type';
+import { createFolder } from '../utils/create_folder';
 import { execFileInWorkspace } from '../utils/exec_file_in_workspace';
+import { generatePathFromTemplate } from '../utils/generate_path_from_template';
 import { cropPdf } from './crop_pdf';
 import { splitPdf } from './split_pdf';
 
@@ -77,4 +79,30 @@ export async function convertDrawioToPdf(
     }
 
     return outputPaths;
+}
+
+/**
+ * Converts every page in a Draw.io file into one PDF without splitting it by tab.
+ */
+export async function convertDrawioToPdfDirectly(
+    appConfig: AppConfig,
+    inputPath: DrawioPath,
+    outputTemplatePath: PdfTemplatePath,
+    workspaceFolder: vscode.WorkspaceFolder,
+): Promise<PdfPath> {
+    const outputBasePath = getDrawioOutputBasePath(inputPath);
+    const outputPath = generatePathFromTemplate(
+        outputTemplatePath,
+        `${outputBasePath}.pdf` as PdfPath,
+        workspaceFolder,
+    );
+
+    await createFolder(outputPath);
+    await execFileInWorkspace(
+        appConfig.execPathDrawio,
+        [inputPath, '-o', outputPath, '-xf', 'pdf', '-t', '-a', '--crop'],
+        workspaceFolder,
+    );
+
+    return outputPath;
 }

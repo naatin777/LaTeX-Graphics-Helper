@@ -24,6 +24,10 @@ export function activate(context: vscode.ExtensionContext) {
             commands.runConvertDrawioToPdfCommand,
         ),
         vscode.commands.registerCommand(
+            'latex-graphics-helper.convertDrawioToPdfDirectly',
+            commands.runConvertDrawioToPdfDirectlyCommand,
+        ),
+        vscode.commands.registerCommand(
             'latex-graphics-helper.convertPdfToPng',
             commands.runConvertPdfToPngCommand,
         ),

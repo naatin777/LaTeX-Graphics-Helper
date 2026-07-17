@@ -5,7 +5,12 @@ import * as path from 'node:path';
 import { restore, stub } from 'sinon';
 import * as vscode from 'vscode';
 
+import type { AppConfig } from '../../configuration';
+import { convertDrawioToPdfDirectly } from '../../core/convert_drawio_to_pdf';
 import { localeMap } from '../../locale_map';
+import type { DrawioPath, ExecutablePath, PdfTemplatePath } from '../../type';
+import * as createFolderUtils from '../../utils/create_folder';
+import * as execFileUtils from '../../utils/exec_file_in_workspace';
 import {
     createPdf,
     createPng,
@@ -20,6 +25,7 @@ const commandIds = [
     'latex-graphics-helper.splitPdf',
     'latex-graphics-helper.mergePdf',
     'latex-graphics-helper.convertDrawioToPdf',
+    'latex-graphics-helper.convertDrawioToPdfDirectly',
     'latex-graphics-helper.convertPdfToPng',
     'latex-graphics-helper.convertPdfToJpeg',
     'latex-graphics-helper.convertPdfToSvg',
@@ -62,7 +68,7 @@ suite('VS Code command e2e Test Suite', () => {
         }
     });
 
-    test('should show Draw.io PDF conversion for editable PNG and SVG files', async () => {
+    test('should show both Draw.io PDF conversions for editable PNG and SVG files', async () => {
         const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
         assert.ok(extension);
 
@@ -70,15 +76,19 @@ suite('VS Code command e2e Test Suite', () => {
             await readFile(path.join(extension.extensionPath, 'package.json'), 'utf8'),
         );
         const explorerContext = packageJson.contributes.menus['explorer/context'];
-        const explorerEntry = explorerContext.find(
+        const explorerEntries = explorerContext.filter(
             (entry: { command?: string }) =>
-                entry.command === 'latex-graphics-helper.convertDrawioToPdf',
+                entry.command === 'latex-graphics-helper.convertDrawioToPdf' ||
+                entry.command === 'latex-graphics-helper.convertDrawioToPdfDirectly',
         );
 
-        assert.ok(explorerEntry.when.includes('resourceExtname == .drawio'));
-        assert.ok(explorerEntry.when.includes('resourceExtname == .dio'));
-        assert.ok(explorerEntry.when.includes('resourceFilename =~'));
-        assert.ok(explorerEntry.when.includes('(png|svg)'));
+        assert.strictEqual(explorerEntries.length, 2);
+        for (const explorerEntry of explorerEntries) {
+            assert.ok(explorerEntry.when.includes('resourceExtname == .drawio'));
+            assert.ok(explorerEntry.when.includes('resourceExtname == .dio'));
+            assert.ok(explorerEntry.when.includes('resourceFilename =~'));
+            assert.ok(explorerEntry.when.includes('(png|svg)'));
+        }
 
         const pngToPdfEntry = explorerContext.find(
             (entry: { command?: string }) =>
@@ -91,6 +101,81 @@ suite('VS Code command e2e Test Suite', () => {
 
         assert.ok(pngToPdfEntry.when.includes('!(resourceFilename =~'));
         assert.ok(svgToPdfEntry.when.includes('!(resourceFilename =~'));
+    });
+
+    test('should export a Draw.io file directly to a single PDF', async () => {
+        const workspaceFolder: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/workspace'),
+            name: 'workspace',
+            index: 0,
+        };
+        const appConfig = { execPathDrawio: 'drawio' as ExecutablePath } as AppConfig;
+        const outputTemplatePath =
+            '${fileDirname}/converted/${fileBasenameNoExtension}.pdf' as PdfTemplatePath;
+        const createFolderStub = stub(createFolderUtils, 'createFolder').resolves();
+        const execFileInWorkspaceStub = stub(execFileUtils, 'execFileInWorkspace').resolves('');
+
+        const outputPath = await convertDrawioToPdfDirectly(
+            appConfig,
+            '/workspace/diagram.drawio' as DrawioPath,
+            outputTemplatePath,
+            workspaceFolder,
+        );
+
+        assert.strictEqual(outputPath, '/workspace/converted/diagram.pdf');
+        assert.deepStrictEqual(createFolderStub.firstCall.args, [outputPath]);
+        assert.deepStrictEqual(execFileInWorkspaceStub.firstCall.args, [
+            'drawio',
+            [
+                '/workspace/diagram.drawio',
+                '-o',
+                '/workspace/converted/diagram.pdf',
+                '-xf',
+                'pdf',
+                '-t',
+                '-a',
+                '--crop',
+            ],
+            workspaceFolder,
+        ]);
+    });
+
+    test('should export an editable Draw.io PNG directly to a PDF', async () => {
+        const workspaceFolder: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file('/workspace'),
+            name: 'workspace',
+            index: 0,
+        };
+        const appConfig = { execPathDrawio: 'drawio' as ExecutablePath } as AppConfig;
+        const outputTemplatePath =
+            '${fileDirname}/${fileBasenameNoExtension}.pdf' as PdfTemplatePath;
+        const createFolderStub = stub(createFolderUtils, 'createFolder').resolves();
+        const execFileInWorkspaceStub = stub(execFileUtils, 'execFileInWorkspace').resolves('');
+
+        const outputPath = await convertDrawioToPdfDirectly(
+            appConfig,
+            '/workspace/diagram.drawio.png' as DrawioPath,
+            outputTemplatePath,
+            workspaceFolder,
+        );
+
+        assert.strictEqual(outputPath, '/workspace/diagram.pdf');
+        assert.deepStrictEqual(createFolderStub.firstCall.args, [outputPath]);
+        assert.deepStrictEqual(execFileInWorkspaceStub.firstCall.args, [
+            'drawio',
+            [
+                '/workspace/diagram.drawio.png',
+                '-o',
+                '/workspace/diagram.pdf',
+                '-xf',
+                'pdf',
+                '-t',
+                '-a',
+                '--crop',
+            ],
+            workspaceFolder,
+        ]);
+        assert.strictEqual(execFileInWorkspaceStub.callCount, 1);
     });
 
     test('should show an error when commands are invoked without selected files', async () => {

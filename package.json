@@ -101,6 +101,11 @@
                     "when": "resourceExtname == .drawio || resourceExtname == .dio || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/"
                 },
                 {
+                    "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+                    "group": "latex-graphics-helper",
+                    "when": "resourceExtname == .drawio || resourceExtname == .dio || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/"
+                },
+                {
                     "submenu": "latex-graphics-helper.convertPdfToImage",
                     "group": "latex-graphics-helper",
                     "when": "resourceExtname == .pdf"
@@ -156,6 +161,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+                    "when": "false"
+                },
+                {
                     "command": "latex-graphics-helper.convertPdfToPng",
                     "when": "false"
                 },
@@ -206,6 +215,11 @@
             {
                 "command": "latex-graphics-helper.convertDrawioToPdf",
                 "title": "%convertDrawioToPdf%",
+                "category": "LaTeX Graphics Helper"
+            },
+            {
+                "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+                "title": "%convertDrawioToPdfDirectly%",
                 "category": "LaTeX Graphics Helper"
             },
             {
@@ -296,6 +310,11 @@
                     "type": "string",
                     "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
                     "description": "Output file name when converting a Draw.io file to PDF."
+                },
+                "latex-graphics-helper.outputPath.convertDrawioToPdfDirectly": {
+                    "type": "string",
+                    "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+                    "description": "Output file name when converting a Draw.io file directly to a single PDF."
                 },
                 "latex-graphics-helper.outputPath.convertPdfToPng": {
                     "type": "string",
