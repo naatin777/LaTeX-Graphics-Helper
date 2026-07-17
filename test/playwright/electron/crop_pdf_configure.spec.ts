@@ -58,7 +58,7 @@ test("実VS CodeでCrop PDF Configureを操作して全ページをcropする", 
 }, testInfo) => {
   if (packagedVsixPath) {
     // Windows also removes the packaged production dependency tree during teardown.
-    testInfo.setTimeout(240_000);
+    testInfo.setTimeout(process.platform === "win32" ? 600_000 : 240_000);
   }
 
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
