@@ -47,8 +47,9 @@
     "check:nls": "node scripts/check-nls.mjs",
     "check:all": "pnpm run check && pnpm run check:nls",
     "check:fix": "pnpm run lint:fix && pnpm run format:fix",
-    "test": "pnpm run build && vscode-test",
-    "test:playwright": "pnpm run build && playwright test --project=vscode-electron",
+    "test": "vscode-test",
+    "test:playwright": "playwright test --project=vscode-electron",
+    "test:playwright:vsix": "playwright test --project=vscode-electron",
     "package": "pnpm run build && pnpm run package:vsix",
     "package:vsix": "node scripts/package-vsix.mjs"
   },

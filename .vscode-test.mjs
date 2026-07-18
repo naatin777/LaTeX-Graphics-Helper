@@ -21,8 +21,8 @@ export default defineConfig({
   // Mocha 設定。
   // VS Code extension tests は Mocha under the hood。
   mocha: {
-    // VS Code の extension sample と同じ TDD style。
-    // suite/test を使うなら tdd。
+    // VS Code extension tests は Mocha under the hood。
+    // suite/testを使うならtdd。
     ui: "tdd",
 
     // PDF / 画像 / CLI / ファイル操作は遅くなるので長めにする。
@@ -49,5 +49,8 @@ export default defineConfig({
 
     // workspace trust の影響を減らす。
     "--disable-workspace-trust",
+    ...(process.env.LGH_VSCODE_TEST_USER_DATA_DIR
+      ? [`--user-data-dir=${process.env.LGH_VSCODE_TEST_USER_DATA_DIR}`]
+      : []),
   ],
 });

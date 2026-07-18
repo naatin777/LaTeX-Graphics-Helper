@@ -14,7 +14,7 @@ jobs:
     test:
         name: test (${{ matrix.label }})
         runs-on: ${{ matrix.os }}
-        timeout-minutes: 10
+        timeout-minutes: 20
         strategy:
             fail-fast: false
             matrix:
@@ -33,7 +33,7 @@ jobs:
 
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.8.0
+                  version: 11.13.1
 
             - uses: actions/setup-node@v6
               with:
@@ -41,6 +41,11 @@ jobs:
                   cache: pnpm
 
             - run: pnpm install --frozen-lockfile
+              shell: bash
+
+            - id: build
+              name: Build extension and Webview
+              run: pnpm run build
               shell: bash
 
             - if: matrix.os == 'ubuntu-latest'
@@ -65,4 +70,24 @@ jobs:
 
             - name: Run Node and VS Code Extension Host tests
               run: ${{ matrix.test_command }}
+              shell: bash
+              env:
+                  LGH_VSCODE_TEST_USER_DATA_DIR: .vscode-test-ci-data
+
+            - if: always() && steps.build.outcome == 'success'
+              name: Run Webview component tests
+              run: pnpm run test:webview
+              shell: bash
+
+            - if: failure()
+              uses: actions/upload-artifact@v7
+              with:
+                  name: extension-host-test-${{ matrix.label }}
+                  path: .vscode-test-ci-data/
+                  if-no-files-found: ignore
+
+            - if: always()
+              name: Cleanup VS Code test data
+              run: |
+                  node --input-type=module -e "import { rm } from 'node:fs/promises'; await rm('.vscode-test-ci-data', { recursive: true, force: true, maxRetries: 20, retryDelay: 200 });"
               shell: bash

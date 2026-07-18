@@ -20,22 +20,22 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       label: Linux
-                      test_command: xvfb-run pnpm run test:playwright
+                      test_command: xvfb-run pnpm run test:playwright:vsix
                       artifact_suffix: linux
                     - os: macos-latest
                       label: macOS
-                      test_command: pnpm run test:playwright
+                      test_command: pnpm run test:playwright:vsix
                       artifact_suffix: macos
                     - os: windows-latest
                       label: Windows
-                      test_command: pnpm run test:playwright
+                      test_command: pnpm run test:playwright:vsix
                       artifact_suffix: windows
         steps:
             - uses: actions/checkout@v7
 
             - uses: pnpm/action-setup@v6
               with:
-                  version: 11.8.0
+                  version: 11.13.1
 
             - uses: actions/setup-node@v6
               with:
