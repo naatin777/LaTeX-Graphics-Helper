@@ -1,4 +1,4 @@
-import { defineConfig } from 'oxlint';
+import { defineConfig, type OxlintOverride } from 'oxlint';
 
 const extensionOnly = [
   { name: 'solid-js', message: 'Solid is Webview frontend-only.' },
@@ -39,11 +39,14 @@ const frontendPatterns = [
   },
 ];
 
-const restrictedImports = (paths: unknown[], patterns = frontendPatterns) => ({
+const restrictedImports = (
+  paths: { name: string; message: string }[],
+  patterns: { group: string[]; message: string }[] = frontendPatterns,
+): NonNullable<OxlintOverride['rules']> => ({
   'no-restricted-imports': ['error', { paths, patterns }],
 });
 
-const appOverrides = [
+const appOverrides: OxlintOverride[] = [
   {
     files: ['webview/apps/pdf-workbench/**/*.ts', 'webview/apps/pdf-workbench/**/*.tsx'],
     rules: restrictedImports(browserOnly, [
