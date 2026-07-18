@@ -33,7 +33,7 @@
 
 | Entry                  | Actual execution                                      | Platform / trigger                              | Meaning gap                                      |
 | ---------------------- | ----------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
-| `test`                 | `vscode-test`                                         | local / Test workflow 3 OS                      | fixed VS Code 1.105.0、build-free Host suite     |
+| `test`                 | `vscode-test`                                         | local / Test workflow 3 OS                      | fixed VS Code 1.128.0、build-free Host suite     |
 | `test:webview`         | three app Vitest configs                              | local / Test workflow 3 OS                      | JSDOM component interaction、build-free          |
 | `test:playwright:vsix` | Electron projectのみ                                  | local / Playwright workflow 3 OS / release 3 OS | required `LGH_VSIX_PATH`のinstalled VSIX journey |
 | `check:all`            | lint / format / TS / NLS                              | Check workflow                                  | runtime testではない                             |

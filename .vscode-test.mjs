@@ -8,7 +8,7 @@ export default defineConfig({
   // テストに使う VS Code。
   // 同じcommitを同じVS Codeで再実行できるよう固定する。
   // latest stable compatibility testはrequired testと別jobで追加する。
-  version: "1.105.0",
+  version: "1.128.0",
 
   // Extension Development Host に読み込ませる拡張のパス。
   // 通常は repo root。
