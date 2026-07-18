@@ -17,6 +17,9 @@ export function defineWebviewTestConfig(config: WebviewTestConfig) {
     resolve: {
       alias: {
         '@webview-shared': resolve(webviewRoot, 'shared'),
+        '@lgh-crop-pdf-protocol': resolve(webviewRoot, '../src/application/crop_pdf_protocol.ts'),
+        '@lgh-merge-pdf-protocol': resolve(webviewRoot, '../src/application/merge_pdf_protocol.ts'),
+        '@lgh-split-pdf-protocol': resolve(webviewRoot, '../src/application/split_pdf_protocol.ts'),
       },
     },
     test: {
