@@ -1,6 +1,0 @@
-interface:
-  display_name: "LGH Task Runner"
-  short_description: "Run one scoped LGH task safely"
-  default_prompt: "Use $lgh-task-runner to work on the current LaTeX Graphics Helper docs/tasks item."
-policy:
-  allow_implicit_invocation: true

@@ -14,10 +14,8 @@ vsc-extension-quickstart.md
 .claude/**
 .codex/**
 .cursor/**
-assets/icon.drawio
 docs/**
 test/**
 lefthook.yml
 .oxlintrc.json
 .oxfmtrc.json
-pnpm-lock.yaml

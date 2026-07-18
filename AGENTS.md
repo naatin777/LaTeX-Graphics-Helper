@@ -1,45 +1,47 @@
-# Project Rules
+# プロジェクトルール
 
-## Before starting
+## 開始前
 
-- Read `PROJECT_STATE.md`.
-- Read the current task linked from `docs/tasks/README.md` when one exists.
-- Read only directly related specs and ADRs.
-- Do not read the entire repository documentation unless the task requires it.
+- `PROJECT_STATE.md` を読む。
+- `docs/tasks/README.md` に現在のタスクがあれば読む。
+- タスクが指定されていない場合は、ユーザーの依頼をタスクとして扱う。
+- 関係する仕様書とADRのみを読み、必要以上にドキュメントを広げない。
 
-## Scope
+## スコープ
 
-- Keep one task focused on one observable objective.
-- Do not modify unrelated files.
-- Do not perform cleanup or refactoring as a side effect.
-- Do not add dependencies without explaining the reason and impact.
-- Preserve existing observable behavior unless the task explicitly changes it.
+- 1つのタスクは、検証可能な1つの目的に集中させる。
+- 関係のないファイルや挙動を変更しない。
+- 付随的なクリーンアップやリファクタリングを行わない。
+- 明示されていない将来要件を推測して実装しない。
+- タスクで変更を求められていない既存挙動を維持する。
 
-## Implementation
+## 実装
 
-- Prefer explicit data flow and small functions.
-- Group parameters only when they share responsibility and lifetime.
-- Do not create a generic framework for a single use case.
-- Do not hide format-specific behavior behind an overly generic abstraction.
-- Use the existing staged commit path for final user-visible file outputs.
+- 最も近い既存実装を確認し、適切なら再利用する。
+- 明示的なデータフローと小さな関数を優先する。
+- 単一用途のために汎用フレームワークを作らない。
+- 形式固有の処理を過度に抽象化しない。
+- 抽象化は、置き換える重複より小さく単純にする。
+- 新しい依存関係は必要な場合に限り、理由と保守・実行・ライセンスへの影響を説明する。
+- ユーザー向けファイルには既存のステージング処理を使用する。
 
-## Tests
+## テストと完了条件
 
-- Define the expected behavior before implementation.
-- Tests and implementation may be completed in the same task.
-- Prefer behavior tests and real fixtures.
-- Preserve existing regression coverage.
-- Run relevant tests and formal checks before completion.
+- 実装前に、期待される挙動と主要なエッジケースを確認する。
+- 内部実装より、外部から確認できる挙動をテストする。
+- 可能な限り実際の形式に近いフィクスチャを使用する。
+- 変更に関係するテスト、型チェック、Lint、フォーマット、ビルドを実行する。
+- 実行していない検証、失敗、残る制約、挙動に影響する前提を報告する。
+- 未検証または部分的な実装を完了済みとしない。
 
-## Safety
+## 安全性
 
-- Do not bypass workspace path validation.
-- Do not bypass staging, Safe Mode, rollback, cleanup, or Undo.
-- Do not write directly to a user-visible final output when the staged commit path is applicable.
-- Cancellation must not commit a new final output after cancellation is requested.
+- パス検証、ステージング、Safe Mode、ロールバック、クリーンアップ、Undoを回避しない。
+- 適用可能な場合、ユーザー向け最終出力へ直接書き込まない。
+- 最終コミットの直前にキャンセル状態を確認する。
+- キャンセル検知後は最終出力を作成、置換、公開しない。
 
-## Refactoring
+## リファクタリング
 
-- Refactor only when it reduces a concrete bug risk, review cost, or repeated change cost.
-- Do not refactor only because code could look cleaner.
-- Keep abstractions smaller than the duplicated logic they replace.
+- バグリスク、レビューコスト、反復的な変更コスト、テスト困難性を具体的に減らす場合のみ行う。
+- コードをきれいに見せることだけを理由に行わない。
