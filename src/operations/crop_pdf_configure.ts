@@ -1,24 +1,19 @@
-import { randomUUID } from "node:crypto";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
+import { randomUUID } from 'node:crypto';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { PDFDocument, type PDFPage } from "pdf-lib";
+import { PDFDocument, type PDFPage } from 'pdf-lib';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-} from "./cleanup_conversion_artifacts.js";
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+} from './commit_conversion_outputs.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 export interface CropBox {
   left: number;
@@ -28,9 +23,9 @@ export interface CropBox {
 }
 
 export type CropTarget =
-  | { type: "all" }
+  | { type: 'all' }
   | {
-      type: "selected";
+      type: 'selected';
       pages: number[];
     };
 
@@ -50,21 +45,12 @@ export interface CropPdfConfigureOptions {
   outputChannel?: LineOutputChannel;
 }
 
-export async function cropPdfWithConfiguredBox(
-  options: CropPdfConfigureOptions,
-): Promise<CommittedConversionOutput[]> {
+export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
-  const stagingRootPath = path.join(
-    options.job.workspacePath,
-    ".latex-graphics-helper",
-    "crop-pdf-configure",
-    runId,
-  );
-  const artifacts: ConversionArtifactRoot[] = [
-    { rootPath: stagingRootPath, workspacePath: options.job.workspacePath },
-  ];
+  const stagingRootPath = path.join(options.job.workspacePath, '.latex-graphics-helper', 'crop-pdf-configure', runId);
+  const artifacts: ConversionArtifactRoot[] = [{ rootPath: stagingRootPath, workspacePath: options.job.workspacePath }];
 
   try {
     const preparedOutput = await createConfiguredCropOutput(options, runId);
@@ -75,7 +61,7 @@ export async function cropPdfWithConfiguredBox(
       ...(options.resolveOutputConflicts !== undefined && {
         resolveConflicts: options.resolveOutputConflicts,
       }),
-      operationName: "crop-pdf-configure",
+      operationName: 'crop-pdf-configure',
       ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     });
   } catch (error) {
@@ -91,13 +77,13 @@ async function createConfiguredCropOutput(
   const { job, signal } = options;
   const workDirectory = path.join(
     job.workspacePath,
-    ".latex-graphics-helper",
-    "crop-pdf-configure",
+    '.latex-graphics-helper',
+    'crop-pdf-configure',
     runId,
     safeName(path.basename(job.sourcePath, path.extname(job.sourcePath))),
   );
   const copiedSourcePath = path.join(workDirectory, path.basename(job.sourcePath));
-  const stagedOutputPath = path.join(workDirectory, "result.pdf");
+  const stagedOutputPath = path.join(workDirectory, 'result.pdf');
 
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(workDirectory, job.workspacePath);
@@ -125,12 +111,7 @@ async function createConfiguredCropOutput(
     stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
-    stagingRootPath: path.join(
-      job.workspacePath,
-      ".latex-graphics-helper",
-      "crop-pdf-configure",
-      runId,
-    ),
+    stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'crop-pdf-configure', runId),
   };
 }
 
@@ -139,7 +120,7 @@ async function validateJobPaths(job: CropPdfConfigureJob): Promise<void> {
     assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
     assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
     assertWritablePathInWorkspace(
-      path.join(job.workspacePath, ".latex-graphics-helper", "crop-pdf-configure"),
+      path.join(job.workspacePath, '.latex-graphics-helper', 'crop-pdf-configure'),
       job.workspacePath,
     ),
   ]);
@@ -147,15 +128,15 @@ async function validateJobPaths(job: CropPdfConfigureJob): Promise<void> {
 
 function targetToPageIndexes(target: CropTarget, pageCount: number): number[] {
   if (pageCount === 0) {
-    throw new Error("PDF has no pages.");
+    throw new Error('PDF has no pages.');
   }
 
-  if (target.type === "all") {
+  if (target.type === 'all') {
     return Array.from({ length: pageCount }, (_value, index) => index);
   }
 
   if (target.pages.length === 0) {
-    throw new Error("At least one page must be selected.");
+    throw new Error('At least one page must be selected.');
   }
 
   const indexes = target.pages.map((page) => {
@@ -171,7 +152,7 @@ function targetToPageIndexes(target: CropTarget, pageCount: number): number[] {
 
 function setPageCropBox(page: PDFPage | undefined, cropBox: CropBox): void {
   if (!page) {
-    throw new Error("Target page was not found.");
+    throw new Error('Target page was not found.');
   }
 
   validateCropBox(cropBox, page);
@@ -194,7 +175,7 @@ function validateCropBox(cropBox: CropBox, page: PDFPage): void {
   }
 
   if (cropBox.left >= cropBox.right || cropBox.bottom >= cropBox.top) {
-    throw new Error("Crop box must have positive width and height.");
+    throw new Error('Crop box must have positive width and height.');
   }
 
   if (
@@ -203,10 +184,10 @@ function validateCropBox(cropBox: CropBox, page: PDFPage): void {
     cropBox.right > mediaRight ||
     cropBox.top > mediaTop
   ) {
-    throw new Error("Crop box must be inside the page media box.");
+    throw new Error('Crop box must be inside the page media box.');
   }
 }
 
 function safeName(value: string): string {
-  return value.replace(/[^A-Za-z0-9._-]/g, "_");
+  return value.replace(/[^A-Za-z0-9._-]/g, '_');
 }

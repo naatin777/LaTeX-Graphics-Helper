@@ -1,11 +1,11 @@
-import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
-import { mkdir, readFile } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
+import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import { mkdir, readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
-import sharp from "sharp";
-import * as vscode from "vscode";
+import sharp from 'sharp';
+import * as vscode from 'vscode';
 
 const execFileAsync = promisify(execFile);
 
@@ -19,9 +19,7 @@ export interface PdfPageVisualComparison {
   dpi?: number;
 }
 
-export async function assertRenderedPdfPagesSimilar(
-  comparison: PdfPageVisualComparison,
-): Promise<void> {
+export async function assertRenderedPdfPagesSimilar(comparison: PdfPageVisualComparison): Promise<void> {
   const dpi = comparison.dpi ?? 144;
   await mkdir(comparison.renderDirectory, { recursive: true });
 
@@ -41,24 +39,19 @@ export async function assertRenderedPdfPagesSimilar(
   await assertPngsSimilar(await readFile(expectedPngPath), await readFile(actualPngPath));
 }
 
-async function renderPdfPage(
-  pdfPath: string,
-  pageNumber: number,
-  outputPrefix: string,
-  dpi: number,
-): Promise<string> {
+async function renderPdfPage(pdfPath: string, pageNumber: number, outputPrefix: string, dpi: number): Promise<string> {
   const pdftocairoPath = vscode.workspace
-    .getConfiguration("latex-graphics-helper")
-    .get<string>("execPath.pdftocairo", "pdftocairo");
+    .getConfiguration('latex-graphics-helper')
+    .get<string>('execPath.pdftocairo', 'pdftocairo');
 
   await execFileAsync(pdftocairoPath, [
-    "-png",
-    "-singlefile",
-    "-f",
+    '-png',
+    '-singlefile',
+    '-f',
     pageNumber.toString(),
-    "-l",
+    '-l',
     pageNumber.toString(),
-    "-r",
+    '-r',
     dpi.toString(),
     pdfPath,
     outputPrefix,
@@ -122,24 +115,16 @@ function calculatePixelDifference(
       const actualX = expectedX + offsetX;
       const actualY = expectedY + offsetY;
 
-      if (
-        actualX < 0 ||
-        actualY < 0 ||
-        actualX >= actual.info.width ||
-        actualY >= actual.info.height
-      ) {
+      if (actualX < 0 || actualY < 0 || actualX >= actual.info.width || actualY >= actual.info.height) {
         continue;
       }
 
       let maximumChannelDifference = 0;
 
       for (let channelIndex = 0; channelIndex < channels; channelIndex += 1) {
-        const expectedIndex =
-          (expectedY * expected.info.width + expectedX) * channels + channelIndex;
+        const expectedIndex = (expectedY * expected.info.width + expectedX) * channels + channelIndex;
         const actualIndex = (actualY * actual.info.width + actualX) * channels + channelIndex;
-        const difference = Math.abs(
-          (expected.data[expectedIndex] ?? 0) - (actual.data[actualIndex] ?? 0),
-        );
+        const difference = Math.abs((expected.data[expectedIndex] ?? 0) - (actual.data[actualIndex] ?? 0));
         maximumChannelDifference = Math.max(maximumChannelDifference, difference);
         totalDifference += difference;
       }

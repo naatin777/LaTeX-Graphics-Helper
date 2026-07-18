@@ -25,23 +25,24 @@
 // - VS Codeのprogress notificationの画面表示
 // - cancellation tokenのUI操作
 
-import assert from "node:assert/strict";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { PDFDocument } from "pdf-lib";
-import sharp from "sharp";
-import sinon from "sinon";
-import * as vscode from "vscode";
+import { PDFDocument } from 'pdf-lib';
+import sharp from 'sharp';
+import { createSandbox } from 'sinon';
+import * as vscode from 'vscode';
 
-import { runCommandAndClearNotificationsUntilDone } from "./helpers/vscode_command.js";
-import { withWorkspaceSettings } from "./helpers/workspace_settings.js";
-import { logicalSourcePathForOutputTemplate } from "../src/application/source_format.js";
+import { logicalSourcePathForOutputTemplate } from '../src/application/source_format.js';
+
+import { runCommandAndClearNotificationsUntilDone } from './helpers/vscode_command.js';
+import { withWorkspaceSettings } from './helpers/workspace_settings.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-const fixturePngPath = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
-const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
+const fixturePngPath = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png');
+const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
 const generatedImageWidth = 17;
 const generatedImageHeight = 13;
 const generatedSvgWidth = 31;
@@ -49,24 +50,23 @@ const generatedSvgHeight = 19;
 
 const jpegAndWebpVariants = [
   {
-    basename: "source-jpeg",
-    extension: "jpeg",
+    basename: 'source-jpeg',
+    extension: 'jpeg',
     imageBase64:
-      "/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAANABEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCbAL6KAA//2Q==",
+      '/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAANABEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCbAL6KAA//2Q==',
   },
   {
-    basename: "source-webp",
-    extension: "webp",
-    imageBase64:
-      "UklGRkAAAABXRUJQVlA4IDQAAADQAgCdASoRAA0APm0skkWkIqGYBABABsSxgDsAAIGwAP7w+iv/ySPVzHQf/oUbKJpMAAAA",
+    basename: 'source-webp',
+    extension: 'webp',
+    imageBase64: 'UklGRkAAAABXRUJQVlA4IDQAAADQAgCdASoRAA0APm0skkWkIqGYBABABsSxgDsAAIGwAP7w+iv/ySPVzHQf/oUbKJpMAAAA',
   },
 ] as const;
 
 const avifVariant = {
-  basename: "source-avif",
-  extension: "avif",
+  basename: 'source-avif',
+  extension: 'avif',
   imageBase64:
-    "AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==",
+    'AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAXBtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAAA5waXRtAAAAAAABAAAANGlsb2MAAAAAREAAAgABAAAAAAGUAAEAAAAAAAAAHQACAAAAAAGxAAEAAAAAAAAAFQAAADhpaW5mAAAAAAACAAAAFWluZmUCAAAAAAEAAGF2MDEAAAAAFWluZmUCAAAAAAIAAGF2MDEAAAAAr2lwcnAAAACKaXBjbwAAAAxhdjFDgSACAAAAABRpc3BlAAAAAAAAABEAAAANAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQAcAAAAAA5waXhpAAAAAAEIAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBlZ0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAdaXBtYQAAAAAAAAACAAEDgQIDAAIEhAIFhgAAABppcmVmAAAAAAAAAA5hdXhsAAIAAQABAAAAOm1kYXQSAAoIOBDhjCAhoNIyDxgAAABAAeAHi4pg1AUBKBIACgUYEOGMKjIKGAAAAQAF04DygA==',
 } as const;
 
 const imageVariants = [
@@ -76,36 +76,33 @@ const imageVariants = [
   },
 ] as const;
 
-suite("PDFに変換コマンド", () => {
+suite('PDFに変換コマンド', () => {
   let sandbox: sinon.SinonSandbox;
 
   setup(() => {
-    sandbox = sinon.createSandbox();
-    sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
-    sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+    sandbox = createSandbox();
+    sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+    sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
   });
 
   teardown(() => {
     sandbox.restore();
   });
 
-  test("コマンドが登録されている", async () => {
+  test('コマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
     assert.ok(commands.includes(CONVERT_TO_PDF_COMMAND));
   });
 
-  test("PNG、JPEG、WebP、AVIFを1つのbatchでPDFへ変換する", async () => {
+  test('PNG、JPEG、WebP、AVIFを1つのbatchでPDFへ変換する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const pngPath = path.join(temporaryDirectory, "source-png.png");
+      const pngPath = path.join(temporaryDirectory, 'source-png.png');
       const imagePaths = await Promise.all(
         imageVariants.map(async (variant) => {
-          const sourcePath = path.join(
-            temporaryDirectory,
-            `${variant.basename}.${variant.extension}`,
-          );
+          const sourcePath = path.join(temporaryDirectory, `${variant.basename}.${variant.extension}`);
           await writeTestImage(sourcePath, variant.imageBase64);
           return sourcePath;
         }),
@@ -120,14 +117,10 @@ suite("PDFに変換コマンド", () => {
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, ".pdf"), pngPath);
+      await assertPdfPageSizeMatchesImage(replaceExtension(pngPath, '.pdf'), pngPath);
       await Promise.all(
         imagePaths.map((sourcePath) =>
-          assertPdfPageSize(
-            replaceExtension(sourcePath, ".pdf"),
-            generatedImageWidth,
-            generatedImageHeight,
-          ),
+          assertPdfPageSize(replaceExtension(sourcePath, '.pdf'), generatedImageWidth, generatedImageHeight),
         ),
       );
     } finally {
@@ -135,51 +128,42 @@ suite("PDFに変換コマンド", () => {
     }
   });
 
-  test("SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する", async () => {
+  test('SVGをSVGの幅と高さと同じpointサイズの1ページPDFへ変換する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const sourcePath = path.join(temporaryDirectory, "source.svg");
+      const sourcePath = path.join(temporaryDirectory, 'source.svg');
       await writeTestSvg(sourcePath, generatedSvgWidth, generatedSvgHeight);
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(sourcePath),
-      );
+      const commandExecution = vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertPdfPageSize(
-        replaceExtension(sourcePath, ".pdf"),
-        generatedSvgWidth,
-        generatedSvgHeight,
-      );
+      await assertPdfPageSize(replaceExtension(sourcePath, '.pdf'), generatedSvgWidth, generatedSvgHeight);
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test(".mmdファイルを読み取り可能なPDFへ変換する", async () => {
-    await assertMermaidFileConvertsToPdf("source.mmd");
+  test('.mmdファイルを読み取り可能なPDFへ変換する', async () => {
+    await assertMermaidFileConvertsToPdf('source.mmd');
   });
 
-  test(".mermaidファイルを読み取り可能なPDFへ変換する", async () => {
-    await assertMermaidFileConvertsToPdf("source.mermaid");
+  test('.mermaidファイルを読み取り可能なPDFへ変換する', async () => {
+    await assertMermaidFileConvertsToPdf('source.mermaid');
   });
 
-  test("outputPath.convertToPdfが設定されている場合はペア別設定より優先する", async () => {
+  test('outputPath.convertToPdfが設定されている場合はペア別設定より優先する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const sourcePath = path.join(temporaryDirectory, "source.png");
-      const outputPath = path.join(temporaryDirectory, "to-pdf-source.pdf");
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const outputPath = path.join(temporaryDirectory, 'to-pdf-source.pdf');
       await copyFile(fixturePngPath, sourcePath);
 
       await withWorkspaceSettings(
         {
-          "latex-graphics-helper.outputPath.convertToPdf":
-            "${fileDirname}/to-pdf-${fileBasenameNoExtension}.pdf",
-          "latex-graphics-helper.outputPath.convertPngToPdf":
-            "${fileDirname}/pair-${fileBasenameNoExtension}.pdf",
+          'latex-graphics-helper.outputPath.convertToPdf': '${fileDirname}/to-pdf-${fileBasenameNoExtension}.pdf',
+          'latex-graphics-helper.outputPath.convertPngToPdf': '${fileDirname}/pair-${fileBasenameNoExtension}.pdf',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
@@ -187,112 +171,102 @@ suite("PDFに変換コマンド", () => {
       );
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, "pair-source.pdf"));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.pdf'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test("outputPath.convertToPdfが空文字の場合はペア別設定へfallbackする", async () => {
-    await assertConvertToPdfOutputPathFallsBackToPairSetting("");
+  test('outputPath.convertToPdfが空文字の場合はペア別設定へfallbackする', async () => {
+    await assertConvertToPdfOutputPathFallsBackToPairSetting('');
   });
 
-  test("outputPath.convertToPdfが空白のみの場合はペア別設定へfallbackする", async () => {
-    await assertConvertToPdfOutputPathFallsBackToPairSetting("   ");
+  test('outputPath.convertToPdfが空白のみの場合はペア別設定へfallbackする', async () => {
+    await assertConvertToPdfOutputPathFallsBackToPairSetting('   ');
   });
 
-  test("outputPath.convertToPdfが未設定の場合はペア別設定へfallbackする", async () => {
+  test('outputPath.convertToPdfが未設定の場合はペア別設定へfallbackする', async () => {
     await assertConvertToPdfOutputPathFallsBackToPairSetting(undefined);
   });
 
-  test("大文字拡張子のファイルを変換する", async () => {
+  test('大文字拡張子のファイルを変換する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const pngPath = path.join(temporaryDirectory, "raster.PNG");
+      const pngPath = path.join(temporaryDirectory, 'raster.PNG');
 
       await copyFile(fixturePngPath, pngPath);
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
-        vscode.Uri.file(pngPath),
-      );
+      const commandExecution = vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath));
       await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, "raster.pdf"), pngPath);
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, 'raster.pdf'), pngPath);
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test("編集可能なDraw.io画像では出力テンプレートに論理入力パスを使う", () => {
+  test('編集可能なDraw.io画像では出力テンプレートに論理入力パスを使う', () => {
     assert.strictEqual(
-      logicalSourcePathForOutputTemplate(path.join("workspace", "source.drawio.png")),
-      path.join("workspace", "source"),
+      logicalSourcePathForOutputTemplate(path.join('workspace', 'source.drawio.png')),
+      path.join('workspace', 'source'),
     );
     assert.strictEqual(
-      logicalSourcePathForOutputTemplate(path.join("workspace", "diagram.DIO.SVG")),
-      path.join("workspace", "diagram"),
+      logicalSourcePathForOutputTemplate(path.join('workspace', 'diagram.DIO.SVG')),
+      path.join('workspace', 'diagram'),
     );
     assert.strictEqual(
-      logicalSourcePathForOutputTemplate(path.join("workspace", "image.png")),
-      path.join("workspace", "image.png"),
+      logicalSourcePathForOutputTemplate(path.join('workspace', 'image.png')),
+      path.join('workspace', 'image.png'),
     );
   });
 
-  test("複数PNGを1つのバッチとして変換する", async () => {
+  test('複数PNGを1つのバッチとして変換する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const firstSourcePath = path.join(temporaryDirectory, "first.png");
-      const secondSourcePath = path.join(temporaryDirectory, "second.png");
+      const firstSourcePath = path.join(temporaryDirectory, 'first.png');
+      const secondSourcePath = path.join(temporaryDirectory, 'second.png');
       await copyFile(fixturePngPath, firstSourcePath);
       await copyFile(fixturePngPath, secondSourcePath);
 
-      await vscode.commands.executeCommand(
-        CONVERT_TO_PDF_COMMAND,
+      await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(firstSourcePath), [
         vscode.Uri.file(firstSourcePath),
-        [vscode.Uri.file(firstSourcePath), vscode.Uri.file(secondSourcePath)],
-      );
+        vscode.Uri.file(secondSourcePath),
+      ]);
 
-      await assertPdfPageSizeMatchesImage(
-        path.join(temporaryDirectory, "first.pdf"),
-        firstSourcePath,
-      );
-      await assertPdfPageSizeMatchesImage(
-        path.join(temporaryDirectory, "second.pdf"),
-        secondSourcePath,
-      );
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, 'first.pdf'), firstSourcePath);
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, 'second.pdf'), secondSourcePath);
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test("非対応入力が含まれる場合はどのファイルも変換しない", async () => {
+  test('非対応入力が含まれる場合はどのファイルも変換しない', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const pngPath = path.join(temporaryDirectory, "source.png");
-      const unsupportedPath = path.join(temporaryDirectory, "source.txt");
+      const pngPath = path.join(temporaryDirectory, 'source.png');
+      const unsupportedPath = path.join(temporaryDirectory, 'source.txt');
       await copyFile(fixturePngPath, pngPath);
-      await writeFile(unsupportedPath, "not an image");
+      await writeFile(unsupportedPath, 'not an image');
 
       await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(pngPath), [
         vscode.Uri.file(pngPath),
         vscode.Uri.file(unsupportedPath),
       ]);
 
-      await assertFileDoesNotExist(path.join(temporaryDirectory, "source.pdf"));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'source.pdf'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test("PDFからPDFへは変換しない", async () => {
+  test('PDFからPDFへは変換しない', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
-      const pdfPath = path.join(temporaryDirectory, "source.pdf");
+      const pdfPath = path.join(temporaryDirectory, 'source.pdf');
       const pdf = await PDFDocument.create();
       pdf.addPage([120, 80]);
       await writeFile(pdfPath, await pdf.save());
@@ -311,13 +285,10 @@ async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
     const sourcePath = path.join(temporaryDirectory, fileName);
     await writeMermaidFixture(sourcePath);
 
-    const commandExecution = vscode.commands.executeCommand(
-      CONVERT_TO_PDF_COMMAND,
-      vscode.Uri.file(sourcePath),
-    );
+    const commandExecution = vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
     await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-    await assertReadablePdfWithAtLeastOnePage(replaceExtension(sourcePath, ".pdf"));
+    await assertReadablePdfWithAtLeastOnePage(replaceExtension(sourcePath, '.pdf'));
   } finally {
     await removeTemporaryDirectory(temporaryDirectory);
   }
@@ -329,15 +300,14 @@ async function assertConvertToPdfOutputPathFallsBackToPairSetting(
   const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
   try {
-    const sourcePath = path.join(temporaryDirectory, "source.png");
-    const outputPath = path.join(temporaryDirectory, "pair-source.pdf");
+    const sourcePath = path.join(temporaryDirectory, 'source.png');
+    const outputPath = path.join(temporaryDirectory, 'pair-source.pdf');
     await copyFile(fixturePngPath, sourcePath);
 
     await withWorkspaceSettings(
       {
-        "latex-graphics-helper.outputPath.convertToPdf": convertToPdfTemplate,
-        "latex-graphics-helper.outputPath.convertPngToPdf":
-          "${fileDirname}/pair-${fileBasenameNoExtension}.pdf",
+        'latex-graphics-helper.outputPath.convertToPdf': convertToPdfTemplate,
+        'latex-graphics-helper.outputPath.convertPngToPdf': '${fileDirname}/pair-${fileBasenameNoExtension}.pdf',
       },
       async () => {
         await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
@@ -354,9 +324,7 @@ async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   assert.ok(workspaceFolder);
 
-  const temporaryDirectory = await mkdtemp(
-    path.join(workspaceFolder.uri.fsPath, "lgh-convert-to-pdf-"),
-  );
+  const temporaryDirectory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, 'lgh-convert-to-pdf-'));
   await mkdir(temporaryDirectory, { recursive: true });
   return temporaryDirectory;
 }
@@ -379,14 +347,11 @@ async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string)
 }
 
 async function writeTestImage(filePath: string, imageBase64: string): Promise<void> {
-  await writeFile(filePath, Buffer.from(imageBase64, "base64"));
+  await writeFile(filePath, Buffer.from(imageBase64, 'base64'));
 }
 
 async function writeMermaidFixture(filePath: string): Promise<void> {
-  await writeFile(
-    filePath,
-    ["flowchart LR", "  A[Mermaid Alpha] --> B[Mermaid Beta]", ""].join("\n"),
-  );
+  await writeFile(filePath, ['flowchart LR', '  A[Mermaid Alpha] --> B[Mermaid Beta]', ''].join('\n'));
 }
 
 async function writeTestSvg(filePath: string, width: number, height: number): Promise<void> {
@@ -402,11 +367,7 @@ async function assertReadablePdfWithAtLeastOnePage(pdfPath: string): Promise<voi
   assert.ok(pdf.getPageCount() >= 1);
 }
 
-async function assertPdfPageSize(
-  pdfPath: string,
-  expectedWidth: number,
-  expectedHeight: number,
-): Promise<void> {
+async function assertPdfPageSize(pdfPath: string, expectedWidth: number, expectedHeight: number): Promise<void> {
   const pdf = await PDFDocument.load(await readFile(pdfPath));
   assert.strictEqual(pdf.getPageCount(), 1);
 
@@ -417,21 +378,15 @@ async function assertPdfPageSize(
 }
 
 function replaceExtension(filePath: string, extension: string): string {
-  return path.join(
-    path.dirname(filePath),
-    `${path.basename(filePath, path.extname(filePath))}${extension}`,
-  );
+  return path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}${extension}`);
 }
 
 function assertApproximatelyEqual(actual: number, expected: number, tolerance: number): void {
-  assert.ok(
-    Math.abs(actual - expected) <= tolerance,
-    `Expected ${actual} to be within ${tolerance} of ${expected}`,
-  );
+  assert.ok(Math.abs(actual - expected) <= tolerance, `Expected ${actual} to be within ${tolerance} of ${expected}`);
 }
 
 async function assertFileDoesNotExist(filePath: string): Promise<void> {
   await assert.rejects(access(filePath), (error) => {
-    return error instanceof Error && "code" in error && error.code === "ENOENT";
+    return error instanceof Error && 'code' in error && error.code === 'ENOENT';
   });
 }

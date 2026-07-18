@@ -1,9 +1,9 @@
-import { execFile } from "node:child_process";
-import { access, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { access, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
-import { type ElectronApplication, type Page, type TestInfo } from "@playwright/test";
+import { type ElectronApplication, type Page, type TestInfo } from '@playwright/test';
 
 const execFileAsync = promisify(execFile);
 
@@ -22,18 +22,15 @@ interface ElectronDiagnostics extends ElectronTestPaths {
   window: Page | undefined;
 }
 
-export async function writeVscodeUserSettings(
-  settingsPath: string,
-  colorTheme: string,
-): Promise<void> {
+export async function writeVscodeUserSettings(settingsPath: string, colorTheme: string): Promise<void> {
   await writeFile(
     settingsPath,
     JSON.stringify(
       {
-        "window.menuStyle": "custom",
-        "window.zoomLevel": 0,
-        "workbench.colorTheme": colorTheme,
-        "workbench.secondarySideBar.defaultVisibility": "hidden",
+        'window.menuStyle': 'custom',
+        'window.zoomLevel': 0,
+        'workbench.colorTheme': colorTheme,
+        'workbench.secondarySideBar.defaultVisibility': 'hidden',
       },
       undefined,
       2,
@@ -52,7 +49,7 @@ export async function attachElectronDiagnostics({
   window,
   workspacePath,
 }: ElectronDiagnostics): Promise<void> {
-  const windowScreenshotPath = testInfo.outputPath("vscode-window.png");
+  const windowScreenshotPath = testInfo.outputPath('vscode-window.png');
   const hasWindowScreenshot = window
     ? await window
         .screenshot({ path: windowScreenshotPath })
@@ -61,35 +58,32 @@ export async function attachElectronDiagnostics({
     : false;
 
   if (hasWindowScreenshot) {
-    await testInfo.attach("vscode-window", {
+    await testInfo.attach('vscode-window', {
       path: windowScreenshotPath,
-      contentType: "image/png",
+      contentType: 'image/png',
     });
   }
 
-  const windowTitle = window ? await window.title().catch(() => "<unavailable>") : "<unavailable>";
+  const windowTitle = window ? await window.title().catch(() => '<unavailable>') : '<unavailable>';
   const windowText = window
     ? await window
-        .locator("body")
+        .locator('body')
         .innerText()
-        .catch(() => "<unavailable>")
-    : "<window unavailable>";
+        .catch(() => '<unavailable>')
+    : '<window unavailable>';
   const frameDiagnostics = window
     ? await Promise.all(
         window.frames().map(async (frame, index) => {
           const bodyText = await frame
-            .locator("body")
+            .locator('body')
             .innerText()
-            .catch(() => "<unavailable>");
+            .catch(() => '<unavailable>');
 
           return `frame[${index}] url: ${frame.url()}\n${bodyText.slice(0, 6000)}`;
         }),
       )
-    : ["<window unavailable>"];
-  const errorMessage =
-    error instanceof Error
-      ? `${error.name}: ${error.message}\n${error.stack ?? ""}`
-      : String(error);
+    : ['<window unavailable>'];
+  const errorMessage = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack ?? ''}` : String(error);
   const diagnostics = [
     `error:\n${errorMessage}`,
     `temporaryRoot: ${temporaryRoot}`,
@@ -98,24 +92,24 @@ export async function attachElectronDiagnostics({
     `sharedDataDir: ${sharedDataDir}`,
     `extensionsDir: ${extensionsDir}`,
     `windowTitle: ${windowTitle}`,
-    `windowUrl: ${window?.url() ?? "<unavailable>"}`,
+    `windowUrl: ${window?.url() ?? '<unavailable>'}`,
     `windowText:\n${windowText.slice(0, 12000)}`,
-    `frames:\n${frameDiagnostics.join("\n\n")}`,
-    `electronConsole:\n${consoleMessages.join("\n") || "<empty>"}`,
-  ].join("\n\n");
-  const diagnosticsPath = testInfo.outputPath("vscode-electron-diagnostic.txt");
+    `frames:\n${frameDiagnostics.join('\n\n')}`,
+    `electronConsole:\n${consoleMessages.join('\n') || '<empty>'}`,
+  ].join('\n\n');
+  const diagnosticsPath = testInfo.outputPath('vscode-electron-diagnostic.txt');
 
   await writeFile(diagnosticsPath, diagnostics);
-  await testInfo.attach("vscode-electron-diagnostic", {
+  await testInfo.attach('vscode-electron-diagnostic', {
     path: diagnosticsPath,
-    contentType: "text/plain",
+    contentType: 'text/plain',
   });
 
-  const logsPath = testInfo.outputPath("vscode-extension-host-log.txt");
-  await writeFile(logsPath, await readVSCodeLogs(join(userDataDir, "logs")));
-  await testInfo.attach("vscode-extension-host-log", {
+  const logsPath = testInfo.outputPath('vscode-extension-host-log.txt');
+  await writeFile(logsPath, await readVSCodeLogs(join(userDataDir, 'logs')));
+  await testInfo.attach('vscode-extension-host-log', {
     path: logsPath,
-    contentType: "text/plain",
+    contentType: 'text/plain',
   });
 }
 
@@ -156,7 +150,7 @@ async function readVSCodeLogs(logRoot: string): Promise<string> {
     return `No VS Code logs were found in ${logRoot}.\n`;
   }
 
-  return entries.join("\n\n");
+  return entries.join('\n\n');
 }
 
 async function readLogFiles(directory: string): Promise<string[]> {
@@ -172,7 +166,7 @@ async function readLogFiles(directory: string): Promise<string[]> {
         return [];
       }
 
-      const content = await readFile(entryPath, "utf8").catch(() => "<unreadable>");
+      const content = await readFile(entryPath, 'utf8').catch(() => '<unreadable>');
       return [`${entryPath}:\n${content.slice(0, 64_000)}`];
     }),
   );
@@ -180,15 +174,13 @@ async function readLogFiles(directory: string): Promise<string[]> {
   return contents.flat();
 }
 
-async function terminateElectronProcess(
-  electronProcess: ReturnType<ElectronApplication["process"]>,
-): Promise<void> {
+async function terminateElectronProcess(electronProcess: ReturnType<ElectronApplication['process']>): Promise<void> {
   if (electronProcess.exitCode !== null || electronProcess.signalCode !== null) {
     return;
   }
 
-  if (process.platform === "win32" && electronProcess.pid !== undefined) {
-    await execFileAsync("taskkill", ["/PID", String(electronProcess.pid), "/T", "/F"], {
+  if (process.platform === 'win32' && electronProcess.pid !== undefined) {
+    await execFileAsync('taskkill', ['/PID', String(electronProcess.pid), '/T', '/F'], {
       timeout: 10_000,
       windowsHide: true,
     }).then(

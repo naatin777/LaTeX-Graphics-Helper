@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export async function runCommandAndClearNotifications<T>(
   commandExecution: Thenable<T>,
@@ -8,32 +8,30 @@ export async function runCommandAndClearNotifications<T>(
   return await runCommandAndClearNotificationsUntilDone(commandExecution);
 }
 
-export async function runCommandAndClearNotificationsUntilDone<T>(
-  commandExecution: Thenable<T>,
-): Promise<T> {
+export async function runCommandAndClearNotificationsUntilDone<T>(commandExecution: Thenable<T>): Promise<T> {
   const commandPromise = Promise.resolve(commandExecution);
 
-  while ((await Promise.race([waitForCompletion(commandPromise), clearAndContinue()])) !== "done") {
+  while ((await Promise.race([waitForCompletion(commandPromise), clearAndContinue()])) !== 'done') {
     // Keep dismissing notifications until the command can complete.
   }
 
   return await commandPromise;
 }
 
-async function waitForCompletion(promise: Promise<unknown>): Promise<"done"> {
+async function waitForCompletion(promise: Promise<unknown>): Promise<'done'> {
   try {
     await promise;
   } catch {
     // The caller awaits commandPromise and observes the original rejection.
   }
 
-  return "done";
+  return 'done';
 }
 
-async function clearAndContinue(): Promise<"continue"> {
-  await vscode.commands.executeCommand("notifications.clearAll");
+async function clearAndContinue(): Promise<'continue'> {
+  await vscode.commands.executeCommand('notifications.clearAll');
   await sleep(50);
-  return "continue";
+  return 'continue';
 }
 
 async function sleep(milliseconds: number): Promise<void> {

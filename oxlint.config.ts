@@ -1,380 +1,150 @@
-import { defineConfig } from "oxlint";
+import { defineConfig } from 'oxlint';
 
-const extensionRuntimeForbiddenPaths = [
+const extensionOnly = [
+  { name: 'solid-js', message: 'Solid is Webview frontend-only.' },
+  { name: 'solid-js/web', message: 'Solid DOM rendering is Webview frontend-only.' },
+  { name: 'pdfjs-dist', message: 'PDF.js belongs in Webview frontend.' },
+  { name: 'vite', message: 'Vite belongs in Webview build config.' },
+  { name: 'vite-plugin-solid', message: 'vite-plugin-solid belongs in Webview build config.' },
+];
+
+const browserOnly = [
+  { name: 'vscode', message: 'Webview frontend must use the acquireVsCodeApi wrapper.' },
+  { name: 'fs', message: 'Webview frontend must not import Node fs.' },
+  { name: 'node:fs', message: 'Webview frontend must not import Node fs.' },
+  { name: 'path', message: 'Webview frontend must not import Node path.' },
+  { name: 'node:path', message: 'Webview frontend must not import Node path.' },
+  { name: 'child_process', message: 'Webview frontend must not execute external processes.' },
+  { name: 'node:child_process', message: 'Webview frontend must not execute external processes.' },
+  { name: 'os', message: 'Webview frontend must not import Node os.' },
+  { name: 'node:os', message: 'Webview frontend must not import Node os.' },
+  { name: 'crypto', message: 'Use Web Crypto in Webview frontend.' },
+  { name: 'node:crypto', message: 'Use Web Crypto in Webview frontend.' },
+];
+
+const corePaths = [{ name: 'vscode', message: 'Core code must not import the VS Code API.' }, ...extensionOnly];
+const corePatterns = [
+  { group: ['../commands/*', '../../commands/*'], message: 'Core code must not import command/UI code.' },
+  { group: ['../webview/*', '../../webview/*'], message: 'Core code must not import Webview presentation code.' },
   {
-    name: "solid-js",
-    message: "Solid is Webview frontend-only. Do not import it from the VS Code extension runtime.",
-  },
-  {
-    name: "solid-js/web",
-    message: "Solid DOM rendering is Webview frontend-only.",
-  },
-  {
-    name: "pdfjs-dist",
-    message: "PDF.js should be bundled into Webview frontend, not extension runtime.",
-  },
-  {
-    name: "vite",
-    message: "Vite belongs in Webview build config, not extension runtime code.",
-  },
-  {
-    name: "vite-plugin-solid",
-    message: "vite-plugin-solid belongs in Webview build config, not extension runtime code.",
+    group: ['@webview-shared/*', '../../webview/*', '../../../webview/*'],
+    message: 'Core code must not import Webview modules.',
   },
 ];
 
-const coreForbiddenPaths = [
+const frontendPatterns = [
   {
-    name: "vscode",
-    message:
-      "Keep VS Code API out of core/application/operation code. Convert VS Code objects in commands first.",
+    group: ['../../src/*', '../../../src/*', '../../../../src/*'],
+    message: 'Webview frontend must not import extension runtime modules.',
   },
-  ...extensionRuntimeForbiddenPaths,
 ];
 
-const webviewFrontendForbiddenPaths = [
+const restrictedImports = (paths: unknown[], patterns = frontendPatterns) => ({
+  'no-restricted-imports': ['error', { paths, patterns }],
+});
+
+const appOverrides = [
   {
-    name: "vscode",
-    message:
-      "Webview frontend cannot import the VS Code extension API. Use acquireVsCodeApi wrapper instead.",
+    files: ['webview/apps/pdf-workbench/**/*.ts', 'webview/apps/pdf-workbench/**/*.tsx'],
+    rules: restrictedImports(browserOnly, [
+      ...frontendPatterns,
+      { group: ['../pdf-arranger/*', '../../pdf-arranger/*'], message: 'pdf-workbench must not import pdf-arranger.' },
+    ]),
   },
   {
-    name: "fs",
-    message: "Webview frontend runs in a browser-like environment. Do not import Node fs.",
+    files: ['webview/apps/pdf-arranger/**/*.ts', 'webview/apps/pdf-arranger/**/*.tsx'],
+    rules: restrictedImports(browserOnly, [
+      ...frontendPatterns,
+      {
+        group: ['../pdf-workbench/*', '../../pdf-workbench/*'],
+        message: 'pdf-arranger must not import pdf-workbench.',
+      },
+    ]),
   },
   {
-    name: "node:fs",
-    message: "Webview frontend runs in a browser-like environment. Do not import Node fs.",
+    files: ['webview/apps/*/src/**/*.ts', 'webview/apps/*/src/**/*.tsx'],
+    rules: restrictedImports(browserOnly, [
+      ...frontendPatterns,
+      { group: ['../*/src/*', '../../*/src/*'], message: 'Webview frontend must not import another app.' },
+    ]),
   },
   {
-    name: "path",
-    message: "Webview frontend should not depend on Node path.",
-  },
-  {
-    name: "node:path",
-    message: "Webview frontend should not depend on Node path.",
-  },
-  {
-    name: "child_process",
-    message: "Webview frontend must not execute external processes.",
-  },
-  {
-    name: "node:child_process",
-    message: "Webview frontend must not execute external processes.",
-  },
-  {
-    name: "os",
-    message: "Webview frontend should not depend on Node os.",
-  },
-  {
-    name: "node:os",
-    message: "Webview frontend should not depend on Node os.",
-  },
-  {
-    name: "crypto",
-    message: "Use Web Crypto in Webview frontend instead of Node crypto.",
-  },
-  {
-    name: "node:crypto",
-    message: "Use Web Crypto in Webview frontend instead of Node crypto.",
+    files: ['webview/shared/**/*.ts'],
+    rules: restrictedImports(browserOnly, [
+      { group: ['../apps/*', '../../apps/*'], message: 'webview/shared must not import app-specific modules.' },
+      {
+        group: ['../src/*', '../../src/*', '../../../src/*'],
+        message: 'webview/shared must not import extension runtime.',
+      },
+    ]),
   },
 ];
 
 export default defineConfig({
-  // Built-in plugin rule groups.
-  // import / node / promise / unicorn / typescript 系を使えるようにする。
-  plugins: ["eslint", "typescript", "unicorn", "oxc", "import", "node", "promise", "vitest"],
-
-  // 大枠の推奨カテゴリ。
-  // correctness は壊れる可能性が高いので error。
-  // suspicious / perf は最初は warn にして、開発体験を壊しすぎない。
-  categories: {
-    correctness: "error",
-    suspicious: "warn",
-    perf: "warn",
-  },
-
-  // oxlint-disable の残骸を検出する。
-  options: {
-    reportUnusedDisableDirectives: "warn",
-  },
-
-  // 生成物・依存物は lint しない。
+  plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'node', 'promise', 'vitest'],
+  categories: { correctness: 'error', suspicious: 'warn', perf: 'warn' },
+  options: { reportUnusedDisableDirectives: 'warn' },
   ignorePatterns: [
-    "out/**",
-    "dist/**",
-    "coverage/**",
-    "media/webview/**",
-    "node_modules/**",
-    ".vscode-test/**",
-    ".playwright/**",
+    'out/**',
+    'dist/**',
+    'coverage/**',
+    'media/webview/**',
+    'node_modules/**',
+    '.vscode-test/**',
+    '.playwright/**',
   ],
-
   rules: {
-    // if / else / for / while は braces 必須寄り。
-    // まず warn にして既存コード移行を楽にする。
-    curly: "warn",
-
-    // == / != は避ける。
-    eqeqeq: "warn",
-
-    // throw は Error object を投げる。
-    "no-throw-literal": "error",
-
-    // extension 開発中は一時的に console を使うことがあるので warn。
-    // logger 導入後に error へ上げてもよい。
-    "no-console": "warn",
-
-    // ファイル操作の順序保証、ロールバック、キャンセル確認では逐次awaitを仕様として使う。
-    // 並列化が適切な箇所はPromise.allまたはp-limitを明示的に選ぶ。
-    "no-await-in-loop": "off",
-
-    // 再代入しない変数は const。
-    "prefer-const": "error",
-
-    // var 禁止。
-    "no-var": "error",
-
-    // TS プロジェクトでは base no-unused-vars より typescript/no-unused-vars を使う。
-    "no-unused-vars": "off",
-    "typescript/no-unused-vars": "error",
-
-    // type import を推奨する。
-    "typescript/consistent-type-imports": "warn",
-
-    // any は原則避けるが、VS Code API / test mock 周辺で必要になるため warn。
-    "typescript/no-explicit-any": "warn",
-
-    // CommonJS require は禁止。
-    "typescript/no-require-imports": "error",
-
-    // Node builtin は node: prefix に統一。
-    "unicorn/prefer-node-protocol": "error",
-
-    // VS Code extension runtime では Node builtin を使うので off。
-    "import/no-nodejs-modules": "off",
-
-    // 設定や CI で process.env を読む可能性があるので off。
-    "node/no-process-env": "off",
-
-    // Promise chain スタイルを強制しない。
-    // async/await 中心にするため、ここは厳格化しない。
-    "promise/always-return": "off",
-    "promise/catch-or-return": "off",
+    curly: 'warn',
+    eqeqeq: 'warn',
+    'no-throw-literal': 'error',
+    'no-console': 'warn',
+    'no-await-in-loop': 'off',
+    'no-unused-vars': 'off',
+    'typescript/no-unused-vars': 'error',
+    'typescript/consistent-type-imports': 'warn',
+    'typescript/no-explicit-any': 'warn',
+    'typescript/no-require-imports': 'error',
+    'unicorn/prefer-node-protocol': 'error',
+    'import/no-nodejs-modules': 'off',
+    'node/no-process-env': 'off',
+    'promise/always-return': 'off',
+    'promise/catch-or-return': 'off',
   },
-
   overrides: [
     {
-      // application / operations / latex / config は core 寄り。
-      // VS Code API や Webview frontend に依存させない。
+      files: ['src/application/**/*.ts', 'src/operations/**/*.ts', 'src/latex/**/*.ts', 'src/config/**/*.ts'],
+      rules: restrictedImports(corePaths, corePatterns),
+    },
+    {
+      files: ['src/commands/**/*.ts', 'src/webview/**/*.ts', 'src/extension.ts'],
+      rules: restrictedImports(extensionOnly, [
+        {
+          group: ['../../webview/apps/*', '../../../webview/apps/*', '@webview-shared/*'],
+          message: 'Extension runtime must not import Webview frontend.',
+        },
+      ]),
+    },
+    ...appOverrides,
+    {
+      files: ['webview/apps/crop_pdf/src/**/*.ts', 'webview/apps/crop_pdf/src/**/*.tsx'],
+      rules: { 'unicorn/require-post-message-target-origin': 'off' },
+    },
+    {
       files: [
-        "src/application/**/*.ts",
-        "src/operations/**/*.ts",
-        "src/latex/**/*.ts",
-        "src/config/**/*.ts",
+        'webview/vite.config.ts',
+        'webview/vitest.config.ts',
+        'webview/apps/*/vite.config.ts',
+        'webview/apps/*/vitest.config.ts',
+        'scripts/**/*.mjs',
       ],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: coreForbiddenPaths,
-            patterns: [
-              {
-                group: ["../commands/*", "../../commands/*"],
-                message:
-                  "Core code must not depend on command/UI code. Pass plain data from commands instead.",
-              },
-              {
-                group: ["../webview/*", "../../webview/*"],
-                message: "Core code must not depend on VS Code Webview presentation code.",
-              },
-              {
-                group: ["@webview-shared/*", "../../webview/*", "../../../webview/*"],
-                message: "Extension core must not import Webview frontend modules.",
-              },
-            ],
-          },
-        ],
-      },
+      rules: { 'no-console': 'off', 'no-restricted-imports': 'off' },
     },
-
     {
-      // commands / src/webview / extension.ts は VS Code API を触ってよい runtime 層。
-      // ただし Solid app や pdfjs-dist を直接 import しない。
-      files: ["src/commands/**/*.ts", "src/webview/**/*.ts", "src/extension.ts"],
+      files: ['test/**/*.ts', 'src/**/*.test.ts', 'webview/**/*.test.ts', 'webview/**/*.test.tsx'],
       rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: extensionRuntimeForbiddenPaths,
-            patterns: [
-              {
-                group: ["../../webview/apps/*", "../../../webview/apps/*", "@webview-shared/*"],
-                message: "VS Code extension runtime must not import Webview frontend source.",
-              },
-            ],
-          },
-        ],
-      },
-    },
-
-    {
-      // pdf-workbench は単独 app。
-      // extension runtime / Node builtin / 他 app への依存を禁止する。
-      files: ["webview/apps/pdf-workbench/**/*.ts", "webview/apps/pdf-workbench/**/*.tsx"],
-      env: {
-        browser: true,
-        node: false,
-      },
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: webviewFrontendForbiddenPaths,
-            patterns: [
-              {
-                group: ["../../src/*", "../../../src/*", "../../../../src/*"],
-                message: "Webview frontend must not import extension runtime modules.",
-              },
-              {
-                group: ["../pdf-arranger/*", "../../pdf-arranger/*"],
-                message:
-                  "pdf-workbench must not import pdf-arranger directly. Move shared code to webview/shared.",
-              },
-            ],
-          },
-        ],
-      },
-    },
-
-    {
-      // pdf-arranger は単独 app。
-      // extension runtime / Node builtin / 他 app への依存を禁止する。
-      files: ["webview/apps/pdf-arranger/**/*.ts", "webview/apps/pdf-arranger/**/*.tsx"],
-      env: {
-        browser: true,
-        node: false,
-      },
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: webviewFrontendForbiddenPaths,
-            patterns: [
-              {
-                group: ["../../src/*", "../../../src/*", "../../../../src/*"],
-                message: "Webview frontend must not import extension runtime modules.",
-              },
-              {
-                group: ["../pdf-workbench/*", "../../pdf-workbench/*"],
-                message:
-                  "pdf-arranger must not import pdf-workbench directly. Move shared code to webview/shared.",
-              },
-            ],
-          },
-        ],
-      },
-    },
-
-    {
-      // 実在する各 Webview app のfrontend source。
-      // app固有の共有を避け、browser環境とpure shared moduleだけに依存させる。
-      files: ["webview/apps/*/src/**/*.ts", "webview/apps/*/src/**/*.tsx"],
-      env: {
-        browser: true,
-        node: false,
-      },
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: webviewFrontendForbiddenPaths,
-            patterns: [
-              {
-                group: ["../../src/*", "../../../src/*", "../../../../src/*"],
-                message: "Webview frontend must not import extension runtime modules.",
-              },
-              {
-                group: ["../*/src/*", "../../*/src/*"],
-                message: "Webview frontend must not import another app's source directly.",
-              },
-            ],
-          },
-        ],
-      },
-    },
-
-    {
-      // webview/shared は frontend shared。
-      // app 固有コードや extension runtime に依存させない。
-      files: ["webview/shared/**/*.ts"],
-      env: {
-        browser: true,
-        node: false,
-      },
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: webviewFrontendForbiddenPaths,
-            patterns: [
-              {
-                group: ["../apps/*", "../../apps/*"],
-                message: "webview/shared must not import app-specific modules.",
-              },
-              {
-                group: ["../src/*", "../../src/*", "../../../src/*"],
-                message: "webview/shared must not import extension runtime modules.",
-              },
-            ],
-          },
-        ],
-      },
-    },
-
-    {
-      // Vite / Vitest config と scripts は Node 実行。
-      // ここでは node:path / node:fs などを普通に使う。
-      files: [
-        "webview/vite.config.ts",
-        "webview/vitest.config.ts",
-        "webview/apps/*/vite.config.ts",
-        "webview/apps/*/vitest.config.ts",
-        "scripts/**/*.mjs",
-      ],
-      env: {
-        node: true,
-        browser: false,
-      },
-      rules: {
-        // config / scripts では console を許可。
-        "no-console": "off",
-
-        // build config は vite / vite-plugin-solid / node builtin を import するので制限しない。
-        "no-restricted-imports": "off",
-      },
-    },
-
-    {
-      // VS Code extension の Mocha test と Vitest test。
-      files: ["test/**/*.ts", "src/**/*.test.ts", "webview/**/*.test.ts", "webview/**/*.test.tsx"],
-      env: {
-        node: true,
-      },
-      globals: {
-        suite: "readonly",
-        test: "readonly",
-        suiteSetup: "readonly",
-        suiteTeardown: "readonly",
-        setup: "readonly",
-        teardown: "readonly",
-      },
-      rules: {
-        // test では調査用の console を許可。
-        "no-console": "off",
-
-        // mock / fake / unknown payload の検証で any が必要になる場合がある。
-        "typescript/no-explicit-any": "off",
+        'no-console': 'off',
+        'typescript/no-explicit-any': 'off',
+        'unicorn/consistent-function-scoping': 'off',
       },
     },
   ],

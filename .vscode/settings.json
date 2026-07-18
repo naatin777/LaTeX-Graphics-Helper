@@ -15,7 +15,10 @@
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
   "editor.codeActionsOnSave": {
     "source.fixAll.oxc": "explicit"
-  }
+  },
+  "oxc.path.oxfmt": "${workspaceFolder}/node_modules/.bin/oxfmt",
+  "oxc.path.oxlint": "${workspaceFolder}/node_modules/.bin/oxlint"
 }

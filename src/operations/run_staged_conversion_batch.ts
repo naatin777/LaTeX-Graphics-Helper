@@ -1,12 +1,12 @@
-import pLimit from "p-limit";
+import pLimit from 'p-limit';
 
+import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
-import type { ConversionRuntime } from "./conversion_runtime.js";
+} from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
 
 const CONVERSION_CONCURRENCY = 2;
 
@@ -15,12 +15,7 @@ export interface StagedConversionBatch<Job extends { workspacePath: string }> {
   operationName: string;
   runId: string;
   runtime?: ConversionRuntime;
-  stage: (
-    job: Job,
-    index: number,
-    runId: string,
-    runtime: ConversionRuntime,
-  ) => Promise<PreparedConversionOutput>;
+  stage: (job: Job, index: number, runId: string, runtime: ConversionRuntime) => Promise<PreparedConversionOutput>;
 }
 
 /** Runs the shared staging/commit lifecycle; source dispatch stays with each operation. */
@@ -35,9 +30,7 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
     async () => {
       const limit = pLimit(CONVERSION_CONCURRENCY);
       const stagedOutputs = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() => options.stage(job, index, options.runId, runtime)),
-        ),
+        options.jobs.map((job, index) => limit(() => options.stage(job, index, options.runId, runtime))),
       );
       runtime.signal?.throwIfAborted();
       return commitConversionOutputs(stagedOutputs, {

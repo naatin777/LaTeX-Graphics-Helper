@@ -1,72 +1,68 @@
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup, onMount } from 'solid-js';
 
-import { renderPdfPages, type PdfRenderController } from "../../../shared/pdf/render_pdf_pages";
-import {
-  applyPreviewZoom,
-  capturePreviewZoomAnchor,
-  clampPreviewZoom,
-  restorePreviewZoomAnchor,
-} from "./preview_zoom";
-import { parseCropBox, parseTarget } from "./crop_input";
+import { renderPdfPages, type PdfRenderController } from '../../../shared/pdf/render_pdf_pages';
 
-import type {
-  CropPdfLabels,
-  ExtensionToWebviewMessage,
-  WebviewToExtensionMessage,
-} from "./messages";
-import { vscode } from "./vscode";
+import { parseCropBox, parseTarget } from './crop_input';
+import type { CropPdfLabels, ExtensionToWebviewMessage, WebviewToExtensionMessage } from './messages';
+import { applyPreviewZoom, capturePreviewZoomAnchor, clampPreviewZoom, restorePreviewZoomAnchor } from './preview_zoom';
+import { vscode } from './vscode';
 
 const defaultLabels: CropPdfLabels = {
-  title: "Custom Crop",
-  description: "Adjust the PDF crop area.",
-  pageLabel: "Page",
-  pages: "pages",
-  preview: "Preview",
-  previewDescription: "Zoom does not change crop values in PDF points.",
-  previewAriaLabel: "PDF preview",
-  cropSettings: "Crop settings",
-  cropBox: "Crop box",
-  cropBoxDescription: "Set the area to keep in PDF points.",
-  left: "Left",
-  bottom: "Bottom",
-  right: "Right",
-  top: "Top",
-  currentPageSize: "Current page size",
-  targetPages: "Target pages",
-  allPages: "All pages",
-  selectedPages: "Selected pages",
-  pagesInput: "Pages",
-  pagesPlaceholder: "Example: 1, 3, 5",
-  zoomOut: "Zoom out",
-  zoomIn: "Zoom in",
-  previewZoom: "Preview zoom",
-  apply: "Apply",
-  cancel: "Cancel",
-  previewRenderError: "Could not display the PDF",
-  previewApplyError: "PDF preview must render before applying.",
-  cropBoxNumberError: "{0} must be a number.",
-  cropBoxSizeError: "Crop box must have positive width and height.",
-  pagesRequiredError: "At least one page must be selected.",
-  pageWholeNumberError: "Page must be a whole number: {0}",
-  pageOutOfRangeError: "Selected page is out of range: {0}",
+  title: 'Custom Crop',
+  description: 'Adjust the PDF crop area.',
+  pageLabel: 'Page',
+  pages: 'pages',
+  preview: 'Preview',
+  previewDescription: 'Zoom does not change crop values in PDF points.',
+  previewAriaLabel: 'PDF preview',
+  cropSettings: 'Crop settings',
+  cropBox: 'Crop box',
+  cropBoxDescription: 'Set the area to keep in PDF points.',
+  left: 'Left',
+  bottom: 'Bottom',
+  right: 'Right',
+  top: 'Top',
+  currentPageSize: 'Current page size',
+  targetPages: 'Target pages',
+  allPages: 'All pages',
+  selectedPages: 'Selected pages',
+  pagesInput: 'Pages',
+  pagesPlaceholder: 'Example: 1, 3, 5',
+  zoomOut: 'Zoom out',
+  zoomIn: 'Zoom in',
+  previewZoom: 'Preview zoom',
+  apply: 'Apply',
+  cancel: 'Cancel',
+  previewRenderError: 'Could not display the PDF',
+  previewApplyError: 'PDF preview must render before applying.',
+  cropBoxNumberError: '{0} must be a number.',
+  cropBoxSizeError: 'Crop box must have positive width and height.',
+  pagesRequiredError: 'At least one page must be selected.',
+  pageWholeNumberError: 'Page must be a whole number: {0}',
+  pageOutOfRangeError: 'Selected page is out of range: {0}',
 };
 
+function cancel() {
+  const message: WebviewToExtensionMessage = { type: 'cancel' };
+  vscode.postMessage(message);
+}
+
 export function App() {
-  const [fileName, setFileName] = createSignal("");
+  const [fileName, setFileName] = createSignal('');
   const [pageCount, setPageCount] = createSignal(1);
   const [pageSize, setPageSize] = createSignal({ width: 0, height: 0 });
   const [cropBox, setCropBox] = createSignal({
-    left: "0",
-    bottom: "0",
-    right: "0",
-    top: "0",
+    left: '0',
+    bottom: '0',
+    right: '0',
+    top: '0',
   });
-  const [targetType, setTargetType] = createSignal<"all" | "selected">("all");
-  const [selectedPages, setSelectedPages] = createSignal("1");
+  const [targetType, setTargetType] = createSignal<'all' | 'selected'>('all');
+  const [selectedPages, setSelectedPages] = createSignal('1');
   const [previewZoom, setPreviewZoom] = createSignal(1);
   const [labels, setLabels] = createSignal(defaultLabels);
-  const [renderError, setRenderError] = createSignal("");
-  const [inputError, setInputError] = createSignal("");
+  const [renderError, setRenderError] = createSignal('');
+  const [inputError, setInputError] = createSignal('');
   let pdfPages: HTMLDivElement | undefined;
   let pdfPreview: HTMLElement | undefined;
   let renderPromise: Promise<void> | undefined;
@@ -74,7 +70,7 @@ export function App() {
 
   onMount(() => {
     const handleMessage = (event: MessageEvent<ExtensionToWebviewMessage>) => {
-      if (event.data.type !== "init" || !pdfPages) {
+      if (event.data.type !== 'init' || !pdfPages) {
         return;
       }
 
@@ -86,7 +82,7 @@ export function App() {
       const pageWidth = event.data.payload.width ?? 0;
       const pageHeight = event.data.payload.height ?? 0;
 
-      setFileName(event.data.payload.fileName ?? "");
+      setFileName(event.data.payload.fileName ?? '');
       setLabels(event.data.payload.labels ?? defaultLabels);
       setPageCount(totalPages);
       setPageSize({
@@ -94,15 +90,15 @@ export function App() {
         height: pageHeight,
       });
       setCropBox({
-        left: "0",
-        bottom: "0",
+        left: '0',
+        bottom: '0',
         right: pageWidth.toString(),
         top: pageHeight.toString(),
       });
-      setTargetType("all");
+      setTargetType('all');
       setSelectedPages(initialPage.toString());
-      setInputError("");
-      setRenderError("");
+      setInputError('');
+      setRenderError('');
       renderPromise = renderPdfPages(event.data.payload.pdfSrc, pdfPages, {
         ...(pdfPreview !== undefined && { root: pdfPreview }),
         ...(event.data.payload.workerSrc ? { workerSrc: event.data.payload.workerSrc } : {}),
@@ -115,7 +111,7 @@ export function App() {
         onRenderError: (error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
           setRenderError(message);
-          vscode.postMessage({ type: "previewLoadFailed", payload: { message } });
+          vscode.postMessage({ type: 'previewLoadFailed', payload: { message } });
         },
       })
         .then((controller) => {
@@ -131,24 +127,19 @@ export function App() {
 
           const size = getPreviewPageSize(pdfPages);
 
-          if (
-            size.width > 0 &&
-            size.height > 0 &&
-            pageSize().width === 0 &&
-            pageSize().height === 0
-          ) {
+          if (size.width > 0 && size.height > 0 && pageSize().width === 0 && pageSize().height === 0) {
             setPageSize(size);
             const currentCropBox = cropBox();
 
             if (
-              currentCropBox.left === "0" &&
-              currentCropBox.bottom === "0" &&
-              currentCropBox.right === "0" &&
-              currentCropBox.top === "0"
+              currentCropBox.left === '0' &&
+              currentCropBox.bottom === '0' &&
+              currentCropBox.right === '0' &&
+              currentCropBox.top === '0'
             ) {
               setCropBox({
-                left: "0",
-                bottom: "0",
+                left: '0',
+                bottom: '0',
                 right: size.width.toString(),
                 top: size.height.toString(),
               });
@@ -157,10 +148,10 @@ export function App() {
         });
     };
 
-    window.addEventListener("message", handleMessage);
-    vscode.postMessage({ type: "ready" });
+    window.addEventListener('message', handleMessage);
+    vscode.postMessage({ type: 'ready' });
     onCleanup(() => {
-      window.removeEventListener("message", handleMessage);
+      window.removeEventListener('message', handleMessage);
       void renderController?.dispose();
     });
   });
@@ -174,7 +165,7 @@ export function App() {
     try {
       await renderPromise;
     } catch {
-      setInputError("PDF preview must render before applying.");
+      setInputError('PDF preview must render before applying.');
       return;
     }
 
@@ -191,10 +182,10 @@ export function App() {
       return;
     }
 
-    setInputError("");
+    setInputError('');
 
     const message: WebviewToExtensionMessage = {
-      type: "apply",
+      type: 'apply',
       payload: {
         cropBox: parsedCropBox.value,
         target: target.value,
@@ -204,20 +195,7 @@ export function App() {
     vscode.postMessage(message);
   };
 
-  const cancel = () => {
-    const message: WebviewToExtensionMessage = {
-      type: "cancel",
-    };
-
-    vscode.postMessage(message);
-  };
-
-  const updatePreviewZoom = (
-    value: number,
-    anchorTarget?: EventTarget | null,
-    clientX?: number,
-    clientY?: number,
-  ) => {
+  const updatePreviewZoom = (value: number, anchorTarget?: EventTarget | null, clientX?: number, clientY?: number) => {
     const nextZoom = clampPreviewZoom(value);
 
     if (nextZoom === previewZoom()) {
@@ -245,146 +223,159 @@ export function App() {
     }
 
     event.preventDefault();
-    updatePreviewZoom(
-      previewZoom() + (event.deltaY < 0 ? 0.1 : -0.1),
-      event.target,
-      event.clientX,
-      event.clientY,
-    );
+    updatePreviewZoom(previewZoom() + (event.deltaY < 0 ? 0.1 : -0.1), event.target, event.clientX, event.clientY);
   };
 
   return (
-    <main class="app">
-      <header class="app__header">
+    <main class='app'>
+      <header class='app__header'>
         <div>
           <h1>{labels().title}</h1>
           <p>{labels().description}</p>
         </div>
-        <p class="app__meta">
+        <p class='app__meta'>
           {fileName()} · {pageCount()} {labels().pages}
         </p>
       </header>
 
-      <div class="workspace">
+      <div class='workspace'>
         <section
           ref={(element) => (pdfPreview = element)}
           aria-label={labels().previewAriaLabel}
-          class="pdf-preview"
+          class='pdf-preview'
           onWheel={zoomWithWheel}
         >
-          <div class="pdf-preview__toolbar">
+          <div class='pdf-preview__toolbar'>
             <div>
               <h2>{labels().preview}</h2>
               <p>{labels().previewDescription}</p>
             </div>
-            <div class="zoom" aria-label={labels().previewZoom}>
-              <button class="button" type="button" aria-label={labels().zoomOut} onClick={zoomOut}>
+            <div
+              class='zoom'
+              aria-label={labels().previewZoom}
+            >
+              <button
+                class='button'
+                type='button'
+                aria-label={labels().zoomOut}
+                onClick={zoomOut}
+              >
                 −
               </button>
-              <span class="zoom__value">{Math.round(previewZoom() * 100)}%</span>
-              <button class="button" type="button" aria-label={labels().zoomIn} onClick={zoomIn}>
+              <span class='zoom__value'>{Math.round(previewZoom() * 100)}%</span>
+              <button
+                class='button'
+                type='button'
+                aria-label={labels().zoomIn}
+                onClick={zoomIn}
+              >
                 +
               </button>
             </div>
           </div>
-          <div ref={(element) => (pdfPages = element)} class="pdf-preview__pages" />
+          <div
+            ref={(element) => (pdfPages = element)}
+            class='pdf-preview__pages'
+          />
           {renderError() ? (
-            <p class="pdf-preview__error" role="alert">
+            <p
+              class='pdf-preview__error'
+              role='alert'
+            >
               {labels().previewRenderError}: {renderError()}
             </p>
           ) : undefined}
         </section>
 
-        <section aria-label={labels().cropSettings} class="panel">
-          <div class="panel__group">
+        <section
+          aria-label={labels().cropSettings}
+          class='panel'
+        >
+          <div class='panel__group'>
             <h2>{labels().cropBox}</h2>
             <p>{labels().cropBoxDescription}</p>
 
-            <div class="crop-grid">
-              <label class="field">
-                <span class="field__label">{labels().left}</span>
+            <div class='crop-grid'>
+              <label class='field'>
+                <span class='field__label'>{labels().left}</span>
                 <input
-                  class="input"
-                  inputmode="decimal"
-                  type="number"
+                  class='input'
+                  inputmode='decimal'
+                  type='number'
                   value={cropBox().left}
                   onInput={(event) => setCropBox({ ...cropBox(), left: event.currentTarget.value })}
                 />
               </label>
 
-              <label class="field">
-                <span class="field__label">{labels().bottom}</span>
+              <label class='field'>
+                <span class='field__label'>{labels().bottom}</span>
                 <input
-                  class="input"
-                  inputmode="decimal"
-                  type="number"
+                  class='input'
+                  inputmode='decimal'
+                  type='number'
                   value={cropBox().bottom}
-                  onInput={(event) =>
-                    setCropBox({ ...cropBox(), bottom: event.currentTarget.value })
-                  }
+                  onInput={(event) => setCropBox({ ...cropBox(), bottom: event.currentTarget.value })}
                 />
               </label>
 
-              <label class="field">
-                <span class="field__label">{labels().right}</span>
+              <label class='field'>
+                <span class='field__label'>{labels().right}</span>
                 <input
-                  class="input"
-                  inputmode="decimal"
-                  type="number"
+                  class='input'
+                  inputmode='decimal'
+                  type='number'
                   value={cropBox().right}
-                  onInput={(event) =>
-                    setCropBox({ ...cropBox(), right: event.currentTarget.value })
-                  }
+                  onInput={(event) => setCropBox({ ...cropBox(), right: event.currentTarget.value })}
                 />
               </label>
 
-              <label class="field">
-                <span class="field__label">{labels().top}</span>
+              <label class='field'>
+                <span class='field__label'>{labels().top}</span>
                 <input
-                  class="input"
-                  inputmode="decimal"
-                  type="number"
+                  class='input'
+                  inputmode='decimal'
+                  type='number'
                   value={cropBox().top}
                   onInput={(event) => setCropBox({ ...cropBox(), top: event.currentTarget.value })}
                 />
               </label>
             </div>
 
-            <p class="panel__hint">
+            <p class='panel__hint'>
               {labels().currentPageSize}: {pageSize().width} × {pageSize().height} pt
             </p>
           </div>
 
-          <fieldset class="target">
+          <fieldset class='target'>
             <legend>{labels().targetPages}</legend>
 
-            <label class="target__option">
+            <label class='target__option'>
               <input
-                checked={targetType() === "all"}
-                name="target"
-                type="radio"
-                onChange={() => setTargetType("all")}
+                checked={targetType() === 'all'}
+                name='target'
+                type='radio'
+                onChange={() => setTargetType('all')}
               />
               {labels().allPages}
             </label>
 
-            <label class="target__option">
+            <label class='target__option'>
               <input
-                checked={targetType() === "selected"}
-                name="target"
-                type="radio"
-                onChange={() => setTargetType("selected")}
+                checked={targetType() === 'selected'}
+                name='target'
+                type='radio'
+                onChange={() => setTargetType('selected')}
               />
               {labels().selectedPages}
             </label>
 
-            <label class="field">
-              <span class="field__label">{labels().pagesInput}</span>
+            <label class='field'>
+              <span class='field__label'>{labels().pagesInput}</span>
               <input
-                class="input"
-                disabled={targetType() !== "selected"}
+                class='input'
+                disabled={targetType() !== 'selected'}
                 placeholder={labels().pagesPlaceholder}
-                type="text"
+                type='text'
                 value={selectedPages()}
                 onInput={(event) => setSelectedPages(event.currentTarget.value)}
               />
@@ -392,16 +383,27 @@ export function App() {
           </fieldset>
 
           {inputError() ? (
-            <p class="panel__error" role="alert">
+            <p
+              class='panel__error'
+              role='alert'
+            >
               {inputError()}
             </p>
           ) : undefined}
 
-          <div class="actions">
-            <button class="button button--primary" type="button" onClick={applyCrop}>
+          <div class='actions'>
+            <button
+              class='button button--primary'
+              type='button'
+              onClick={applyCrop}
+            >
               {labels().apply}
             </button>
-            <button class="button" type="button" onClick={cancel}>
+            <button
+              class='button'
+              type='button'
+              onClick={cancel}
+            >
               {labels().cancel}
             </button>
           </div>

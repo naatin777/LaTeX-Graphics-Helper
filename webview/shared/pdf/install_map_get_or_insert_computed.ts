@@ -4,7 +4,7 @@ function installMapGetOrInsertComputed(): void {
   };
 
   if (!mapPrototype.getOrInsertComputed) {
-    Object.defineProperty(mapPrototype, "getOrInsertComputed", {
+    Object.defineProperty(mapPrototype, 'getOrInsertComputed', {
       configurable: true,
       writable: true,
       value(this: Map<unknown, unknown>, key: unknown, callback: (key: unknown) => unknown) {

@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - PNGをPDFに変換する機能
 //
@@ -10,37 +8,35 @@
 // - VS Codeのcommand UI
 // - 他の画像フォーマット（JPEG、WebP、Avif、SVG）の変換
 
-import assert from "node:assert/strict";
-import { copyFile, mkdtemp } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { copyFile, mkdtemp } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { convertPngToPdfFiles } from "../src/operations/convert_png_to_pdf.js";
+import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
-suite("PNGからPDFへの変換処理", () => {
-  test("PNGをPDFへ変換する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-png-test-"));
-    const sourcePath = path.join(workspacePath, "source.png");
-    const outputPath = path.join(workspacePath, "output.pdf");
+suite('PNGからPDFへの変換処理', () => {
+  test('PNGをPDFへ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-png-test-'));
+    const sourcePath = path.join(workspacePath, 'source.png');
+    const outputPath = path.join(workspacePath, 'output.pdf');
 
     // Copy fixture PNG file
-    await copyFile(path.join(__dirname, "..", "..", "test", "fixtures", "test.png"), sourcePath);
+    await copyFile(path.join(dirname, '..', '..', 'test', 'fixtures', 'test.png'), sourcePath);
 
     await convertPngToPdfFiles({
       jobs: [{ sourcePath, outputPath, workspacePath }],
-      supportedExtensions: [".png"],
-      operationName: "convert-png-to-pdf",
+      supportedExtensions: ['.png'],
+      operationName: 'convert-png-to-pdf',
     });
 
     // Verify output PDF exists
-    const { PDFDocument } = await import("pdf-lib");
-    const pdf = await PDFDocument.load(
-      await import("node:fs/promises").then((fs) => fs.readFile(outputPath)),
-    );
+    const { PDFDocument } = await import('pdf-lib');
+    const pdf = await PDFDocument.load(await import('node:fs/promises').then((fs) => fs.readFile(outputPath)));
     assert.strictEqual(pdf.getPageCount(), 1);
   });
 });

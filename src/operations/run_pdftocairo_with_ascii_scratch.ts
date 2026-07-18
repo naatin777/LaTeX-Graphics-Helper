@@ -1,4 +1,4 @@
-import { copyFile } from "node:fs/promises";
+import { copyFile } from 'node:fs/promises';
 
 import {
   createAsciiInputOutputScratch,
@@ -7,7 +7,7 @@ import {
   validateAsciiScratchInput,
   validateAsciiScratchOutput,
   type LineOutputChannel,
-} from "./external_tool_ascii_scratch.js";
+} from './external_tool_ascii_scratch.js';
 
 export interface PdfToolScratchOptions {
   platform?: NodeJS.Platform;
@@ -18,21 +18,21 @@ export interface PdfToolScratchOptions {
 export async function runPdftocairoWithAsciiScratch(options: {
   sourcePath: string;
   outputPath: string;
-  scratchOutputFileName: "output.png" | "output.svg";
+  scratchOutputFileName: 'output.png' | 'output.svg';
   run: (sourcePath: string, outputPath: string) => Promise<void>;
   scratch: PdfToolScratchOptions;
   signal?: AbortSignal;
 }): Promise<void> {
-  if (options.scratch.platform !== "win32") {
+  if (options.scratch.platform !== 'win32') {
     await options.run(options.sourcePath, options.outputPath);
     return;
   }
 
   const scratch = await createAsciiInputOutputScratch({
     baseCandidates: options.scratch.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates(),
-    inputFileName: "input.pdf",
+    inputFileName: 'input.pdf',
     outputFileName: options.scratchOutputFileName,
-    toolName: "pdftocairo",
+    toolName: 'pdftocairo',
     ...(options.signal !== undefined && { signal: options.signal }),
     ...(options.scratch.outputChannel !== undefined && {
       outputChannel: options.scratch.outputChannel,
@@ -43,7 +43,7 @@ export async function runPdftocairoWithAsciiScratch(options: {
     options.signal?.throwIfAborted();
     await copyFile(options.sourcePath, scratch.inputPath);
     options.signal?.throwIfAborted();
-    await validateAsciiScratchInput(scratch, "pdftocairo");
+    await validateAsciiScratchInput(scratch, 'pdftocairo');
 
     options.scratch.outputChannel?.appendLine(`[scratch] logical input: ${options.sourcePath}`);
     options.scratch.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
@@ -58,9 +58,7 @@ export async function runPdftocairoWithAsciiScratch(options: {
     options.signal?.throwIfAborted();
     await removeSuccessfulScratch(scratch, options.scratch.outputChannel);
   } catch (error) {
-    options.scratch.outputChannel?.appendLine(
-      `[scratch] retained after failure: ${scratch.rootPath}`,
-    );
+    options.scratch.outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
     throw error;
   }
 }

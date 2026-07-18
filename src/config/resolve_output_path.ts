@@ -1,4 +1,4 @@
-import path from "node:path";
+import path from 'node:path';
 
 export interface OutputPathContext {
   workspacePath: string;
@@ -8,7 +8,7 @@ export interface OutputPathContext {
   dateNow?: number;
 }
 
-export type OutputPathPlatform = "win32" | "posix";
+export type OutputPathPlatform = 'win32' | 'posix';
 
 export interface ResolveOutputPathOptions {
   platform?: OutputPathPlatform;
@@ -20,7 +20,7 @@ export function resolveOutputPath(
   options: ResolveOutputPathOptions = {},
 ): string {
   const platform = options.platform ?? currentOutputPathPlatform();
-  const pathApi = platform === "win32" ? path.win32 : path.posix;
+  const pathApi = platform === 'win32' ? path.win32 : path.posix;
   const values = createTemplateValues(context, pathApi);
   const expandedPath = templatePath.replace(/\${([^}]+)}/g, (_match, variable: string) => {
     const value = values[variable];
@@ -39,10 +39,7 @@ export function resolveOutputPath(
   return outputPath;
 }
 
-function createTemplateValues(
-  context: OutputPathContext,
-  pathApi: typeof path.posix,
-): Record<string, string> {
+function createTemplateValues(context: OutputPathContext, pathApi: typeof path.posix): Record<string, string> {
   const { workspacePath, workspaceName, sourcePath } = context;
   const relativeFile = pathApi.relative(workspacePath, sourcePath);
 
@@ -56,31 +53,27 @@ function createTemplateValues(
     fileBasenameNoExtension: pathApi.basename(sourcePath, pathApi.extname(sourcePath)),
     fileDirname: pathApi.dirname(sourcePath),
     fileExtname: pathApi.extname(sourcePath),
-    page: context.page ?? "",
+    page: context.page ?? '',
     dateNow: (context.dateNow ?? Date.now()).toString(),
   };
 }
 
 function currentOutputPathPlatform(): OutputPathPlatform {
-  return process.platform === "win32" ? "win32" : "posix";
+  return process.platform === 'win32' ? 'win32' : 'posix';
 }
 
-function validateOutputPath(
-  outputPath: string,
-  platform: OutputPathPlatform,
-  pathApi: typeof path.posix,
-): void {
+function validateOutputPath(outputPath: string, platform: OutputPathPlatform, pathApi: typeof path.posix): void {
   const root = pathApi.parse(outputPath).root;
   const relativePath = outputPath.slice(root.length);
-  const separatorPattern = platform === "win32" ? /[\\/]+/ : /\/+/;
-  const components = relativePath.split(separatorPattern).filter((component) => component !== "");
+  const separatorPattern = platform === 'win32' ? /[\\/]+/ : /\/+/;
+  const components = relativePath.split(separatorPattern).filter((component) => component !== '');
 
   for (const component of components) {
-    if (component.includes("\u0000")) {
-      throwInvalidComponent(platform, component, "contains NUL");
+    if (component.includes('\u0000')) {
+      throwInvalidComponent(platform, component, 'contains NUL');
     }
 
-    if (platform === "posix") {
+    if (platform === 'posix') {
       continue;
     }
 
@@ -90,46 +83,36 @@ function validateOutputPath(
     });
 
     if (controlCharacter !== undefined) {
-      throwInvalidComponent(platform, component, "contains a control character");
+      throwInvalidComponent(platform, component, 'contains a control character');
     }
 
     const reservedCharacter = component.match(/[<>:"|?*]/)?.[0];
 
     if (reservedCharacter !== undefined) {
-      throwInvalidComponent(
-        platform,
-        component,
-        `contains reserved character ${JSON.stringify(reservedCharacter)}`,
-      );
+      throwInvalidComponent(platform, component, `contains reserved character ${JSON.stringify(reservedCharacter)}`);
     }
 
-    if (component.startsWith(" ")) {
-      throwInvalidComponent(platform, component, "has a leading ASCII space");
+    if (component.startsWith(' ')) {
+      throwInvalidComponent(platform, component, 'has a leading ASCII space');
     }
 
-    if (component.endsWith(" ")) {
-      throwInvalidComponent(platform, component, "has a trailing ASCII space");
+    if (component.endsWith(' ')) {
+      throwInvalidComponent(platform, component, 'has a trailing ASCII space');
     }
 
-    if (component.endsWith(".")) {
-      throwInvalidComponent(platform, component, "has a trailing period");
+    if (component.endsWith('.')) {
+      throwInvalidComponent(platform, component, 'has a trailing period');
     }
 
-    const baseName = component.split(".", 1)[0] ?? component;
+    const baseName = component.split('.', 1)[0] ?? component;
 
     if (/^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])$/i.test(baseName)) {
-      throwInvalidComponent(platform, component, "uses a reserved name");
+      throwInvalidComponent(platform, component, 'uses a reserved name');
     }
   }
 }
 
-function throwInvalidComponent(
-  platform: OutputPathPlatform,
-  component: string,
-  reason: string,
-): never {
-  const platformName = platform === "win32" ? "Windows" : "POSIX";
-  throw new Error(
-    `Invalid output path for ${platformName}: component ${JSON.stringify(component)} ${reason}.`,
-  );
+function throwInvalidComponent(platform: OutputPathPlatform, component: string, reason: string): never {
+  const platformName = platform === 'win32' ? 'Windows' : 'POSIX';
+  throw new Error(`Invalid output path for ${platformName}: component ${JSON.stringify(component)} ${reason}.`);
 }

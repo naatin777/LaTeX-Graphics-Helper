@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - 固定PDF fixtureを使った全ページ・選択ページのconfigure crop結果
 // - 日本語、絵文字、空白を含む入力名とoutputPathテンプレート
@@ -11,35 +9,36 @@
 // - VS Code Webviewとcommandのmessage接続
 // - Safe Modeのdialog
 
-import assert from "node:assert/strict";
-import { execFile } from "node:child_process";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
-import { PDFDocument, type PDFPage } from "pdf-lib";
-import sharp from "sharp";
-import * as vscode from "vscode";
+import { PDFDocument, type PDFPage } from 'pdf-lib';
+import sharp from 'sharp';
+import * as vscode from 'vscode';
 
-import { resolveOutputPath } from "../src/config/resolve_output_path.js";
-import { cropPdfWithConfiguredBox, type CropBox } from "../src/operations/crop_pdf_configure.js";
-import { cropConfigureFixture } from "./helpers/crop_configure_fixture.js";
+import { resolveOutputPath } from '../src/config/resolve_output_path.js';
+import { cropPdfWithConfiguredBox, type CropBox } from '../src/operations/crop_pdf_configure.js';
+
+import { cropConfigureFixture } from './helpers/crop_configure_fixture.js';
 
 const execFileAsync = promisify(execFile);
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDirectory = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "pdf-operations",
-  "user-files",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'pdf-operations',
+  'user-files',
 );
 
-suite("PDF configure crop処理", () => {
+suite('PDF configure crop処理', () => {
   const temporaryDirectories: string[] = [];
 
   teardown(async () => {
@@ -53,15 +52,11 @@ suite("PDF configure crop処理", () => {
     );
   });
 
-  test("固定fixtureの全ページを同じboxでcropし、描画内容の位置を維持する", async () => {
+  test('固定fixtureの全ページを同じboxでcropし、描画内容の位置を維持する', async () => {
     const workspacePath = await createTemporaryWorkspace(temporaryDirectories);
     const renderDirectory = await createTemporaryRenderDirectory(temporaryDirectories);
-    const sourcePath = await copyFixtureToWorkspace(
-      workspacePath,
-      cropConfigureFixture.fileName,
-      "入力 PDF",
-    );
-    const outputPath = path.join(workspacePath, "出力 PDF", "q a-all-crop.pdf");
+    const sourcePath = await copyFixtureToWorkspace(workspacePath, cropConfigureFixture.fileName, '入力 PDF');
+    const outputPath = path.join(workspacePath, '出力 PDF', 'q a-all-crop.pdf');
     const cropBox = cropConfigureFixture.cropBox;
 
     const outputs = await cropPdfWithConfiguredBox({
@@ -70,21 +65,16 @@ suite("PDF configure crop処理", () => {
         workspacePath,
         outputPath,
         cropBox,
-        target: { type: "all" },
+        target: { type: 'all' },
       },
-      runId: "all-pages",
+      runId: 'all-pages',
     });
 
     assert.deepStrictEqual(outputs, [
       {
         outputPath,
         workspacePath,
-        stagingRootPath: path.join(
-          workspacePath,
-          ".latex-graphics-helper",
-          "crop-pdf-configure",
-          "all-pages",
-        ),
+        stagingRootPath: path.join(workspacePath, '.latex-graphics-helper', 'crop-pdf-configure', 'all-pages'),
       },
     ]);
 
@@ -111,15 +101,11 @@ suite("PDF configure crop処理", () => {
     });
   });
 
-  test("選択ページだけをcropし、未選択ページと元fixtureを変更しない", async () => {
+  test('選択ページだけをcropし、未選択ページと元fixtureを変更しない', async () => {
     const workspacePath = await createTemporaryWorkspace(temporaryDirectories);
     const renderDirectory = await createTemporaryRenderDirectory(temporaryDirectories);
-    const sourcePath = await copyFixtureToWorkspace(
-      workspacePath,
-      cropConfigureFixture.fileName,
-      "選択元",
-    );
-    const outputPath = path.join(workspacePath, "選択結果", "q a-selected-crop.pdf");
+    const sourcePath = await copyFixtureToWorkspace(workspacePath, cropConfigureFixture.fileName, '選択元');
+    const outputPath = path.join(workspacePath, '選択結果', 'q a-selected-crop.pdf');
     const cropBox = cropConfigureFixture.cropBox;
 
     await cropPdfWithConfiguredBox({
@@ -128,23 +114,17 @@ suite("PDF configure crop処理", () => {
         workspacePath,
         outputPath,
         cropBox,
-        target: { type: "selected", pages: [1, 1] },
+        target: { type: 'selected', pages: [1, 1] },
       },
-      runId: "selected-pages",
+      runId: 'selected-pages',
     });
 
     const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
     const outputDocument = await PDFDocument.load(await readFile(outputPath));
     assert.strictEqual(outputDocument.getPageCount(), 2);
     assertPageBox(outputDocument.getPage(0), cropBox);
-    assert.deepStrictEqual(
-      outputDocument.getPage(1).getMediaBox(),
-      sourceDocument.getPage(1).getMediaBox(),
-    );
-    assert.deepStrictEqual(
-      outputDocument.getPage(1).getCropBox(),
-      sourceDocument.getPage(1).getCropBox(),
-    );
+    assert.deepStrictEqual(outputDocument.getPage(1).getMediaBox(), sourceDocument.getPage(1).getMediaBox());
+    assert.deepStrictEqual(outputDocument.getPage(1).getCropBox(), sourceDocument.getPage(1).getCropBox());
 
     const expectedCroppedDocument = await PDFDocument.load(
       await readFile(fixturePath(cropConfigureFixture.expectedCroppedPageFileName)),
@@ -167,62 +147,50 @@ suite("PDF configure crop処理", () => {
       actualPdfPath: outputPath,
       actualPageNumber: 2,
       temporaryDirectory: renderDirectory,
-      prefix: "unselected-page",
+      prefix: 'unselected-page',
     });
 
-    assert.deepStrictEqual(
-      await readFile(sourcePath),
-      await readFile(fixturePath(cropConfigureFixture.fileName)),
-    );
+    assert.deepStrictEqual(await readFile(sourcePath), await readFile(fixturePath(cropConfigureFixture.fileName)));
   });
 
-  test("多言語・複雑なUnicode・半角全角空白を保ち、複数のoutputPathへ出力する", async () => {
+  test('多言語・複雑なUnicode・半角全角空白を保ち、複数のoutputPathへ出力する', async () => {
     const workspacePath = await createTemporaryWorkspace(temporaryDirectories);
-    const sourceFixtureFileName = " 薔薇🌹-1.pdf";
+    const sourceFixtureFileName = ' 薔薇🌹-1.pdf';
     const sourceFileName = cropConfigureFixture.complexUnicodeFileName;
     const sourceBaseName = path.basename(sourceFileName, path.extname(sourceFileName));
-    const relativeSourceDirectory = "入力 Multilingual　자료🌏";
+    const relativeSourceDirectory = '入力 Multilingual　자료🌏';
     const sourcePath = await copyFixtureToWorkspace(
       workspacePath,
       sourceFixtureFileName,
       relativeSourceDirectory,
       sourceFileName,
     );
-    const workspaceName = "作業 空間🌹";
+    const workspaceName = '作業 空間🌹';
     const dateNow = 1_234_567_890;
     const cases = [
       {
-        template: "${fileDirname}/${fileBasenameNoExtension}-crop${fileExtname}",
+        template: '${fileDirname}/${fileBasenameNoExtension}-crop${fileExtname}',
         expectedPath: path.join(path.dirname(sourcePath), `${sourceBaseName}-crop.pdf`),
       },
       {
-        template: "generated/${relativeFileDirname}/${fileBasenameNoExtension} 結果${fileExtname}",
-        expectedPath: path.join(
-          workspacePath,
-          "generated",
-          relativeSourceDirectory,
-          `${sourceBaseName} 結果.pdf`,
-        ),
+        template: 'generated/${relativeFileDirname}/${fileBasenameNoExtension} 結果${fileExtname}',
+        expectedPath: path.join(workspacePath, 'generated', relativeSourceDirectory, `${sourceBaseName} 結果.pdf`),
       },
       {
-        template: "${workspaceFolder}/出力 🌹/${workspaceFolderBasename}/${fileBasename}",
-        expectedPath: path.join(workspacePath, "出力 🌹", workspaceName, sourceFileName),
+        template: '${workspaceFolder}/出力 🌹/${workspaceFolderBasename}/${fileBasename}',
+        expectedPath: path.join(workspacePath, '出力 🌹', workspaceName, sourceFileName),
       },
       {
-        template: "${fileDirname}/日時-${dateNow}/${fileBasenameNoExtension}-crop.pdf",
-        expectedPath: path.join(
-          path.dirname(sourcePath),
-          `日時-${dateNow}`,
-          `${sourceBaseName}-crop.pdf`,
-        ),
+        template: '${fileDirname}/日時-${dateNow}/${fileBasenameNoExtension}-crop.pdf',
+        expectedPath: path.join(path.dirname(sourcePath), `日時-${dateNow}`, `${sourceBaseName}-crop.pdf`),
       },
       {
-        template: "${file}-crop.pdf",
+        template: '${file}-crop.pdf',
         expectedPath: `${sourcePath}-crop.pdf`,
       },
       {
-        template: "archive/${relativeFile}",
-        expectedPath: path.join(workspacePath, "archive", relativeSourceDirectory, sourceFileName),
+        template: 'archive/${relativeFile}',
+        expectedPath: path.join(workspacePath, 'archive', relativeSourceDirectory, sourceFileName),
       },
     ];
 
@@ -247,7 +215,7 @@ suite("PDF configure crop処理", () => {
               right: 180,
               top: 40,
             },
-            target: { type: "all" },
+            target: { type: 'all' },
           },
           runId: `output-path-${index + 1}`,
         });
@@ -260,15 +228,13 @@ suite("PDF configure crop処理", () => {
         return outputPath;
       }),
     );
-    const rejectedResults = results.filter(
-      (result): result is PromiseRejectedResult => result.status === "rejected",
-    );
+    const rejectedResults = results.filter((result): result is PromiseRejectedResult => result.status === 'rejected');
     assert.deepStrictEqual(
       rejectedResults.map(({ reason }) => reason),
       [],
     );
     const outputPaths = results.map((result) => {
-      assert.strictEqual(result.status, "fulfilled");
+      assert.strictEqual(result.status, 'fulfilled');
       return result.value;
     });
 
@@ -277,10 +243,7 @@ suite("PDF configure crop処理", () => {
       cases.map(({ expectedPath }) => expectedPath),
     );
     assert.strictEqual(path.basename(sourcePath), sourceFileName);
-    assert.deepStrictEqual(
-      await readFile(sourcePath),
-      await readFile(fixturePath(sourceFixtureFileName)),
-    );
+    assert.deepStrictEqual(await readFile(sourcePath), await readFile(fixturePath(sourceFixtureFileName)));
   });
 });
 
@@ -289,13 +252,13 @@ function fixturePath(fileName: string): string {
 }
 
 async function createTemporaryWorkspace(temporaryDirectories: string[]): Promise<string> {
-  const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh crop 作業🌹-"));
+  const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh crop 作業🌹-'));
   temporaryDirectories.push(workspacePath);
   return workspacePath;
 }
 
 async function createTemporaryRenderDirectory(temporaryDirectories: string[]): Promise<string> {
-  const renderDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-crop-render-"));
+  const renderDirectory = await mkdtemp(path.join(os.tmpdir(), 'lgh-crop-render-'));
   temporaryDirectories.push(renderDirectory);
   return renderDirectory;
 }
@@ -370,14 +333,7 @@ async function assertRenderedPagesSimilar(params: {
   temporaryDirectory: string;
   prefix: string;
 }): Promise<void> {
-  const {
-    expectedPdfPath,
-    expectedPageNumber,
-    actualPdfPath,
-    actualPageNumber,
-    temporaryDirectory,
-    prefix,
-  } = params;
+  const { expectedPdfPath, expectedPageNumber, actualPdfPath, actualPageNumber, temporaryDirectory, prefix } = params;
   const expectedPngPath = await renderPdfPage(
     expectedPdfPath,
     expectedPageNumber,
@@ -392,24 +348,20 @@ async function assertRenderedPagesSimilar(params: {
   await assertPngsSimilar(await readFile(expectedPngPath), await readFile(actualPngPath));
 }
 
-async function renderPdfPage(
-  pdfPath: string,
-  pageNumber: number,
-  outputPrefix: string,
-): Promise<string> {
+async function renderPdfPage(pdfPath: string, pageNumber: number, outputPrefix: string): Promise<string> {
   const pdftocairoPath = vscode.workspace
-    .getConfiguration("latex-graphics-helper")
-    .get<string>("execPath.pdftocairo", "pdftocairo");
+    .getConfiguration('latex-graphics-helper')
+    .get<string>('execPath.pdftocairo', 'pdftocairo');
 
   await execFileAsync(pdftocairoPath, [
-    "-png",
-    "-singlefile",
-    "-f",
+    '-png',
+    '-singlefile',
+    '-f',
     pageNumber.toString(),
-    "-l",
+    '-l',
     pageNumber.toString(),
-    "-r",
-    "72",
+    '-r',
+    '72',
     pdfPath,
     outputPrefix,
   ]);
@@ -472,24 +424,16 @@ function calculatePixelDifference(
       const actualX = expectedX + offsetX;
       const actualY = expectedY + offsetY;
 
-      if (
-        actualX < 0 ||
-        actualY < 0 ||
-        actualX >= actual.info.width ||
-        actualY >= actual.info.height
-      ) {
+      if (actualX < 0 || actualY < 0 || actualX >= actual.info.width || actualY >= actual.info.height) {
         continue;
       }
 
       let maximumChannelDifference = 0;
 
       for (let channelIndex = 0; channelIndex < channels; channelIndex += 1) {
-        const expectedIndex =
-          (expectedY * expected.info.width + expectedX) * channels + channelIndex;
+        const expectedIndex = (expectedY * expected.info.width + expectedX) * channels + channelIndex;
         const actualIndex = (actualY * actual.info.width + actualX) * channels + channelIndex;
-        const difference = Math.abs(
-          (expected.data[expectedIndex] ?? 0) - (actual.data[actualIndex] ?? 0),
-        );
+        const difference = Math.abs((expected.data[expectedIndex] ?? 0) - (actual.data[actualIndex] ?? 0));
         maximumChannelDifference = Math.max(maximumChannelDifference, difference);
         totalDifference += difference;
       }

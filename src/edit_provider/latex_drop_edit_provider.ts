@@ -1,11 +1,12 @@
-import path from "node:path";
+import path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { localeMap } from "../locale_map.js";
-import { escapeLatex, escapeLatexLabel } from "./latex_escape.js";
-import { readLatexInsertionConfig, type LatexInsertionConfig } from "./latex_config.js";
-import { LatexSnippet } from "./latex_snippet.js";
+import { localeMap } from '../locale_map.js';
+
+import { readLatexInsertionConfig, type LatexInsertionConfig } from './latex_config.js';
+import { escapeLatex, escapeLatexLabel } from './latex_escape.js';
+import { LatexSnippet } from './latex_snippet.js';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
   async provideDocumentDropEdits(
@@ -15,11 +16,11 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     token: vscode.CancellationToken,
     config: LatexInsertionConfig = readLatexInsertionConfig(),
   ): Promise<vscode.DocumentDropEdit | undefined> {
-    if (token.isCancellationRequested || document.uri.scheme !== "file") {
+    if (token.isCancellationRequested || document.uri.scheme !== 'file') {
       return undefined;
     }
 
-    const dataTransferItem = dataTransfer.get("text/uri-list");
+    const dataTransferItem = dataTransfer.get('text/uri-list');
 
     if (!dataTransferItem) {
       return undefined;
@@ -57,14 +58,14 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
 
     const snippet =
       uris.length === 1
-        ? this.createSinglePdfSnippet(config, fileNames[0] ?? "", relativeFilePaths[0] ?? "")
+        ? this.createSinglePdfSnippet(config, fileNames[0] ?? '', relativeFilePaths[0] ?? '')
         : this.createMultiplePdfSnippet(config, fileNames, relativeFilePaths);
 
     if (token.isCancellationRequested) {
       return undefined;
     }
 
-    return new vscode.DocumentDropEdit(snippet, localeMap("insertLatex"));
+    return new vscode.DocumentDropEdit(snippet, localeMap('insertLatex'));
   }
 
   createSinglePdfSnippet(
@@ -74,20 +75,20 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
   ): vscode.SnippetString {
     const snippet = new LatexSnippet(config);
 
-    snippet.wrapEnvironment("figure", () => {
+    snippet.wrapEnvironment('figure', () => {
       snippet.appendFigurePlacement().lineBreak();
       snippet.appendFigureAlignment().lineBreak();
       snippet
         .appendCommand(
-          "includegraphics",
+          'includegraphics',
           () => snippet.appendGraphicsOptions(),
           () => snippet.appendText(snippet.convertToLatexPath(relativeFilePath)),
         )
         .lineBreak();
       snippet
-        .appendCommand("caption", undefined, () => snippet.appendPlaceholder(escapeLatex(fileName)))
-        .appendCommand("label", undefined, () => {
-          snippet.appendText("fig:").appendPlaceholder(escapeLatexLabel(fileName));
+        .appendCommand('caption', undefined, () => snippet.appendPlaceholder(escapeLatex(fileName)))
+        .appendCommand('label', undefined, () => {
+          snippet.appendText('fig:').appendPlaceholder(escapeLatexLabel(fileName));
         })
         .lineEnd();
     });
@@ -102,29 +103,25 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
   ): vscode.SnippetString {
     const snippet = new LatexSnippet(config);
 
-    snippet.wrapEnvironment("figure", () => {
+    snippet.wrapEnvironment('figure', () => {
       snippet.appendFigurePlacement().lineBreak();
       snippet.appendFigureAlignment().lineBreak();
 
       relativeFilePaths.forEach((relativeFilePath, index) => {
-        snippet.wrapEnvironment("minipage", () => {
+        snippet.wrapEnvironment('minipage', () => {
           snippet.appendSubfigureVerticalAlignment().appendSubfigureWidth().lineBreak();
           snippet.appendFigureAlignment().lineBreak();
           snippet
             .appendCommand(
-              "includegraphics",
+              'includegraphics',
               () => snippet.appendGraphicsOptions(),
               () => snippet.appendText(snippet.convertToLatexPath(relativeFilePath)),
             )
             .lineBreak();
           snippet
-            .appendCommand("caption", undefined, () =>
-              snippet.appendPlaceholder(escapeLatex(fileNames[index] ?? "")),
-            )
-            .appendCommand("label", undefined, () => {
-              snippet
-                .appendText("fig:")
-                .appendPlaceholder(escapeLatexLabel(fileNames[index] ?? ""));
+            .appendCommand('caption', undefined, () => snippet.appendPlaceholder(escapeLatex(fileNames[index] ?? '')))
+            .appendCommand('label', undefined, () => {
+              snippet.appendText('fig:').appendPlaceholder(escapeLatexLabel(fileNames[index] ?? ''));
             })
             .lineEnd();
         });
@@ -152,7 +149,7 @@ function parsePdfUris(uriList: string, token: vscode.CancellationToken): vscode.
 
     const line = rawLine.trim();
 
-    if (line === "" || line.startsWith("#")) {
+    if (line === '' || line.startsWith('#')) {
       continue;
     }
 
@@ -164,7 +161,7 @@ function parsePdfUris(uriList: string, token: vscode.CancellationToken): vscode.
       return undefined;
     }
 
-    if (uri.scheme !== "file" || path.extname(uri.fsPath).toLowerCase() !== ".pdf") {
+    if (uri.scheme !== 'file' || path.extname(uri.fsPath).toLowerCase() !== '.pdf') {
       return undefined;
     }
 

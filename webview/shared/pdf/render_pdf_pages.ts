@@ -1,12 +1,13 @@
 // PDF.js reads this Map method while its module is evaluated, so the polyfill must run first.
 // oxlint-disable-next-line import/no-unassigned-import
-import "./install_map_get_or_insert_computed";
+import './install_map_get_or_insert_computed';
+
+import * as pdfjsModule from 'pdfjs-dist';
+import type { PDFPageProxy } from 'pdfjs-dist';
 
 // Vite turns this worker query into an asset URL even though the source module has no default export.
 // oxlint-disable-next-line import/default
-import pdfJsWorkerUrl from "./pdfjs_worker?worker&url";
-import * as pdfjsModule from "pdfjs-dist";
-import type { PDFPageProxy } from "pdfjs-dist";
+import pdfJsWorkerUrl from './pdfjs_worker?worker&url';
 
 type PdfJs = typeof pdfjsModule;
 
@@ -56,26 +57,26 @@ export async function renderPdfPages(
   const document = await loadingTask.promise;
   const renderPromises = new Map<number, Promise<void>>();
   const pages = new Map<number, PDFPageProxy>();
-  const renderTasks = new Set<ReturnType<PDFPageProxy["render"]>>();
+  const renderTasks = new Set<ReturnType<PDFPageProxy['render']>>();
   let disposed = false;
 
   container.replaceChildren();
   const pageFrames: HTMLElement[] = [];
 
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const pageFrame = container.ownerDocument.createElement("figure");
-    pageFrame.className = "pdf-page";
+    const pageFrame = container.ownerDocument.createElement('figure');
+    pageFrame.className = 'pdf-page';
     pageFrame.dataset.pdfPage = pageNumber.toString();
 
-    const canvas = container.ownerDocument.createElement("canvas");
+    const canvas = container.ownerDocument.createElement('canvas');
     canvas.dataset.pdfPage = pageNumber.toString();
-    canvas.className = "pdf-page__canvas";
-    canvas.setAttribute("aria-label", `${options.pageLabel ?? "Page"} ${pageNumber}`);
+    canvas.className = 'pdf-page__canvas';
+    canvas.setAttribute('aria-label', `${options.pageLabel ?? 'Page'} ${pageNumber}`);
     pageFrame.append(canvas);
 
-    const footer = container.ownerDocument.createElement("figcaption");
-    footer.className = "pdf-page__footer";
-    footer.textContent = `${options.pageLabel ?? "Page"} ${pageNumber} / ${document.numPages}`;
+    const footer = container.ownerDocument.createElement('figcaption');
+    footer.className = 'pdf-page__footer';
+    footer.textContent = `${options.pageLabel ?? 'Page'} ${pageNumber} / ${document.numPages}`;
     pageFrame.append(footer);
 
     container.append(pageFrame);
@@ -90,7 +91,7 @@ export async function renderPdfPages(
     }
 
     const pageFrame = pageFrames[pageNumber - 1];
-    const canvas = pageFrame?.querySelector<HTMLCanvasElement>("canvas[data-pdf-page]");
+    const canvas = pageFrame?.querySelector<HTMLCanvasElement>('canvas[data-pdf-page]');
 
     if (!canvas) {
       return Promise.reject(new Error(`Could not create PDF page ${pageNumber}.`));
@@ -128,7 +129,7 @@ export async function renderPdfPages(
   };
 
   const observer =
-    typeof IntersectionObserver === "undefined"
+    typeof IntersectionObserver === 'undefined'
       ? undefined
       : new IntersectionObserver(
           (entries) => {
@@ -143,7 +144,7 @@ export async function renderPdfPages(
           },
           {
             root: options.root ?? null,
-            rootMargin: "0px",
+            rootMargin: '0px',
           },
         );
 
@@ -178,7 +179,7 @@ export async function renderPdfPages(
 }
 
 async function loadPdfJs(): Promise<PdfJs> {
-  pdfjsModule.GlobalWorkerOptions.workerSrc = "pdf.worker.mjs";
+  pdfjsModule.GlobalWorkerOptions.workerSrc = 'pdf.worker.mjs';
   pdfjsModule.GlobalWorkerOptions.workerPort ??= await loadPdfJsWorker();
   return pdfjsModule;
 }
@@ -190,7 +191,7 @@ async function loadPdfJsWorker(): Promise<Worker> {
     }
 
     const workerBlobUrl = URL.createObjectURL(await response.blob());
-    return new Worker(workerBlobUrl, { type: "module" });
+    return new Worker(workerBlobUrl, { type: 'module' });
   });
 
   return pdfJsWorkerPromise;
@@ -206,10 +207,7 @@ interface PdfRenderOptions {
   onRenderError?: (error: unknown) => void;
 }
 
-function createDocumentOptions(
-  pdfSrc: string,
-  options: PdfRenderOptions,
-): Parameters<PdfJs["getDocument"]>[0] {
+function createDocumentOptions(pdfSrc: string, options: PdfRenderOptions): Parameters<PdfJs['getDocument']>[0] {
   return {
     url: pdfSrc,
     cMapPacked: true,
@@ -220,16 +218,13 @@ function createDocumentOptions(
   };
 }
 
-function renderPageToCanvasWithTask(
-  page: PDFPageProxy,
-  canvas: HTMLCanvasElement,
-): ReturnType<PDFPageProxy["render"]> {
+function renderPageToCanvasWithTask(page: PDFPageProxy, canvas: HTMLCanvasElement): ReturnType<PDFPageProxy['render']> {
   const viewport = page.getViewport({ scale: 1 });
   const outputScale = Math.max(1, globalThis.devicePixelRatio || 1);
-  const context = canvas.getContext("2d");
+  const context = canvas.getContext('2d');
 
   if (!context) {
-    throw new Error("Could not create a 2D context for the PDF canvas.");
+    throw new Error('Could not create a 2D context for the PDF canvas.');
   }
 
   canvas.width = Math.floor(viewport.width * outputScale);

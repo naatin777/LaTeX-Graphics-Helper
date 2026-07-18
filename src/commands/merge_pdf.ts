@@ -1,15 +1,16 @@
-import path from "node:path";
+import path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { mergePdf } from "../operations/merge_pdf.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
-import { userMessage } from "./user_messages.js";
-import type { CommandDependencies } from "./command_dependencies.js";
+import { mergePdf } from '../operations/merge_pdf.js';
 
-export const MERGE_PDF_SELECTED_FILES_COMMAND = "latex-graphics-helper.mergePdf.selectedFiles";
+import type { CommandDependencies } from './command_dependencies.js';
+import { withCancellationSignal } from './progress_cancellation.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './undo_last_conversion.js';
+import { userMessage } from './user_messages.js';
+
+export const MERGE_PDF_SELECTED_FILES_COMMAND = 'latex-graphics-helper.mergePdf.selectedFiles';
 
 export async function mergePdfSelectedFilesCommand(
   uri?: vscode.Uri,
@@ -21,14 +22,14 @@ export async function mergePdfSelectedFilesCommand(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length < 2) {
-      throw new Error("Select at least two PDF files.");
+      throw new Error('Select at least two PDF files.');
     }
 
     const workspace = workspaceForSources(sourceUris);
     const outputUri = await vscode.window.showSaveDialog({
-      defaultUri: vscode.Uri.file(path.join(workspace.uri.fsPath, "merged.pdf")),
-      filters: { PDF: ["pdf"] },
-      saveLabel: "Merge",
+      defaultUri: vscode.Uri.file(path.join(workspace.uri.fsPath, 'merged.pdf')),
+      filters: { PDF: ['pdf'] },
+      saveLabel: 'Merge',
     });
 
     if (!outputUri) {
@@ -38,7 +39,7 @@ export async function mergePdfSelectedFilesCommand(
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.mergePdf.title", sourceUris.length),
+        title: userMessage('message.progress.mergePdf.title', sourceUris.length),
         cancellable: true,
       },
       async (_progress, token) => {
@@ -55,20 +56,18 @@ export async function mergePdfSelectedFilesCommand(
       },
     );
 
-    const successMessage = userMessage("message.mergePdf.success", sourceUris.length);
+    const successMessage = userMessage('message.mergePdf.success', sourceUris.length);
     let undoId: string;
 
     try {
       undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
+      await vscode.window.showWarningMessage(userMessage('message.undoUnavailable', successMessage, message));
       return;
     }
 
-    const undoAction = userMessage("message.action.undo");
+    const undoAction = userMessage('message.action.undo');
     const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
     if (selectedAction === undoAction) {
@@ -76,17 +75,17 @@ export async function mergePdfSelectedFilesCommand(
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(userMessage("message.mergePdf.cancelled"));
+      await vscode.window.showInformationMessage(userMessage('message.mergePdf.cancelled'));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(userMessage("message.mergePdf.failed", message));
+    await vscode.window.showErrorMessage(userMessage('message.mergePdf.failed', message));
   }
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
@@ -95,11 +94,11 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const selected = [...uniqueUris.values()];
 
   for (const candidate of selected) {
-    if (candidate.scheme !== "file") {
+    if (candidate.scheme !== 'file') {
       throw new Error(`Only local PDF files are supported: ${candidate.toString()}`);
     }
 
-    if (path.extname(candidate.fsPath).toLowerCase() !== ".pdf") {
+    if (path.extname(candidate.fsPath).toLowerCase() !== '.pdf') {
       throw new Error(`Only PDF files can be merged: ${candidate.fsPath}`);
     }
   }
@@ -111,7 +110,7 @@ function workspaceForSources(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {
   const firstSourceUri = sourceUris[0];
 
   if (!firstSourceUri) {
-    throw new Error("Select at least two PDF files.");
+    throw new Error('Select at least two PDF files.');
   }
 
   const workspace = vscode.workspace.getWorkspaceFolder(firstSourceUri);
@@ -121,14 +120,14 @@ function workspaceForSources(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {
   }
 
   for (const sourceUri of sourceUris) {
-    if (sourceUri.scheme !== "file") {
+    if (sourceUri.scheme !== 'file') {
       throw new Error(`Only local PDF files are supported: ${sourceUri.toString()}`);
     }
 
     const sourceWorkspace = vscode.workspace.getWorkspaceFolder(sourceUri);
 
     if (sourceWorkspace?.uri.toString() !== workspace.uri.toString()) {
-      throw new Error("All selected PDF files must be in the same workspace.");
+      throw new Error('All selected PDF files must be in the same workspace.');
     }
   }
 

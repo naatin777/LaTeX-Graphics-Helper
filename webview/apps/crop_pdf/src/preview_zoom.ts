@@ -1,5 +1,5 @@
 export function applyPreviewZoom(container: HTMLDivElement | undefined, zoom: number): void {
-  const canvases = container?.querySelectorAll<HTMLCanvasElement>("canvas[data-pdf-page]");
+  const canvases = container?.querySelectorAll<HTMLCanvasElement>('canvas[data-pdf-page]');
 
   if (!canvases) {
     return;
@@ -40,10 +40,10 @@ export function capturePreviewZoomAnchor(
   const anchorClientX = clientX ?? previewBounds.left + preview.clientWidth / 2;
   const anchorClientY = clientY ?? previewBounds.top + preview.clientHeight / 2;
   const targetElement = target instanceof Element ? target : undefined;
-  const targetCanvas = targetElement?.closest<HTMLCanvasElement>("canvas[data-pdf-page]");
+  const targetCanvas = targetElement?.closest<HTMLCanvasElement>('canvas[data-pdf-page]');
   const canvas =
     targetCanvas ??
-    [...preview.querySelectorAll<HTMLCanvasElement>("canvas[data-pdf-page]")].find((candidate) => {
+    [...preview.querySelectorAll<HTMLCanvasElement>('canvas[data-pdf-page]')].find((candidate) => {
       const bounds = candidate.getBoundingClientRect();
 
       return (

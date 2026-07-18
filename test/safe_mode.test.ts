@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - Safe Modeが初期値ONで、切替状態をglobal storageへ保存すること
 //
@@ -10,26 +8,26 @@
 // - VS Codeのstatus bar描画
 // - command登録
 
-import assert from "node:assert/strict";
+import assert from 'node:assert/strict';
 
-import { SafeModeState } from "../src/application/safe_mode.js";
+import { SafeModeState } from '../src/application/safe_mode.js';
 
-suite("Safe Mode状態", () => {
-  test("初期状態では有効である", () => {
+suite('Safe Mode状態', () => {
+  test('初期状態では有効である', () => {
     const state = new SafeModeState(new MemoryState());
 
     assert.strictEqual(state.isEnabled(), true);
   });
 
-  test("切り替えた値をglobalStateに保存する", async () => {
+  test('切り替えた値をglobalStateに保存する', async () => {
     const storage = new MemoryState();
     const state = new SafeModeState(storage);
 
     assert.strictEqual(await state.toggle(), false);
-    assert.strictEqual(storage.get("safeMode.enabled"), false);
+    assert.strictEqual(storage.get('safeMode.enabled'), false);
     assert.strictEqual(new SafeModeState(storage).isEnabled(), false);
     assert.strictEqual(await state.toggle(), true);
-    assert.strictEqual(storage.get("safeMode.enabled"), true);
+    assert.strictEqual(storage.get('safeMode.enabled'), true);
   });
 });
 

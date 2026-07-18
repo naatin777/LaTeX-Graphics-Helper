@@ -1,40 +1,38 @@
-import { execFile } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
+import { execFile } from 'node:child_process';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
-import { run as runMermaidCli } from "@mermaid-js/mermaid-cli";
-import pLimit from "p-limit";
-import { PDFDocument, type PDFPage } from "pdf-lib";
-import { launch, type Browser, type ChromeReleaseChannel } from "puppeteer-core";
-import sharp from "sharp";
+import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
+import pLimit from 'p-limit';
+import { PDFDocument, type PDFPage } from 'pdf-lib';
+import { launch, type Browser, type ChromeReleaseChannel } from 'puppeteer-core';
+import sharp from 'sharp';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import { isEditableDrawioImagePath, isMermaidPath } from "../application/source_format.js";
-import { stagingArtifactsForJobs, withStagingCleanup } from "./cleanup_conversion_artifacts.js";
+import { isEditableDrawioImagePath, isMermaidPath } from '../application/source_format.js';
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+
+import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
-} from "./commit_conversion_outputs.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+} from './commit_conversion_outputs.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { runExternalTool } from './run_external_tool.js';
 import {
   runRsvgConvertWithAsciiScratch,
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
-} from "./run_rsvg_convert_with_ascii_scratch.js";
-import { runExternalTool } from "./run_external_tool.js";
+} from './run_rsvg_convert_with_ascii_scratch.js';
 
 const CONVERSION_CONCURRENCY = 2;
-const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = [".png"] as const;
-const SVG_EXTENSION = ".svg";
+const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = ['.png'] as const;
+const SVG_EXTENSION = '.svg';
 const execFileAsync = promisify(execFile);
 
-export type SvgToPdfEngine = "puppeteer" | "rsvg-convert";
+export type SvgToPdfEngine = 'puppeteer' | 'rsvg-convert';
 
 export interface SvgToPdfOptions {
   engine: SvgToPdfEngine;
@@ -77,9 +75,7 @@ export interface ConvertPngToPdfFilesOptions {
   operationName?: string;
 }
 
-export async function convertPngToPdfFiles(
-  options: ConvertPngToPdfFilesOptions,
-): Promise<CommittedConversionOutput[]> {
+export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs, options.supportedExtensions ?? DEFAULT_SUPPORTED_IMAGE_EXTENSIONS);
   await validateJobPaths(options.jobs);
@@ -94,7 +90,7 @@ export async function convertPngToPdfFiles(
       scratchBaseCandidates: options.scratchBaseCandidates,
     }),
   };
-  const artifacts = stagingArtifactsForJobs(options.jobs, "convert-png-to-pdf", runId);
+  const artifacts = stagingArtifactsForJobs(options.jobs, 'convert-png-to-pdf', runId);
 
   return withStagingCleanup(
     artifacts,
@@ -123,7 +119,7 @@ export async function convertPngToPdfFiles(
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
         }),
-        operationName: options.operationName ?? "convert-png-to-pdf",
+        operationName: options.operationName ?? 'convert-png-to-pdf',
         ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
       });
     },
@@ -144,18 +140,13 @@ async function stagePngConversion(
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
     job.workspacePath,
-    ".latex-graphics-helper",
-    "convert-png-to-pdf",
+    '.latex-graphics-helper',
+    'convert-png-to-pdf',
     runId,
     `${index + 1}`,
-    "result.pdf",
+    'result.pdf',
   );
-  const stagingRootPath = path.join(
-    job.workspacePath,
-    ".latex-graphics-helper",
-    "convert-png-to-pdf",
-    runId,
-  );
+  const stagingRootPath = path.join(job.workspacePath, '.latex-graphics-helper', 'convert-png-to-pdf', runId);
 
   await writeImageAsPdf(
     job.sourcePath,
@@ -212,7 +203,7 @@ async function writeDrawioAsPdf(
   outputPath: string,
   workspacePath: string,
   signal?: AbortSignal,
-  drawio: DrawioToPdfOptions = { drawioPath: "drawio" },
+  drawio: DrawioToPdfOptions = { drawioPath: 'drawio' },
 ): Promise<void> {
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(outputPath, workspacePath);
@@ -221,18 +212,14 @@ async function writeDrawioAsPdf(
 
   await (drawio.runDrawio ?? executeDrawio)(
     drawio.drawioPath,
-    ["-x", "-f", "pdf", "-o", outputPath, sourcePath],
+    ['-x', '-f', 'pdf', '-o', outputPath, sourcePath],
     signal,
   );
 }
 
-async function executeDrawio(
-  executable: string,
-  args: string[],
-  signal?: AbortSignal,
-): Promise<void> {
+async function executeDrawio(executable: string, args: string[], signal?: AbortSignal): Promise<void> {
   await runExternalTool({
-    toolName: "drawio",
+    toolName: 'drawio',
     executable,
     args,
     ...(signal !== undefined && { signal }),
@@ -253,7 +240,7 @@ async function writeMermaidAsPdf(
 
   try {
     await runMermaidCli(sourcePath, asPdfOutputPath(outputPath), {
-      outputFormat: "pdf",
+      outputFormat: 'pdf',
       puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
       quiet: true,
     });
@@ -267,7 +254,7 @@ async function writeMermaidAsPdf(
 }
 
 function createMermaidPuppeteerConfig(
-  options: MermaidPuppeteerOptions = { browserChannel: "chrome" },
+  options: MermaidPuppeteerOptions = { browserChannel: 'chrome' },
 ): Record<string, unknown> {
   if (options.executablePath) {
     return {
@@ -283,7 +270,7 @@ function createMermaidPuppeteerConfig(
 }
 
 function asPdfOutputPath(outputPath: string): `${string}.pdf` {
-  if (!outputPath.toLowerCase().endsWith(".pdf")) {
+  if (!outputPath.toLowerCase().endsWith('.pdf')) {
     throw new Error(`Mermaid PDF output path must end with .pdf: ${outputPath}`);
   }
 
@@ -336,9 +323,9 @@ async function writeSvgAsPdf(
   scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<void> {
   const options = svgToPdf ?? {
-    engine: "puppeteer",
-    rsvgConvertPath: "rsvg-convert",
-    puppeteerBrowserChannel: "chrome",
+    engine: 'puppeteer',
+    rsvgConvertPath: 'rsvg-convert',
+    puppeteerBrowserChannel: 'chrome',
   };
   const size = await readSvgSize(sourcePath);
 
@@ -347,7 +334,7 @@ async function writeSvgAsPdf(
   await mkdir(path.dirname(outputPath), { recursive: true });
   signal?.throwIfAborted();
 
-  if (options.engine === "rsvg-convert") {
+  if (options.engine === 'rsvg-convert') {
     await writeSvgAsPdfWithRsvgConvert(sourcePath, outputPath, options, scratchOptions, signal);
   } else {
     await writeSvgAsPdfWithPuppeteer(sourcePath, outputPath, size, options, signal);
@@ -385,13 +372,9 @@ async function writeSvgAsPdfWithRsvgConvert(
   });
 }
 
-async function executeRsvgConvert(
-  executable: string,
-  args: string[],
-  signal?: AbortSignal,
-): Promise<void> {
+async function executeRsvgConvert(executable: string, args: string[], signal?: AbortSignal): Promise<void> {
   await execFileAsync(executable, args, {
-    encoding: "utf8",
+    encoding: 'utf8',
     maxBuffer: 10 * 1024 * 1024,
     signal,
   });
@@ -404,8 +387,8 @@ async function writeSvgAsPdfWithPuppeteer(
   options: SvgToPdfOptions,
   signal?: AbortSignal,
 ): Promise<void> {
-  const rawSvg = await readFile(sourcePath, "utf8");
-  const svg = rawSvg.replace(/^<\?xml[^>]*\?>/i, "").trim();
+  const rawSvg = await readFile(sourcePath, 'utf8');
+  const svg = rawSvg.replace(/^<\?xml[^>]*\?>/i, '').trim();
   signal?.throwIfAborted();
 
   let browser: Browser | undefined;
@@ -423,20 +406,20 @@ async function writeSvgAsPdfWithPuppeteer(
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(false);
     await page.setRequestInterception(true);
-    page.on("request", (request) => {
+    page.on('request', (request) => {
       if (request.isNavigationRequest()) {
         request.continue().catch(() => {});
         return;
       }
       request.abort().catch(() => {});
     });
-    await page.setContent(svgPageHtml(svg, size), { waitUntil: "load" });
+    await page.setContent(svgPageHtml(svg, size), { waitUntil: 'load' });
     signal?.throwIfAborted();
     await page.pdf({
       path: outputPath,
       width: `${size.width / 72}in`,
       height: `${size.height / 72}in`,
-      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      margin: { top: '0', right: '0', bottom: '0', left: '0' },
       printBackground: true,
       preferCSSPageSize: false,
     });
@@ -452,7 +435,7 @@ function puppeteerLaunchEnv(): NodeJS.ProcessEnv {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function errorMessage(error: unknown): string {
@@ -465,28 +448,24 @@ function errorMessage(error: unknown): string {
 
 function svgPageHtml(svg: string, size: { width: number; height: number }): string {
   return [
-    "<!doctype html>",
-    "<html>",
-    "<head>",
+    '<!doctype html>',
+    '<html>',
+    '<head>',
     '<meta charset="utf-8">',
-    "<style>",
-    "@page { margin: 0; }",
+    '<style>',
+    '@page { margin: 0; }',
     `html, body { margin: 0; width: ${size.width}px; height: ${size.height}px; overflow: hidden; }`,
-    "svg { display: block; width: 100%; height: 100%; }",
-    "</style>",
-    "</head>",
-    "<body>",
+    'svg { display: block; width: 100%; height: 100%; }',
+    '</style>',
+    '</head>',
+    '<body>',
     svg,
-    "</body>",
-    "</html>",
-  ].join("");
+    '</body>',
+    '</html>',
+  ].join('');
 }
 
-async function normalizePdfPageSize(
-  outputPath: string,
-  width: number,
-  height: number,
-): Promise<void> {
+async function normalizePdfPageSize(outputPath: string, width: number, height: number): Promise<void> {
   const pdfDocument = await PDFDocument.load(await readFile(outputPath));
   if (pdfDocument.getPageCount() === 0) {
     throw new Error(`Generated PDF has no pages: ${outputPath}`);
@@ -509,7 +488,7 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
       assertWritablePathInWorkspace(job.outputPath, job.workspacePath),
       assertWritablePathInWorkspace(
-        path.join(job.workspacePath, ".latex-graphics-helper", "convert-png-to-pdf"),
+        path.join(job.workspacePath, '.latex-graphics-helper', 'convert-png-to-pdf'),
         job.workspacePath,
       ),
     ]),
@@ -518,12 +497,10 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
 
 function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly string[]): void {
   if (jobs.length === 0) {
-    throw new Error("No image files were selected.");
+    throw new Error('No image files were selected.');
   }
 
-  const supportedExtensionSet = new Set(
-    supportedExtensions.map((extension) => extension.toLowerCase()),
-  );
+  const supportedExtensionSet = new Set(supportedExtensions.map((extension) => extension.toLowerCase()));
 
   for (const job of jobs) {
     if (!isSupportedSourcePath(job.sourcePath, supportedExtensionSet)) {

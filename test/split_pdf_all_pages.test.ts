@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - 1件以上のPDFを1ページごとに分割し、全成功後に出力すること
 // - 既存出力、出力重複、キャンセル時に出力を反映しないこと
@@ -12,34 +10,35 @@
 // - VS CodeのwithProgress UI
 // - commandからのURI選択
 
-import assert from "node:assert/strict";
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument } from 'pdf-lib';
 
-import { splitPdfAllPages } from "../src/operations/split_pdf_all_pages.js";
-import { assertRenderedPdfPagesSimilar } from "./helpers/pdf_visual_assertions.js";
+import { splitPdfAllPages } from '../src/operations/split_pdf_all_pages.js';
+
+import { assertRenderedPdfPagesSimilar } from './helpers/pdf_visual_assertions.js';
 
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDirectory = path.resolve(
   compiledTestDirectory,
-  "..",
-  "..",
-  "test",
-  "fixtures",
-  "pdf-operations",
-  "user-files",
+  '..',
+  '..',
+  'test',
+  'fixtures',
+  'pdf-operations',
+  'user-files',
 );
 
-suite("PDF全ページ分割", () => {
-  test("すべてのページを1始まりのページ番号で分割し、作業ファイルを残す", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePath = path.join(workspacePath, "q a.pdf");
-    const outputDirectory = path.join(workspacePath, "source");
-    await copyFile(fixturePath("q a.pdf"), sourcePath);
+suite('PDF全ページ分割', () => {
+  test('すべてのページを1始まりのページ番号で分割し、作業ファイルを残す', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-test-'));
+    const sourcePath = path.join(workspacePath, 'q a.pdf');
+    const outputDirectory = path.join(workspacePath, 'source');
+    await copyFile(fixturePath('q a.pdf'), sourcePath);
 
     try {
       await splitPdfAllPages({
@@ -50,7 +49,7 @@ suite("PDF全ページ分割", () => {
             outputPathForPage: (page: number) => path.join(outputDirectory, `${page}.pdf`),
           },
         ],
-        runId: "run",
+        runId: 'run',
       });
 
       const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
@@ -63,63 +62,47 @@ suite("PDF全ページ分割", () => {
           expectedPageNumber: page,
           actualPdfPath: outputPath,
           actualPageNumber: 1,
-          renderDirectory: path.join(workspacePath, "rendered"),
+          renderDirectory: path.join(workspacePath, 'rendered'),
           renderPrefix: `split-single-${page}`,
         });
       }
 
-      const stagingDirectory = path.join(
-        workspacePath,
-        ".latex-graphics-helper",
-        "split-pdf",
-        "run",
-        "1-q_a",
-      );
-      await assert.doesNotReject(access(path.join(stagingDirectory, "q a.pdf")));
-      await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "1.pdf")));
-      await assert.doesNotReject(access(path.join(stagingDirectory, "pages", "2.pdf")));
+      const stagingDirectory = path.join(workspacePath, '.latex-graphics-helper', 'split-pdf', 'run', '1-q_a');
+      await assert.doesNotReject(access(path.join(stagingDirectory, 'q a.pdf')));
+      await assert.doesNotReject(access(path.join(stagingDirectory, 'pages', '1.pdf')));
+      await assert.doesNotReject(access(path.join(stagingDirectory, 'pages', '2.pdf')));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }
   });
 
-  test("複数PDFはすべての入力が成功してから出力する", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePaths = ["q a.pdf", " 薔薇🌹.pdf"].map((fileName) =>
-      path.join(workspacePath, fileName),
-    );
+  test('複数PDFはすべての入力が成功してから出力する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-test-'));
+    const sourcePaths = ['q a.pdf', ' 薔薇🌹.pdf'].map((fileName) => path.join(workspacePath, fileName));
 
     try {
-      await Promise.all(
-        sourcePaths.map((sourcePath) =>
-          copyFile(fixturePath(path.basename(sourcePath)), sourcePath),
-        ),
-      );
+      await Promise.all(sourcePaths.map((sourcePath) => copyFile(fixturePath(path.basename(sourcePath)), sourcePath)));
 
       await splitPdfAllPages({
         jobs: sourcePaths.map((sourcePath) => ({
           sourcePath,
           workspacePath,
           outputPathForPage: (page: number) =>
-            path.join(workspacePath, path.basename(sourcePath, ".pdf"), `${page}.pdf`),
+            path.join(workspacePath, path.basename(sourcePath, '.pdf'), `${page}.pdf`),
         })),
       });
 
       for (const [sourceIndex, sourcePath] of sourcePaths.entries()) {
         const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
         for (let page = 1; page <= sourceDocument.getPageCount(); page += 1) {
-          const outputPath = path.join(
-            workspacePath,
-            path.basename(sourcePath, ".pdf"),
-            `${page}.pdf`,
-          );
+          const outputPath = path.join(workspacePath, path.basename(sourcePath, '.pdf'), `${page}.pdf`);
           await assert.doesNotReject(access(outputPath));
           await assertRenderedPdfPagesSimilar({
             expectedPdfPath: sourcePath,
             expectedPageNumber: page,
             actualPdfPath: outputPath,
             actualPageNumber: 1,
-            renderDirectory: path.join(workspacePath, "rendered"),
+            renderDirectory: path.join(workspacePath, 'rendered'),
             renderPrefix: `split-multiple-${sourceIndex + 1}-${page}`,
           });
         }
@@ -129,14 +112,14 @@ suite("PDF全ページ分割", () => {
     }
   });
 
-  test("出力先が既に存在する場合は何も作成しない", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePath = path.join(workspacePath, "source.pdf");
-    const firstOutputPath = path.join(workspacePath, "source", "1.pdf");
-    const secondOutputPath = path.join(workspacePath, "source", "2.pdf");
+  test('出力先が既に存在する場合は何も作成しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-test-'));
+    const sourcePath = path.join(workspacePath, 'source.pdf');
+    const firstOutputPath = path.join(workspacePath, 'source', '1.pdf');
+    const secondOutputPath = path.join(workspacePath, 'source', '2.pdf');
     await writePdf(sourcePath, 2);
     await mkdir(path.dirname(secondOutputPath), { recursive: true });
-    await writeFile(secondOutputPath, "existing");
+    await writeFile(secondOutputPath, 'existing');
 
     await assert.rejects(
       splitPdfAllPages({
@@ -152,13 +135,13 @@ suite("PDF全ページ分割", () => {
     );
 
     await assert.rejects(access(firstOutputPath));
-    assert.strictEqual(await readFile(secondOutputPath, "utf8"), "existing");
+    assert.strictEqual(await readFile(secondOutputPath, 'utf8'), 'existing');
   });
 
-  test("ページごとの出力パスが衝突する場合は出力しない", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePath = path.join(workspacePath, "source.pdf");
-    const outputPath = path.join(workspacePath, "same.pdf");
+  test('ページごとの出力パスが衝突する場合は出力しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-test-'));
+    const sourcePath = path.join(workspacePath, 'source.pdf');
+    const outputPath = path.join(workspacePath, 'same.pdf');
     await writePdf(sourcePath, 2);
 
     await assert.rejects(
@@ -177,10 +160,10 @@ suite("PDF全ページ分割", () => {
     await assert.rejects(access(outputPath));
   });
 
-  test("キャンセルされた場合は出力しない", async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), "lgh-split-test-"));
-    const sourcePath = path.join(workspacePath, "source.pdf");
-    const outputPath = path.join(workspacePath, "source", "1.pdf");
+  test('キャンセルされた場合は出力しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-test-'));
+    const sourcePath = path.join(workspacePath, 'source.pdf');
+    const outputPath = path.join(workspacePath, 'source', '1.pdf');
     const abortController = new AbortController();
     await writePdf(sourcePath, 1);
     abortController.abort();
@@ -196,7 +179,7 @@ suite("PDF全ページ分割", () => {
         ],
         signal: abortController.signal,
       }),
-      { name: "AbortError" },
+      { name: 'AbortError' },
     );
 
     await assert.rejects(access(outputPath));

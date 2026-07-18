@@ -1,31 +1,30 @@
-/* oxlint-disable vitest/expect-expect */
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { PUBLIC_COMMAND_IDS } from "../src/extension.js";
+import { PUBLIC_COMMAND_IDS } from '../src/extension.js';
 
-const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-const CONVERT_TO_PDF_COMMAND = "latex-graphics-helper.convertToPdf";
-const CONVERT_TO_PNG_COMMAND = "latex-graphics-helper.convertToPng";
-const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
-const CONVERT_TO_WEBP_COMMAND = "latex-graphics-helper.convertToWebp";
-const CONVERT_TO_AVIF_COMMAND = "latex-graphics-helper.convertToAvif";
-const CONVERT_TO_SVG_COMMAND = "latex-graphics-helper.convertToSvg";
-const CONVERT_SUBMENU = "latex-graphics-helper.convert";
+const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
+const CONVERT_TO_PNG_COMMAND = 'latex-graphics-helper.convertToPng';
+const CONVERT_TO_JPEG_COMMAND = 'latex-graphics-helper.convertToJpeg';
+const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
+const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
+const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
+const CONVERT_SUBMENU = 'latex-graphics-helper.convert';
 const UNIMPLEMENTED_MANUAL_COMMANDS = [
-  "latex-graphics-helper.splitPdf.manual",
-  "latex-graphics-helper.mergePdf.manual",
+  'latex-graphics-helper.splitPdf.manual',
+  'latex-graphics-helper.mergePdf.manual',
 ] as const;
 const LEGACY_TO_PDF_COMMANDS = [
-  "latex-graphics-helper.convertDrawioToPdf",
-  "latex-graphics-helper.convertPngToPdf",
-  "latex-graphics-helper.convertJpegToPdf",
-  "latex-graphics-helper.convertWebpToPdf",
-  "latex-graphics-helper.convertAvifToPdf",
-  "latex-graphics-helper.convertSvgToPdf",
+  'latex-graphics-helper.convertDrawioToPdf',
+  'latex-graphics-helper.convertPngToPdf',
+  'latex-graphics-helper.convertJpegToPdf',
+  'latex-graphics-helper.convertWebpToPdf',
+  'latex-graphics-helper.convertAvifToPdf',
+  'latex-graphics-helper.convertSvgToPdf',
 ] as const;
 
 interface PackageJson {
@@ -49,12 +48,10 @@ interface PackageJson {
   };
 }
 
-suite("package.jsonの変換メニュー定義", () => {
-  test("公開command・menu・extension登録のID一覧が整合する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const manifestCommandIds = new Set(
-      packageJson.contributes.commands.map((command) => command.command),
-    );
+suite('package.jsonの変換メニュー定義', () => {
+  test('公開command・menu・extension登録のID一覧が整合する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const manifestCommandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
     const menuCommandIds = new Set(
       Object.values(packageJson.contributes.menus)
         .flatMap((entries) => entries.map((entry) => entry.command))
@@ -68,8 +65,8 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("未実装のmanual PDFコマンドを公開しない", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
+  test('未実装のmanual PDFコマンドを公開しない', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
     const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
     const menuCommandIds = new Set(
       Object.values(packageJson.contributes.menus)
@@ -83,8 +80,8 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("PDFに変換コマンドだけを公開し、旧PDF変換コマンドは公開しない", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
+  test('PDFに変換コマンドだけを公開し、旧PDF変換コマンドは公開しない', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
     const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
 
     assert.ok(commandIds.has(CONVERT_TO_PDF_COMMAND));
@@ -94,36 +91,36 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("Explorerの変換サブメニューにPDFに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('Explorerの変換サブメニューにPDFに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const submenu = packageJson.contributes.submenus.find((entry) => entry.id === CONVERT_SUBMENU);
     const convertToPdf = convertMenu.find((entry) => entry.command === CONVERT_TO_PDF_COMMAND);
 
-    assert.strictEqual(submenu?.label, "%submenu.convert%");
+    assert.strictEqual(submenu?.label, '%submenu.convert%');
     assert.ok(explorerContext.some((entry) => entry.submenu === CONVERT_SUBMENU));
     assert.ok(convertToPdf);
-    assert.ok(convertToPdf.when?.includes("mmd"));
-    assert.ok(convertToPdf.when?.includes("mermaid"));
-    assert.ok(convertToPdf.when?.includes("drawio"));
-    assert.ok(convertToPdf.when?.includes("dio"));
+    assert.ok(convertToPdf.when?.includes('mmd'));
+    assert.ok(convertToPdf.when?.includes('mermaid'));
+    assert.ok(convertToPdf.when?.includes('drawio'));
+    assert.ok(convertToPdf.when?.includes('dio'));
 
     assert.ok(
       explorerContext.some(
         (entry) =>
           entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("resourceFilename") &&
-          entry.when.includes("drawio") &&
-          entry.when.includes("dio") &&
-          entry.when.includes("png") &&
-          entry.when.includes("svg"),
+          entry.when?.includes('resourceFilename') &&
+          entry.when.includes('drawio') &&
+          entry.when.includes('dio') &&
+          entry.when.includes('png') &&
+          entry.when.includes('svg'),
       ),
     );
 
     const menuCommandIds = new Set(
       Object.entries(packageJson.contributes.menus)
-        .filter(([menuId]) => menuId !== "commandPalette")
+        .filter(([menuId]) => menuId !== 'commandPalette')
         .flatMap(([, entries]) => entries.map((entry) => entry.command))
         .filter((command): command is string => command !== undefined),
     );
@@ -133,9 +130,9 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("convertToPdfのcontext menu入力を大文字小文字非依存で判定する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('convertToPdfのcontext menu入力を大文字小文字非依存で判定する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertSubmenu = explorerContext.find((entry) => entry.submenu === CONVERT_SUBMENU);
     const convertToPdf = convertMenu.find((entry) => entry.command === CONVERT_TO_PDF_COMMAND);
@@ -149,31 +146,28 @@ suite("package.jsonの変換メニュー定義", () => {
     }
   });
 
-  test("変換サブメニューにSVGに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('変換サブメニューにSVGに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertToSvg = convertMenu.find((entry) => entry.command === CONVERT_TO_SVG_COMMAND);
 
     assert.ok(
       explorerContext.some(
-        (entry) =>
-          entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("mmd") &&
-          entry.when.includes("mermaid"),
+        (entry) => entry.submenu === CONVERT_SUBMENU && entry.when?.includes('mmd') && entry.when.includes('mermaid'),
       ),
     );
     assert.ok(convertToSvg);
-    assert.ok(convertToSvg.when?.includes("pdf"));
-    assert.ok(convertToSvg.when?.includes("mmd"));
-    assert.ok(convertToSvg.when?.includes("mermaid"));
-    assert.ok(convertToSvg.when?.includes("drawio"));
-    assert.ok(convertToSvg.when?.includes("dio"));
+    assert.ok(convertToSvg.when?.includes('pdf'));
+    assert.ok(convertToSvg.when?.includes('mmd'));
+    assert.ok(convertToSvg.when?.includes('mermaid'));
+    assert.ok(convertToSvg.when?.includes('drawio'));
+    assert.ok(convertToSvg.when?.includes('dio'));
   });
 
-  test("変換サブメニューにPNGに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('変換サブメニューにPNGに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertToPng = convertMenu.find((entry) => entry.command === CONVERT_TO_PNG_COMMAND);
 
@@ -181,28 +175,28 @@ suite("package.jsonの変換メニュー定義", () => {
       explorerContext.some(
         (entry) =>
           entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("mmd") &&
-          entry.when.includes("mermaid") &&
-          entry.when.includes("drawio") &&
-          entry.when.includes("dio"),
+          entry.when?.includes('mmd') &&
+          entry.when.includes('mermaid') &&
+          entry.when.includes('drawio') &&
+          entry.when.includes('dio'),
       ),
     );
     assert.ok(convertToPng);
-    assert.ok(convertToPng.when?.includes("pdf"));
-    assert.ok(convertToPng.when?.includes("svg"));
-    assert.ok(convertToPng.when?.includes("mmd"));
-    assert.ok(convertToPng.when?.includes("mermaid"));
-    assert.ok(convertToPng.when?.includes("jpg"));
-    assert.ok(convertToPng.when?.includes("jpeg"));
-    assert.ok(convertToPng.when?.includes("webp"));
-    assert.ok(convertToPng.when?.includes("avif"));
-    assert.ok(convertToPng.when?.includes("drawio"));
-    assert.ok(convertToPng.when?.includes("dio"));
+    assert.ok(convertToPng.when?.includes('pdf'));
+    assert.ok(convertToPng.when?.includes('svg'));
+    assert.ok(convertToPng.when?.includes('mmd'));
+    assert.ok(convertToPng.when?.includes('mermaid'));
+    assert.ok(convertToPng.when?.includes('jpg'));
+    assert.ok(convertToPng.when?.includes('jpeg'));
+    assert.ok(convertToPng.when?.includes('webp'));
+    assert.ok(convertToPng.when?.includes('avif'));
+    assert.ok(convertToPng.when?.includes('drawio'));
+    assert.ok(convertToPng.when?.includes('dio'));
   });
 
-  test("変換サブメニューにJPEGに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('変換サブメニューにJPEGに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertToJpeg = convertMenu.find((entry) => entry.command === CONVERT_TO_JPEG_COMMAND);
 
@@ -210,27 +204,27 @@ suite("package.jsonの変換メニュー定義", () => {
       explorerContext.some(
         (entry) =>
           entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("mmd") &&
-          entry.when.includes("mermaid") &&
-          entry.when.includes("drawio") &&
-          entry.when.includes("dio"),
+          entry.when?.includes('mmd') &&
+          entry.when.includes('mermaid') &&
+          entry.when.includes('drawio') &&
+          entry.when.includes('dio'),
       ),
     );
     assert.ok(convertToJpeg);
-    assert.ok(convertToJpeg.when?.includes("pdf"));
-    assert.ok(convertToJpeg.when?.includes("png"));
-    assert.ok(convertToJpeg.when?.includes("svg"));
-    assert.ok(convertToJpeg.when?.includes("mmd"));
-    assert.ok(convertToJpeg.when?.includes("mermaid"));
-    assert.ok(convertToJpeg.when?.includes("webp"));
-    assert.ok(convertToJpeg.when?.includes("avif"));
-    assert.ok(convertToJpeg.when?.includes("drawio"));
-    assert.ok(convertToJpeg.when?.includes("dio"));
+    assert.ok(convertToJpeg.when?.includes('pdf'));
+    assert.ok(convertToJpeg.when?.includes('png'));
+    assert.ok(convertToJpeg.when?.includes('svg'));
+    assert.ok(convertToJpeg.when?.includes('mmd'));
+    assert.ok(convertToJpeg.when?.includes('mermaid'));
+    assert.ok(convertToJpeg.when?.includes('webp'));
+    assert.ok(convertToJpeg.when?.includes('avif'));
+    assert.ok(convertToJpeg.when?.includes('drawio'));
+    assert.ok(convertToJpeg.when?.includes('dio'));
   });
 
-  test("変換サブメニューにWebPに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('変換サブメニューにWebPに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertToWebp = convertMenu.find((entry) => entry.command === CONVERT_TO_WEBP_COMMAND);
 
@@ -238,28 +232,28 @@ suite("package.jsonの変換メニュー定義", () => {
       explorerContext.some(
         (entry) =>
           entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("mmd") &&
-          entry.when.includes("mermaid") &&
-          entry.when.includes("drawio") &&
-          entry.when.includes("dio"),
+          entry.when?.includes('mmd') &&
+          entry.when.includes('mermaid') &&
+          entry.when.includes('drawio') &&
+          entry.when.includes('dio'),
       ),
     );
     assert.ok(convertToWebp);
-    assert.ok(convertToWebp.when?.includes("pdf"));
-    assert.ok(convertToWebp.when?.includes("png"));
-    assert.ok(convertToWebp.when?.includes("jpg"));
-    assert.ok(convertToWebp.when?.includes("jpeg"));
-    assert.ok(convertToWebp.when?.includes("svg"));
-    assert.ok(convertToWebp.when?.includes("mmd"));
-    assert.ok(convertToWebp.when?.includes("mermaid"));
-    assert.ok(convertToWebp.when?.includes("avif"));
-    assert.ok(convertToWebp.when?.includes("drawio"));
-    assert.ok(convertToWebp.when?.includes("dio"));
+    assert.ok(convertToWebp.when?.includes('pdf'));
+    assert.ok(convertToWebp.when?.includes('png'));
+    assert.ok(convertToWebp.when?.includes('jpg'));
+    assert.ok(convertToWebp.when?.includes('jpeg'));
+    assert.ok(convertToWebp.when?.includes('svg'));
+    assert.ok(convertToWebp.when?.includes('mmd'));
+    assert.ok(convertToWebp.when?.includes('mermaid'));
+    assert.ok(convertToWebp.when?.includes('avif'));
+    assert.ok(convertToWebp.when?.includes('drawio'));
+    assert.ok(convertToWebp.when?.includes('dio'));
   });
 
-  test("変換サブメニューにAVIFに変換コマンドを表示する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const explorerContext = packageJson.contributes.menus["explorer/context"] ?? [];
+  test('変換サブメニューにAVIFに変換コマンドを表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
     const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
     const convertToAvif = convertMenu.find((entry) => entry.command === CONVERT_TO_AVIF_COMMAND);
 
@@ -267,149 +261,147 @@ suite("package.jsonの変換メニュー定義", () => {
       explorerContext.some(
         (entry) =>
           entry.submenu === CONVERT_SUBMENU &&
-          entry.when?.includes("mmd") &&
-          entry.when.includes("mermaid") &&
-          entry.when.includes("drawio") &&
-          entry.when.includes("dio"),
+          entry.when?.includes('mmd') &&
+          entry.when.includes('mermaid') &&
+          entry.when.includes('drawio') &&
+          entry.when.includes('dio'),
       ),
     );
     assert.ok(convertToAvif);
-    assert.ok(convertToAvif.when?.includes("pdf"));
-    assert.ok(convertToAvif.when?.includes("png"));
-    assert.ok(convertToAvif.when?.includes("jpg"));
-    assert.ok(convertToAvif.when?.includes("jpeg"));
-    assert.ok(convertToAvif.when?.includes("webp"));
-    assert.ok(convertToAvif.when?.includes("svg"));
-    assert.ok(convertToAvif.when?.includes("mmd"));
-    assert.ok(convertToAvif.when?.includes("mermaid"));
-    assert.ok(convertToAvif.when?.includes("drawio"));
-    assert.ok(convertToAvif.when?.includes("dio"));
+    assert.ok(convertToAvif.when?.includes('pdf'));
+    assert.ok(convertToAvif.when?.includes('png'));
+    assert.ok(convertToAvif.when?.includes('jpg'));
+    assert.ok(convertToAvif.when?.includes('jpeg'));
+    assert.ok(convertToAvif.when?.includes('webp'));
+    assert.ok(convertToAvif.when?.includes('svg'));
+    assert.ok(convertToAvif.when?.includes('mmd'));
+    assert.ok(convertToAvif.when?.includes('mermaid'));
+    assert.ok(convertToAvif.when?.includes('drawio'));
+    assert.ok(convertToAvif.when?.includes('dio'));
   });
 
-  test("日本語の変換メニューには出力形式のラベルを使う", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
-    const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
-    const convertToPdf = packageJson.contributes.commands.find(
-      (command) => command.command === CONVERT_TO_PDF_COMMAND,
-    );
+  test('日本語の変換メニューには出力形式のラベルを使う', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const jaMessages = await readJson<Record<string, string>>('package.nls.ja.json');
+    const convertToPdf = packageJson.contributes.commands.find((command) => command.command === CONVERT_TO_PDF_COMMAND);
 
-    assert.strictEqual(convertToPdf?.title, "%command.convertToPdf%");
-    assert.strictEqual(jaMessages["submenu.convert"], "変換");
-    assert.strictEqual(jaMessages["command.convertToPdf"], "PDF");
-    assert.strictEqual(jaMessages["command.convertToPng"], "PNG");
-    assert.strictEqual(jaMessages["command.convertToJpeg"], "JPEG");
-    assert.strictEqual(jaMessages["command.convertToWebp"], "WebP");
-    assert.strictEqual(jaMessages["command.convertToAvif"], "AVIF");
-    assert.strictEqual(jaMessages["command.convertToSvg"], "SVG");
+    assert.strictEqual(convertToPdf?.title, '%command.convertToPdf%');
+    assert.strictEqual(jaMessages['submenu.convert'], '変換');
+    assert.strictEqual(jaMessages['command.convertToPdf'], 'PDF');
+    assert.strictEqual(jaMessages['command.convertToPng'], 'PNG');
+    assert.strictEqual(jaMessages['command.convertToJpeg'], 'JPEG');
+    assert.strictEqual(jaMessages['command.convertToWebp'], 'WebP');
+    assert.strictEqual(jaMessages['command.convertToAvif'], 'AVIF');
+    assert.strictEqual(jaMessages['command.convertToSvg'], 'SVG');
   });
 
-  test("英語と日本語のNLSキーが一致している", async () => {
-    const enMessages = await readJson<Record<string, string>>("package.nls.json");
-    const jaMessages = await readJson<Record<string, string>>("package.nls.ja.json");
+  test('英語と日本語のNLSキーが一致している', async () => {
+    const enMessages = await readJson<Record<string, string>>('package.nls.json');
+    const jaMessages = await readJson<Record<string, string>>('package.nls.ja.json');
 
     assert.deepStrictEqual(sortedKeys(jaMessages), sortedKeys(enMessages));
   });
 
-  test("WebPとAVIFのeffort設定を公開する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
+  test('WebPとAVIFのeffort設定を公開する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
     const properties = packageJson.contributes.configuration.properties;
 
-    assert.deepStrictEqual(properties["latex-graphics-helper.convertToWebp.effort"], {
-      type: "integer",
+    assert.deepStrictEqual(properties['latex-graphics-helper.convertToWebp.effort'], {
+      type: 'integer',
       default: 4,
       minimum: 0,
       maximum: 6,
-      description: "%config.convertToWebp.effort%",
+      description: '%config.convertToWebp.effort%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.convertToAvif.effort"], {
-      type: "integer",
+    assert.deepStrictEqual(properties['latex-graphics-helper.convertToAvif.effort'], {
+      type: 'integer',
       default: 4,
       minimum: 0,
       maximum: 9,
-      description: "%config.convertToAvif.effort%",
+      description: '%config.convertToAvif.effort%',
     });
   });
 
-  test("LaTeX文書でdrag and drop / clipboard paste用に拡張機能を起動する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
+  test('LaTeX文書でdrag and drop / clipboard paste用に拡張機能を起動する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
 
-    assert.ok(packageJson.activationEvents?.includes("onLanguage:latex"));
+    assert.ok(packageJson.activationEvents?.includes('onLanguage:latex'));
   });
 
-  test("LaTeX挿入用の出力先とsnippet候補設定を公開する", async () => {
-    const packageJson = await readJson<PackageJson>("package.json");
+  test('LaTeX挿入用の出力先とsnippet候補設定を公開する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
     const properties = packageJson.contributes.configuration.properties;
 
-    assert.deepStrictEqual(properties["latex-graphics-helper.outputPath.clipboardImage"], {
-      type: "string",
-      default: "${fileDirname}/${dateNow}",
-      description: "%config.outputPath.clipboardImage%",
+    assert.deepStrictEqual(properties['latex-graphics-helper.outputPath.clipboardImage'], {
+      type: 'string',
+      default: '${fileDirname}/${dateNow}',
+      description: '%config.outputPath.clipboardImage%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.figure.placementOptions"], {
-      type: "array",
+    assert.deepStrictEqual(properties['latex-graphics-helper.figure.placementOptions'], {
+      type: 'array',
       default: [
-        "[H]",
-        "[h]",
-        "[t]",
-        "[b]",
-        "[p]",
-        "[ht]",
-        "[hb]",
-        "[hp]",
-        "[tb]",
-        "[tp]",
-        "[bp]",
-        "[htb]",
-        "[htp]",
-        "[hbp]",
-        "[tbp]",
-        "[htbp]",
+        '[H]',
+        '[h]',
+        '[t]',
+        '[b]',
+        '[p]',
+        '[ht]',
+        '[hb]',
+        '[hp]',
+        '[tb]',
+        '[tp]',
+        '[bp]',
+        '[htb]',
+        '[htp]',
+        '[hbp]',
+        '[tbp]',
+        '[htbp]',
       ],
-      description: "%config.figure.placementOptions%",
+      description: '%config.figure.placementOptions%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.figure.alignmentOptions"], {
-      type: "array",
-      default: ["\\centering", "\\raggedright", "\\raggedleft"],
-      description: "%config.figure.alignmentOptions%",
+    assert.deepStrictEqual(properties['latex-graphics-helper.figure.alignmentOptions'], {
+      type: 'array',
+      default: ['\\centering', '\\raggedright', '\\raggedleft'],
+      description: '%config.figure.alignmentOptions%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.figure.graphicsOptions"], {
-      type: "array",
+    assert.deepStrictEqual(properties['latex-graphics-helper.figure.graphicsOptions'], {
+      type: 'array',
       default: [
-        "[width=1.0\\linewidth]",
-        "[width=0.9\\linewidth]",
-        "[width=0.8\\linewidth]",
-        "[width=0.7\\linewidth]",
-        "[width=0.6\\linewidth]",
-        "[width=0.5\\linewidth]",
+        '[width=1.0\\linewidth]',
+        '[width=0.9\\linewidth]',
+        '[width=0.8\\linewidth]',
+        '[width=0.7\\linewidth]',
+        '[width=0.6\\linewidth]',
+        '[width=0.5\\linewidth]',
       ],
-      description: "%config.figure.graphicsOptions%",
+      description: '%config.figure.graphicsOptions%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.verticalAlignmentOptions"], {
-      type: "array",
-      default: ["[t]", "[c]", "[b]"],
-      description: "%config.subfigure.verticalAlignmentOptions%",
+    assert.deepStrictEqual(properties['latex-graphics-helper.subfigure.verticalAlignmentOptions'], {
+      type: 'array',
+      default: ['[t]', '[c]', '[b]'],
+      description: '%config.subfigure.verticalAlignmentOptions%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.widthOptions"], {
-      type: "array",
-      default: ["{0.45\\linewidth}", "{0.35\\linewidth}", "{0.25\\linewidth}", "{0.15\\linewidth}"],
-      description: "%config.subfigure.widthOptions%",
+    assert.deepStrictEqual(properties['latex-graphics-helper.subfigure.widthOptions'], {
+      type: 'array',
+      default: ['{0.45\\linewidth}', '{0.35\\linewidth}', '{0.25\\linewidth}', '{0.15\\linewidth}'],
+      description: '%config.subfigure.widthOptions%',
     });
-    assert.deepStrictEqual(properties["latex-graphics-helper.subfigure.spacingOptions"], {
-      type: "array",
+    assert.deepStrictEqual(properties['latex-graphics-helper.subfigure.spacingOptions'], {
+      type: 'array',
       default: [
-        "\\hspace{0.01\\linewidth}",
-        "\\hspace{0.02\\linewidth}",
-        "\\hspace{0.03\\linewidth}",
-        "\\hspace{0.04\\linewidth}",
-        "\\hspace{0.05\\linewidth}",
+        '\\hspace{0.01\\linewidth}',
+        '\\hspace{0.02\\linewidth}',
+        '\\hspace{0.03\\linewidth}',
+        '\\hspace{0.04\\linewidth}',
+        '\\hspace{0.05\\linewidth}',
       ],
-      description: "%config.subfigure.spacingOptions%",
+      description: '%config.subfigure.spacingOptions%',
     });
   });
 });
 
 async function readJson<T>(relativePath: string): Promise<T> {
-  const content = await readFile(path.join(repositoryRoot, relativePath), "utf8");
+  const content = await readFile(path.join(repositoryRoot, relativePath), 'utf8');
   return JSON.parse(content) as T;
 }
 

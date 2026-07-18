@@ -1,16 +1,18 @@
-import * as vscode from "vscode";
-import path from "node:path";
+import path from 'node:path';
 
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import { splitPdfAllPages, type SplitPdfJob } from "../operations/split_pdf_all_pages.js";
-import { withCancellationSignal } from "./progress_cancellation.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from "./undo_last_conversion.js";
-import { userMessage } from "./user_messages.js";
-import type { CommandDependencies } from "./command_dependencies.js";
+import * as vscode from 'vscode';
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf";
-export const SPLIT_PDF_ALL_PAGES_COMMAND = "latex-graphics-helper.splitPdf.allPages";
+import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { splitPdfAllPages, type SplitPdfJob } from '../operations/split_pdf_all_pages.js';
+
+import type { CommandDependencies } from './command_dependencies.js';
+import { withCancellationSignal } from './progress_cancellation.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './undo_last_conversion.js';
+import { userMessage } from './user_messages.js';
+
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.pdf';
+export const SPLIT_PDF_ALL_PAGES_COMMAND = 'latex-graphics-helper.splitPdf.allPages';
 
 export async function splitPdfAllPagesCommand(
   uri?: vscode.Uri,
@@ -22,21 +24,21 @@ export async function splitPdfAllPagesCommand(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
-      throw new Error("No PDF files were selected.");
+      throw new Error('No PDF files were selected.');
     }
 
-    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
-    const outputTemplate = configuration.get<string>("outputPath.splitPdf", DEFAULT_OUTPUT_PATH);
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const outputTemplate = configuration.get<string>('outputPath.splitPdf', DEFAULT_OUTPUT_PATH);
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: userMessage("message.progress.splitPdf.title", jobs.length),
+        title: userMessage('message.progress.splitPdf.title', jobs.length),
         cancellable: true,
       },
       async (progress, token) => {
         return withCancellationSignal(token, async (signal) => {
-          progress.report({ message: userMessage("message.progress.preparePdfSplit") });
+          progress.report({ message: userMessage('message.progress.preparePdfSplit') });
           return splitPdfAllPages({
             jobs,
             signal,
@@ -47,20 +49,18 @@ export async function splitPdfAllPagesCommand(
       },
     );
 
-    const successMessage = userMessage("message.splitPdf.success", outputs.length);
+    const successMessage = userMessage('message.splitPdf.success', outputs.length);
     let undoId: string;
 
     try {
       undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await vscode.window.showWarningMessage(
-        userMessage("message.undoUnavailable", successMessage, message),
-      );
+      await vscode.window.showWarningMessage(userMessage('message.undoUnavailable', successMessage, message));
       return;
     }
 
-    const undoAction = userMessage("message.action.undo");
+    const undoAction = userMessage('message.action.undo');
     const selectedAction = await vscode.window.showInformationMessage(successMessage, undoAction);
 
     if (selectedAction === undoAction) {
@@ -68,12 +68,12 @@ export async function splitPdfAllPagesCommand(
     }
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(userMessage("message.splitPdf.cancelled"));
+      await vscode.window.showInformationMessage(userMessage('message.splitPdf.cancelled'));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(userMessage("message.splitPdf.failed", message));
+    await vscode.window.showErrorMessage(userMessage('message.splitPdf.failed', message));
   }
 }
 
@@ -85,7 +85,7 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
 }
 
 function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
-  if (sourceUri.scheme !== "file") {
+  if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local PDF files are supported: ${sourceUri.toString()}`);
   }
 
@@ -97,7 +97,7 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
 
   const sourcePath = sourceUri.fsPath;
 
-  if (path.extname(sourcePath).toLowerCase() !== ".pdf") {
+  if (path.extname(sourcePath).toLowerCase() !== '.pdf') {
     throw new Error(`Only PDF files can be split: ${sourcePath}`);
   }
 
@@ -115,5 +115,5 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }

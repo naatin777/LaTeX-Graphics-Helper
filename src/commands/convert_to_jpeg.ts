@@ -1,32 +1,26 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-import { PDFDocument } from "pdf-lib";
-import * as vscode from "vscode";
+import { PDFDocument } from 'pdf-lib';
+import * as vscode from 'vscode';
 
-import { readOutputFormatOutputTemplate } from "../config/output_path_settings.js";
-import { resolveOutputPath } from "../config/resolve_output_path.js";
-import {
-  isEditableDrawioImagePath,
-  logicalSourcePathForOutputTemplate,
-} from "../application/source_format.js";
-import { assertExistingPathInWorkspace } from "../security/workspace_path.js";
-import type { CommandDependencies } from "./command_dependencies.js";
-import type { MermaidPuppeteerOptions } from "../operations/convert_png_to_pdf.js";
-import {
-  convertToJpegFiles,
-  type ConvertToJpegJob,
-  type DrawioToJpegOptions,
-} from "../operations/convert_to_jpeg.js";
-import { resolveOutputConflicts } from "./safe_mode.js";
-import { createOutputConversionMessages, runOutputConversion } from "./run_output_conversion.js";
-import { userMessage } from "./user_messages.js";
+import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
+import type { MermaidPuppeteerOptions } from '../operations/convert_png_to_pdf.js';
+import { convertToJpegFiles, type ConvertToJpegJob, type DrawioToJpegOptions } from '../operations/convert_to_jpeg.js';
+import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
-export const CONVERT_TO_JPEG_COMMAND = "latex-graphics-helper.convertToJpeg";
+import type { CommandDependencies } from './command_dependencies.js';
+import { createOutputConversionMessages, runOutputConversion } from './run_output_conversion.js';
+import { resolveOutputConflicts } from './safe_mode.js';
+import { userMessage } from './user_messages.js';
 
-const DEFAULT_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}.jpeg";
-const DEFAULT_PDF_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg";
-const DEFAULT_DRAWIO_OUTPUT_PATH = "${fileDirname}/${fileBasenameNoExtension}/${page}.jpeg";
+export const CONVERT_TO_JPEG_COMMAND = 'latex-graphics-helper.convertToJpeg';
+
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.jpeg';
+const DEFAULT_PDF_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.jpeg';
+const DEFAULT_DRAWIO_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.jpeg';
 
 export async function convertToJpegCommand(
   uri?: vscode.Uri,
@@ -38,29 +32,22 @@ export async function convertToJpegCommand(
     const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
-      throw new Error("No files were selected.");
+      throw new Error('No files were selected.');
     }
 
-    const configuration = vscode.workspace.getConfiguration("latex-graphics-helper");
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(
-      configuration,
-      "outputPath.convertToJpeg",
-    );
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToJpeg');
     const jobs = (
-      await Promise.all(
-        sourceUris.map((sourceUri) =>
-          createJobs(sourceUri, configuration, outputFormatOutputTemplate),
-        ),
-      )
+      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration);
     const drawio = readDrawioToJpegOptions(configuration);
-    const pdftocairoPath = configuration.get<string>("execPath.pdftocairo", "pdftocairo");
+    const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
     await runOutputConversion({
-      operationName: "convert-to-jpeg",
+      operationName: 'convert-to-jpeg',
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
-      messages: createOutputConversionMessages("JPEG", sourceUris.length),
+      messages: createOutputConversionMessages('JPEG', sourceUris.length),
       run: (runtime) =>
         convertToJpegFiles({
           jobs,
@@ -77,16 +64,12 @@ export async function convertToJpegCommand(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      await vscode.window.showInformationMessage(
-        userMessage("message.convertToOutput.cancelled", "JPEG"),
-      );
+      await vscode.window.showInformationMessage(userMessage('message.convertToOutput.cancelled', 'JPEG'));
       return;
     }
 
     const message = error instanceof Error ? error.message : String(error);
-    await vscode.window.showErrorMessage(
-      userMessage("message.convertToOutput.failed", "JPEG", message),
-    );
+    await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'JPEG', message));
   }
 }
 
@@ -95,7 +78,7 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToJpegJob[]> {
-  if (sourceUri.scheme !== "file") {
+  if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
   }
 
@@ -108,21 +91,17 @@ async function createJobs(
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 
-  if ((extension === ".jpg" || extension === ".jpeg") && !isEditableDrawioImagePath(sourcePath)) {
+  if ((extension === '.jpg' || extension === '.jpeg') && !isEditableDrawioImagePath(sourcePath)) {
     throw new Error(`Unsupported input for JPEG conversion: ${sourcePath}`);
   }
 
-  if (extension === ".pdf") {
+  if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
   }
 
-  const page = isEditableDrawioImagePath(sourcePath) ? "1" : undefined;
-  const outputTemplate = outputTemplateForSource(
-    sourcePath,
-    configuration,
-    outputFormatOutputTemplate,
-  );
+  const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
   const outputPath = resolveOutputPath(outputTemplate, {
     sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
     workspacePath: workspace.uri.fsPath,
@@ -154,8 +133,7 @@ async function createPdfJobs(
   }
 
   const outputTemplate =
-    outputFormatOutputTemplate ??
-    configuration.get<string>("outputPath.convertPdfToJpeg", DEFAULT_PDF_OUTPUT_PATH);
+    outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToJpeg', DEFAULT_PDF_OUTPUT_PATH);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
@@ -185,25 +163,25 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>("outputPath.convertDrawioToJpeg", DEFAULT_DRAWIO_OUTPUT_PATH);
+    return configuration.get<string>('outputPath.convertDrawioToJpeg', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
-    case ".png": {
-      return configuration.get<string>("outputPath.convertPngToJpeg", DEFAULT_OUTPUT_PATH);
+    case '.png': {
+      return configuration.get<string>('outputPath.convertPngToJpeg', DEFAULT_OUTPUT_PATH);
     }
-    case ".webp": {
-      return configuration.get<string>("outputPath.convertWebpToJpeg", DEFAULT_OUTPUT_PATH);
+    case '.webp': {
+      return configuration.get<string>('outputPath.convertWebpToJpeg', DEFAULT_OUTPUT_PATH);
     }
-    case ".avif": {
-      return configuration.get<string>("outputPath.convertAvifToJpeg", DEFAULT_OUTPUT_PATH);
+    case '.avif': {
+      return configuration.get<string>('outputPath.convertAvifToJpeg', DEFAULT_OUTPUT_PATH);
     }
-    case ".svg": {
-      return configuration.get<string>("outputPath.convertSvgToJpeg", DEFAULT_OUTPUT_PATH);
+    case '.svg': {
+      return configuration.get<string>('outputPath.convertSvgToJpeg', DEFAULT_OUTPUT_PATH);
     }
-    case ".mmd":
-    case ".mermaid": {
-      return configuration.get<string>("outputPath.convertMermaidToJpeg", DEFAULT_OUTPUT_PATH);
+    case '.mmd':
+    case '.mermaid': {
+      return configuration.get<string>('outputPath.convertMermaidToJpeg', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;
@@ -211,26 +189,17 @@ function outputTemplateForSource(
   }
 }
 
-function readMermaidPuppeteerOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): MermaidPuppeteerOptions {
-  const executablePath = configuration
-    .get<string>("convertToPdf.mermaid.puppeteer.executablePath", "")
-    .trim();
+function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
+  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
 
   return {
-    browserChannel: configuration.get<string>(
-      "convertToPdf.mermaid.puppeteer.browserChannel",
-      "chrome",
-    ),
+    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { executablePath } : {}),
   };
 }
 
-function readDrawioToJpegOptions(
-  configuration: vscode.WorkspaceConfiguration,
-): DrawioToJpegOptions {
-  const configuredPath = configuration.get<string>("execPath.drawio", "").trim();
+function readDrawioToJpegOptions(configuration: vscode.WorkspaceConfiguration): DrawioToJpegOptions {
+  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
 
   return {
     drawioPath: configuredPath || defaultDrawioPath(),
@@ -238,7 +207,7 @@ function readDrawioToJpegOptions(
 }
 
 function defaultDrawioPath(): string {
-  return process.platform === "win32" ? "drawio.exe" : "drawio";
+  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
@@ -249,5 +218,5 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
 }
 
 function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === "AbortError";
+  return error instanceof Error && error.name === 'AbortError';
 }

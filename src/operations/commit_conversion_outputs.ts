@@ -1,19 +1,14 @@
-import { constants as fsConstants } from "node:fs";
-import { access, copyFile, mkdir, open, rm, stat } from "node:fs/promises";
-import path from "node:path";
+import { constants as fsConstants } from 'node:fs';
+import { access, copyFile, mkdir, open, rm, stat } from 'node:fs/promises';
+import path from 'node:path';
 
-import {
-  assertExistingPathInWorkspace,
-  assertWritablePathInWorkspace,
-} from "../security/workspace_path.js";
-import { filesHaveEqualContents, hashFile } from "./file_content_hash.js";
-import {
-  cleanupConversionArtifacts,
-  type ConversionArtifactRoot,
-} from "./cleanup_conversion_artifacts.js";
-import type { LineOutputChannel } from "./external_tool_ascii_scratch.js";
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
-export type OutputConflictDecision = "keep-both" | "cancel" | "overwrite";
+import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { filesHaveEqualContents, hashFile } from './file_content_hash.js';
+
+export type OutputConflictDecision = 'keep-both' | 'cancel' | 'overwrite';
 
 export interface PreparedConversionOutput {
   stagedOutputPath: string;
@@ -66,20 +61,18 @@ export class CommitRollbackError extends Error {
 
   constructor(originalError: unknown, rollbackErrors: readonly RollbackFailure[]) {
     const normalizedOriginalError = asError(originalError);
-    const details = rollbackErrors
-      .map(({ outputPath, error }) => `${outputPath}: ${error.message}`)
-      .join("; ");
+    const details = rollbackErrors.map(({ outputPath, error }) => `${outputPath}: ${error.message}`).join('; ');
     super(`Commit failed: ${normalizedOriginalError.message}; rollback failed: ${details}`);
-    this.name = "CommitRollbackError";
+    this.name = 'CommitRollbackError';
     this.originalError = normalizedOriginalError;
     this.rollbackErrors = rollbackErrors;
   }
 }
 
 export class OperationCancelledError extends Error {
-  constructor(message = "Operation was cancelled.") {
+  constructor(message = 'Operation was cancelled.') {
     super(message);
-    this.name = "AbortError";
+    this.name = 'AbortError';
   }
 }
 
@@ -99,9 +92,7 @@ export async function commitConversionOutputs(
       conflicts.map(({ output }) => output),
       options.resolveConflicts,
     );
-    options.outputChannel?.appendLine(
-      `[${options.operationName ?? "conversion"}] conflict decision: ${decision}`,
-    );
+    options.outputChannel?.appendLine(`[${options.operationName ?? 'conversion'}] conflict decision: ${decision}`);
     resolvedOutputs = await resolveOutputPaths(outputs, decision, conflicts);
 
     options.signal?.throwIfAborted();
@@ -131,7 +122,7 @@ async function resolveDecision(
   resolveConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>,
 ): Promise<OutputConflictDecision> {
   if (conflicts.length === 0) {
-    return "overwrite";
+    return 'overwrite';
   }
 
   if (!resolveConflicts) {
@@ -140,8 +131,8 @@ async function resolveDecision(
 
   const decision = await resolveConflicts(conflicts.map((item) => item.outputPath));
 
-  if (decision === "cancel") {
-    throw new OperationCancelledError("Output conflict resolution was cancelled.");
+  if (decision === 'cancel') {
+    throw new OperationCancelledError('Output conflict resolution was cancelled.');
   }
 
   return decision;
@@ -153,30 +144,26 @@ async function resolveOutputPaths(
   conflicts: ExistingOutputSnapshot[],
 ): Promise<ResolvedOutput[]> {
   const reservedPaths = new Set(outputs.map((item) => path.resolve(item.outputPath)));
-  const snapshots = new Map(
-    conflicts.map((conflict) => [path.resolve(conflict.output.outputPath), conflict]),
-  );
+  const snapshots = new Map(conflicts.map((conflict) => [path.resolve(conflict.output.outputPath), conflict]));
   const resolved: ResolvedOutput[] = [];
 
   for (const output of outputs) {
     const exists = await pathExists(output.outputPath);
     let outputPath = output.outputPath;
 
-    if (exists && decision === "keep-both") {
+    if (exists && decision === 'keep-both') {
       outputPath = await findAvailableOutputPath(output.outputPath, reservedPaths);
       reservedPaths.add(path.resolve(outputPath));
     }
 
     const snapshot = snapshots.get(path.resolve(output.outputPath));
-    const existedBeforeCommit = decision === "overwrite" && snapshot !== undefined;
+    const existedBeforeCommit = decision === 'overwrite' && snapshot !== undefined;
 
     resolved.push({
       ...output,
       outputPath,
       existedBeforeCommit,
-      ...(existedBeforeCommit && snapshot !== undefined
-        ? { contentHashBeforeConflict: snapshot.contentHash }
-        : {}),
+      ...(existedBeforeCommit && snapshot !== undefined ? { contentHashBeforeConflict: snapshot.contentHash } : {}),
     });
   }
 
@@ -188,7 +175,7 @@ async function createBackups(
   decision: OutputConflictDecision,
   copyFileImpl: (source: string, destination: string, flags?: number) => Promise<void>,
 ): Promise<void> {
-  if (decision !== "overwrite") {
+  if (decision !== 'overwrite') {
     return;
   }
 
@@ -243,12 +230,12 @@ async function commitResolvedOutputs(
     if (rollbackErrors.length > 0) {
       for (const failure of rollbackErrors) {
         options.outputChannel?.appendLine(
-          `[${options.operationName ?? "conversion"}] rollback failed for ${failure.outputPath}: ${failure.error.message}`,
+          `[${options.operationName ?? 'conversion'}] rollback failed for ${failure.outputPath}: ${failure.error.message}`,
         );
         const output = outputs.find((item) => item.outputPath === failure.outputPath);
         if (output?.previousFilePath !== undefined) {
           options.outputChannel?.appendLine(
-            `[${options.operationName ?? "conversion"}] preserving recovery backup for ${failure.outputPath}: ${output.previousFilePath}`,
+            `[${options.operationName ?? 'conversion'}] preserving recovery backup for ${failure.outputPath}: ${output.previousFilePath}`,
           );
         }
       }
@@ -269,9 +256,7 @@ async function commitResolvedOutputs(
       result.stagingRootPath = stagingRootPath;
     }
 
-    options.outputChannel?.appendLine(
-      `[${options.operationName ?? "conversion"}] committed output: ${outputPath}`,
-    );
+    options.outputChannel?.appendLine(`[${options.operationName ?? 'conversion'}] committed output: ${outputPath}`);
 
     return result;
   });
@@ -287,9 +272,7 @@ function toArtifactRoots(
           {
             rootPath: output.stagingRootPath,
             workspacePath: output.workspacePath,
-            preservePaths: preservePaths.filter((preservePath) =>
-              isWithin(preservePath, output.stagingRootPath ?? ""),
-            ),
+            preservePaths: preservePaths.filter((preservePath) => isWithin(preservePath, output.stagingRootPath ?? '')),
           },
         ]
       : [],
@@ -321,7 +304,7 @@ async function rollbackCommittedOutputs(
         const currentIdentity = await readFileIdentity(output.outputPath);
 
         if (!sameFileIdentity(currentIdentity, output.createdOutputIdentity)) {
-          throw new Error("Output was replaced by another process; it was not removed.");
+          throw new Error('Output was replaced by another process; it was not removed.');
         }
 
         await rmImpl(output.outputPath, { force: true });
@@ -343,27 +326,18 @@ async function validatePreparedOutputs(outputs: PreparedConversionOutput[]): Pro
   );
 }
 
-async function findExistingOutputs(
-  outputs: PreparedConversionOutput[],
-): Promise<ExistingOutputSnapshot[]> {
+async function findExistingOutputs(outputs: PreparedConversionOutput[]): Promise<ExistingOutputSnapshot[]> {
   const existence = await Promise.all(outputs.map((output) => pathExists(output.outputPath)));
   return Promise.all(
-    outputs.flatMap((output, index) =>
-      existence[index] ? [createExistingOutputSnapshot(output)] : [],
-    ),
+    outputs.flatMap((output, index) => (existence[index] ? [createExistingOutputSnapshot(output)] : [])),
   );
 }
 
-async function createExistingOutputSnapshot(
-  output: PreparedConversionOutput,
-): Promise<ExistingOutputSnapshot> {
+async function createExistingOutputSnapshot(output: PreparedConversionOutput): Promise<ExistingOutputSnapshot> {
   return { output, contentHash: await hashFile(output.outputPath) };
 }
 
-async function findAvailableOutputPath(
-  requestedPath: string,
-  reservedPaths: Set<string>,
-): Promise<string> {
+async function findAvailableOutputPath(requestedPath: string, reservedPaths: Set<string>): Promise<string> {
   const extension = path.extname(requestedPath);
   const basename = path.basename(requestedPath, extension);
   const directory = path.dirname(requestedPath);
@@ -421,7 +395,7 @@ async function assertConflictOutputsUnchanged(outputs: ResolvedOutput[]): Promis
 }
 
 async function createOwnedOutputPlaceholder(outputPath: string): Promise<FileIdentity> {
-  const handle = await open(outputPath, "wx");
+  const handle = await open(outputPath, 'wx');
 
   try {
     const outputStat = await handle.stat();
@@ -442,10 +416,7 @@ function sameFileIdentity(first: FileIdentity, second: FileIdentity): boolean {
 
 function isWithin(targetPath: string, parentPath: string): boolean {
   const relativePath = path.relative(path.resolve(parentPath), path.resolve(targetPath));
-  return (
-    relativePath === "" ||
-    (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`))
-  );
+  return relativePath === '' || (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`));
 }
 
 function asError(error: unknown): Error {
@@ -453,5 +424,5 @@ function asError(error: unknown): Error {
 }
 
 function isFileNotFoundError(error: unknown): error is NodeJS.ErrnoException {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
+  return error instanceof Error && 'code' in error && error.code === 'ENOENT';
 }
