@@ -108,8 +108,18 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.splitPdf.configure",
+        "title": "%command.splitPdf.configure%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.mergePdf.selectedFiles",
         "title": "%command.mergePdf.selectedFiles%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.mergePdf.configure",
+        "title": "%command.mergePdf.configure%",
         "category": "LaTeX Graphics Helper"
       },
       {
@@ -183,11 +193,21 @@
           "command": "latex-graphics-helper.splitPdf.allPages",
           "group": "latex-graphics-helper.splitPdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.splitPdf.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.splitPdf.configure",
+          "group": "latex-graphics-helper.splitPdf",
+          "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.splitPdf.enabled"
         }
       ],
       "latex-graphics-helper.mergePdf": [
         {
           "command": "latex-graphics-helper.mergePdf.selectedFiles",
+          "group": "latex-graphics-helper.mergePdf",
+          "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.mergePdf.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.mergePdf.configure",
           "group": "latex-graphics-helper.mergePdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.mergePdf.enabled"
         }
@@ -231,6 +251,14 @@
         },
         {
           "command": "latex-graphics-helper.cropPdf.configure",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.splitPdf.configure",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.mergePdf.configure",
           "when": "false"
         }
       ]

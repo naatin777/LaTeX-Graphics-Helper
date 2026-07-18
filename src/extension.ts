@@ -14,9 +14,19 @@ import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/convert_
 import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/convert_to_webp.js';
 import { cropPdfAuto, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
 import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/crop_pdf_configure.js';
-import { mergePdfSelectedFilesCommand, MERGE_PDF_SELECTED_FILES_COMMAND } from './commands/merge_pdf.js';
+import {
+  mergePdfConfigureCommand,
+  mergePdfSelectedFilesCommand,
+  MERGE_PDF_CONFIGURE_COMMAND,
+  MERGE_PDF_SELECTED_FILES_COMMAND,
+} from './commands/merge_pdf.js';
 import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from './commands/safe_mode.js';
-import { splitPdfAllPagesCommand, SPLIT_PDF_ALL_PAGES_COMMAND } from './commands/split_pdf_all_pages.js';
+import {
+  splitPdfAllPagesCommand,
+  splitPdfConfigureCommand,
+  SPLIT_PDF_ALL_PAGES_COMMAND,
+  SPLIT_PDF_CONFIGURE_COMMAND,
+} from './commands/split_pdf_all_pages.js';
 import { undoLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './commands/undo_last_conversion.js';
 import { LatexDropEditProvider } from './edit_provider/latex_drop_edit_provider.js';
 import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provider.js';
@@ -27,7 +37,9 @@ export const PUBLIC_COMMAND_IDS = [
   CROP_PDF_AUTO_COMMAND,
   CROP_PDF_CONFIGURE_COMMAND,
   SPLIT_PDF_ALL_PAGES_COMMAND,
+  SPLIT_PDF_CONFIGURE_COMMAND,
   MERGE_PDF_SELECTED_FILES_COMMAND,
+  MERGE_PDF_CONFIGURE_COMMAND,
   UNDO_LAST_CONVERSION_COMMAND,
   CONVERT_TO_PDF_COMMAND,
   CONVERT_TO_PNG_COMMAND,
@@ -55,8 +67,14 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
   registerFileCommand(context, SPLIT_PDF_ALL_PAGES_COMMAND, (uri, uris) =>
     splitPdfAllPagesCommand(uri, uris, dependencies),
   );
+  registerFileCommand(context, SPLIT_PDF_CONFIGURE_COMMAND, (uri, uris) =>
+    splitPdfConfigureCommand(context, uri, uris, dependencies),
+  );
   registerFileCommand(context, MERGE_PDF_SELECTED_FILES_COMMAND, (uri, uris) =>
     mergePdfSelectedFilesCommand(uri, uris, dependencies),
+  );
+  registerFileCommand(context, MERGE_PDF_CONFIGURE_COMMAND, (uri, uris) =>
+    mergePdfConfigureCommand(context, uri, uris, dependencies),
   );
   registerFileCommand(context, CONVERT_TO_PDF_COMMAND, (uri, uris) => convertToPdfCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_PNG_COMMAND, (uri, uris) => convertToPngCommand(uri, uris, dependencies));

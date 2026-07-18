@@ -33,7 +33,10 @@
     // vite/client の import.meta.env 型などを使えるようにする。
     "types": ["vite/client"],
     "paths": {
-      "@lgh-crop-pdf-protocol": ["../src/application/crop_pdf_protocol.ts"]
+      "@webview-shared/*": ["./shared/*"],
+      "@lgh-crop-pdf-protocol": ["../src/application/crop_pdf_protocol.ts"],
+      "@lgh-merge-pdf-protocol": ["../src/application/merge_pdf_protocol.ts"],
+      "@lgh-split-pdf-protocol": ["../src/application/split_pdf_protocol.ts"]
     }
   },
   "include": [

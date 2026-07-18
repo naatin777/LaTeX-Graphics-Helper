@@ -46,6 +46,13 @@ suite('拡張機能の基本動作', () => {
     assert.ok(commands.includes('latex-graphics-helper.splitPdf.allPages'));
   });
 
+  test('PDF結合・分割のconfigureコマンドが登録されている', async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes('latex-graphics-helper.mergePdf.configure'));
+    assert.ok(commands.includes('latex-graphics-helper.splitPdf.configure'));
+  });
+
   test('PNGからPDFへの変換コマンドが登録されている', async () => {
     const commands = await vscode.commands.getCommands(true);
 
