@@ -2,7 +2,7 @@
 
 ## Status
 
-In Progress
+Done
 
 ## 目的
 
@@ -108,9 +108,14 @@ Linux、macOS、Windowsの最終的なpackage/install/Electron E2EはGitHub Acti
 - `pnpm run package:vsix -- --out <macOS VSIX>` 成功
 - `pnpm run check:all`、`node --check scripts/package-vsix.mjs`、package/test/Webview typecheck 成功
 - `pnpm run test:webview` 成功（crop 1、merge 1、split 2 cases）
-- `pnpm run test`はmacOSのExtension Hostが応答不能になり120秒で未完了。baselineでも同じ症状を確認済み
+- `pnpm run test` 成功（VS Code 1.128.0、219 passing）
 - packaged Electron E2Eは`LGH_VSIX_PATH`を指定して成功（macOS、VS Code 1.128.0）。absolute path validationの相対path拒否も確認済み
 
-### 未確認
+### Remote CI Evidence
 
-- GitHub ActionsのLinux、macOS、Windowsでのbuild、Extension Host/JSDOM test、package、VSIX install、Electron E2E、Windows cleanup、release artifact download/publish前提は未実行。CIの成功を確認するまでStatusを`In Progress`のままにする。
+- PR #363のcommit `6c98029`で`check`、Test workflowのLinux/macOS/Windows、Playwright workflowのLinux/macOS/Windowsがすべてsuccessした。
+- Remote CIでLinux、macOS、Windowsのbuild、Extension Host/JSDOM test、runner-matched VSIX package、VSIX install、Electron Playwright、Windows cleanupを確認した。
+
+### Release-only Verification
+
+- `release.yml`のtag pushとpublish jobは実行していない。GitHub Release、Marketplace、Open VSXへの公開を伴うため、PR検証では実行せず、release時に同じartifact download/publish経路を確認する。
