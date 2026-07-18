@@ -13,7 +13,7 @@ export interface WebviewTestConfig {
 export function defineWebviewTestConfig(config: WebviewTestConfig) {
   return defineConfig({
     root: resolve(webviewRoot, 'apps', config.appName),
-    plugins: [solid()],
+    plugins: [solid({ hot: false })],
     resolve: {
       alias: {
         '@webview-shared': resolve(webviewRoot, 'shared'),
