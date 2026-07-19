@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { Parser } from 'xml2js';
@@ -9,7 +9,7 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../application/source_format.js';
-import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { isWindowsReservedPathComponent, resolveOutputPath } from '../config/resolve_output_path.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommittedConversionOutput, PreparedConversionOutput } from './commit_conversion_outputs.js';
@@ -144,6 +144,7 @@ async function stageDrawioJob(options: {
   await mkdir(pageDirectory, { recursive: true });
 
   const outputs: PreparedConversionOutput[] = [];
+  const usedPageNames = new Set<string>();
   for (let index = 0; index < pageCount; index += 1) {
     runtime.signal?.throwIfAborted();
     const pageDocument = await PDFDocument.create();
@@ -159,7 +160,7 @@ async function stageDrawioJob(options: {
 
     const outputPath = resolveOutputPath(job.outputTemplate, {
       ...outputContext,
-      page: safePageName(pageNames[index], index + 1),
+      page: uniquePageName(safePageName(pageNames[index], index + 1), usedPageNames),
     });
     await assertWritablePathInWorkspace(outputPath, job.workspacePath);
     outputs.push({
@@ -181,19 +182,19 @@ async function prepareDrawioInput(options: {
   runDrawio?: RunDrawio;
   runtime: ConversionRuntime;
 }): Promise<string> {
-  if (!isEditableDrawioImagePath(options.sourcePath)) {
-    return options.sourcePath;
-  }
-
   const drawioSourcePath = path.join(options.stageDirectory, 'source.drawio');
   await assertWritablePathInWorkspace(drawioSourcePath, options.workspacePath);
   options.runtime.signal?.throwIfAborted();
-  await runDrawioCommand(
-    options.drawioPath,
-    ['-x', '-f', 'xml', '-o', drawioSourcePath, options.sourcePath],
-    options.runtime,
-    options.runDrawio,
-  );
+  if (isEditableDrawioImagePath(options.sourcePath)) {
+    await runDrawioCommand(
+      options.drawioPath,
+      ['-x', '-f', 'xml', '-o', drawioSourcePath, options.sourcePath],
+      options.runtime,
+      options.runDrawio,
+    );
+  } else {
+    await copyFile(options.sourcePath, drawioSourcePath);
+  }
   await assertExistingPathInWorkspace(drawioSourcePath, options.workspacePath);
   return drawioSourcePath;
 }
@@ -272,5 +273,21 @@ function safePageName(value: string | undefined, page: number): string {
     .trim()
     .replace(/[. ]+$/g, '');
 
-  return normalized || String(page);
+  const pageName = normalized || String(page);
+  return isWindowsReservedPathComponent(pageName) ? `_${pageName}` : pageName;
+}
+
+function uniquePageName(pageName: string, usedPageNames: Set<string>): string {
+  const normalizedPageName = pageName.toLowerCase();
+  let candidate = pageName;
+  let suffix = 2;
+
+  while (usedPageNames.has(candidate.toLowerCase())) {
+    candidate = `${pageName}-${suffix}`;
+    suffix += 1;
+  }
+
+  usedPageNames.add(normalizedPageName);
+  usedPageNames.add(candidate.toLowerCase());
+  return candidate;
 }

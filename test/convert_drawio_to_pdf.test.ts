@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { copyFile, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,6 +19,7 @@ suite('Draw.io PDF変換', () => {
     try {
       const sourcePath = path.join(workspacePath, 'q a.drawio');
       await copyFile(drawioFixturePath, sourcePath);
+      const originalSource = await readFile(sourcePath, 'utf8');
       const calls: string[][] = [];
 
       const outputs = await convertDrawioToPdfFiles({
@@ -36,6 +37,8 @@ suite('Draw.io PDF変換', () => {
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
           calls.push(args);
+          assert.notStrictEqual(args[0], sourcePath);
+          await writeFile(args[0]!, `${originalSource}\n<!-- mutated staged source -->`);
           await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]!);
         },
       });
@@ -45,7 +48,14 @@ suite('Draw.io PDF変換', () => {
         [path.join(workspacePath, 'q a', 'ぺ ー　ジ1.pdf'), path.join(workspacePath, 'q a', 'ページ           2.pdf')],
       );
       assert.deepStrictEqual(calls[0], [
-        sourcePath,
+        path.join(
+          workspacePath,
+          '.latex-graphics-helper',
+          'convert-drawio-to-pdf',
+          'split-test',
+          '1-q_a',
+          'source.drawio',
+        ),
         '-o',
         path.join(
           workspacePath,
@@ -69,6 +79,7 @@ suite('Draw.io PDF変換', () => {
         await PDFDocument.load(await readFile(outputs[1]!.outputPath)).then((pdf) => pdf.getPageCount()),
         1,
       );
+      assert.strictEqual(await readFile(sourcePath, 'utf8'), originalSource);
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }
@@ -105,6 +116,40 @@ suite('Draw.io PDF変換', () => {
         [outputPath],
       );
       assert.strictEqual(await PDFDocument.load(await readFile(outputPath)).then((pdf) => pdf.getPageCount()), 2);
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('ページ名をWindowsで安全かつ一意な出力名へ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-drawio-pdf-names-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'names.drawio');
+      await writeFile(sourcePath, '<mxfile><diagram name="CON"/><diagram name="con"/></mxfile>');
+
+      const outputs = await convertDrawioToPdfFiles({
+        jobs: [
+          {
+            sourcePath,
+            outputTemplate: '${fileDirname}/${page}.pdf',
+            workspacePath,
+            workspaceName: path.basename(workspacePath),
+          },
+        ],
+        drawioPath: 'drawio',
+        splitByPage: true,
+        runId: 'names-test',
+        runtime: { resolveConflicts: async () => 'overwrite' },
+        runDrawio: async (_executable, args) => {
+          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]!);
+        },
+      });
+
+      assert.deepStrictEqual(
+        outputs.map(({ outputPath }) => outputPath),
+        [path.join(workspacePath, '_CON.pdf'), path.join(workspacePath, '_con-2.pdf')],
+      );
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

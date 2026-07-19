@@ -3,11 +3,13 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readDrawioExecutablePath } from '../config/drawio_path.js';
 import { readMermaidPuppeteerOptions, readPuppeteerExecutablePath } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
 import {
   convertPngToPdfFiles,
+  validateSvgToPdfOptions,
   type ConvertPngToPdfJob,
   type DrawioToPdfOptions,
   type SvgToPdfEngine,
@@ -24,6 +26,7 @@ export const CONVERT_PNG_TO_PDF_COMMAND = 'latex-graphics-helper.convertPngToPdf
 export const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
 
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
+const DEFAULT_DRAWIO_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
 const PNG_EXTENSIONS = ['.png'] as const;
 const PDF_IMAGE_EXTENSIONS = [
   '.png',
@@ -103,6 +106,7 @@ async function convertSelectedPngFilesToPdf(
         ? undefined
         : readOutputFormatOutputTemplate(configuration, messages.outputFormatOutputPathKey);
     const svgToPdf = readSvgToPdfOptions(configuration);
+    validateSvgToPdfOptions(svgToPdf);
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToPdfOptions(configuration);
     const jobs = sourceUris.map((sourceUri) =>
@@ -151,7 +155,7 @@ async function convertSelectedPngFilesToPdf(
   }
 }
 
-function outputTemplateForSource(
+export function outputTemplateForSource(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
   pngOutputTemplate: string,
@@ -165,7 +169,11 @@ function outputTemplateForSource(
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>('outputPath.convertDrawioToPdf', DEFAULT_OUTPUT_PATH);
+    const configuredPath = configuration.get<string>(
+      'outputPath.convertDrawioToPdfDirectly',
+      DEFAULT_DRAWIO_OUTPUT_PATH,
+    );
+    return configuredPath.trim() ? configuredPath : DEFAULT_DRAWIO_OUTPUT_PATH;
   }
 
   switch (extension) {
@@ -208,15 +216,9 @@ function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgT
 }
 
 function readDrawioToPdfOptions(configuration: vscode.WorkspaceConfiguration): DrawioToPdfOptions {
-  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
-
   return {
-    drawioPath: configuredPath || defaultDrawioPath(),
+    drawioPath: readDrawioExecutablePath(configuration),
   };
-}
-
-function defaultDrawioPath(): string {
-  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {

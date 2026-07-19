@@ -36,6 +36,7 @@ import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { logicalSourcePathForOutputTemplate } from '../src/application/source_format.js';
+import { outputTemplateForSource } from '../src/commands/convert_png_to_pdf.js';
 
 import { runCommandAndClearNotificationsUntilDone } from './helpers/vscode_command.js';
 import { withWorkspaceSettings } from './helpers/workspace_settings.js';
@@ -218,6 +219,27 @@ suite('PDFに変換コマンド', () => {
     assert.strictEqual(
       logicalSourcePathForOutputTemplate(path.join('workspace', 'image.png')),
       path.join('workspace', 'image.png'),
+    );
+  });
+
+  test('editable Draw.io画像をConvert to PDFで変換するときは直接PDF設定を使う', () => {
+    const settings: Record<string, string> = {};
+    const configuration = {
+      get<T>(key: string, defaultValue: T): T {
+        return (settings[key] ?? defaultValue) as T;
+      },
+    } as vscode.WorkspaceConfiguration;
+    const sourceUri = vscode.Uri.file(path.join('workspace', 'source.drawio.png'));
+
+    assert.strictEqual(
+      outputTemplateForSource(sourceUri, configuration, 'unused.pdf', undefined),
+      '${fileDirname}/${fileBasenameNoExtension}.pdf',
+    );
+
+    settings['outputPath.convertDrawioToPdfDirectly'] = '${fileDirname}/direct-${fileBasenameNoExtension}.pdf';
+    assert.strictEqual(
+      outputTemplateForSource(sourceUri, configuration, 'unused.pdf', undefined),
+      '${fileDirname}/direct-${fileBasenameNoExtension}.pdf',
     );
   });
 

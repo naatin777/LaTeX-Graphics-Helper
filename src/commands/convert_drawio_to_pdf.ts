@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { isDrawioPath } from '../application/source_format.js';
+import { readDrawioExecutablePath } from '../config/drawio_path.js';
 import { convertDrawioToPdfFiles, type DrawioPdfJob } from '../operations/convert_drawio_to_pdf.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -65,7 +66,7 @@ async function runDrawioPdfCommand(options: {
     const configuredOutputTemplate = configuration.get<string>(options.outputSetting, options.defaultOutputPath);
     const outputTemplate = configuredOutputTemplate.trim() ? configuredOutputTemplate : options.defaultOutputPath;
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
-    const drawioPath = configuration.get<string>('execPath.drawio', '').trim() || defaultDrawioPath();
+    const drawioPath = readDrawioExecutablePath(configuration);
 
     await runOutputConversion({
       operationName: options.operationName,
@@ -138,12 +139,4 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): DrawioPdfJob 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
   return [...new Map(candidates.map((candidate) => [candidate.toString(), candidate])).values()];
-}
-
-function defaultDrawioPath(): string {
-  if (process.platform === 'win32') {
-    return 'drawio.exe';
-  }
-
-  return process.platform === 'darwin' ? 'draw.io' : 'drawio';
 }

@@ -6,7 +6,13 @@ import { promisify } from 'node:util';
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import pLimit from 'p-limit';
 import { PDFDocument, type PDFPage } from 'pdf-lib';
-import { launch, type Browser, type ChromeReleaseChannel, type SupportedBrowser } from 'puppeteer-core';
+import {
+  launch,
+  type Browser,
+  type ChromeReleaseChannel,
+  type LaunchOptions,
+  type SupportedBrowser,
+} from 'puppeteer-core';
 import sharp from 'sharp';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../application/source_format.js';
@@ -41,6 +47,25 @@ export interface SvgToPdfOptions {
   puppeteerBrowserChannel: ChromeReleaseChannel;
   puppeteerExecutablePath?: string;
   runRsvgConvert?: RunRsvgConvert;
+}
+
+export function validateSvgToPdfOptions(options: SvgToPdfOptions): void {
+  if (options.engine === 'puppeteer' && options.puppeteerBrowser === 'firefox' && !options.puppeteerExecutablePath) {
+    throw new Error('puppeteer.executablePath must be set when puppeteer.browser is firefox.');
+  }
+}
+
+export function createSvgPuppeteerLaunchOptions(options: SvgToPdfOptions): LaunchOptions {
+  validateSvgToPdfOptions(options);
+
+  return {
+    headless: true,
+    env: puppeteerLaunchEnv(),
+    browser: options.puppeteerBrowser,
+    ...(options.puppeteerExecutablePath
+      ? { executablePath: options.puppeteerExecutablePath }
+      : { channel: options.puppeteerBrowserChannel }),
+  };
 }
 
 export interface MermaidPuppeteerOptions {
@@ -396,16 +421,7 @@ async function writeSvgAsPdfWithPuppeteer(
   let browser: Browser | undefined;
 
   try {
-    browser = await launch({
-      headless: true,
-      env: puppeteerLaunchEnv(),
-      browser: options.puppeteerBrowser,
-      ...(options.puppeteerExecutablePath
-        ? { executablePath: options.puppeteerExecutablePath }
-        : options.puppeteerBrowser === 'chrome'
-          ? { channel: options.puppeteerBrowserChannel }
-          : {}),
-    });
+    browser = await launch(createSvgPuppeteerLaunchOptions(options));
     signal?.throwIfAborted();
 
     const page = await browser.newPage();
