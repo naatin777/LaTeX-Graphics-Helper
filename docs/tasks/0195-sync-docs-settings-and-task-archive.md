@@ -48,6 +48,8 @@ README、NLS、VS Code configuration、task management、refactor backlog。
 - `.github/scripts/install-image-tools-macos.sh`
 - `.github/scripts/install-test-tools-linux.sh`
 - `.github/scripts/install-image-tools-windows.ps1`
+- `.github/scripts/verify-image-tools-unix.sh`
+- `.github/scripts/verify-image-tools-windows.ps1`
 - `tsconfig.json`
 - `tsconfig.test.json`
 - `docs/tasks/README.md`
@@ -89,13 +91,13 @@ README、NLS、VS Code configuration、task management、refactor backlog。
 
 ## Verification results
 
-| Command                                                              | Result | Notes                                                                                                                                                        |
-| -------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `pnpm run check:nls`                                                 | Pass   | 272 English/Japanese keys, placeholders, package references, and static `userMessage` arguments are consistent.                                              |
-| `pnpm run typecheck && pnpm run typecheck:test`                      | Pass   | Production and Extension Host test TypeScript checks passed.                                                                                                 |
-| `pnpm run check:all`                                                 | Pass   | Lint, format, all typechecks, NLS, placeholders, package references, and `userMessage` arguments passed.                                                     |
-| `pnpm run build`                                                     | Pass   | Production, test, and all three Webview bundles built successfully.                                                                                          |
-| `pnpm run test`                                                      | Pass   | 223 Extension Host tests passed, including common Mermaid setting precedence, legacy fallback, and TypeScript scanner-based `userMessage` argument counting. |
-| `pnpm run test:webview`                                              | Pass   | Crop 1, Merge 1, and Split 2 Webview component tests passed.                                                                                                 |
-| `tsconfig.json`, `tsconfig.test.json`, and extension lifecycle audit | Pass   | Include/exclude matches the source/test boundaries; no `deactivate` export is required because disposables are owned by `context.subscriptions`.             |
-| `git diff --check`                                                   | Pass   | No whitespace errors.                                                                                                                                        |
+| Command                                                              | Result | Notes                                                                                                                                                                                   |
+| -------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run check:nls`                                                 | Pass   | 272 English/Japanese keys, placeholders, package references, and static `userMessage` arguments are consistent.                                                                         |
+| `pnpm run typecheck && pnpm run typecheck:test`                      | Pass   | Production and Extension Host test TypeScript checks passed.                                                                                                                            |
+| `pnpm run check:all`                                                 | Pass   | Lint, format, all typechecks, NLS, placeholders, package references, and `userMessage` arguments passed.                                                                                |
+| `pnpm run build`                                                     | Pass   | Production, test, and all three Webview bundles built successfully.                                                                                                                     |
+| `pnpm run test`                                                      | Pass   | 224 Extension Host tests passed, including common Puppeteer executable path, Mermaid channel precedence, legacy fallback, and TypeScript scanner-based `userMessage` argument counting. |
+| `pnpm run test:webview`                                              | Pass   | Crop 1, Merge 1, and Split 2 Webview component tests passed.                                                                                                                            |
+| `tsconfig.json`, `tsconfig.test.json`, and extension lifecycle audit | Pass   | Include/exclude matches the source/test boundaries; no `deactivate` export is required because disposables are owned by `context.subscriptions`.                                        |
+| `git diff --check`                                                   | Pass   | No whitespace errors.                                                                                                                                                                   |

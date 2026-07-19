@@ -61,8 +61,7 @@ $settings = [ordered]@{
 	'latex-graphics-helper.execPath.ghostscript' = $gs.FullName
 	'latex-graphics-helper.execPath.pdftocairo' = $pdftocairo.FullName
 	'latex-graphics-helper.execPath.rsvgConvert' = $rsvgConvert
-	'latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath' = $chrome
-	'latex-graphics-helper.mermaid.puppeteer.executablePath' = $chrome
+	'latex-graphics-helper.puppeteer.executablePath' = $chrome
 }
 $settings | ConvertTo-Json | Set-Content $settingsPath -Encoding utf8
 Get-Content $settingsPath

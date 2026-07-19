@@ -15,16 +15,18 @@ export type MermaidConfiguration = {
   inspect<T>(key: string): ConfigurationInspection<T> | undefined;
 };
 
+export function readPuppeteerExecutablePath(configuration: MermaidConfiguration, legacyKey: string): string {
+  return readSetting(configuration, 'puppeteer.executablePath', legacyKey, '').trim();
+}
+
 export function readMermaidPuppeteerOptions(
   configuration: MermaidConfiguration,
   legacySection: MermaidLegacySettingsSection,
 ): MermaidPuppeteerOptions {
-  const executablePath = readSetting(
+  const executablePath = readPuppeteerExecutablePath(
     configuration,
-    'mermaid.puppeteer.executablePath',
     `${legacySection}.mermaid.puppeteer.executablePath`,
-    '',
-  ).trim();
+  );
 
   return {
     browserChannel: readSetting(

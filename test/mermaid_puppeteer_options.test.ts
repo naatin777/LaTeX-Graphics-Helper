@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 
-import { readMermaidPuppeteerOptions, type MermaidConfiguration } from '../src/config/mermaid_puppeteer_options.js';
+import {
+  readMermaidPuppeteerOptions,
+  readPuppeteerExecutablePath,
+  type MermaidConfiguration,
+} from '../src/config/mermaid_puppeteer_options.js';
 
 suite('Mermaid Puppeteer settings', () => {
   test('uses the legacy output-specific settings when the common settings are unset', () => {
@@ -22,7 +26,7 @@ suite('Mermaid Puppeteer settings', () => {
     const options = readMermaidPuppeteerOptions(
       fakeConfiguration({
         'mermaid.puppeteer.browserChannel': 'chrome-dev',
-        'mermaid.puppeteer.executablePath': '',
+        'puppeteer.executablePath': '',
         'convertToPdf.mermaid.puppeteer.browserChannel': 'chrome-canary',
         'convertToPdf.mermaid.puppeteer.executablePath': '/legacy/chrome',
       }),
@@ -30,6 +34,18 @@ suite('Mermaid Puppeteer settings', () => {
     );
 
     assert.deepEqual(options, { browserChannel: 'chrome-dev' });
+  });
+
+  test('shares the common executable path with SVG conversion', () => {
+    const executablePath = readPuppeteerExecutablePath(
+      fakeConfiguration({
+        'puppeteer.executablePath': '/shared/chrome',
+        'convertToPdf.svg.puppeteer.executablePath': '/legacy/chrome',
+      }),
+      'convertToPdf.svg.puppeteer.executablePath',
+    );
+
+    assert.strictEqual(executablePath, '/shared/chrome');
   });
 });
 

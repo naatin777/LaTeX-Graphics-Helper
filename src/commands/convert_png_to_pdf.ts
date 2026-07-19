@@ -3,7 +3,7 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
-import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
+import { readMermaidPuppeteerOptions, readPuppeteerExecutablePath } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
 import {
@@ -196,7 +196,7 @@ function outputTemplateForSource(
 }
 
 function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
-  const executablePath = configuration.get<string>('convertToPdf.svg.puppeteer.executablePath', '').trim();
+  const executablePath = readPuppeteerExecutablePath(configuration, 'convertToPdf.svg.puppeteer.executablePath');
 
   return {
     engine: configuration.get<SvgToPdfEngine>('convertToPdf.svg.engine', 'puppeteer'),

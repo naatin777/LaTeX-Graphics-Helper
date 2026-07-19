@@ -377,10 +377,10 @@
           "default": "chrome",
           "description": "%config.mermaid.puppeteer.browserChannel%"
         },
-        "latex-graphics-helper.mermaid.puppeteer.executablePath": {
+        "latex-graphics-helper.puppeteer.executablePath": {
           "type": "string",
           "default": "",
-          "description": "%config.mermaid.puppeteer.executablePath%"
+          "description": "%config.puppeteer.executablePath%"
         },
         "latex-graphics-helper.convertToWebp.effort": {
           "type": "integer",

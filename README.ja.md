@@ -144,7 +144,7 @@ Draw.io Desktop は以下からインストールしてください。
 | `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | `rsvg-convert` 実行ファイルへのパスです                                                                        |
 | `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVGをPDFへ変換するときのバックエンドです。`puppeteer` または `rsvg-convert` を選択できます                     |
 | `latex-graphics-helper.mermaid.puppeteer.browserChannel`   | `chrome`                       | Mermaid CLIが使用するChromeチャンネルです                                                                      |
-| `latex-graphics-helper.mermaid.puppeteer.executablePath`   | 空文字                         | Mermaid CLIが使用するブラウザ実行ファイルです。チャンネルより優先されます                                      |
+| `latex-graphics-helper.puppeteer.executablePath`           | 空文字                         | SVG変換とMermaid変換で共有するChromeまたはChromium実行ファイルです。チャンネルより優先されます                 |
 | `latex-graphics-helper.convertToWebp.effort`               | `4`                            | WebP出力のエンコードeffortです                                                                                 |
 | `latex-graphics-helper.convertToAvif.effort`               | `4`                            | AVIF出力のエンコードeffortです                                                                                 |
 

@@ -83,7 +83,7 @@ Main settings:
 | `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | Path to the `rsvg-convert` executable                                                                                             |
 | `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVG to PDF backend. Choose `puppeteer` or `rsvg-convert`                                                                          |
 | `latex-graphics-helper.mermaid.puppeteer.browserChannel`   | `chrome`                       | Chrome channel used by Mermaid CLI                                                                                                |
-| `latex-graphics-helper.mermaid.puppeteer.executablePath`   | empty string                   | Browser executable used by Mermaid CLI; takes precedence over the channel                                                         |
+| `latex-graphics-helper.puppeteer.executablePath`           | empty string                   | Chrome or Chromium executable shared by SVG and Mermaid conversions; takes precedence over the channel                            |
 | `latex-graphics-helper.convertToWebp.effort`               | `4`                            | Encoding effort for WebP output                                                                                                   |
 | `latex-graphics-helper.convertToAvif.effort`               | `4`                            | Encoding effort for AVIF output                                                                                                   |
 
