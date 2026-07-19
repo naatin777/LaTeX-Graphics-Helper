@@ -120,19 +120,16 @@ async function packageVsix({ outputPath, target }) {
 
   try {
     await mkdir(path.dirname(outputPath), { recursive: true });
-    await runCommand(
-      process.execPath,
-      [getPnpmScript(), '--filter', '.', 'deploy', '--prod', '--legacy', stageDirectory],
-      { cwd: rootDirectory },
-    );
-    await runCommand(process.execPath, [getPnpmScript(), 'install', '--prod', '--no-frozen-lockfile'], {
-      cwd: stageDirectory,
-    });
     await writeFile(
       path.join(stageDirectory, 'package.json'),
       `${JSON.stringify(createRuntimeManifest(packageManifest), null, 2)}\n`,
     );
     await copyRuntimeFiles(stageDirectory);
+    await cp(path.join(rootDirectory, 'pnpm-workspace.yaml'), path.join(stageDirectory, 'pnpm-workspace.yaml'));
+    await runCommand(process.execPath, [getPnpmScript(), 'install', '--prod', '--lockfile=false'], {
+      cwd: stageDirectory,
+    });
+    await rm(path.join(stageDirectory, 'pnpm-workspace.yaml'), { force: true });
 
     await runCommand(
       process.execPath,
