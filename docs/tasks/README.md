@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- なし
+- [0180: パッケージ済みVSIXのオフライン3 OS smoke testを追加する](0180-add-packaged-vsix-offline-smoke-tests.md)
 
 ## Task boundaries
 

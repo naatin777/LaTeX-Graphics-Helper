@@ -125,6 +125,9 @@ async function packageVsix({ outputPath, target }) {
       [getPnpmScript(), '--filter', '.', 'deploy', '--prod', '--legacy', stageDirectory],
       { cwd: rootDirectory },
     );
+    await runCommand(process.execPath, [getPnpmScript(), 'install', '--prod', '--no-frozen-lockfile'], {
+      cwd: stageDirectory,
+    });
     await writeFile(
       path.join(stageDirectory, 'package.json'),
       `${JSON.stringify(createRuntimeManifest(packageManifest), null, 2)}\n`,
