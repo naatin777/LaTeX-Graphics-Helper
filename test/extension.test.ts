@@ -59,6 +59,13 @@ suite('拡張機能の基本動作', () => {
     assert.ok(commands.includes('latex-graphics-helper.convertPngToPdf'));
   });
 
+  test('Draw.io PDF変換コマンドが登録されている', async () => {
+    const commands = await vscode.commands.getCommands(true);
+
+    assert.ok(commands.includes('latex-graphics-helper.convertDrawioToPdf'));
+    assert.ok(commands.includes('latex-graphics-helper.convertDrawioToPdfDirectly'));
+  });
+
   test('manifestの公開commandと実際の登録commandが一致する', async () => {
     const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
     assert.ok(extension);

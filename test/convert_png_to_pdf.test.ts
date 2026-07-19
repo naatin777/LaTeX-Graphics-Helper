@@ -14,7 +14,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
+import {
+  convertPngToPdfFiles,
+  createSvgPuppeteerLaunchOptions,
+  validateSvgToPdfOptions,
+} from '../src/operations/convert_png_to_pdf.js';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -38,5 +42,31 @@ suite('PNGからPDFへの変換処理', () => {
     const { PDFDocument } = await import('pdf-lib');
     const pdf = await PDFDocument.load(await import('node:fs/promises').then((fs) => fs.readFile(outputPath)));
     assert.strictEqual(pdf.getPageCount(), 1);
+  });
+
+  test('Firefox選択時は実行ファイルの指定を必須にする', () => {
+    assert.throws(
+      () =>
+        validateSvgToPdfOptions({
+          engine: 'puppeteer',
+          rsvgConvertPath: 'rsvg-convert',
+          puppeteerBrowser: 'firefox',
+          puppeteerBrowserChannel: 'chrome',
+        }),
+      /puppeteer\.executablePath must be set/,
+    );
+  });
+
+  test('FirefoxのPuppeteer起動には指定された実行ファイルを使う', () => {
+    const options = createSvgPuppeteerLaunchOptions({
+      engine: 'puppeteer',
+      rsvgConvertPath: 'rsvg-convert',
+      puppeteerBrowser: 'firefox',
+      puppeteerBrowserChannel: 'chrome',
+      puppeteerExecutablePath: '/opt/firefox/firefox',
+    });
+
+    assert.strictEqual(options.executablePath, '/opt/firefox/firefox');
+    assert.strictEqual('channel' in options, false);
   });
 });

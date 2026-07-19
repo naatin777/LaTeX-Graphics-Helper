@@ -7,7 +7,7 @@
 [English](README.md) | 日本語
 
 VS Code で PDF や画像ファイルを直感的に扱えるように設計された拡張機能です。
-PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.io 画像の形式変換、LaTeX コード生成などを提供します。
+PDF の分割、トリミング、PDF・画像・SVG・Mermaid・Draw.io ファイルの形式変換、LaTeX コード生成などを提供します。
 
 ## 機能
 
@@ -20,8 +20,9 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.i
 ### 変換
 
 - **出力形式を選ぶ変換**: Explorer の右クリックメニューでは `変換 > PDF` / `変換 > PNG` / `変換 > JPEG` / `変換 > WebP` / `変換 > AVIF` / `変換 > SVG` のように、出力形式を選んで変換します。
-- **PDF / 画像 / SVG / Mermaid / Draw.io の変換**: 対応入力を、選択した出力形式へまとめて変換します。
+- **PDF / 画像 / SVG / Mermaid / editable Draw.io の変換**: 対応入力を、選択した出力形式へまとめて変換します。
 - **混在選択**: 同じ出力形式へ変換できる複数形式のファイルを、1回の操作で変換できます。
+- **ネイティブDraw.ioのPDF変換**: `.drawio` / `.dio` をページごとのPDF、または全ページを含む1つのPDFへ変換できます。
 
 ### LaTeX コード生成
 
@@ -36,6 +37,8 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.i
 | PDF の分割                      | `.pdf`                                                                            | `.pdf`                      | PDF をページごとに分割                  | 不要                                                     |
 | PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                         | `.pdf`                      | ラスター画像を PDF に変換               | 不要                                                     |
 | PDF へ変換                      | `.svg`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.pdf`                      | 図版ファイルを PDF に変換               | 入力形式により異なります                                 |
+| Draw.ioをページごとのPDFへ変換  | `.drawio`, `.dio`, editable Draw.io 画像                                          | ページごとのPDF             | Draw.ioの各ページを個別に出力           | Draw.io Desktop                                          |
+| Draw.ioを1つのPDFへ変換         | `.drawio`, `.dio`, editable Draw.io 画像                                          | 1つのPDF                    | Draw.ioの全ページをまとめて出力         | Draw.io Desktop                                          |
 | PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | PDF入力ではPoppler                                       |
 | JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | PDF入力ではPoppler                                       |
 | WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | PDF入力ではPoppler                                       |
@@ -64,13 +67,14 @@ Open VSX Registry からもインストールできます。
 
 一部の機能では、VS Code 拡張機能とは別に外部ツールが必要です。使用する機能に応じて、必要なツールをインストールしてください。
 
-| ツール                   | 用途                        | 必須になる機能                                        | 備考                                                                           |
-| ------------------------ | --------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Ghostscript              | PDF の余白検出              | PDF トリミング                                        | `gs` または `gswin64c` が利用可能である必要があります                          |
-| Poppler / `pdftocairo`   | PDFページの画像化           | PDFからPNG/JPEG/WebP/AVIF/SVGへの変換                 | macOS: `brew install poppler`、Debian/Ubuntu: `sudo apt install poppler-utils` |
-| rsvg-convert             | SVG から PDF への変換       | `rsvg-convert`バックエンドを選択した場合              | SVG 変換バックエンドの 1 つです                                                |
-| Google Chrome / Chromium | SVG / Mermaid 変換          | SVG から PDF、Mermaid から PDF/PNG/JPEG/WebP/AVIF/SVG | puppeteer-core / Mermaid CLI から使用します                                    |
-| Draw.io Desktop          | editable Draw.io 画像の変換 | `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg`  | Draw.io デスクトップアプリケーションが必要です                                 |
+| ツール                   | 用途                                        | 必須になる機能                                                          | 備考                                                                           |
+| ------------------------ | ------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Ghostscript              | PDF の余白検出                              | PDF トリミング                                                          | `gs` または `gswin64c` が利用可能である必要があります                          |
+| Poppler / `pdftocairo`   | PDFページの画像化                           | PDFからPNG/JPEG/WebP/AVIF/SVGへの変換                                   | macOS: `brew install poppler`、Debian/Ubuntu: `sudo apt install poppler-utils` |
+| rsvg-convert             | SVG から PDF への変換                       | `rsvg-convert`バックエンドを選択した場合                                | SVG 変換バックエンドの 1 つです                                                |
+| Google Chrome / Chromium | SVG / Mermaid 変換                          | SVG から PDF、Mermaid から PDF/PNG/JPEG/WebP/AVIF/SVG                   | Puppeteer / Mermaid CLI から使用します                                         |
+| Draw.io Desktop          | Draw.ioファイルとeditable Draw.io画像の変換 | `.drawio`, `.dio`, `.drawio.png`, `.dio.png`, `.drawio.svg`, `.dio.svg` | Draw.io デスクトップアプリケーションが必要です                                 |
+| Firefox                  | SVG から PDF への変換                       | `puppeteer.browser` を `firefox` にした場合                             | Firefox の実行ファイルが必要です                                               |
 
 ### すべての機能を利用する場合
 
@@ -129,24 +133,26 @@ Draw.io Desktop は以下からインストールしてください。
 
 主な設定項目は以下の通りです。
 
-| 設定                                                       | 既定値                         | 説明                                                                                                           |
-| ---------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `latex-graphics-helper.outputPath.clipboardImage`          | `${fileDirname}/${dateNow}`    | クリップボード画像を貼り付けるときに表示する既定の保存先です。貼り付け時に編集でき、拡張子は自動で追加されます |
-| `latex-graphics-helper.figure.placementOptions`            | `[H]` など                     | `figure` 環境の配置オプション候補です                                                                          |
-| `latex-graphics-helper.figure.alignmentOptions`            | `\centering` など              | `figure` 内の配置コマンド候補です                                                                              |
-| `latex-graphics-helper.figure.graphicsOptions`             | `[width=1.0\linewidth]` など   | `includegraphics` のオプション候補です                                                                         |
-| `latex-graphics-helper.subfigure.verticalAlignmentOptions` | `[t]` など                     | 複数PDFをdropしたときの `minipage` 縦位置候補です                                                              |
-| `latex-graphics-helper.subfigure.widthOptions`             | `{0.45\linewidth}` など        | 複数PDFをdropしたときの `minipage` 幅候補です                                                                  |
-| `latex-graphics-helper.subfigure.spacingOptions`           | `\hspace{0.01\linewidth}` など | 複数PDFをdropしたときの図間スペース候補です                                                                    |
-| `latex-graphics-helper.execPath.drawio`                    | 空文字                         | Draw.io 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                             |
-| `latex-graphics-helper.execPath.ghostscript`               | 空文字                         | Ghostscript 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                         |
-| `latex-graphics-helper.execPath.pdftocairo`                | `pdftocairo`                   | `pdftocairo` 実行ファイルへのパスです                                                                          |
-| `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | `rsvg-convert` 実行ファイルへのパスです                                                                        |
-| `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVGをPDFへ変換するときのバックエンドです。`puppeteer` または `rsvg-convert` を選択できます                     |
-| `latex-graphics-helper.mermaid.puppeteer.browserChannel`   | `chrome`                       | Mermaid CLIが使用するChromeチャンネルです                                                                      |
-| `latex-graphics-helper.puppeteer.executablePath`           | 空文字                         | SVG変換とMermaid変換で共有するChromeまたはChromium実行ファイルです。チャンネルより優先されます                 |
-| `latex-graphics-helper.convertToWebp.effort`               | `4`                            | WebP出力のエンコードeffortです                                                                                 |
-| `latex-graphics-helper.convertToAvif.effort`               | `4`                            | AVIF出力のエンコードeffortです                                                                                 |
+| 設定                                                          | 既定値                                          | 説明                                                                                                           |
+| ------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `latex-graphics-helper.outputPath.clipboardImage`             | `${fileDirname}/${dateNow}`                     | クリップボード画像を貼り付けるときに表示する既定の保存先です。貼り付け時に編集でき、拡張子は自動で追加されます |
+| `latex-graphics-helper.figure.placementOptions`               | `[H]` など                                      | `figure` 環境の配置オプション候補です                                                                          |
+| `latex-graphics-helper.figure.alignmentOptions`               | `\centering` など                               | `figure` 内の配置コマンド候補です                                                                              |
+| `latex-graphics-helper.figure.graphicsOptions`                | `[width=1.0\linewidth]` など                    | `includegraphics` のオプション候補です                                                                         |
+| `latex-graphics-helper.subfigure.verticalAlignmentOptions`    | `[t]` など                                      | 複数PDFをdropしたときの `minipage` 縦位置候補です                                                              |
+| `latex-graphics-helper.subfigure.widthOptions`                | `{0.45\linewidth}` など                         | 複数PDFをdropしたときの `minipage` 幅候補です                                                                  |
+| `latex-graphics-helper.subfigure.spacingOptions`              | `\hspace{0.01\linewidth}` など                  | 複数PDFをdropしたときの図間スペース候補です                                                                    |
+| `latex-graphics-helper.execPath.drawio`                       | 空文字                                          | Draw.io 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                             |
+| `latex-graphics-helper.execPath.ghostscript`                  | 空文字                                          | Ghostscript 実行ファイルへのパスです。未指定の場合は OS ごとの既定コマンドを使用します                         |
+| `latex-graphics-helper.execPath.pdftocairo`                   | `pdftocairo`                                    | `pdftocairo` 実行ファイルへのパスです                                                                          |
+| `latex-graphics-helper.execPath.rsvgConvert`                  | `rsvg-convert`                                  | `rsvg-convert` 実行ファイルへのパスです                                                                        |
+| `latex-graphics-helper.convertToPdf.svg.engine`               | `puppeteer`                                     | SVGをPDFへ変換するときのバックエンドです。`puppeteer` または `rsvg-convert` を選択できます                     |
+| `latex-graphics-helper.puppeteer.browser`                     | `chrome`                                        | SVG変換でPuppeteerが使用するブラウザです。`chrome` または `firefox` を選択できます                             |
+| `latex-graphics-helper.mermaid.puppeteer.browserChannel`      | `chrome`                                        | Mermaid CLIが使用するChromeチャンネルです                                                                      |
+| `latex-graphics-helper.puppeteer.executablePath`              | 空文字                                          | SVG変換とMermaid変換で共有するブラウザ実行ファイルです。チャンネルより優先されます                             |
+| `latex-graphics-helper.outputPath.convertDrawioToPdfDirectly` | `${fileDirname}/${fileBasenameNoExtension}.pdf` | Draw.ioの全ページを1つのPDFへ出力するパスです                                                                  |
+| `latex-graphics-helper.convertToWebp.effort`                  | `4`                                             | WebP出力のエンコードeffortです                                                                                 |
+| `latex-graphics-helper.convertToAvif.effort`                  | `4`                                             | AVIF出力のエンコードeffortです                                                                                 |
 
 出力ファイル名や LaTeX snippet の候補も VS Code の設定から変更できます。
 

@@ -1,7 +1,7 @@
-import { copyFile, rm } from 'node:fs/promises';
+import { copyFile, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 
-import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
+import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
@@ -63,20 +63,64 @@ export async function undoConversionOutputs(
   outputChannel?: LineOutputChannel,
 ): Promise<void> {
   await Promise.all(record.outputs.map(validateUnchangedOutput));
+  const rollbackCopies = await createRollbackCopies(record);
 
-  for (const output of record.outputs) {
-    // 検証後の差し替え時間を短くするため、削除直前にも同じ条件を確認する。
-    await validateUnchangedOutput(output);
+  try {
+    for (const output of record.outputs) {
+      // 検証後の差し替え時間を短くするため、削除直前にも同じ条件を確認する。
+      await validateUnchangedOutput(output);
 
-    if (output.previousFilePath) {
-      await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
-      await copyFile(output.previousFilePath, output.outputPath);
-    } else {
-      await rm(output.outputPath);
+      if (output.previousFilePath) {
+        await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
+        await copyFile(output.previousFilePath, output.outputPath);
+      } else {
+        await rm(output.outputPath);
+      }
     }
+  } catch (error) {
+    try {
+      await Promise.all(
+        rollbackCopies.map(async ({ output, rollbackPath }) => {
+          await assertWritablePathInWorkspace(output.outputPath, output.workspacePath);
+          await copyFile(rollbackPath, output.outputPath);
+        }),
+      );
+    } catch (rollbackError) {
+      throw new Error(`Undo failed and rollback was incomplete: ${String(error)}`, { cause: rollbackError });
+    }
+    throw error;
+  } finally {
+    await Promise.all(
+      rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
+    );
   }
 
   await cleanupConversionArtifacts(toArtifactRoots(record), outputChannel);
+}
+
+async function createRollbackCopies(
+  record: ConversionUndoRecord,
+): Promise<Array<{ output: ConversionUndoOutput; rollbackPath: string; rollbackRootPath: string }>> {
+  const rollbackCopies: Array<{ output: ConversionUndoOutput; rollbackPath: string; rollbackRootPath: string }> = [];
+
+  try {
+    const rollbackId = crypto.randomUUID();
+    for (const [index, output] of record.outputs.entries()) {
+      const rollbackRootPath = path.join(output.workspacePath, '.latex-graphics-helper', 'undo-rollback', rollbackId);
+      const rollbackPath = path.join(rollbackRootPath, `${index}.backup`);
+      await assertExistingPathInWorkspace(output.outputPath, output.workspacePath);
+      await assertWritablePathInWorkspace(rollbackRootPath, output.workspacePath);
+      await mkdir(rollbackRootPath, { recursive: true });
+      await copyFile(output.outputPath, rollbackPath);
+      rollbackCopies.push({ output, rollbackPath, rollbackRootPath });
+    }
+    return rollbackCopies;
+  } catch (error) {
+    await Promise.all(
+      rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
+    );
+    throw error;
+  }
 }
 
 async function validateUnchangedOutput(output: ConversionUndoOutput): Promise<void> {

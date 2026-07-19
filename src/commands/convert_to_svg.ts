@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readDrawioExecutablePath } from '../config/drawio_path.js';
 import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
@@ -178,15 +179,9 @@ function outputTemplateForSource(
 }
 
 function readDrawioToSvgOptions(configuration: vscode.WorkspaceConfiguration): DrawioToSvgOptions {
-  const configuredPath = configuration.get<string>('execPath.drawio', '').trim();
-
   return {
-    drawioPath: configuredPath || defaultDrawioPath(),
+    drawioPath: readDrawioExecutablePath(configuration),
   };
-}
-
-function defaultDrawioPath(): string {
-  return process.platform === 'win32' ? 'drawio.exe' : 'drawio';
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {

@@ -65,4 +65,62 @@ suite('staged conversion batch', () => {
       await rm(outsidePath, { recursive: true, force: true });
     }
   });
+
+  test('1件のstage失敗後も実行中のstageを待ってからcleanupする', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-staged-batch-'));
+    const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'fixture-raster', 'abort-run');
+    let resolveSecondStarted!: () => void;
+    const secondStarted = new Promise<void>((resolve) => {
+      resolveSecondStarted = resolve;
+    });
+    let thirdStarted = false;
+    let releaseSecond!: () => void;
+    const secondFinished = new Promise<void>((resolve) => {
+      releaseSecond = resolve;
+    });
+    let batch: Promise<unknown> | undefined;
+
+    try {
+      batch = runStagedConversionBatch({
+        jobs: [{ workspacePath }, { workspacePath }, { workspacePath }],
+        operationName: 'fixture-raster',
+        runId: 'abort-run',
+        stage: async (_job, index) => {
+          await mkdir(stagingRootPath, { recursive: true });
+
+          if (index === 0) {
+            await writeFile(path.join(stagingRootPath, 'first'), 'partial');
+            throw new Error('injected stage failure');
+          }
+
+          if (index === 1) {
+            await writeFile(path.join(stagingRootPath, 'second'), 'in progress');
+            resolveSecondStarted();
+            await secondFinished;
+            throw new Error('second stage stopped');
+          }
+
+          thirdStarted = true;
+          throw new Error('queued stage should not start');
+        },
+      });
+
+      await Promise.race([
+        secondStarted,
+        new Promise<never>((_resolve, reject) =>
+          setTimeout(() => reject(new Error('second stage did not start')), 1000),
+        ),
+      ]);
+      assert.strictEqual(thirdStarted, false);
+      await assert.doesNotReject(access(path.join(stagingRootPath, 'second')));
+      releaseSecond();
+
+      await assert.rejects(batch, /injected stage failure/);
+      await assert.rejects(access(stagingRootPath));
+    } finally {
+      releaseSecond();
+      await batch?.catch(() => undefined);
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
 });

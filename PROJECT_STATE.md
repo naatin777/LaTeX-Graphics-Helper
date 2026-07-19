@@ -19,6 +19,8 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - PDF to PNG/JPEG/WebP/AVIF/SVG conversion
 - PNG/JPEG/WebP/AVIF/SVG to PDF conversion
 - Draw.io to PDF conversion
+- Native Draw.io PDF conversion by page or as one PDF
+- Puppeteer Chrome/Firefox selection for SVG conversion
 - Insert LaTeX code from PDF
 - Insert LaTeX code from clipboard image
 

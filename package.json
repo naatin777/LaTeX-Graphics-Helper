@@ -133,6 +133,16 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.convertDrawioToPdf",
+        "title": "%command.convertDrawioToPdf%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+        "title": "%command.convertDrawioToPdfDirectly%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.convertToPng",
         "title": "%command.convertToPng%",
         "category": "LaTeX Graphics Helper"
@@ -179,6 +189,16 @@
           "submenu": "latex-graphics-helper.convert",
           "group": "latex-graphics-helper",
           "when": "(resourceExtname =~ /^\\.(pdf|png|jpg|jpeg|webp|avif|svg|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertDrawioToPdf",
+          "group": "latex-graphics-helper",
+          "when": "(resourceExtname =~ /^\\.(drawio|dio)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertDrawio.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+          "group": "latex-graphics-helper",
+          "when": "(resourceExtname =~ /^\\.(drawio|dio)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertDrawio.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -264,6 +284,14 @@
         },
         {
           "command": "latex-graphics-helper.mergePdf.configure",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertDrawioToPdf",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
           "when": "false"
         }
       ]
@@ -381,6 +409,15 @@
           "type": "string",
           "default": "",
           "description": "%config.puppeteer.executablePath%"
+        },
+        "latex-graphics-helper.puppeteer.browser": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "firefox"
+          ],
+          "default": "chrome",
+          "description": "%config.puppeteer.browser%"
         },
         "latex-graphics-helper.convertToWebp.effort": {
           "type": "integer",
@@ -532,6 +569,11 @@
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}/${page}.pdf",
           "description": "%config.outputPath.convertDrawioToPdf%"
+        },
+        "latex-graphics-helper.outputPath.convertDrawioToPdfDirectly": {
+          "type": "string",
+          "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
+          "description": "%config.outputPath.convertDrawioToPdfDirectly%"
         },
         "latex-graphics-helper.outputPath.convertDrawioToPng": {
           "type": "string",

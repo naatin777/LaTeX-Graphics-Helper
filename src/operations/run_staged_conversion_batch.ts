@@ -15,7 +15,12 @@ export interface StagedConversionBatch<Job extends { workspacePath: string }> {
   operationName: string;
   runId: string;
   runtime?: ConversionRuntime;
-  stage: (job: Job, index: number, runId: string, runtime: ConversionRuntime) => Promise<PreparedConversionOutput>;
+  stage: (
+    job: Job,
+    index: number,
+    runId: string,
+    runtime: ConversionRuntime,
+  ) => Promise<PreparedConversionOutput | PreparedConversionOutput[]>;
 }
 
 /** Runs the shared staging/commit lifecycle; source dispatch stays with each operation. */
@@ -24,24 +29,58 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
 ): Promise<CommittedConversionOutput[]> {
   const runtime = options.runtime ?? {};
   const artifacts = stagingArtifactsForJobs(options.jobs, options.operationName, options.runId);
+  const abortController = new AbortController();
+  const abortFromCaller = () => abortController.abort(options.runtime?.signal?.reason);
 
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(CONVERSION_CONCURRENCY);
-      const stagedOutputs = await Promise.all(
-        options.jobs.map((job, index) => limit(() => options.stage(job, index, options.runId, runtime))),
-      );
-      runtime.signal?.throwIfAborted();
-      return commitConversionOutputs(stagedOutputs, {
-        ...(runtime.signal !== undefined && { signal: runtime.signal }),
-        ...(runtime.resolveConflicts !== undefined && {
-          resolveConflicts: runtime.resolveConflicts,
-        }),
-        operationName: options.operationName,
-        ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-      });
-    },
-    runtime.outputChannel,
-  );
+  if (options.runtime?.signal?.aborted) {
+    abortFromCaller();
+  } else {
+    options.runtime?.signal?.addEventListener('abort', abortFromCaller, { once: true });
+  }
+
+  const batchRuntime: ConversionRuntime = {
+    ...runtime,
+    signal: abortController.signal,
+  };
+  const signal = abortController.signal;
+
+  try {
+    return await withStagingCleanup(
+      artifacts,
+      async () => {
+        const limit = pLimit(CONVERSION_CONCURRENCY);
+        const settled = await Promise.allSettled(
+          options.jobs.map((job, index) =>
+            limit(async () => {
+              batchRuntime.signal?.throwIfAborted();
+              try {
+                return await options.stage(job, index, options.runId, batchRuntime);
+              } catch (error) {
+                abortController.abort(error);
+                throw error;
+              }
+            }),
+          ),
+        );
+        const failure = settled.find((result) => result.status === 'rejected');
+        if (failure?.status === 'rejected') {
+          throw failure.reason;
+        }
+
+        signal.throwIfAborted();
+        const stagedOutputs = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+        return commitConversionOutputs(stagedOutputs.flat(), {
+          signal,
+          ...(runtime.resolveConflicts !== undefined && {
+            resolveConflicts: runtime.resolveConflicts,
+          }),
+          operationName: options.operationName,
+          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+        });
+      },
+      runtime.outputChannel,
+    );
+  } finally {
+    options.runtime?.signal?.removeEventListener('abort', abortFromCaller);
+  }
 }

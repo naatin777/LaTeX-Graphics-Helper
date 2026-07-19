@@ -104,12 +104,15 @@ function validateOutputPath(outputPath: string, platform: OutputPathPlatform, pa
       throwInvalidComponent(platform, component, 'has a trailing period');
     }
 
-    const baseName = component.split('.', 1)[0] ?? component;
-
-    if (/^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])$/i.test(baseName)) {
+    if (isWindowsReservedPathComponent(component)) {
       throwInvalidComponent(platform, component, 'uses a reserved name');
     }
   }
+}
+
+export function isWindowsReservedPathComponent(component: string): boolean {
+  const baseName = component.split('.', 1)[0] ?? component;
+  return /^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])$/i.test(baseName);
 }
 
 function throwInvalidComponent(platform: OutputPathPlatform, component: string, reason: string): never {
