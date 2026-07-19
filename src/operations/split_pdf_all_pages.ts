@@ -23,8 +23,23 @@ export interface SplitPdfJob {
   outputPathForPage: (page: number) => string;
 }
 
+export interface SplitPdfPageGroupsJob {
+  sourcePath: string;
+  workspacePath: string;
+  pageGroups?: number[][];
+  outputPathForGroup?: (groupIndex: number, pages: readonly number[]) => string;
+}
+
 export interface SplitPdfOptions {
   jobs: SplitPdfJob[];
+  runId?: string;
+  signal?: AbortSignal;
+  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
+  outputChannel?: LineOutputChannel;
+}
+
+export interface SplitPdfByPageGroupsOptions {
+  jobs: SplitPdfPageGroupsJob[];
   runId?: string;
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
@@ -58,6 +73,43 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
 
       options.signal?.throwIfAborted();
       return commitConversionOutputs(stagedPages, {
+        ...(options.signal !== undefined && { signal: options.signal }),
+        ...(options.resolveOutputConflicts !== undefined && {
+          resolveConflicts: options.resolveOutputConflicts,
+        }),
+        operationName: 'split-pdf',
+        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+      });
+    },
+    options.outputChannel,
+  );
+}
+
+export async function splitPdfByPageGroups(options: SplitPdfByPageGroupsOptions): Promise<SplitPdfOutput[]> {
+  options.signal?.throwIfAborted();
+  validatePageGroupJobs(options.jobs);
+  await validatePageGroupInputPaths(options.jobs);
+  options.signal?.throwIfAborted();
+
+  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const artifacts = stagingArtifactsForJobs(options.jobs, 'split-pdf', runId);
+
+  return withStagingCleanup(
+    artifacts,
+    async () => {
+      const limit = pLimit(SPLIT_CONCURRENCY);
+      const stagedByJob = await Promise.all(
+        options.jobs.map((job, index) =>
+          limit(() => {
+            options.signal?.throwIfAborted();
+            return splitPdfPageGroups({ job, index, runId, signal: options.signal });
+          }),
+        ),
+      );
+      const stagedGroups = stagedByJob.flat();
+
+      options.signal?.throwIfAborted();
+      return commitConversionOutputs(stagedGroups, {
         ...(options.signal !== undefined && { signal: options.signal }),
         ...(options.resolveOutputConflicts !== undefined && {
           resolveConflicts: options.resolveOutputConflicts,
@@ -131,7 +183,95 @@ async function splitPdf(params: {
   return stagedPages;
 }
 
+async function splitPdfPageGroups(params: {
+  job: SplitPdfPageGroupsJob;
+  index: number;
+  runId: string;
+  signal: AbortSignal | undefined;
+}): Promise<PreparedConversionOutput[]> {
+  const { job, index, runId, signal } = params;
+  const pageGroups = job.pageGroups;
+  const outputPathForGroup = job.outputPathForGroup;
+
+  if (!pageGroups || !outputPathForGroup) {
+    throw new Error('Page groups and outputPathForGroup are required.');
+  }
+
+  signal?.throwIfAborted();
+
+  const itemName = `${index + 1}-${safeName(path.basename(job.sourcePath, path.extname(job.sourcePath)))}`;
+  const workDirectory = path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf', runId, itemName);
+  const groupsDirectory = path.join(workDirectory, 'groups');
+  const copiedSourcePath = path.join(workDirectory, path.basename(job.sourcePath));
+
+  await assertExistingPathInWorkspace(job.sourcePath, job.workspacePath);
+  await assertWritablePathInWorkspace(groupsDirectory, job.workspacePath);
+  signal?.throwIfAborted();
+  await mkdir(groupsDirectory, { recursive: true });
+  await assertWritablePathInWorkspace(copiedSourcePath, job.workspacePath);
+  signal?.throwIfAborted();
+  await copyFile(job.sourcePath, copiedSourcePath);
+
+  await assertExistingPathInWorkspace(copiedSourcePath, job.workspacePath);
+  signal?.throwIfAborted();
+  const sourceDocument = await PDFDocument.load(await readFile(copiedSourcePath));
+  signal?.throwIfAborted();
+  const pageCount = sourceDocument.getPageCount();
+
+  if (pageCount === 0) {
+    throw new Error(`PDF has no pages: ${job.sourcePath}`);
+  }
+
+  validatePageGroups(pageGroups, pageCount, job.sourcePath);
+
+  const stagedGroups: PreparedConversionOutput[] = [];
+
+  for (const [groupIndex, pages] of pageGroups.entries()) {
+    signal?.throwIfAborted();
+    const groupDocument = await PDFDocument.create();
+    const copiedPages = await groupDocument.copyPages(
+      sourceDocument,
+      pages.map((page) => page - 1),
+    );
+
+    if (copiedPages.length !== pages.length) {
+      throw new Error(`Could not copy all pages for group ${groupIndex}: ${job.sourcePath}`);
+    }
+
+    for (const copiedPage of copiedPages) {
+      groupDocument.addPage(copiedPage);
+    }
+
+    const stagedOutputPath = path.join(groupsDirectory, `${groupIndex + 1}.pdf`);
+    await assertWritablePathInWorkspace(stagedOutputPath, job.workspacePath);
+    signal?.throwIfAborted();
+    await writeFile(stagedOutputPath, await groupDocument.save());
+    signal?.throwIfAborted();
+
+    stagedGroups.push({
+      stagedOutputPath,
+      outputPath: outputPathForGroup(groupIndex, pages),
+      workspacePath: job.workspacePath,
+      stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf', runId),
+    });
+  }
+
+  return stagedGroups;
+}
+
 async function validateInputPaths(jobs: SplitPdfJob[]): Promise<void> {
+  await Promise.all(
+    jobs.flatMap((job) => [
+      assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
+      assertWritablePathInWorkspace(
+        path.join(job.workspacePath, '.latex-graphics-helper', 'split-pdf'),
+        job.workspacePath,
+      ),
+    ]),
+  );
+}
+
+async function validatePageGroupInputPaths(jobs: SplitPdfPageGroupsJob[]): Promise<void> {
   await Promise.all(
     jobs.flatMap((job) => [
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
@@ -151,6 +291,42 @@ function validateJobs(jobs: SplitPdfJob[]): void {
   for (const job of jobs) {
     if (path.extname(job.sourcePath).toLowerCase() !== '.pdf') {
       throw new Error(`Only PDF files can be split: ${job.sourcePath}`);
+    }
+  }
+}
+
+function validatePageGroupJobs(jobs: SplitPdfPageGroupsJob[]): void {
+  if (jobs.length === 0) {
+    throw new Error('No PDF files were selected.');
+  }
+
+  for (const job of jobs) {
+    if (path.extname(job.sourcePath).toLowerCase() !== '.pdf') {
+      throw new Error(`Only PDF files can be split: ${job.sourcePath}`);
+    }
+
+    if (!job.pageGroups || job.pageGroups.length === 0) {
+      throw new Error(`No page groups were supplied: ${job.sourcePath}`);
+    }
+
+    if (!job.outputPathForGroup) {
+      throw new Error(`outputPathForGroup is required: ${job.sourcePath}`);
+    }
+
+    for (const pages of job.pageGroups) {
+      if (!Array.isArray(pages) || pages.length === 0) {
+        throw new Error(`Page groups cannot be empty: ${job.sourcePath}`);
+      }
+    }
+  }
+}
+
+function validatePageGroups(pageGroups: number[][], pageCount: number, sourcePath: string): void {
+  for (const [groupIndex, pages] of pageGroups.entries()) {
+    for (const page of pages) {
+      if (!Number.isInteger(page) || page < 1 || page > pageCount) {
+        throw new Error(`Page ${page} in group ${groupIndex} is out of range for ${sourcePath}`);
+      }
     }
   }
 }

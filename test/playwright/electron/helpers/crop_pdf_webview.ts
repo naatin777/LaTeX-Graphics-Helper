@@ -22,8 +22,7 @@ export async function openCropPdfConfigure(vscodeWindow: Page, fileName: string)
 
   const pdfEntry = explorer.getByRole('treeitem', { name: fileName });
   await expect(pdfEntry).toBeVisible();
-  await pdfEntry.click();
-  await expect(pdfEntry).toHaveAttribute('aria-selected', 'true');
+  await selectExplorerEntry(pdfEntry);
   await pdfEntry.press('Shift+F10');
 
   const cropPdfMenu = vscodeWindow.getByRole('menuitem', { name: 'Crop PDF' });
@@ -73,8 +72,7 @@ export async function convertPngToJpeg(vscodeWindow: Page, fileName: string): Pr
   const explorer = vscodeWindow.getByRole('tree', { name: 'Files Explorer' });
   const pngEntry = explorer.getByRole('treeitem', { name: fileName });
   await expect(pngEntry).toBeVisible();
-  await pngEntry.click();
-  await expect(pngEntry).toHaveAttribute('aria-selected', 'true');
+  await selectExplorerEntry(pngEntry);
   await pngEntry.press('Shift+F10');
 
   const convertMenu = vscodeWindow.getByRole('menuitem', { name: 'Convert' });
@@ -87,11 +85,25 @@ export async function convertPngToJpeg(vscodeWindow: Page, fileName: string): Pr
   await expect(jpegMenu).toBeFocused();
   await vscodeWindow.keyboard.press('Enter');
 
-  const successNotification = vscodeWindow.getByText('Converted 1 file(s) to JPEG.', {
-    exact: true,
-  });
+  const successNotification = vscodeWindow.getByRole('alert').filter({ hasText: 'Converted 1 file(s) to JPEG.' });
   await expect(successNotification).toBeVisible();
   await vscodeWindow.keyboard.press('Escape');
+}
+
+async function selectExplorerEntry(entry: Locator): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        if ((await entry.getAttribute('aria-selected')) === 'true') {
+          return true;
+        }
+
+        await entry.click();
+        return (await entry.getAttribute('aria-selected')) === 'true';
+      },
+      { message: 'Explorer entry was not selected.' },
+    )
+    .toBe(true);
 }
 
 export async function expectPdfCanvasesReadable(canvases: Locator, message?: string): Promise<void> {

@@ -8,7 +8,7 @@ export default defineConfig({
   // テストに使う VS Code。
   // 同じcommitを同じVS Codeで再実行できるよう固定する。
   // latest stable compatibility testはrequired testと別jobで追加する。
-  version: "1.105.0",
+  version: "1.128.0",
 
   // Extension Development Host に読み込ませる拡張のパス。
   // 通常は repo root。
@@ -21,8 +21,8 @@ export default defineConfig({
   // Mocha 設定。
   // VS Code extension tests は Mocha under the hood。
   mocha: {
-    // VS Code の extension sample と同じ TDD style。
-    // suite/test を使うなら tdd。
+    // VS Code extension tests は Mocha under the hood。
+    // suite/testを使うならtdd。
     ui: "tdd",
 
     // PDF / 画像 / CLI / ファイル操作は遅くなるので長めにする。
@@ -49,5 +49,8 @@ export default defineConfig({
 
     // workspace trust の影響を減らす。
     "--disable-workspace-trust",
+    ...(process.env.LGH_VSCODE_TEST_USER_DATA_DIR
+      ? [`--user-data-dir=${process.env.LGH_VSCODE_TEST_USER_DATA_DIR}`]
+      : []),
   ],
 });

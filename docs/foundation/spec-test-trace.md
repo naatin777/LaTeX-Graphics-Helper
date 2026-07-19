@@ -54,12 +54,12 @@
 
 ## 5. Presentation and manifest trace
 
-| Trace ID    | Contract                                                              | Record                                          | Test                                            | Runtime                           | Status    | Gap                                                                                                |
-| ----------- | --------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- | --------------------------------- | --------- | -------------------------------------------------------------------------------------------------- |
-| TR-PRES-001 | public command ID、manifest、menu、extension registrationが一致する   | `package.json`, `extension.ts`                  | `package_manifest.test.ts`, `extension.test.ts` | 現在はExtension Host              | `covered` | manifest static testは`extension.ts` importのためHost依存。定数所有を変えればNode化可能            |
-| TR-PRES-002 | generated Webview HTML stringにCSP / nonce / locale directiveを含める | crop spec、security hardening task              | `webview_html.test.ts`                          | 現在はExtension Host fake Webview | `partial` | generated HTML string contractはcovered。actual Webview load / CSP enforcementは直接testしていない |
-| TR-PRES-003 | Browser rendererでPDF.js canvas、DPI、lazy render、zoomを成立させる   | `docs/specs/internal/test-policy.md`, crop spec | `webview-pdf-rendering.spec.ts`                 | Browser Playwright                | `covered` | Host simulationを含むためrenderer-only contractへの分割候補                                        |
-| TR-PRES-004 | 実VS Code theme、message bridge、Apply outputを成立させる             | `docs/specs/internal/test-policy.md`, crop spec | Electron crop spec                              | VS Code Electron                  | `covered` | visual、journey、packaging smokeが同じspecに混在                                                   |
+| Trace ID    | Contract                                                               | Record                                          | Test                                            | Runtime                           | Status    | Gap                                                                                                |
+| ----------- | ---------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- | --------------------------------- | --------- | -------------------------------------------------------------------------------------------------- |
+| TR-PRES-001 | public command ID、manifest、menu、extension registrationが一致する    | `package.json`, `extension.ts`                  | `package_manifest.test.ts`, `extension.test.ts` | 現在はExtension Host              | `covered` | manifest static testは`extension.ts` importのためHost依存。定数所有を変えればNode化可能            |
+| TR-PRES-002 | generated Webview HTML stringにCSP / nonce / locale directiveを含める  | crop spec、security hardening task              | `webview_html.test.ts`                          | 現在はExtension Host fake Webview | `partial` | generated HTML string contractはcovered。actual Webview load / CSP enforcementは直接testしていない |
+| TR-PRES-003 | Webview componentの入力、操作、zoom、表示切替、Apply stateを成立させる | `docs/specs/internal/test-policy.md`, crop spec | `webview/apps/*/src/App.test.tsx`               | JSDOM / Vitest                    | `covered` | PDF.js worker、canvas、CSP enforcementはJSDOMの対象外でElectron E2Eが正本                          |
+| TR-PRES-004 | 実VS Code theme、message bridge、Apply outputを成立させる              | `docs/specs/internal/test-policy.md`, crop spec | Electron crop spec                              | VS Code Electron                  | `covered` | visual、journey、packaging smokeが同じspecに混在                                                   |
 
 ## 6. Packaging and release trace
 
@@ -77,7 +77,7 @@
 2. `undo-last-conversion.md`の対象command一覧を現行generic conversion commandと同期するか、共通staged output operationを対象とする表現へ変更する。
 3. `conversion-progress-and-cancellation.md`の「対応済み」を実装から再生成せず、現行public commandとの手動traceを追加する。
 4. Merge / Split / Conversion matrixの正式specが必要かをmaintainerが決める。
-5. Browser / Electron testの正本関係は`docs/specs/internal/test-policy.md`だけでなく、case単位のtransition tableを持つ。
+5. JSDOM / Electron testの正本関係は`docs/specs/internal/test-policy.md`だけでなく、case単位のtransition tableを持つ。
 
 ## 8. Remaining unknowns
 

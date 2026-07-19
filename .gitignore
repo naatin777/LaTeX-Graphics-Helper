@@ -3,6 +3,7 @@ dist
 node_modules
 .pnpm-store/
 .vscode-test/
+.vscode-test-ci-data/
 playwright-report/
 test-results/
 media/

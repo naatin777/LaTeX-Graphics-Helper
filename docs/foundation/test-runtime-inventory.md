@@ -9,14 +9,14 @@
 
 詳細なfile単位表とcase indexは[test-file-inventory](test-file-inventory.md)にある。
 
-| Scope                 |  Files |   Cases | Current execution                               |
-| --------------------- | -----: | ------: | ----------------------------------------------- |
-| Root `test/*.test.ts` |     45 |     207 | configured VS Code Extension Host / Mocha       |
-| Browser Playwright    |      1 |      18 | configured Chromium                             |
-| Electron Playwright   |      1 |       1 | configured VS Code Electron                     |
-| **Total**             | **47** | **226** | statically declared; Vitest configured scope: 0 |
+| Scope                 |  Files |   Cases | Current execution                         |
+| --------------------- | -----: | ------: | ----------------------------------------- |
+| Root `test/*.test.ts` |     45 |     207 | configured VS Code Extension Host / Mocha |
+| Webview component     |      3 |       4 | configured JSDOM / Vitest                 |
+| Electron Playwright   |      1 |       1 | configured VS Code Electron               |
+| **Total**             | **49** | **212** | statically declared; Browser scope: 0     |
 
-`test:all`はconfigured Host 207 + Browser 18 = 225 statically declared casesであり、Electron、packaged VSIX、Vitestを含まない。actual executed countはこのinventoryから断定しない。
+`test`、`test:webview`、`test:playwright:vsix`はruntimeごとに分離されている。actual executed countと3 OSの結果はGitHub Actionsで確認する。
 
 ## 1. Runtime definitions
 
@@ -24,25 +24,23 @@
 | ----------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | RT-NODE     | Node test runner / Vitest候補  | pure logic、Node filesystem、child process、PDF / image library、failure injection                                    | 現在`test/`に置かれていること                             |
 | RT-VSCODE   | VS Code Extension Host / Mocha | `vscode` command registry、workspace、configuration、TextDocument、DataTransfer、globalState、notification / progress | production moduleが偶然`vscode`をtop-level importすること |
-| RT-BROWSER  | Browser Playwright             | Chromium canvas、PDF.js worker、layout、DPI、IntersectionObserver、scroll                                             | Webviewという名前が付いていること                         |
+| RT-BROWSER  | Retired Browser Playwright     | 過去のChromium canvas、PDF.js worker、layout、DPI、IntersectionObserver、scrollの履歴                                 | 現行required runtimeではない                              |
 | RT-ELECTRON | Real VS Code Electron          | VS Code window、actual Webview frame、theme CSS variables、Host message bridge、critical user journey                 | pure operationやpackage内部moduleの全組合せ               |
 | RT-PACKAGE  | Installed VSIX smoke           | packaged artifact、native dependency、controlled external-fetch failure / installation / execution                    | development extension pathの動作                          |
 | RT-PLATFORM | Native OS matrix               | path、shell、external process、native module、file lock等のOS差                                                       | 1 OSのsimulationだけ                                      |
 
 ## 2. Runner and script inventory
 
-| Entry                      | Actual execution                                            | Platform / trigger                                       | Meaning gap                                             |
-| -------------------------- | ----------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------- |
-| `test`                     | `test:vscode`                                               | local                                                    | 名前だけではExtension Host testと分からない             |
-| `test:vscode`              | build:test後に`vscode-test`                                 | fixed VS Code 1.128.0                                    | `out/test/**/*.test.js`をすべてExtension Hostへ入れる   |
-| `test:playwright`          | Browser projectのみ                                         | local / Playwright workflow 3 OS                         | browser renderer suite                                  |
-| `test:playwright:electron` | Electron projectのみ                                        | local / Test workflow Linux / release 3 OS packaged mode | development journeyとpackaged smokeを同じspecで切替える |
-| `test:all`                 | `test:vscode` + Browser Playwright                          | local                                                    | Electron、packaging、Vitestを含まないため名称が曖昧     |
-| `check:all`                | lint / format / TS / NLS                                    | Check workflow                                           | runtime testではない                                    |
-| Test workflow              | VS Code test 3 OS + Electron Linux                          | PR / main push、docs-only skip                           | runtime Evidenceを提供する。初稿監査では見落としていた  |
-| Playwright workflow        | Browser Playwright 3 OS + gate                              | PR / main push、docs-only skip                           | renderer Evidenceを提供する                             |
-| Release workflow           | static verify + VSIX package / packaged Electron smoke 3 OS | tag                                                      | distribution Evidenceを提供する                         |
-| Vitest config              | `webview/vitest.config.ts`                                  | formal root scriptなし                                   | current test execution scopeなし。formal adoptionは未決 |
+| Entry                  | Actual execution                                      | Platform / trigger                              | Meaning gap                                      |
+| ---------------------- | ----------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
+| `test`                 | `vscode-test`                                         | local / Test workflow 3 OS                      | fixed VS Code 1.128.0、build-free Host suite     |
+| `test:webview`         | three app Vitest configs                              | local / Test workflow 3 OS                      | JSDOM component interaction、build-free          |
+| `test:playwright:vsix` | Electron projectのみ                                  | local / Playwright workflow 3 OS / release 3 OS | required `LGH_VSIX_PATH`のinstalled VSIX journey |
+| `check:all`            | lint / format / TS / NLS                              | Check workflow                                  | runtime testではない                             |
+| Test workflow          | build + Host + JSDOM component test 3 OS              | PR / main push、docs-only skipなし              | pre-package runtime Evidenceを提供する           |
+| Playwright workflow    | build + runner VSIX package + installed Electron 3 OS | PR / main push                                  | packaged artifact Evidenceを提供する             |
+| Release workflow       | VSIX package / packaged Electron smoke 3 OS           | tag                                             | distribution Evidenceを提供する                  |
+| Vitest config          | `test:webview`                                        | formal root scriptあり                          | PDF.js real renderingやElectronの証明には不十分  |
 
 ## 3. Tests whose contract is Node-level
 
@@ -100,9 +98,11 @@ These are not current Node migration candidates. They require a production or ow
 | `test/convert_to_pdf_command.test.ts`    | command registration、configuration、selected Uri、notification completion          | public command behaviorがcontract               | source format conversionの組合せはoperation testへ移せる可能性              |
 | `test/merge_pdf_command.test.ts`         | command registry、SaveDialog、selected Uri、notification                            | Explorer command journeyがcontract              | rasterized content comparisonはoperation testとの役割を整理する             |
 
-## 5. Browser Playwright inventory
+## 5. Historical Browser Playwright inventory
 
 ### `test/playwright/webview-pdf-rendering.spec.ts`
+
+この節はTask 0197以前の履歴を保存するためのもので、現行required runtimeではない。現在のWebview操作契約はJSDOM component test、PDF.js/canvasとHost bridgeはpackaged Electron E2Eで確認する。
 
 現在確認したcontract群:
 

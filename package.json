@@ -23,30 +23,33 @@
   "type": "module",
   "main": "./out/extension.js",
   "scripts": {
+    "clean": "node -e \"const fs = require('node:fs'); for (const p of ['out', 'media/webview']) fs.rmSync(p, { recursive: true, force: true })\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
     "typecheck:webview": "tsc --noEmit -p webview/tsconfig.json",
     "typecheck:webview:test": "tsc --noEmit -p webview/tsconfig.test.json",
+    "lint": "oxlint src test webview/apps webview/shared",
+    "lint:fix": "oxlint --fix src test webview/apps webview/shared",
+    "format": "oxfmt --config ./oxfmt.config.ts --check src test webview/apps webview/shared package.json tsconfig.json tsconfig.test.json webview/tsconfig.json webview/tsconfig.test.json oxfmt.config.ts oxlint.config.ts",
+    "format:fix": "oxfmt --config ./oxfmt.config.ts --write src test webview/apps webview/shared package.json tsconfig.json tsconfig.test.json webview/tsconfig.json webview/tsconfig.test.json oxfmt.config.ts oxlint.config.ts",
     "compile": "tsc -p tsconfig.json",
     "compile:test": "tsc -p tsconfig.test.json",
-    "compile:webview": "pnpm run compile:webview:crop_pdf",
+    "compile:webview": "pnpm run compile:webview:crop_pdf && pnpm run compile:webview:merge_pdf && pnpm run compile:webview:split_pdf",
     "compile:webview:crop_pdf": "vite build --config webview/apps/crop_pdf/vite.config.ts",
-    "build": "pnpm run clean && pnpm run compile && pnpm run compile:webview",
-    "build:test": "pnpm run clean && pnpm run compile && pnpm run compile:test && pnpm run compile:webview",
-    "watch": "tsc --watch -p tsconfig.json",
-    "watch:webview:crop_pdf": "vite build --watch --config webview/apps/crop_pdf/vite.config.ts",
-    "lint": "oxlint src test webview/apps webview/shared webview/vite.config.ts webview/vitest.config.ts oxlint.config.ts",
-    "lint:fix": "oxlint --fix src test webview/apps webview/shared webview/vite.config.ts webview/vitest.config.ts oxlint.config.ts",
-    "format": "oxfmt --config ./oxfmt.config.ts --check src test webview/apps webview/shared webview/vite.config.ts webview/vitest.config.ts package.json tsconfig.json tsconfig.test.json webview/tsconfig.json webview/tsconfig.test.json oxfmt.config.ts oxlint.config.ts",
-    "format:fix": "oxfmt --config ./oxfmt.config.ts --write src test webview/apps webview/shared webview/vite.config.ts webview/vitest.config.ts package.json tsconfig.json tsconfig.test.json webview/tsconfig.json webview/tsconfig.test.json oxfmt.config.ts oxlint.config.ts",
-    "check": "pnpm run lint && pnpm run format && pnpm run typecheck && pnpm run typecheck:webview",
-    "check:test": "pnpm run typecheck:test && pnpm run typecheck:webview:test",
-    "check:all": "pnpm run check && pnpm run check:test && pnpm run check:nls",
-    "check:fix": "pnpm run lint:fix && pnpm run format:fix",
+    "compile:webview:merge_pdf": "vite build --config webview/apps/merge_pdf/vite.config.ts",
+    "compile:webview:split_pdf": "vite build --config webview/apps/split_pdf/vite.config.ts",
+    "test:webview": "pnpm run test:webview:crop_pdf && pnpm run test:webview:merge_pdf && pnpm run test:webview:split_pdf",
+    "test:webview:crop_pdf": "vitest run --config webview/apps/crop_pdf/vitest.config.ts",
+    "test:webview:merge_pdf": "vitest run --config webview/apps/merge_pdf/vitest.config.ts",
+    "test:webview:split_pdf": "vitest run --config webview/apps/split_pdf/vitest.config.ts",
+    "build": "pnpm run clean && pnpm run compile && pnpm run compile:test && pnpm run compile:webview",
+    "check": "pnpm run lint && pnpm run format && pnpm run typecheck && pnpm run typecheck:test && pnpm run typecheck:webview && pnpm run typecheck:webview:test",
     "check:nls": "node scripts/check-nls.mjs",
-    "clean": "node -e \"const fs = require('node:fs'); for (const p of ['out', 'media/webview']) fs.rmSync(p, { recursive: true, force: true })\"",
-    "test": "pnpm run build:test && vscode-test",
+    "check:all": "pnpm run check && pnpm run check:nls",
+    "check:fix": "pnpm run lint:fix && pnpm run format:fix",
+    "test": "vscode-test",
     "test:playwright": "playwright test --project=vscode-electron",
+    "test:playwright:vsix": "playwright test --project=vscode-electron",
     "package": "pnpm run build && pnpm run package:vsix",
     "package:vsix": "node scripts/package-vsix.mjs"
   },
@@ -110,8 +113,18 @@
         "category": "LaTeX Graphics Helper"
       },
       {
+        "command": "latex-graphics-helper.splitPdf.configure",
+        "title": "%command.splitPdf.configure%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
         "command": "latex-graphics-helper.mergePdf.selectedFiles",
         "title": "%command.mergePdf.selectedFiles%",
+        "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.mergePdf.configure",
+        "title": "%command.mergePdf.configure%",
         "category": "LaTeX Graphics Helper"
       },
       {
@@ -185,11 +198,21 @@
           "command": "latex-graphics-helper.splitPdf.allPages",
           "group": "latex-graphics-helper.splitPdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.splitPdf.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.splitPdf.configure",
+          "group": "latex-graphics-helper.splitPdf",
+          "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.splitPdf.enabled"
         }
       ],
       "latex-graphics-helper.mergePdf": [
         {
           "command": "latex-graphics-helper.mergePdf.selectedFiles",
+          "group": "latex-graphics-helper.mergePdf",
+          "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.mergePdf.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.mergePdf.configure",
           "group": "latex-graphics-helper.mergePdf",
           "when": "resourceExtname == .pdf && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.mergePdf.enabled"
         }
@@ -233,6 +256,14 @@
         },
         {
           "command": "latex-graphics-helper.cropPdf.configure",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.splitPdf.configure",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.mergePdf.configure",
           "when": "false"
         }
       ]

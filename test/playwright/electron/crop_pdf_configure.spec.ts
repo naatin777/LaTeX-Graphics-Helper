@@ -1,6 +1,7 @@
 import { cp, mkdir, mkdtemp, readFile, stat } from 'node:fs/promises';
+import { statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 import { downloadAndUnzipVSCode } from '@vscode/test-electron';
@@ -25,15 +26,7 @@ import {
 
 const projectRoot = process.cwd();
 const vscodeVersion = '1.128.0';
-const configuredVsixPath = process.env.LGH_VSIX_PATH;
-
-if (!configuredVsixPath) {
-  throw new Error(
-    'LGH_VSIX_PATH is required. Package a VSIX and pass its absolute path before running Electron Playwright.',
-  );
-}
-
-const packagedVsixPath = resolve(configuredVsixPath);
+const packagedVsixPath = resolvePackagedVsixPath(process.env.LGH_VSIX_PATH);
 const temporaryBase = process.platform === 'win32' ? tmpdir() : '/tmp';
 const sourceFixture = join(
   projectRoot,
@@ -52,6 +45,36 @@ const expectedCropBox = {
   width: cropConfigureFixture.cropBox.right - cropConfigureFixture.cropBox.left,
   height: cropConfigureFixture.cropBox.top - cropConfigureFixture.cropBox.bottom,
 };
+
+function resolvePackagedVsixPath(value: string | undefined): string {
+  if (!value) {
+    throw new Error(
+      'LGH_VSIX_PATH is required. Package a VSIX and pass its absolute path before running Electron Playwright.',
+    );
+  }
+
+  if (!isAbsolute(value)) {
+    throw new Error(`LGH_VSIX_PATH must be an absolute path: ${value}`);
+  }
+
+  if (!value.toLowerCase().endsWith('.vsix')) {
+    throw new Error(`LGH_VSIX_PATH must point to a .vsix file: ${value}`);
+  }
+
+  let fileStats;
+
+  try {
+    fileStats = statSync(value);
+  } catch {
+    throw new Error(`LGH_VSIX_PATH does not exist: ${value}`);
+  }
+
+  if (!fileStats.isFile()) {
+    throw new Error(`LGH_VSIX_PATH must point to a regular file: ${value}`);
+  }
+
+  return value;
+}
 
 test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', async ({ playwright }, testInfo) => {
   testInfo.setTimeout(240_000);

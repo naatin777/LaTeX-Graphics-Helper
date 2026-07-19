@@ -1,39 +1,39 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { parseArgs } from "node:util";
-import { fileURLToPath } from "node:url";
-import { spawn } from "node:child_process";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 
-const rootDirectory = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
+const rootDirectory = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const supportedTargets = new Set([
-  "darwin-arm64",
-  "darwin-x64",
-  "linux-arm64",
-  "linux-x64",
-  "win32-arm64",
-  "win32-x64",
+  'darwin-arm64',
+  'darwin-x64',
+  'linux-arm64',
+  'linux-x64',
+  'win32-arm64',
+  'win32-x64',
 ]);
 const runtimeFiles = [
-  "CHANGELOG.md",
-  "LICENSE",
-  "README.ja.md",
-  "README.md",
-  "assets",
-  "media",
-  "out",
-  ".vscodeignore",
-  "package.nls.ja.json",
-  "package.nls.json",
+  'CHANGELOG.md',
+  'LICENSE',
+  'README.ja.md',
+  'README.md',
+  'assets',
+  'media',
+  'out',
+  '.vscodeignore',
+  'package.nls.ja.json',
+  'package.nls.json',
 ];
 
 function parsePackageArguments(args) {
-  const normalizedArgs = args[0] === "--" ? args.slice(1) : args;
+  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
   const { values } = parseArgs({
     args: normalizedArgs,
     options: {
-      out: { type: "string" },
-      target: { type: "string" },
+      out: { type: 'string' },
+      target: { type: 'string' },
     },
     strict: true,
   });
@@ -43,27 +43,22 @@ function parsePackageArguments(args) {
     throw new Error(`Unsupported VSIX target: ${target}`);
   }
   if (target !== getCurrentTarget()) {
-    throw new Error(
-      `VSIX target ${target} must match the current runner target ${getCurrentTarget()}`,
-    );
+    throw new Error(`VSIX target ${target} must match the current runner target ${getCurrentTarget()}`);
   }
 
-  const outputPath = path.resolve(
-    rootDirectory,
-    values.out ?? `latex-graphics-helper-${target}.vsix`,
-  );
+  const outputPath = path.resolve(rootDirectory, values.out ?? `latex-graphics-helper-${target}.vsix`);
   return { outputPath, target };
 }
 
 function getCurrentTarget() {
   const platform = {
-    darwin: "darwin",
-    linux: "linux",
-    win32: "win32",
+    darwin: 'darwin',
+    linux: 'linux',
+    win32: 'win32',
   }[process.platform];
   const architecture = {
-    arm64: "arm64",
-    x64: "x64",
+    arm64: 'arm64',
+    x64: 'x64',
   }[process.arch];
 
   if (!platform || !architecture) {
@@ -93,15 +88,13 @@ async function copyRuntimeFiles(stageDirectory) {
 
 function runCommand(command, args, options) {
   return new Promise((resolve, reject) => {
-    // Windows exposes pnpm through a .cmd shim, which Node cannot spawn with shell:false.
-    const useShell = process.platform === "win32" && command.toLowerCase().endsWith(".cmd");
     const child = spawn(command, args, {
       ...options,
-      shell: useShell,
-      stdio: "inherit",
+      shell: false,
+      stdio: 'inherit',
     });
-    child.once("error", reject);
-    child.once("exit", (code, signal) => {
+    child.once('error', reject);
+    child.once('exit', (code, signal) => {
       if (code === 0) {
         resolve();
         return;
@@ -111,25 +104,29 @@ function runCommand(command, args, options) {
   });
 }
 
-function getPnpmCommand() {
-  return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+function getPnpmScript() {
+  const npmExecPath = process.env.npm_execpath;
+
+  if (!npmExecPath || npmExecPath.toLowerCase().endsWith('.cmd')) {
+    throw new Error('package-vsix.mjs must be run through pnpm so npm_execpath points to the pnpm JavaScript CLI.');
+  }
+
+  return path.resolve(rootDirectory, npmExecPath);
 }
 
 async function packageVsix({ outputPath, target }) {
-  const packageManifest = JSON.parse(
-    await readFile(path.join(rootDirectory, "package.json"), "utf8"),
-  );
-  const stageDirectory = await mkdtemp(path.join(os.tmpdir(), "latex-graphics-helper-vsix-"));
+  const packageManifest = JSON.parse(await readFile(path.join(rootDirectory, 'package.json'), 'utf8'));
+  const stageDirectory = await mkdtemp(path.join(os.tmpdir(), 'latex-graphics-helper-vsix-'));
 
   try {
     await mkdir(path.dirname(outputPath), { recursive: true });
     await runCommand(
-      getPnpmCommand(),
-      ["--filter", ".", "deploy", "--prod", "--legacy", stageDirectory],
+      process.execPath,
+      [getPnpmScript(), '--filter', '.', 'deploy', '--prod', '--legacy', stageDirectory],
       { cwd: rootDirectory },
     );
     await writeFile(
-      path.join(stageDirectory, "package.json"),
+      path.join(stageDirectory, 'package.json'),
       `${JSON.stringify(createRuntimeManifest(packageManifest), null, 2)}\n`,
     );
     await copyRuntimeFiles(stageDirectory);
@@ -137,11 +134,11 @@ async function packageVsix({ outputPath, target }) {
     await runCommand(
       process.execPath,
       [
-        path.join(rootDirectory, "node_modules", "@vscode", "vsce", "vsce"),
-        "package",
-        "--target",
+        path.join(rootDirectory, 'node_modules', '@vscode', 'vsce', 'vsce'),
+        'package',
+        '--target',
         target,
-        "--out",
+        '--out',
         outputPath,
       ],
       { cwd: stageDirectory },
