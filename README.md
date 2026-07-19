@@ -42,19 +42,19 @@ You can install this extension in one of the following ways:
 
 ## Commands
 
-| Feature                | Input                                                                               | Output                  | Use case                                   | Required external tools  |
-| ---------------------- | ----------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------ | ------------------------ |
-| Crop PDF margins       | `.pdf`                                                                              | `.pdf`                  | Remove margins from figure PDFs            | Ghostscript              |
-| Split PDF              | `.pdf`                                                                              | `.pdf`                  | Split a PDF into single pages              | None                     |
-| Convert to PDF         | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                           | `.pdf`                  | Convert raster images to PDF               | None                     |
-| Convert to PDF         | `.svg`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.pdf`                  | Convert figure files to PDF                | Depends on input format  |
-| Convert to PNG         | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images | `.png`                  | Convert figure files to PNG                | Poppler for PDF input    |
-| Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Poppler for PDF input    |
-| Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Poppler for PDF input    |
-| Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Poppler for PDF input    |
-| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.svg`                  | Convert figure files to SVG                | Poppler for PDF input    |
-| Insert PDF into LaTeX  | `.pdf`                                                                              | LaTeX code              | Generate `figure` / `includegraphics` code | None                     |
-| Insert clipboard image | Clipboard image                                                                     | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format |
+| Feature                | Input                                                                               | Output                  | Use case                                   | Required external tools                                          |
+| ---------------------- | ----------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| Crop PDF margins       | `.pdf`                                                                              | `.pdf`                  | Remove margins from figure PDFs            | Ghostscript                                                      |
+| Split PDF              | `.pdf`                                                                              | `.pdf`                  | Split a PDF into single pages              | None                                                             |
+| Convert to PDF         | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                           | `.pdf`                  | Convert raster images to PDF               | None                                                             |
+| Convert to PDF         | `.svg`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.pdf`                  | Convert figure files to PDF                | Depends on input format                                          |
+| Convert to PNG         | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images | `.png`                  | Convert figure files to PNG                | Poppler for PDF input                                            |
+| Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Poppler for PDF input                                            |
+| Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Poppler for PDF input                                            |
+| Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Poppler for PDF input                                            |
+| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                 | `.svg`                  | Convert figure files to SVG                | Poppler for PDF, Chrome for Mermaid, Draw.io for editable images |
+| Insert PDF into LaTeX  | `.pdf`                                                                              | LaTeX code              | Generate `figure` / `includegraphics` code | None                                                             |
+| Insert clipboard image | Clipboard image                                                                     | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format                                         |
 
 ## Required Tools
 
@@ -82,10 +82,14 @@ Main settings:
 | `latex-graphics-helper.execPath.pdftocairo`                | `pdftocairo`                   | Path to the `pdftocairo` executable                                                                                               |
 | `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | Path to the `rsvg-convert` executable                                                                                             |
 | `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVG to PDF backend. Choose `puppeteer` or `rsvg-convert`                                                                          |
+| `latex-graphics-helper.mermaid.puppeteer.browserChannel`   | `chrome`                       | Chrome channel used by Mermaid CLI                                                                                                |
+| `latex-graphics-helper.mermaid.puppeteer.executablePath`   | empty string                   | Browser executable used by Mermaid CLI; takes precedence over the channel                                                         |
 | `latex-graphics-helper.convertToWebp.effort`               | `4`                            | Encoding effort for WebP output                                                                                                   |
 | `latex-graphics-helper.convertToAvif.effort`               | `4`                            | Encoding effort for AVIF output                                                                                                   |
 
 Output paths and LaTeX snippet candidates can also be changed from VS Code settings.
+
+Output-format settings such as `outputPath.convertToPdf` take precedence. When they are empty, whitespace-only, or unset, the legacy input/output pair-specific setting is used. The legacy settings remain as a compatibility fallback and are planned for review before the next major version.
 
 ## Output Panel
 

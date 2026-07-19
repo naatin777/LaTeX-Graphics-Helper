@@ -30,19 +30,19 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・editable Draw.i
 
 ## コマンド一覧
 
-| 機能                            | 入力                                                                              | 出力                        | 主な用途                                | 必要な外部ツール         |
-| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------- | --------------------------------------- | ------------------------ |
-| PDF の余白トリミング            | `.pdf`                                                                            | `.pdf`                      | 図版 PDF の余白を削除                   | Ghostscript              |
-| PDF の分割                      | `.pdf`                                                                            | `.pdf`                      | PDF をページごとに分割                  | 不要                     |
-| PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                         | `.pdf`                      | ラスター画像を PDF に変換               | 不要                     |
-| PDF へ変換                      | `.svg`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.pdf`                      | 図版ファイルを PDF に変換               | 入力形式により異なります |
-| PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | PDF入力ではPoppler       |
-| JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | PDF入力ではPoppler       |
-| WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | PDF入力ではPoppler       |
-| AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | PDF入力ではPoppler       |
-| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.svg`                      | 図版ファイルを SVG に変換               | PDF入力ではPoppler       |
-| PDF の LaTeX 挿入               | `.pdf`                                                                            | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                     |
-| クリップボード画像の LaTeX 挿入 | クリップボード画像                                                                | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります |
+| 機能                            | 入力                                                                              | 出力                        | 主な用途                                | 必要な外部ツール                                         |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------- | --------------------------------------- | -------------------------------------------------------- |
+| PDF の余白トリミング            | `.pdf`                                                                            | `.pdf`                      | 図版 PDF の余白を削除                   | Ghostscript                                              |
+| PDF の分割                      | `.pdf`                                                                            | `.pdf`                      | PDF をページごとに分割                  | 不要                                                     |
+| PDF へ変換                      | `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`                                         | `.pdf`                      | ラスター画像を PDF に変換               | 不要                                                     |
+| PDF へ変換                      | `.svg`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.pdf`                      | 図版ファイルを PDF に変換               | 入力形式により異なります                                 |
+| PNG へ変換                      | `.pdf`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像 | `.png`                      | 図版ファイルを PNG に変換               | PDF入力ではPoppler                                       |
+| JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | PDF入力ではPoppler                                       |
+| WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | PDF入力ではPoppler                                       |
+| AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | PDF入力ではPoppler                                       |
+| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                 | `.svg`                      | 図版ファイルを SVG に変換               | PDF入力はPoppler、MermaidはChrome、editable画像はDraw.io |
+| PDF の LaTeX 挿入               | `.pdf`                                                                            | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                                                     |
+| クリップボード画像の LaTeX 挿入 | クリップボード画像                                                                | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります                                 |
 
 ## インストール方法
 
@@ -143,10 +143,14 @@ Draw.io Desktop は以下からインストールしてください。
 | `latex-graphics-helper.execPath.pdftocairo`                | `pdftocairo`                   | `pdftocairo` 実行ファイルへのパスです                                                                          |
 | `latex-graphics-helper.execPath.rsvgConvert`               | `rsvg-convert`                 | `rsvg-convert` 実行ファイルへのパスです                                                                        |
 | `latex-graphics-helper.convertToPdf.svg.engine`            | `puppeteer`                    | SVGをPDFへ変換するときのバックエンドです。`puppeteer` または `rsvg-convert` を選択できます                     |
+| `latex-graphics-helper.mermaid.puppeteer.browserChannel`   | `chrome`                       | Mermaid CLIが使用するChromeチャンネルです                                                                      |
+| `latex-graphics-helper.mermaid.puppeteer.executablePath`   | 空文字                         | Mermaid CLIが使用するブラウザ実行ファイルです。チャンネルより優先されます                                      |
 | `latex-graphics-helper.convertToWebp.effort`               | `4`                            | WebP出力のエンコードeffortです                                                                                 |
 | `latex-graphics-helper.convertToAvif.effort`               | `4`                            | AVIF出力のエンコードeffortです                                                                                 |
 
 出力ファイル名や LaTeX snippet の候補も VS Code の設定から変更できます。
+
+`outputPath.convertToPdf`などの出力形式別設定を優先し、空、空白のみ、または未設定の場合はlegacyの入力形式と出力形式のペア別設定へfallbackします。legacy設定は互換性のために保持し、次のmajor version前に利用実態を確認して廃止時期を決めます。
 
 ## Output パネル
 

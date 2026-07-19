@@ -22,8 +22,7 @@ cat > "$settings_dir/settings.json" <<EOF
     "latex-graphics-helper.execPath.pdftocairo": "${pdftocairo_path}",
     "latex-graphics-helper.execPath.rsvgConvert": "${rsvg_convert_path}",
     "latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath": "${chrome_path}",
-    "latex-graphics-helper.convertToPdf.mermaid.puppeteer.executablePath": "${chrome_path}",
-    "latex-graphics-helper.convertToSvg.mermaid.puppeteer.executablePath": "${chrome_path}"
+    "latex-graphics-helper.mermaid.puppeteer.executablePath": "${chrome_path}"
 }
 EOF
 

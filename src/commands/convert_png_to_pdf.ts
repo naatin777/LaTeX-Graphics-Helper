@@ -3,13 +3,13 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
 import {
   convertPngToPdfFiles,
   type ConvertPngToPdfJob,
   type DrawioToPdfOptions,
-  type MermaidPuppeteerOptions,
   type SvgToPdfEngine,
   type SvgToPdfOptions,
 } from '../operations/convert_png_to_pdf.js';
@@ -103,7 +103,7 @@ async function convertSelectedPngFilesToPdf(
         ? undefined
         : readOutputFormatOutputTemplate(configuration, messages.outputFormatOutputPathKey);
     const svgToPdf = readSvgToPdfOptions(configuration);
-    const mermaid = readMermaidPuppeteerOptions(configuration);
+    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToPdfOptions(configuration);
     const jobs = sourceUris.map((sourceUri) =>
       createJob(
@@ -203,15 +203,6 @@ function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgT
     rsvgConvertPath: configuration.get<string>('execPath.rsvgConvert', 'rsvg-convert'),
     puppeteerBrowserChannel: configuration.get('convertToPdf.svg.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),
-  };
-}
-
-function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
-  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
-
-  return {
-    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
-    ...(executablePath ? { executablePath } : {}),
   };
 }
 
