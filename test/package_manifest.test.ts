@@ -13,13 +13,14 @@ const CONVERT_TO_JPEG_COMMAND = 'latex-graphics-helper.convertToJpeg';
 const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
 const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
 const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
+const CONVERT_DRAWIO_TO_PDF_COMMAND = 'latex-graphics-helper.convertDrawioToPdf';
+const CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND = 'latex-graphics-helper.convertDrawioToPdfDirectly';
 const CONVERT_SUBMENU = 'latex-graphics-helper.convert';
 const UNIMPLEMENTED_MANUAL_COMMANDS = [
   'latex-graphics-helper.splitPdf.manual',
   'latex-graphics-helper.mergePdf.manual',
 ] as const;
 const LEGACY_TO_PDF_COMMANDS = [
-  'latex-graphics-helper.convertDrawioToPdf',
   'latex-graphics-helper.convertPngToPdf',
   'latex-graphics-helper.convertJpegToPdf',
   'latex-graphics-helper.convertWebpToPdf',
@@ -89,6 +90,22 @@ suite('package.jsonの変換メニュー定義', () => {
     for (const legacyCommand of LEGACY_TO_PDF_COMMANDS) {
       assert.ok(!commandIds.has(legacyCommand), `${legacyCommand} should not be public`);
     }
+  });
+
+  test('ネイティブDraw.io用のPDFコマンドと直接出力設定を公開する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const commandIds = new Set(packageJson.contributes.commands.map((command) => command.command));
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
+    const properties = packageJson.contributes.configuration.properties;
+
+    assert.ok(commandIds.has(CONVERT_DRAWIO_TO_PDF_COMMAND));
+    assert.ok(commandIds.has(CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND));
+    assert.ok(explorerContext.some((entry) => entry.command === CONVERT_DRAWIO_TO_PDF_COMMAND));
+    assert.ok(explorerContext.some((entry) => entry.command === CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND));
+    assert.strictEqual(
+      properties['latex-graphics-helper.outputPath.convertDrawioToPdfDirectly']?.default,
+      '${fileDirname}/${fileBasenameNoExtension}.pdf',
+    );
   });
 
   test('Explorerの変換サブメニューにPDFに変換コマンドを表示する', async () => {

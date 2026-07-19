@@ -15,7 +15,12 @@ export interface StagedConversionBatch<Job extends { workspacePath: string }> {
   operationName: string;
   runId: string;
   runtime?: ConversionRuntime;
-  stage: (job: Job, index: number, runId: string, runtime: ConversionRuntime) => Promise<PreparedConversionOutput>;
+  stage: (
+    job: Job,
+    index: number,
+    runId: string,
+    runtime: ConversionRuntime,
+  ) => Promise<PreparedConversionOutput | PreparedConversionOutput[]>;
 }
 
 /** Runs the shared staging/commit lifecycle; source dispatch stays with each operation. */
@@ -29,9 +34,11 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
     artifacts,
     async () => {
       const limit = pLimit(CONVERSION_CONCURRENCY);
-      const stagedOutputs = await Promise.all(
-        options.jobs.map((job, index) => limit(() => options.stage(job, index, options.runId, runtime))),
-      );
+      const stagedOutputs = (
+        await Promise.all(
+          options.jobs.map((job, index) => limit(() => options.stage(job, index, options.runId, runtime))),
+        )
+      ).flat();
       runtime.signal?.throwIfAborted();
       return commitConversionOutputs(stagedOutputs, {
         ...(runtime.signal !== undefined && { signal: runtime.signal }),

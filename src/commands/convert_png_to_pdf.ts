@@ -201,6 +201,7 @@ function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgT
   return {
     engine: configuration.get<SvgToPdfEngine>('convertToPdf.svg.engine', 'puppeteer'),
     rsvgConvertPath: configuration.get<string>('execPath.rsvgConvert', 'rsvg-convert'),
+    puppeteerBrowser: configuration.get<'chrome' | 'firefox'>('puppeteer.browser', 'chrome'),
     puppeteerBrowserChannel: configuration.get('convertToPdf.svg.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),
   };

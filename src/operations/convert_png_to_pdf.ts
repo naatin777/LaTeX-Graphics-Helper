@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import pLimit from 'p-limit';
 import { PDFDocument, type PDFPage } from 'pdf-lib';
-import { launch, type Browser, type ChromeReleaseChannel } from 'puppeteer-core';
+import { launch, type Browser, type ChromeReleaseChannel, type SupportedBrowser } from 'puppeteer-core';
 import sharp from 'sharp';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../application/source_format.js';
@@ -37,6 +37,7 @@ export type SvgToPdfEngine = 'puppeteer' | 'rsvg-convert';
 export interface SvgToPdfOptions {
   engine: SvgToPdfEngine;
   rsvgConvertPath: string;
+  puppeteerBrowser: SupportedBrowser;
   puppeteerBrowserChannel: ChromeReleaseChannel;
   puppeteerExecutablePath?: string;
   runRsvgConvert?: RunRsvgConvert;
@@ -325,6 +326,7 @@ async function writeSvgAsPdf(
   const options = svgToPdf ?? {
     engine: 'puppeteer',
     rsvgConvertPath: 'rsvg-convert',
+    puppeteerBrowser: 'chrome',
     puppeteerBrowserChannel: 'chrome',
   };
   const size = await readSvgSize(sourcePath);
@@ -397,9 +399,12 @@ async function writeSvgAsPdfWithPuppeteer(
     browser = await launch({
       headless: true,
       env: puppeteerLaunchEnv(),
+      browser: options.puppeteerBrowser,
       ...(options.puppeteerExecutablePath
         ? { executablePath: options.puppeteerExecutablePath }
-        : { channel: options.puppeteerBrowserChannel }),
+        : options.puppeteerBrowser === 'chrome'
+          ? { channel: options.puppeteerBrowserChannel }
+          : {}),
     });
     signal?.throwIfAborted();
 

@@ -8,6 +8,7 @@ export type SourceFormat =
   | 'avif'
   | 'svg'
   | 'mermaid'
+  | 'drawio'
   | 'editable-drawio-png'
   | 'editable-drawio-svg';
 
@@ -18,6 +19,9 @@ export function sourceFormatForPath(sourcePath: string): SourceFormat | undefine
   }
   if (lowerSourcePath.endsWith('.drawio.svg') || lowerSourcePath.endsWith('.dio.svg')) {
     return 'editable-drawio-svg';
+  }
+  if (lowerSourcePath.endsWith('.drawio') || lowerSourcePath.endsWith('.dio')) {
+    return 'drawio';
   }
 
   switch (path.extname(lowerSourcePath)) {
@@ -49,6 +53,14 @@ export function isMermaidPath(sourcePath: string): boolean {
 export function isEditableDrawioImagePath(sourcePath: string): boolean {
   const format = sourceFormatForPath(sourcePath);
   return format === 'editable-drawio-png' || format === 'editable-drawio-svg';
+}
+
+export function isNativeDrawioPath(sourcePath: string): boolean {
+  return sourceFormatForPath(sourcePath) === 'drawio';
+}
+
+export function isDrawioPath(sourcePath: string): boolean {
+  return isNativeDrawioPath(sourcePath) || isEditableDrawioImagePath(sourcePath);
 }
 
 export function logicalSourcePathForOutputTemplate(sourcePath: string): string {

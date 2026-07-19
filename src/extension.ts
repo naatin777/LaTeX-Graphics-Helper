@@ -7,6 +7,12 @@ import {
   CONVERT_TO_PDF_COMMAND,
   CONVERT_PNG_TO_PDF_COMMAND,
 } from './commands/convert_png_to_pdf.js';
+import {
+  convertDrawioToPdfCommand,
+  convertDrawioToPdfDirectlyCommand,
+  CONVERT_DRAWIO_TO_PDF_COMMAND,
+  CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND,
+} from './commands/convert_drawio_to_pdf.js';
 import { convertToAvifCommand, CONVERT_TO_AVIF_COMMAND } from './commands/convert_to_avif.js';
 import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/convert_to_jpeg.js';
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/convert_to_png.js';
@@ -42,6 +48,8 @@ export const PUBLIC_COMMAND_IDS = [
   MERGE_PDF_CONFIGURE_COMMAND,
   UNDO_LAST_CONVERSION_COMMAND,
   CONVERT_TO_PDF_COMMAND,
+  CONVERT_DRAWIO_TO_PDF_COMMAND,
+  CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND,
   CONVERT_TO_PNG_COMMAND,
   CONVERT_TO_JPEG_COMMAND,
   CONVERT_TO_WEBP_COMMAND,
@@ -77,6 +85,12 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
     mergePdfConfigureCommand(context, uri, uris, dependencies),
   );
   registerFileCommand(context, CONVERT_TO_PDF_COMMAND, (uri, uris) => convertToPdfCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_DRAWIO_TO_PDF_COMMAND, (uri, uris) =>
+    convertDrawioToPdfCommand(uri, uris, dependencies),
+  );
+  registerFileCommand(context, CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND, (uri, uris) =>
+    convertDrawioToPdfDirectlyCommand(uri, uris, dependencies),
+  );
   registerFileCommand(context, CONVERT_TO_PNG_COMMAND, (uri, uris) => convertToPngCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_JPEG_COMMAND, (uri, uris) => convertToJpegCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_WEBP_COMMAND, (uri, uris) => convertToWebpCommand(uri, uris, dependencies));
