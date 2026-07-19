@@ -343,6 +343,7 @@ async function applyConfiguredSplit(params: {
     try {
       undoId = await rememberLastConversion(outputs, outputChannel);
     } catch (error) {
+      panel.dispose();
       const message = error instanceof Error ? error.message : String(error);
       await vscode.window.showWarningMessage(userMessage('message.undoUnavailable', successMessage, message));
       return;

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { access, copyFile, mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +9,7 @@ import { createSandbox, match } from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../src/locale_map.js';
+import { mergePdfConfigureCommand } from '../src/commands/merge_pdf.js';
 
 import { assertRenderedPdfPagesSimilar } from './helpers/pdf_visual_assertions.js';
 import { runCommandAndClearNotificationsUntilDone } from './helpers/vscode_command.js';
@@ -96,6 +98,41 @@ suite('PDF結合コマンド', () => {
     } finally {
       sandbox.restore();
       await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test('workspace外へ解決するsymlinkのpreviewを作成しない', async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const temporaryDirectory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, 'lgh-merge-pdf-configure-'));
+    const outsideDirectory = await mkdtemp(path.join(os.tmpdir(), 'lgh-merge-pdf-outside-'));
+
+    try {
+      const firstPdfPath = path.join(temporaryDirectory, 'first.pdf');
+      const outsidePdfPath = path.join(outsideDirectory, 'second.pdf');
+      const linkedDirectory = path.join(temporaryDirectory, 'linked');
+      const linkedPdfPath = path.join(linkedDirectory, 'second.pdf');
+      await copyFile(firstFixturePath, firstPdfPath);
+      await copyFile(secondFixturePath, outsidePdfPath);
+      await symlink(outsideDirectory, linkedDirectory, process.platform === 'win32' ? 'junction' : 'dir');
+
+      const showErrorMessage = sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+      const createWebviewPanel = sandbox.stub(vscode.window, 'createWebviewPanel');
+
+      await mergePdfConfigureCommand(
+        { extensionUri: vscode.Uri.file(compiledTestDirectory) } as unknown as vscode.ExtensionContext,
+        undefined,
+        [vscode.Uri.file(firstPdfPath), vscode.Uri.file(linkedPdfPath)],
+      );
+
+      assert.strictEqual(createWebviewPanel.called, false);
+      assert.strictEqual(showErrorMessage.calledOnce, true);
+    } finally {
+      sandbox.restore();
+      await rm(temporaryDirectory, { recursive: true, force: true });
+      await rm(outsideDirectory, { recursive: true, force: true });
     }
   });
 

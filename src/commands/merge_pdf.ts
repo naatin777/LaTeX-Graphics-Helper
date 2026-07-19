@@ -7,6 +7,7 @@ import { localeMap } from '../locale_map.js';
 import { mergePdf } from '../operations/merge_pdf.js';
 import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
 import { getWebviewHtml } from '../presentation/webview/get_webview_html.js';
+import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
 import { withCancellationSignal } from './progress_cancellation.js';
@@ -30,7 +31,7 @@ export async function mergePdfSelectedFilesCommand(
       throw new Error('Select at least two PDF files.');
     }
 
-    const workspace = workspaceForSources(sourceUris);
+    const workspace = await workspaceForSources(sourceUris);
     const outputUri = await vscode.window.showSaveDialog({
       defaultUri: vscode.Uri.file(path.join(workspace.uri.fsPath, 'merged.pdf')),
       filters: { PDF: ['pdf'] },
@@ -104,7 +105,7 @@ export async function mergePdfConfigureCommand(
       throw new Error('Select at least two PDF files.');
     }
 
-    const workspace = workspaceForSources(sourceUris);
+    const workspace = await workspaceForSources(sourceUris);
     const panelTitle = localeMap('submenu.mergePdf');
     const appRoot = vscode.Uri.joinPath(context.extensionUri, 'media', 'webview', 'merge_pdf');
     const sourceById = new Map(sourceUris.map((sourceUri, index) => [`source-${index + 1}`, sourceUri]));
@@ -344,7 +345,7 @@ function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
   return selected;
 }
 
-function workspaceForSources(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {
+async function workspaceForSources(sourceUris: vscode.Uri[]): Promise<vscode.WorkspaceFolder> {
   const firstSourceUri = sourceUris[0];
 
   if (!firstSourceUri) {
@@ -368,6 +369,10 @@ function workspaceForSources(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {
       throw new Error('All selected PDF files must be in the same workspace.');
     }
   }
+
+  await Promise.all(
+    sourceUris.map((sourceUri) => assertExistingPathInWorkspace(sourceUri.fsPath, workspace.uri.fsPath)),
+  );
 
   return workspace;
 }
