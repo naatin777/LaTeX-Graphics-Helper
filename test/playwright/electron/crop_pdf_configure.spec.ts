@@ -2,12 +2,15 @@ import { cp, mkdir, mkdtemp, readFile, stat } from 'node:fs/promises';
 import { statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { expect, test, type Page } from '@playwright/test';
 import { downloadAndUnzipVSCode } from '@vscode/test-electron';
 import { PDFDocument } from 'pdf-lib';
 
 import { cropConfigureFixture } from '../../helpers/crop_configure_fixture.js';
+import type { MergePdfOptions } from '../../../src/operations/merge_pdf.js';
+import type { SplitPdfOptions, SplitPdfOutput } from '../../../src/operations/split_pdf_all_pages.js';
 
 import { captureCropPdfScreenshot } from './helpers/crop_pdf_screenshot.js';
 import {
@@ -45,6 +48,12 @@ const expectedCropBox = {
   width: cropConfigureFixture.cropBox.right - cropConfigureFixture.cropBox.left,
   height: cropConfigureFixture.cropBox.top - cropConfigureFixture.cropBox.bottom,
 };
+type PackagedMergePdfModule = {
+  mergePdf(options: MergePdfOptions): Promise<unknown>;
+};
+type PackagedSplitPdfModule = {
+  splitPdfAllPages(options: SplitPdfOptions): Promise<SplitPdfOutput[]>;
+};
 
 function resolvePackagedVsixPath(value: string | undefined): string {
   if (!value) {
@@ -76,7 +85,7 @@ function resolvePackagedVsixPath(value: string | undefined): string {
   return value;
 }
 
-test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', async ({ playwright }, testInfo) => {
+test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認する', async ({ playwright }, testInfo) => {
   testInfo.setTimeout(240_000);
 
   // Playwright exposes its Electron launcher under the experimental `_electron` API.
@@ -93,6 +102,8 @@ test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', 
   const outputPath = join(workspacePath, 'q a-crop.pdf');
   const rasterInputPath = join(workspacePath, 'packaged-raster-input.png');
   const rasterOutputPath = join(workspacePath, 'packaged-raster-input.jpeg');
+  const splitOutputDirectory = join(workspacePath, 'packaged-split');
+  const mergedOutputPath = join(workspacePath, 'packaged-merged.pdf');
   let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
   let window: Page | undefined;
   const consoleMessages: string[] = [];
@@ -110,7 +121,7 @@ test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', 
 
     const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
 
-    await installPackagedVsix({
+    const installedExtension = await installPackagedVsix({
       extensionsDir,
       userDataDir,
       version: vscodeVersion,
@@ -263,6 +274,44 @@ test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', 
         }
       })
       .toBe(true);
+
+    const splitModule = await loadPackagedOperation<PackagedSplitPdfModule>(
+      installedExtension.extensionPath,
+      'out/operations/split_pdf_all_pages.js',
+    );
+    const splitOutputs = await splitModule.splitPdfAllPages({
+      jobs: [
+        {
+          sourcePath: inputPath,
+          workspacePath,
+          outputPathForPage: (page) => join(splitOutputDirectory, `${page}.pdf`),
+        },
+      ],
+      runId: 'packaged-split',
+      resolveOutputConflicts: async () => 'overwrite',
+    });
+
+    expect(splitOutputs).toHaveLength(2);
+    for (const splitOutput of splitOutputs) {
+      const splitDocument = await PDFDocument.load(await readFile(splitOutput.outputPath));
+      expect(splitDocument.getPageCount()).toBe(1);
+    }
+
+    const mergeModule = await loadPackagedOperation<PackagedMergePdfModule>(
+      installedExtension.extensionPath,
+      'out/operations/merge_pdf.js',
+    );
+    await mergeModule.mergePdf({
+      sourcePaths: [inputPath, outputPath],
+      outputPath: mergedOutputPath,
+      workspacePath,
+      runId: 'packaged-merge',
+      resolveOutputConflicts: async () => 'overwrite',
+    });
+
+    const mergedDocument = await PDFDocument.load(await readFile(mergedOutputPath));
+    expect(mergedDocument.getPageCount()).toBe(4);
+    expect(await readFile(inputPath)).toEqual(sourceFixtureBytes);
   } catch (error) {
     await attachElectronDiagnostics({
       consoleMessages,
@@ -280,3 +329,7 @@ test('実VS CodeでCrop PDF Configureを操作して全ページをcropする', 
     await disposeElectronTest(electronApp, temporaryRoot);
   }
 });
+
+async function loadPackagedOperation<T>(extensionPath: string, relativePath: string): Promise<T> {
+  return (await import(pathToFileURL(join(extensionPath, relativePath)).href)) as T;
+}
