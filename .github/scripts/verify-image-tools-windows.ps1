@@ -8,7 +8,7 @@ $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
 $gs = $settings.'latex-graphics-helper.execPath.ghostscript'
 $pdftocairo = $settings.'latex-graphics-helper.execPath.pdftocairo'
 $rsvgConvert = $settings.'latex-graphics-helper.execPath.rsvgConvert'
-$chrome = $settings.'latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath'
+$chrome = $settings.'latex-graphics-helper.puppeteer.executablePath'
 
 if (-not (Test-Path $gs)) { throw "missing Ghostscript: $gs" }
 if (-not (Test-Path $pdftocairo)) { throw "missing pdftocairo: $pdftocairo" }

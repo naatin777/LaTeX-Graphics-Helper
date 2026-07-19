@@ -5,9 +5,9 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
-import type { MermaidPuppeteerOptions } from '../operations/convert_png_to_pdf.js';
 import {
   convertToAvifFiles,
   type AvifOutputOptions,
@@ -46,7 +46,7 @@ export async function convertToAvifCommand(
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
-    const mermaid = readMermaidPuppeteerOptions(configuration);
+    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToAvifOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
@@ -196,15 +196,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
-  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
-
-  return {
-    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
-    ...(executablePath ? { executablePath } : {}),
-  };
 }
 
 function readDrawioToAvifOptions(configuration: vscode.WorkspaceConfiguration): DrawioToAvifOptions {

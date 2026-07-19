@@ -72,4 +72,16 @@
 - Expected test impact: PDF/SVGの実変換、external tool failure、cleanup、Safe Modeの全suite。
 - Reversibility: 形式固有のまま小さいhelperを導入できる。
 
+### legacy outputPath設定の移行
+
+- Area: configuration
+- Type: Architecture
+- Concrete problem: 出力形式基準の`outputPath.*`を優先しつつ、既存の入力形式・出力形式ペア別keyをfallbackとして保持している。
+- Evidence: `src/config/output_path_settings.ts`、`package.json`の`outputPath.*`設定、`docs/specs/product/output-format-conversion.md`。
+- Trigger: 次のmajor versionの計画を決めるとき。
+- Why not now: 既存設定を突然無効にせず、利用実態を確認してから廃止時期を決める。
+- Related files: `package.json`、`package.nls.json`、`package.nls.ja.json`、`src/config/output_path_settings.ts`、`src/commands/convert_*.ts`。
+- Expected test impact: output format優先、空文字fallback、複数ページtemplateの回帰確認が必要。
+- Reversibility: legacy keyをfallbackとして残したまま移行案内だけを更新できる。
+
 ---

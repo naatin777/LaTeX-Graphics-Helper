@@ -366,6 +366,22 @@
           "default": "",
           "description": "%config.convertToSvg.mermaid.puppeteer.executablePath%"
         },
+        "latex-graphics-helper.mermaid.puppeteer.browserChannel": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "chrome-beta",
+            "chrome-dev",
+            "chrome-canary"
+          ],
+          "default": "chrome",
+          "description": "%config.mermaid.puppeteer.browserChannel%"
+        },
+        "latex-graphics-helper.puppeteer.executablePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.puppeteer.executablePath%"
+        },
         "latex-graphics-helper.convertToWebp.effort": {
           "type": "integer",
           "default": 4,

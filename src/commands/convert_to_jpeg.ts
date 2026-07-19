@@ -5,9 +5,9 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
-import type { MermaidPuppeteerOptions } from '../operations/convert_png_to_pdf.js';
 import { convertToJpegFiles, type ConvertToJpegJob, type DrawioToJpegOptions } from '../operations/convert_to_jpeg.js';
 import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
@@ -40,7 +40,7 @@ export async function convertToJpegCommand(
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
-    const mermaid = readMermaidPuppeteerOptions(configuration);
+    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToJpegOptions(configuration);
     const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
     await runOutputConversion({
@@ -187,15 +187,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
-  const executablePath = configuration.get<string>('convertToPdf.mermaid.puppeteer.executablePath', '').trim();
-
-  return {
-    browserChannel: configuration.get<string>('convertToPdf.mermaid.puppeteer.browserChannel', 'chrome'),
-    ...(executablePath ? { executablePath } : {}),
-  };
 }
 
 function readDrawioToJpegOptions(configuration: vscode.WorkspaceConfiguration): DrawioToJpegOptions {

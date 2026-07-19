@@ -13,7 +13,7 @@ read_setting() {
 gs_path="$(read_setting "latex-graphics-helper.execPath.ghostscript")"
 pdftocairo_path="$(read_setting "latex-graphics-helper.execPath.pdftocairo")"
 rsvg_convert_path="$(read_setting "latex-graphics-helper.execPath.rsvgConvert")"
-chrome_path="$(read_setting "latex-graphics-helper.convertToPdf.svg.puppeteer.executablePath")"
+chrome_path="$(read_setting "latex-graphics-helper.puppeteer.executablePath")"
 test -x "${gs_path}"
 test -x "${pdftocairo_path}"
 test -x "${rsvg_convert_path}"

@@ -5,14 +5,10 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
-import {
-  convertToSvgFiles,
-  type ConvertToSvgJob,
-  type DrawioToSvgOptions,
-  type MermaidPuppeteerOptions,
-} from '../operations/convert_to_svg.js';
+import { convertToSvgFiles, type ConvertToSvgJob, type DrawioToSvgOptions } from '../operations/convert_to_svg.js';
 import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -44,7 +40,7 @@ export async function convertToSvgCommand(
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
-    const puppeteer = readMermaidPuppeteerOptions(configuration);
+    const puppeteer = readMermaidPuppeteerOptions(configuration, 'convertToSvg');
     const drawio = readDrawioToSvgOptions(configuration);
     const pdftocairoPath = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
     await runOutputConversion({
@@ -179,15 +175,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readMermaidPuppeteerOptions(configuration: vscode.WorkspaceConfiguration): MermaidPuppeteerOptions {
-  const executablePath = configuration.get<string>('convertToSvg.mermaid.puppeteer.executablePath', '').trim();
-
-  return {
-    browserChannel: configuration.get<string>('convertToSvg.mermaid.puppeteer.browserChannel', 'chrome'),
-    ...(executablePath ? { executablePath } : {}),
-  };
 }
 
 function readDrawioToSvgOptions(configuration: vscode.WorkspaceConfiguration): DrawioToSvgOptions {
