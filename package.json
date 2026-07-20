@@ -830,8 +830,27 @@
     "onStartupFinished"
   ],
   "icon": "assets/icon.png",
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "12.0.1",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=22",
+      "onFail": "error"
+    }
+  },
   "engines": {
     "node": ">=22",
     "vscode": "^1.105.0"
+  },
+  "packageManager": "npm@12.0.1",
+  "allowScripts": {
+    "lefthook": true,
+    "puppeteer@25.3.0": false,
+    "keytar": false,
+    "@vscode/vsce-sign": false
   }
 }
