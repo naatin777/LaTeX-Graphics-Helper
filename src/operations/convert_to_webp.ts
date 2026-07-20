@@ -21,7 +21,6 @@ import type { RunPdfToPng } from './convert_to_png.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
-import { defaultSourceInputOptions, prepareSourceForRasterOutput, type SourceInputOptions } from './source_input.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -46,7 +45,6 @@ export interface ConvertToWebpFilesOptions extends PdfToolScratchOptions {
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToWebpOptions;
-  sourceInput?: SourceInputOptions;
   webp: WebpOutputOptions;
   runPdfToPng?: RunPdfToPng;
   runId?: string;
@@ -58,7 +56,6 @@ interface WebpStageTools {
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToWebpOptions;
-  sourceInput: SourceInputOptions;
   runPdfToPng?: RunPdfToPng;
 }
 
@@ -102,7 +99,6 @@ export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Pr
     pdftocairoPath: options.pdftocairoPath,
     mermaid: options.mermaid,
     drawio: options.drawio,
-    sourceInput: options.sourceInput ?? defaultSourceInputOptions(options.platform),
     ...(options.runPdfToPng !== undefined && { runPdfToPng: options.runPdfToPng }),
   };
   const scratch: PdfToolScratchOptions = {
@@ -171,16 +167,7 @@ async function writeSourceAsWebp(
   paths: WebpStagePaths,
   context: WebpStageContext,
 ): Promise<void> {
-  const sourcePath = await prepareSourceForRasterOutput({
-    sourcePath: job.sourcePath,
-    stageDirectory: paths.stageDirectory,
-    workspacePath: job.workspacePath,
-    context: {
-      sourceInput: context.tools.sourceInput,
-      scratch: context.scratch,
-      signal: context.runtime.signal,
-    },
-  });
+  const sourcePath = job.sourcePath;
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {

@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
 import { readDrawioExecutablePath } from '../config/drawio_path.js';
-import { readGhostscriptExecutablePath, readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
+import { readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
 import { readMermaidPuppeteerOptions, readPuppeteerExecutablePath } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
@@ -38,7 +38,6 @@ const PDF_IMAGE_EXTENSIONS = [
   '.gif',
   '.tif',
   '.tiff',
-  '.eps',
   '.svg',
   '.mmd',
   '.mermaid',
@@ -114,7 +113,6 @@ async function convertSelectedPngFilesToPdf(
     validateSvgToPdfOptions(svgToPdf);
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToPdfOptions(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     const jobs = sourceUris.map((sourceUri) =>
       createJob(
         sourceUri,
@@ -146,7 +144,6 @@ async function convertSelectedPngFilesToPdf(
           svgToPdf,
           mermaid,
           drawio,
-          sourceInput: { ghostscriptPath },
           operationName: messages.operationName,
           ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
         }),

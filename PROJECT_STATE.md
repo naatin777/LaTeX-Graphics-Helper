@@ -18,7 +18,6 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - PDF merge
 - PDF to PNG/JPEG/WebP/AVIF/SVG conversion
 - PNG/JPEG/WebP/AVIF/SVG to PDF conversion
-- GIF/TIFF/EPS input conversion through existing output commands
 - Draw.io to PDF conversion
 - Native Draw.io PDF conversion by page or as one PDF
 - Puppeteer Chrome/Firefox selection for SVG conversion
@@ -27,7 +26,8 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- なし
+- GIF/TIFF input conversion through existing output commands (PR review中)
+- EPS input conversion deferred until security/resource limits are designed
 
 ## Non-goals
 

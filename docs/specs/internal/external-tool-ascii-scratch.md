@@ -17,11 +17,11 @@ tool scratchはtransaction stagingの代わりではない。
 
 タスク0141の実測結果に基づき、Windowsで次だけを対象にする。
 
-| Tool         | scratch入力 | scratch出力         | 理由                                                                                     |
-| ------------ | ----------- | ------------------- | ---------------------------------------------------------------------------------------- |
-| Ghostscript  | 必須        | EPS変換とcropで必須 | Hindi・emojiを含む入力pathで失敗した                                                     |
-| pdftocairo   | 必須        | 必須                | Unicode入力は実測上成功したが、toolへ渡すpathを一律に隔離し、Unicode出力の文字化けを防ぐ |
-| rsvg-convert | 必須        | 必須                | 調査した非ASCII入出力pathで失敗した                                                      |
+| Tool         | scratch入力 | scratch出力 | 理由                                                                                     |
+| ------------ | ----------- | ----------- | ---------------------------------------------------------------------------------------- |
+| Ghostscript  | 必須        | cropで必須  | Hindi・emojiを含む入力pathで失敗した                                                     |
+| pdftocairo   | 必須        | 必須        | Unicode入力は実測上成功したが、toolへ渡すpathを一律に隔離し、Unicode出力の文字化けを防ぐ |
+| rsvg-convert | 必須        | 必須        | 調査した非ASCII入出力pathで失敗した                                                      |
 
 次には適用しない。
 
@@ -59,7 +59,6 @@ command実行ごとに、次のような専用rootを`mkdtemp`で作る。
 <ascii-temp-base>/latex-graphics-helper-<random>/
 ├ input.pdf
 ├ input.svg
-├ input.eps
 ├ output.pdf
 ├ output.png
 └ output.svg
@@ -188,11 +187,8 @@ platform、temp候補、file APIはテストから注入できるようにし、
 
 ### Ghostscript
 
-- 論理入力がUnicodeでもtool引数はcropでは`input.pdf`、EPS変換では`input.eps`のASCII absolute pathになる
-- EPS変換では期待出力`output.pdf`だけをworkspace内transaction stagingへcopyする
-- bbox取得成功後にscratchを削除する
+- 論理入力がUnicodeでもtool引数はcropの`input.pdf`のASCII absolute pathになる
 - non-zero exitとcancelではscratchを残す
-- EPS変換のWindows scratch成功・失敗は`test/convert_eps_to_pdf.test.ts`で確認する
 
 ### pdftocairo
 

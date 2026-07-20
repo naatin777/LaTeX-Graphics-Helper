@@ -29,15 +29,10 @@ Ghostscript `10.07.1`へ最小EPSをstdinで渡し、`-dSAFER -dEPSCrop -sDEVICE
 
 ### Current conclusion
 
-- 作業treeではGIF/TIFF/EPSを既存のPDF/PNG/JPEG/WebP/AVIF commandの入力として扱うprototypeを実装した。GIF/TIFFは先頭page/frame、EPSはGhostscript PDF中間経路を使う。
-- PRの3 OS Test workflowでGIF/TIFF/EPSの実fixture変換が成功した。Packaged Electron Playwrightも3 OSで成功した。
-- GIF/TIFF/EPSのsupported昇格は、PR reviewとmerge後に確定する。GIF/TIFFの先頭page/frame semanticsとEPSのstaged PDF経路は今回のprototypeで固定する。
-
-### Remote evidence
-
-- Check: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915828
-- Test: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915852
-- Packaged Electron Playwright: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915831
+- 作業treeではGIF/TIFFを既存のPDF/PNG/JPEG/WebP/AVIF commandの入力として扱うprototypeを実装した。GIF/TIFFは先頭page/frameだけを使う。
+- EPSのlocal smokeはGhostscriptの最小parse確認に留まり、product supportや安全性のEvidenceではないため、このPRから外した。
+- GIF/TIFFのsupported昇格は、animated/multi-page fixture、5 output経路、3 OS CI、PR reviewの完了後に確定する。
+- Packaged Electron Playwrightは既存packaged VSIXの回帰Evidenceであり、GIF/TIFFの実機能Evidenceではない。
 - HEIF / HEIC、JP2、JPEG XL、BMP、ICOは現時点でdefault対応にしない。
 
 ### Current sources

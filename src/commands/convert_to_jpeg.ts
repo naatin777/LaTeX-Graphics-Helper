@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
 import { readDrawioExecutablePath } from '../config/drawio_path.js';
-import { readGhostscriptExecutablePath, readPdftocairoExecutablePath } from '../config/external_tool_paths.js';
+import { readPdftocairoExecutablePath } from '../config/external_tool_paths.js';
 import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
@@ -45,7 +45,6 @@ export async function convertToJpegCommand(
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioToJpegOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     await runOutputConversion({
       operationName: 'convert-to-jpeg',
       ...(outputChannel !== undefined && { outputChannel }),
@@ -57,7 +56,6 @@ export async function convertToJpegCommand(
           pdftocairoPath,
           mermaid,
           drawio,
-          sourceInput: { ghostscriptPath },
           platform: process.platform,
           ...(runtime.signal !== undefined && { signal: runtime.signal }),
           ...(runtime.resolveConflicts !== undefined && {
