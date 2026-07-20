@@ -10,6 +10,8 @@ pnpm→npm移行(PR #367)で失われたinstall時のsecurity policyを、npmの
 
 各pnpm設定が何を防いでいたかを整理し、採用npm(`npm@12.0.1`)の公式機能で実現できる範囲だけを最小限復元する。pnpmへは戻さない。
 
+pnpm→npm移行時にwarningだけだったnpm version制約を`devEngines.packageManager: 12.0.1` + `onFail: error`に強化し、localでも12.0.1以外のinstallを即時拒否する。また`lefthook`をexact pinし、version更新時に再レビューが必要になる仕組みを入れる。Node最小versionはdependency tree(`>=22.12.0`)と採用npm@12.0.1のengine要求(`^22.22.2`)の両方を満たす`>=22.22.2`に統一する。
+
 ## pnpm設定との対応
 
 | pnpm setting                 | 守っていたもの            | npmでの候補                             | 代替     | 採用判断                                                  |
@@ -28,12 +30,12 @@ pnpm→npm移行(PR #367)で失われたinstall時のsecurity policyを、npmの
 
 `npm ci`後の`npm install-scripts ls`で列挙。install scriptを持つのは4package(すべてbuild/package/testで実行不要と実測)。`sharp`はprebuilt(`@img/sharp-*`)でscriptなし、承認対象外。
 
-- `lefthook: true` — direct devDep。local git hook installのみ。`resolved` URL欠落でpin不可のためname承認。
+- `lefthook: true` — direct devDep。local git hook installのみ。version付きapproval(`lefthook@2.1.10: true`)はnpm 12.0.1のlockfile identityと一致せず承認されない(実測:`ESTRICTALLOWSCRIPTS`)ため、dependencyをexact pin(`lefthook: "2.1.10"`)してname承認とする。
 - `puppeteer@25.3.0: false` — mermaid-cli経由。Chromium download。system Chrome利用のため不要。pinしてdeny。
 - `keytar: false` — vsce経由optional。native binding build。packaging不要。
 - `@vscode/vsce-sign: false` — vsce経由。VSIX署名。`vsce package`は署名なしで動作。
 
-`strict-allow-scripts=true`で、4package中いずれかがレビューから外れる/approved versionが変わると`npm ci`がexit 1で失敗する。CIは既存`npm ci`がそのままgate。
+`strict-allow-scripts=true`で、4package中いずれかがレビューから外れると`npm ci`がexit 1で失敗する。さらに`lefthook`はexact pinのため、versionを更新するには`package.json`と`package-lock.json`を意図的に変更する必要があり、`npm ci`はlockfile不一致で失敗する。つまりversion更新は再レビューを伴う明示的変更として検知される。CIは既存`npm ci`がそのままgate。
 
 ## audit policy
 
@@ -48,24 +50,29 @@ pnpm→npm移行(PR #367)で失われたinstall時のsecurity policyを、npmの
 
 ## Verification results
 
-| Command                                         | Result | Notes                                                           |
-| ----------------------------------------------- | ------ | --------------------------------------------------------------- |
-| `rm -rf node_modules && npm ci`                 | Pass   | 4 install scriptすべてレビュー済みでwarning/errorなし、exit 0。 |
-| `npm install-scripts ls`                        | Pass   | "No packages with unreviewed install scripts." exit 0。         |
-| 未レビューpackageでの`npm ci`(検証用、非commit) | Pass   | lefthookをallowScriptsから外すと`ESTRICTALLOWSCRIPTS`でexit 1。 |
-| `npm run check:all`                             | Pass   | lint/format/typecheck/NLS(283 keys)。                           |
-| `npm run build`                                 | Pass   | extension + 3 webview build。                                   |
-| `npm test`                                      | Pass   | 239 passing。                                                   |
-| `npm run package:vsix -- --out /tmp/...vsix`    | Pass   | 102 MB VSIX、install scriptすべてblockでも成功。                |
-| packaged VSIX Electron smoke                    | Pass   | 1 test passed。Sharp native PNG→JPEG成功。                      |
-| `npm audit --audit-level=high`                  | 記録   | dev-only high 1 + moderate 2、fixなし。gate追加せず。           |
+| Command                                            | Result | Notes                                                                                            |
+| -------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------ |
+| `rm -rf node_modules && npm ci`                    | Pass   | 4 install scriptすべてレビュー済みでwarning/errorなし、exit 0。                                  |
+| `npm install-scripts ls`                           | Pass   | "No packages with unreviewed install scripts." exit 0。                                          |
+| npm 10での`npm ci`(検証用、非commit)               | Pass   | `devEngines.packageManager: 12.0.1` + `onFail: error`で`EBADDEVENGINES` exit 1。policy迂回不可。 |
+| 未レビューpackageでの`npm ci`(検証用、非commit)    | Pass   | lefthookをallowScriptsから外すと`ESTRICTALLOWSCRIPTS`でexit 1。                                  |
+| lefthook version変更での`npm ci`(検証用、非commit) | Pass   | exact pinにより`package.json`とlockfile不一致で`EUSAGE` exit 1。再レビューなしでは通らない。     |
+| Node 22.0.0での`npm ci`(検証用、非commit)          | Pass   | `engine-strict` + `engines.node: >=22.22.2`で`EBADENGINE` exit 1。                               |
+| Node 22.22.2 + npm 12.0.1での`npm ci`              | Pass   | 最小Node + 採用npmでexit 0。                                                                     |
+| `npm run check:all`                                | Pass   | lint/format/typecheck/NLS(283 keys)。                                                            |
+| `npm run build`                                    | Pass   | extension + 3 webview build。                                                                    |
+| `npm test`                                         | Pass   | 239 passing。                                                                                    |
+| `npm run package:vsix -- --out /tmp/...vsix`       | Pass   | 102 MB VSIX、install scriptすべてblockでも成功。                                                 |
+| packaged VSIX Electron smoke                       | Pass   | 1 test passed。Sharp native PNG→JPEG成功。                                                       |
+| `npm audit --audit-level=high`                     | 記録   | dev-only high 1 + moderate 2、fixなし。gate追加せず。                                            |
 
-darwin-arm64 localで確認。Linux/macOS/WindowsはCI(check/test/playwright)で確認する。
+darwin-arm64 localで確認(Node 22.0.0/22.12.0/22.22.2はnvmで実測)。Linux/macOS/WindowsはCI(check/test/playwright/release)で確認する。
 
 ## 残risk
 
 - dev-only `serialize-javascript` high(vsce-test-cli chain、fixなし)。別taskで対応。
-- `keytar`/`lefthook`/`@vscode/vsce-sign`はlockfileに`resolved` URLがなくversion pin不可(name承認/deny)。lockfile完全化は broad update回避のため今回見送り。
+- `lefthook`のversion付きapproval(`lefthook@2.1.10: true`)はnpm 12.0.1でlockfile identityと一致せず機能しないため、exact pin + name承認とした。version更新検知はlockfile不一致で行われる。
+- `keytar`/`@vscode/vsce-sign`はlockfileに`resolved` URLがなくversion pin不可。`puppeteer`はversion付きdeny。lockfile完全化は broad update回避のため今回見送り。
 
 ## 追加で必要なtask
 

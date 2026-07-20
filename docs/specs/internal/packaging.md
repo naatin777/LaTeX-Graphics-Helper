@@ -32,7 +32,14 @@ VS Code integration testは固定versionを使う。互換性確認用のlatest 
 
 pnpmからnpmへの移行(PR #367)で失われたinstall時のsecurity policyを、npmの公式機能で復元する。package managerはnpmのまま変更しない。
 
-採用npm versionは`npm@12.0.1`。localは`packageManager`で固定し、CIは各workflowで`npm install -g npm@12.0.1`を実行してから`npm ci`する。Node 22同梱のnpmは10系でinstall-script policyやmin-release-ageを持たないため、明示的に上書きする。`devEngines.packageManager`は`>=12.0.1`を要求するが`onFail: warn`とする。npm 10は`setup-node`の`cache: npm`(内部で`npm config get cache`を実行)やnpm自身のupgrade前にdevEnginesを評価するため、`error`にするとnpm upgrade前に落ちる。強制はerrorではなくCIのnpm pinと`.npmrc`で担保する。
+採用npm versionは`npm@12.0.1`。CIは各workflowで`actions/setup-node`の`node-version: 22.22.2`(npm@12.0.1が要求するNode下限)のあと、`npm install -g npm@12.0.1`を実行してから`npm ci`する。Node 22同梱のnpmは10系でinstall-script policyやmin-release-ageを持たないため、明示的に上書きする。localでは`devEngines.packageManager`を`12.0.1`に固定し`onFail: error`とする。これによりnpm 10など12.0.1以外では`npm ci`が`EBADDEVENGINES`で即時失敗し、policyを迂回できない。`packageManager`フィールドだけではnpm versionは切り替わらない。localでもnpm 12.0.1を使うには、corepack/手動でnpm 12.0.1を有効にするか、CIと同じく`npm install -g npm@12.0.1`で上書きする必要がある。`setup-node`の`cache: npm`はpackage-lock.jsonからcacheをrestoreするだけでdevEnginesを評価しないため、`onFail: error`でもnpm upgrade前に落ちることはない。
+
+責務の分離:
+
+- `devEngines.packageManager`(`onFail: error`): localでnpm versionを強制し、12.0.1以外のinstallを即時拒否する。
+- `devEngines.runtime` / `engines.node`(`>=22.22.2`): 実行・installに必要な最小Node versionを強制する(`engine-strict=true`と組み合わせ)。
+- CIの`setup-node` + `npm install -g npm@12.0.1`: CI環境でもnpm 12.0.1とNode 22.22.2以上を確実に用意する。CIの強制は`devEngines`ではなくこのpinで担保する。
+- `.npmrc`: install-script policy(`strict-allow-scripts`)、engine厳格化(`engine-strict`)、peer厳格化、release age(`min-release-age`)を定義する。
 
 `.npmrc`のpolicy:
 
@@ -43,11 +50,11 @@ pnpmからnpmへの移行(PR #367)で失われたinstall時のsecurity policyを
 
 install scriptの承認は`package.json`の`allowScripts`で管理する。現在のdependency treeを`npm ci`後の`npm install-scripts ls`で列挙し、install scriptを持つpackageは`@vscode/vsce-sign`、`keytar`、`lefthook`、`puppeteer`の4つ(すべてbuild・package・testで実行不要と実測)。`sharp`はprebuilt binary(`@img/sharp-*` optionalDependencies)を使いinstall scriptを持たないため承認対象外。承認は次の基準とする。
 
-- `lefthook: true` — direct devDependency。localのgit hook installのみ。build/package/testに影響しない。npmが`resolved` URL欠落によりversion pinできないためname承認。
+- `lefthook: true` — direct devDependency。localのgit hook installのみ。build/package/testに影響しない。version付きapproval(`lefthook@2.1.10: true`)はnpm 12.0.1のlockfile identityと一致せず承認されないため、dependencyをexact pin(`lefthook: "2.1.10"`)してname承認とする。
 - `puppeteer@25.3.0: false` — mermaid-cli経由のtransitive。postinstallはChromium download。extensionはpuppeteer-coreでsystem Chrome(channel)またはuser executablePathを使うためbundled Chromeは不要。versionをpinしてdeny。
 - `keytar: false` — `@vscode/vsce`経由のtransitive・optional・dev。native credential storage bindingのbuild。packagingはmarketplace認証を使わないため不要。
 - `@vscode/vsce-sign: false` — `@vscode/vsce`経由のtransitive。VSIX署名用postinstall。`vsce package`は署名なしで動作するため不要。
 
-`strict-allow-scripts=true`により、上記4つのいずれかがレビュー(true/false)から外れると`npm ci`が失敗する。approved packageのversionが変わった場合(例: puppeteerのpin外れ)も再レビューが必要になる。CIは既存の`npm ci`がそのままgateになるため、追加の検査commandは不要。
+`strict-allow-scripts=true`により、上記4つのいずれかがレビュー(true/false)から外れると`npm ci`が`ESTRICTALLOWSCRIPTS`で失敗する。さらに`lefthook`はdependencyをexact pin(`lefthook: "2.1.10"`)しているため、versionを更新するには`package.json`と`package-lock.json`の両方を意図的に変更する必要があり、`npm ci`はlockfile不一致(`EUSAGE`)で失敗する。つまりversion変更は再レビューを伴う明示的な変更として検知される。puppeteer等はversion付きdeny(`puppeteer@25.3.0: false`)でpin外れ時に再レビューが必要になる。CIは既存の`npm ci`がそのままgateになるため、追加の検査commandは不要。
 
 audit: `npm audit --audit-level=high`で、`@vscode/test-cli` → `mocha` → `serialize-javascript`のchainにhigh 1件・moderate 2件が存在する。すべてdev-only(VSIX非同梱)でfix未提供。security policy復元とvulnerability更新は分離し、auditはCI gateへ追加しない。`--audit-level`の無効化やadvisory ignore、`audit fix --force`は使わない。
