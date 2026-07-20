@@ -33,6 +33,12 @@ Ghostscript `10.07.1`へ最小EPSをstdinで渡し、`-dSAFER -dEPSCrop -sDEVICE
 - EPSのlocal smokeはGhostscriptの最小parse確認に留まり、product supportや安全性のEvidenceではないため、このPRから外した。
 - GIF/TIFFのsupported昇格は、animated/multi-page fixture、5 output経路、3 OS CI、PR reviewの完了後に確定する。
 - Packaged Electron Playwrightは既存packaged VSIXの回帰Evidenceであり、GIF/TIFFの実機能Evidenceではない。
+
+### Remote evidence
+
+- Check: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29719192043
+- Test: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29719192017
+- Packaged Electron Playwright regression: https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29719192024
 - HEIF / HEIC、JP2、JPEG XL、BMP、ICOは現時点でdefault対応にしない。
 
 ### Current sources
