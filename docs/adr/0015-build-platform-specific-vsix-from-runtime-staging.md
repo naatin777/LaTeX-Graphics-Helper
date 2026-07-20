@@ -1,4 +1,4 @@
-# ADR-0015: runtime stagingからOS別VSIXを生成する
+# ADR-0015: npmからOS別VSIXを生成する
 
 ## ステータス
 
@@ -10,41 +10,40 @@
 
 ## 背景
 
-このprojectはpnpmで依存を管理しているが、`vsce package`のproduction dependency検証はpnpmの依存treeと互換しない場合がある。依存検証を無効にした`--no-dependencies`は、runtime dependencyをVSIXへ同梱しないため実行可能な配布物にならない。
+`vsce package`はnpmのproduction dependency treeを前提にしている。pnpmは単一拡張のpackage管理に不要なworkspaceと独自node_modules treeを持ち、VSCEの依存検証とも互換しないため採用しない。
 
 さらに`sharp`はOS / architectureごとのnative packageをinstall環境に応じて選ぶ。1つのOSで作った`node_modules`を別OSへ持ち回ると、native binaryの互換性を保証できない。
 
 ## 決定
 
 - releaseではLinux、macOS、WindowsのrunnerごとにVSIXを生成する
-- 各runnerでbuild後、runtime manifestとcompiled output、Webview assets、extension metadataだけをOS一時directoryへstagingする
-- staging内で`npm install --omit=dev --ignore-scripts`を実行し、production dependencyだけを同梱する
-- staging内で`vsce package --target <platform>-<architecture>`を実行する
-- stagingへのruntime fileのコピーはallowlistで管理し、docs、test、source、AI開発設定を配布物へコピーしない
-- `--no-dependencies`はrelease生成方法として使わない
+- 各runnerで`npm ci`とbuildを実行し、runner固有のnative dependencyをinstallする
+- repository rootでローカルVSCEのNode entrypointを`node .../node_modules/@vscode/vsce/vsce package --target <platform>-<architecture>`として実行する
+- `.vscodeignore`でdocs、test、source、AI開発設定、source mapなどを配布物から除外する
+- `package-lock.json`だけを依存lockfileとして使い、VSIX専用lockfileや独自lockfile同期処理は追加しない
 
-生成手順の正本は`package.json`の`package:vsix`と`scripts/package-vsix.mjs`、OS別runnerの正本は`.github/workflows/release.yml`とする。
+生成手順の正本は`package.json`の`package:vsix`と`scripts/package-vsix.mjs`、OS別runnerの正本は`.github/workflows/release.yml`とする。VSIX専用stagingは通常のroot packageでproduction dependencyが正常に同梱できない場合だけ再検討する。
 
 ## 理由
 
-- pnpmのworkspace上の依存treeをvsceへ直接渡さず、npmが検証できるproduction treeを作れる
+- npm公式toolchainに近い`npm ci`、`npm run build`、rootのローカルVSCE entrypointの流れで検証できる
 - `sharp`のnative packageを実際にpackageするrunnerのOS / architectureへ合わせられる
-- allowlistにより、repositoryのdocsやAI設定を誤って配布しにくい
+- `.vscodeignore`により、repositoryのdocsやAI設定を誤って配布しにくい
 - 生成後のVSIXにはruntime dependencyが含まれるため、networkなしのsmoke testへ進められる
 
 ## 代替案
 
 ### `vsce package --no-dependencies`を使う
 
-生成は通るがruntime dependencyが欠落するため採用しない。
+依存収集自体を無効にするためruntime dependencyが欠落し、採用しない。
 
 ### Linuxで作った1つのVSIXを全OSへ配布する
 
 `sharp`のnative binaryを別OSで実行できる保証がないため採用しない。
 
-### pnpmの`deploy --prod`出力をそのままVSIXへ渡す
+### pnpmをpackage managerとして使う
 
-VSIXに必要なruntime fileだけを制御しにくく、今回の検証では依存を含む配布stagingとして成立しなかったため採用しない。
+VSCEはpnpmの依存treeを正式にサポートしていないため、package managerをnpmへ統一する。
 
 ## 結果・影響
 

@@ -21,31 +21,27 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       label: Linux
-                      test_command: xvfb-run pnpm run test
+                      test_command: xvfb-run npm test
                     - os: macos-latest
                       label: macOS
-                      test_command: pnpm run test
+                      test_command: npm test
                     - os: windows-latest
                       label: Windows
-                      test_command: pnpm run test
+                      test_command: npm test
         steps:
             - uses: actions/checkout@v7
-
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.13.1
 
             - uses: actions/setup-node@v6
               with:
                   node-version: '22'
-                  cache: pnpm
+                  cache: npm
 
-            - run: pnpm install --frozen-lockfile
+            - run: npm ci
               shell: bash
 
             - id: build
               name: Build extension and Webview
-              run: pnpm run build
+              run: npm run build
               shell: bash
 
             - if: matrix.os == 'ubuntu-latest'
@@ -76,7 +72,7 @@ jobs:
 
             - if: always() && steps.build.outcome == 'success'
               name: Run Webview component tests
-              run: pnpm run test:webview
+              run: npm run test:webview
               shell: bash
 
             - if: failure()

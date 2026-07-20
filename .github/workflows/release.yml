@@ -17,37 +17,33 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       label: Linux
-                      test_command: xvfb-run pnpm run test:playwright:vsix
+                      test_command: xvfb-run npm run test:playwright:vsix
                       artifact_suffix: linux
                     - os: macos-latest
                       label: macOS
-                      test_command: pnpm run test:playwright:vsix
+                      test_command: npm run test:playwright:vsix
                       artifact_suffix: macos
                     - os: windows-latest
                       label: Windows
-                      test_command: pnpm run test:playwright:vsix
+                      test_command: npm run test:playwright:vsix
                       artifact_suffix: windows
         steps:
             - uses: actions/checkout@v7
 
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.13.1
-
             - uses: actions/setup-node@v6
               with:
                   node-version: '22'
-                  cache: pnpm
+                  cache: npm
 
-            - run: pnpm install --frozen-lockfile
+            - run: npm ci
               shell: bash
 
             - name: Build extension and Webview
-              run: pnpm run build
+              run: npm run build
               shell: bash
 
             - name: Package current runner VSIX
-              run: pnpm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
+              run: npm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
               shell: bash
 
             - name: Install VSIX and run Electron Playwright
@@ -81,16 +77,12 @@ jobs:
         steps:
             - uses: actions/checkout@v7
 
-            - uses: pnpm/action-setup@v6
-              with:
-                  version: 11.13.1
-
             - uses: actions/setup-node@v6
               with:
                   node-version: '22'
-                  cache: pnpm
+                  cache: npm
 
-            - run: pnpm install --frozen-lockfile
+            - run: npm ci
               shell: bash
 
             - uses: actions/download-artifact@v4
@@ -124,7 +116,7 @@ jobs:
                   VSCE_PAT: ${{ secrets.VSCE_PAT }}
               run: |
                   for vsix in ./*.vsix; do
-                    pnpm exec vsce publish --packagePath "$vsix" --pat "$VSCE_PAT"
+                    npx --no-install vsce publish --packagePath "$vsix" --pat "$VSCE_PAT"
                   done
 
             - name: Publish to Open VSX
@@ -133,5 +125,5 @@ jobs:
                   OVSX_PAT: ${{ secrets.OVSX_PAT }}
               run: |
                   for vsix in ./*.vsix; do
-                    pnpm exec ovsx publish "$vsix" --pat "$OVSX_PAT"
+                    npx --no-install ovsx publish "$vsix" --pat "$OVSX_PAT"
                   done

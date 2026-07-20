@@ -22,7 +22,11 @@ interface ElectronDiagnostics extends ElectronTestPaths {
   window: Page | undefined;
 }
 
-export async function writeVscodeUserSettings(settingsPath: string, colorTheme: string): Promise<void> {
+export async function writeVscodeUserSettings(
+  settingsPath: string,
+  colorTheme: string,
+  settings: Record<string, unknown> = {},
+): Promise<void> {
   await writeFile(
     settingsPath,
     JSON.stringify(
@@ -31,6 +35,7 @@ export async function writeVscodeUserSettings(settingsPath: string, colorTheme: 
         'window.zoomLevel': 0,
         'workbench.colorTheme': colorTheme,
         'workbench.secondarySideBar.defaultVisibility': 'hidden',
+        ...settings,
       },
       undefined,
       2,
