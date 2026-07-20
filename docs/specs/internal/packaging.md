@@ -32,7 +32,7 @@ VS Code integration testは固定versionを使う。互換性確認用のlatest 
 
 pnpmからnpmへの移行(PR #367)で失われたinstall時のsecurity policyを、npmの公式機能で復元する。package managerはnpmのまま変更しない。
 
-採用npm versionは`npm@12.0.1`。localは`packageManager`と`devEngines`で固定し、CIは各workflowで`npm install -g npm@12.0.1`を実行してから`npm ci`する。Node 22同梱のnpmは10系でinstall-script policyやmin-release-ageを持たないため、明示的に上書きする。`devEngines`(npm 12でinstall/ci/run前に検査)が不一致npmを`onFail: error`で止める。
+採用npm versionは`npm@12.0.1`。localは`packageManager`で固定し、CIは各workflowで`npm install -g npm@12.0.1`を実行してから`npm ci`する。Node 22同梱のnpmは10系でinstall-script policyやmin-release-ageを持たないため、明示的に上書きする。`devEngines.packageManager`は`>=12.0.1`を要求するが`onFail: warn`とする。npm 10は`setup-node`の`cache: npm`(内部で`npm config get cache`を実行)やnpm自身のupgrade前にdevEnginesを評価するため、`error`にするとnpm upgrade前に落ちる。強制はerrorではなくCIのnpm pinと`.npmrc`で担保する。
 
 `.npmrc`のpolicy:
 

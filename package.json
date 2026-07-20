@@ -833,8 +833,8 @@
   "devEngines": {
     "packageManager": {
       "name": "npm",
-      "version": "12.0.1",
-      "onFail": "error"
+      "version": ">=12.0.1",
+      "onFail": "warn"
     },
     "runtime": {
       "name": "node",
