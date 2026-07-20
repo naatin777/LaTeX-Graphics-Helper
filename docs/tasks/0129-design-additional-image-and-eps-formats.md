@@ -2,7 +2,31 @@
 
 ## Status
 
-Todo
+In Progress
+
+## 再調査結果（2026-07-20）
+
+- 現行依存は`sharp` `0.35.3`、同梱libvipsは`8.18.3`。旧調査の`sharp` `0.34.5`から更新されている。
+- macOS arm64の実環境では、`sharp.format`でGIF/TIFFのinput・outputが有効だった。
+- 同じ環境でJP2/JPEG XLはinput・outputとも無効だった。HEIFはAVIFのaliasとして有効だが、`.avif` suffixのみであり、HEICをdefault対応とする根拠にはしない。
+- macOS arm64で2x2の生成画像をGIF/TIFFへencodeし、sharpでdecodeできることを確認した。
+- GhostscriptはmacOSで`10.07.1`。最小EPSを`-dSAFER -dEPSCrop -sDEVICE=pdfwrite`で処理できた。
+- `source_format.ts`と既存のPDF/PNG/JPEG/WebP/AVIF commandへGIF/TIFF/EPSの入力対応を追加し、GIF/TIFFは先頭page/frame、EPSはGhostscriptでPDFを経由するprototypeを実装した。
+- Linux / Windowsでの`sharp.format`と実fixture変換はまだ未確認。CIのGhostscriptはLinux/macOSが未固定、Windowsは`gs10071`固定である。
+
+### 今回の実装判断
+
+- GIF/TIFFは既存の画像出力commandへの入力だけを対応し、先頭page/frameだけを処理する。animationやmulti-pageの展開は行わない。
+- EPSは既存のPDF/PNG/JPEG/WebP/AVIF outputへ入力でき、Ghostscriptでstaged PDFを作って既存経路へ渡す。EPSの新規出力commandは追加しない。
+- GIF/TIFFの出力commandとmulti-page展開は今回実装しない。
+- HEIF/HEIC、JP2、JPEG XL、BMP、ICOはdefault対応候補から外す。
+
+### 残りの確認
+
+- Linux / Windowsの`sharp.format`と実fixture変換をCIで確認する。
+- GIF animation / multi-page TIFFを展開しない先頭page/frame仕様を3 OSで確認する。
+- EPSのBoundingBox正常系・欠落・不正、vector / fontの変換結果、timeout・memory・disk制限を確認する。
+- CI結果を確認してprototypeをsupportedへ昇格するか、見送るかをmaintainerが決定する。
 
 ## 目的
 

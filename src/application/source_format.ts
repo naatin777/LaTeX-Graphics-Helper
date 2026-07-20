@@ -6,6 +6,9 @@ export type SourceFormat =
   | 'jpeg'
   | 'webp'
   | 'avif'
+  | 'gif'
+  | 'tiff'
+  | 'eps'
   | 'svg'
   | 'mermaid'
   | 'drawio'
@@ -36,6 +39,13 @@ export function sourceFormatForPath(sourcePath: string): SourceFormat | undefine
       return 'webp';
     case '.avif':
       return 'avif';
+    case '.gif':
+      return 'gif';
+    case '.tif':
+    case '.tiff':
+      return 'tiff';
+    case '.eps':
+      return 'eps';
     case '.svg':
       return 'svg';
     case '.mmd':
@@ -44,6 +54,26 @@ export function sourceFormatForPath(sourcePath: string): SourceFormat | undefine
     default:
       return undefined;
   }
+}
+
+export function isRasterImagePath(sourcePath: string): boolean {
+  const format = sourceFormatForPath(sourcePath);
+  return (
+    format === 'png' ||
+    format === 'jpeg' ||
+    format === 'webp' ||
+    format === 'avif' ||
+    format === 'gif' ||
+    format === 'tiff'
+  );
+}
+
+export function isEpsPath(sourcePath: string): boolean {
+  return sourceFormatForPath(sourcePath) === 'eps';
+}
+
+export function isSupportedImageInputPath(sourcePath: string): boolean {
+  return isRasterImagePath(sourcePath) || isEpsPath(sourcePath);
 }
 
 export function isMermaidPath(sourcePath: string): boolean {

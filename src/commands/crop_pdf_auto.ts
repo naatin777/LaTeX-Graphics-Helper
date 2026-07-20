@@ -3,6 +3,7 @@ import path from 'node:path';
 import * as vscode from 'vscode';
 
 import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { readGhostscriptExecutablePath } from '../config/external_tool_paths.js';
 import { localeMap } from '../locale_map.js';
 import { cropPdfFiles, type CropPdfJob } from '../operations/crop_pdf_auto.js';
 
@@ -39,8 +40,7 @@ export async function cropPdfAuto(
 
     const outputTemplate = configuration.get<string>('outputPath.cropPdf', DEFAULT_OUTPUT_PATH);
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
-    const ghostscriptPath =
-      configuration.get<string>('execPath.ghostscript') || (process.platform === 'win32' ? 'gswin64c.exe' : 'gs');
+    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     const outputs = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,

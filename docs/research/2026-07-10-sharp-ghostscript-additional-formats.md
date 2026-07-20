@@ -1,5 +1,48 @@
 # sharpとGhostscriptの追加形式予備調査
 
+## 再調査（2026-07-20）
+
+### 現行version
+
+- package manifest: `sharp` `^0.35.3`
+- local installed sharp: `0.35.3`
+- local bundled libvips: `8.18.3`
+- local Ghostscript: `10.07.1`
+- Windows CI: Ghostscript `gs10071`を固定して取得する。
+- Linux / macOS CI: package managerからGhostscriptを取得するため、versionはworkflowで固定されていない。
+
+### macOS arm64の`sharp.format`
+
+| Format      | Input             | Output            | 判定               |
+| ----------- | ----------------- | ----------------- | ------------------ |
+| GIF         | enabled           | enabled           | 追加評価候補       |
+| TIFF        | enabled           | enabled           | 追加評価候補       |
+| HEIF / AVIF | enabled (`.avif`) | enabled (`.avif`) | HEIC defaultは保留 |
+| JP2         | disabled          | disabled          | 対象外             |
+| JPEG XL     | disabled          | disabled          | 対象外             |
+
+GIFとTIFFは、2x2の生成画像をencodeし、同じsharpでdecodeできることを確認した。これはmacOS arm64のlocal Evidenceであり、3 OS共通のsupported判定ではない。
+
+### EPSのlocal smoke
+
+Ghostscript `10.07.1`へ最小EPSをstdinで渡し、`-dSAFER -dEPSCrop -sDEVICE=pdfwrite`で処理が成功することを確認した。これはCLIの最小parse / conversion確認であり、BoundingBox、font、vector保持、resource制限のEvidenceではない。
+
+### Current conclusion
+
+- 作業treeではGIF/TIFF/EPSを既存のPDF/PNG/JPEG/WebP/AVIF commandの入力として扱うprototypeを実装した。GIF/TIFFは先頭page/frame、EPSはGhostscript PDF中間経路を使う。
+- GIF/TIFF/EPSのsupported昇格は、3 OSの`sharp.format`、実fixture、EPS security検証が完了するまで保留する。
+- HEIF / HEIC、JP2、JPEG XL、BMP、ICOは現時点でdefault対応にしない。
+
+### Current sources
+
+- https://sharp.pixelplumbing.com/docs/api-utility/
+- https://sharp.pixelplumbing.com/docs/api-constructor/
+- https://sharp.pixelplumbing.com/docs/api-output/
+- https://ghostscript.readthedocs.io/en/latest/Use.html
+- https://ghostscript.readthedocs.io/en/latest/VectorDevices.html
+
+以下は初回調査の記録である。
+
 ## 調査日
 
 2026-07-10

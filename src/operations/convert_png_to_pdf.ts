@@ -32,6 +32,7 @@ import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
 } from './run_rsvg_convert_with_ascii_scratch.js';
+import { defaultSourceInputOptions, prepareSourceForRasterOutput, type SourceInputOptions } from './source_input.js';
 
 const CONVERSION_CONCURRENCY = 2;
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = ['.png'] as const;
@@ -95,6 +96,7 @@ export interface ConvertPngToPdfFilesOptions {
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
   drawio?: DrawioToPdfOptions;
+  sourceInput?: SourceInputOptions;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
   outputChannel?: LineOutputChannel;
@@ -133,6 +135,7 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
               options.svgToPdf,
               options.mermaid,
               options.drawio,
+              options.sourceInput,
               scratchOptions,
             ),
           ),
@@ -161,6 +164,7 @@ async function stagePngConversion(
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
+  sourceInput?: SourceInputOptions,
   scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -182,6 +186,7 @@ async function stagePngConversion(
     svgToPdf,
     mermaid,
     drawio,
+    sourceInput ?? defaultSourceInputOptions(scratchOptions.platform),
     scratchOptions,
   );
   signal?.throwIfAborted();
@@ -202,26 +207,44 @@ async function writeImageAsPdf(
   svgToPdf?: SvgToPdfOptions,
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
+  sourceInput?: SourceInputOptions,
   scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<void> {
-  const extension = path.extname(sourcePath).toLowerCase();
+  const preparedSourcePath = await prepareSourceForRasterOutput({
+    sourcePath,
+    stageDirectory: path.dirname(outputPath),
+    workspacePath,
+    context: {
+      sourceInput: sourceInput ?? defaultSourceInputOptions(scratchOptions.platform),
+      scratch: scratchOptions,
+      signal,
+    },
+  });
+  const extension = path.extname(preparedSourcePath).toLowerCase();
 
-  if (isEditableDrawioImagePath(sourcePath)) {
-    await writeDrawioAsPdf(sourcePath, outputPath, workspacePath, signal, drawio);
+  if (extension === '.pdf') {
+    await assertWritablePathInWorkspace(outputPath, workspacePath);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, await readFile(preparedSourcePath));
     return;
   }
 
-  if (isMermaidPath(sourcePath)) {
-    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
+  if (isEditableDrawioImagePath(preparedSourcePath)) {
+    await writeDrawioAsPdf(preparedSourcePath, outputPath, workspacePath, signal, drawio);
+    return;
+  }
+
+  if (isMermaidPath(preparedSourcePath)) {
+    await writeMermaidAsPdf(preparedSourcePath, outputPath, workspacePath, signal, mermaid);
     return;
   }
 
   if (extension === SVG_EXTENSION) {
-    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf, scratchOptions);
+    await writeSvgAsPdf(preparedSourcePath, outputPath, workspacePath, signal, svgToPdf, scratchOptions);
     return;
   }
 
-  await writeRasterImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+  await writeRasterImageAsPdf(preparedSourcePath, outputPath, workspacePath, signal);
 }
 
 async function writeDrawioAsPdf(

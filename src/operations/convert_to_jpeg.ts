@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import sharp from 'sharp';
 
-import { isEditableDrawioImagePath, isMermaidPath, sourceFormatForPath } from '../application/source_format.js';
+import { isEditableDrawioImagePath, isMermaidPath, isSupportedImageInputPath } from '../application/source_format.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import {
@@ -20,8 +20,8 @@ import type { RunPdfToPng } from './convert_to_png.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
+import { defaultSourceInputOptions, prepareSourceForRasterOutput, type SourceInputOptions } from './source_input.js';
 
-const RASTER_IMAGE_EXTENSIONS = ['.png', '.webp', '.avif'] as const;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToJpegJob {
@@ -41,6 +41,7 @@ export interface ConvertToJpegFilesOptions extends PdfToolScratchOptions {
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToJpegOptions;
+  sourceInput?: SourceInputOptions;
   runPdfToPng?: RunPdfToPng;
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
@@ -51,6 +52,7 @@ interface JpegStageTools {
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToJpegOptions;
+  sourceInput: SourceInputOptions;
   runPdfToPng?: RunPdfToPng;
 }
 
@@ -93,6 +95,7 @@ export async function convertToJpegFiles(options: ConvertToJpegFilesOptions): Pr
     pdftocairoPath: options.pdftocairoPath,
     mermaid: options.mermaid,
     drawio: options.drawio,
+    sourceInput: options.sourceInput ?? defaultSourceInputOptions(options.platform),
     ...(options.runPdfToPng !== undefined && { runPdfToPng: options.runPdfToPng }),
   };
   const scratch: PdfToolScratchOptions = {
@@ -160,15 +163,25 @@ async function writeSourceAsJpeg(
   paths: JpegStagePaths,
   context: JpegStageContext,
 ): Promise<void> {
-  const extension = path.extname(job.sourcePath).toLowerCase();
+  const sourcePath = await prepareSourceForRasterOutput({
+    sourcePath: job.sourcePath,
+    stageDirectory: paths.stageDirectory,
+    workspacePath: job.workspacePath,
+    context: {
+      sourceInput: context.tools.sourceInput,
+      scratch: context.scratch,
+      signal: context.runtime.signal,
+    },
+  });
+  const extension = path.extname(sourcePath).toLowerCase();
 
-  if (isEditableDrawioImagePath(job.sourcePath)) {
+  if (isEditableDrawioImagePath(sourcePath)) {
     await writeDrawioAsJpeg(job, paths, context);
     return;
   }
 
   const request: JpegRenderRequest = {
-    sourcePath: job.sourcePath,
+    sourcePath,
     outputPath: paths.stagedOutputPath,
     workspacePath: job.workspacePath,
     stageDirectory: paths.stageDirectory,
@@ -180,7 +193,7 @@ async function writeSourceAsJpeg(
     return;
   }
 
-  if (isMermaidPath(job.sourcePath)) {
+  if (isMermaidPath(sourcePath)) {
     await writeMermaidAsJpeg(request, context);
     return;
   }
@@ -333,8 +346,8 @@ function isSupportedSourcePath(sourcePath: string): boolean {
   return (
     extension === '.pdf' ||
     extension === '.svg' ||
-    sourceFormatForPath(sourcePath) === 'mermaid' ||
-    RASTER_IMAGE_EXTENSIONS.includes(extension as (typeof RASTER_IMAGE_EXTENSIONS)[number]) ||
+    isMermaidPath(sourcePath) ||
+    isSupportedImageInputPath(sourcePath) ||
     isEditableDrawioImagePath(sourcePath)
   );
 }

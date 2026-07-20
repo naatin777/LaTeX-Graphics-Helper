@@ -4,7 +4,15 @@
 
 Done
 
-3 OSのremote GitHub Actions EvidenceとローカルのNode / Extension Host実行結果を確認し、tested subsetのNode runtime採用、CI jobの恒久化、Hostとの重複終了、formal script名を決定・適用した。required statusは今回設定しない。
+3 OSのremote GitHub Actions EvidenceとローカルのNode / Extension Host実行結果を確認し、tested subsetのNode runtime採用、CI jobの恒久化、Hostとの重複終了、formal script名を決定・適用した。required statusは今回設定しない。この判断は後続のADR-0018で置き換えられた。
+
+## Current status
+
+このtaskのNode runtime採用判断は、後続の[ADR-0018](../adr/0018-use-extension-host-for-pre-package-tests.md)で置き換えられた。現在の正本は次のとおり。
+
+- pre-package testはすべてVS Code Extension Hostで実行する。
+- `npm test`は`vscode-test`を実行し、Node専用runnerやtest file除外は持たない。
+- Node runtimeの実験結果と当時の判断は、このtaskと[評価record](../records/node-test-runtime-evaluation.md)に履歴として残す。
 
 ## Goal
 
