@@ -834,7 +834,7 @@
     "packageManager": {
       "name": "npm",
       "version": "12.0.1",
-      "onFail": "error"
+      "onFail": "warn"
     },
     "runtime": {
       "name": "node",
