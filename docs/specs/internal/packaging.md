@@ -2,7 +2,7 @@
 
 ## dependency source
 
-VSIXはrepository rootで`npm ci`、`npm run build`、`npx --no-install vsce package --target <platform>-<architecture>`を実行して生成する。依存lockfileは通常の`package-lock.json`だけを使い、VSIX専用lockfileやstaging内の依存再解決は行わない。
+VSIXはrepository rootで`npm ci`、`npm run build`、ローカルVSCEのNode entrypointを`node node_modules/@vscode/vsce/vsce package --target <platform>-<architecture>`として実行して生成する。依存lockfileは通常の`package-lock.json`だけを使い、VSIX専用lockfileやstaging内の依存再解決は行わない。
 
 production dependencyが正常に含まれることを`npm ls --omit=dev`と生成VSIXの内容で確認する。変更時は各OS runnerでnative packageと生成VSIXを再確認する。
 

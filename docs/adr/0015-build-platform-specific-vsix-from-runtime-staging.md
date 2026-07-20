@@ -18,7 +18,7 @@
 
 - releaseではLinux、macOS、WindowsのrunnerごとにVSIXを生成する
 - 各runnerで`npm ci`とbuildを実行し、runner固有のnative dependencyをinstallする
-- repository rootで`npx --no-install vsce package --target <platform>-<architecture>`を実行する
+- repository rootでローカルVSCEのNode entrypointを`node .../node_modules/@vscode/vsce/vsce package --target <platform>-<architecture>`として実行する
 - `.vscodeignore`でdocs、test、source、AI開発設定、source mapなどを配布物から除外する
 - `package-lock.json`だけを依存lockfileとして使い、VSIX専用lockfileや独自lockfile同期処理は追加しない
 
@@ -26,7 +26,7 @@
 
 ## 理由
 
-- npm公式toolchainに近い`npm ci`、`npm run build`、`npx vsce package`の流れで検証できる
+- npm公式toolchainに近い`npm ci`、`npm run build`、rootのローカルVSCE entrypointの流れで検証できる
 - `sharp`のnative packageを実際にpackageするrunnerのOS / architectureへ合わせられる
 - `.vscodeignore`により、repositoryのdocsやAI設定を誤って配布しにくい
 - 生成後のVSIXにはruntime dependencyが含まれるため、networkなしのsmoke testへ進められる

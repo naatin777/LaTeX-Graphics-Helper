@@ -6,7 +6,7 @@ Todo
 
 ## 再開理由
 
-- package managerをnpmへ統一し、rootの通常の`npm ci`と`npx vsce package`でproduction dependencyを同梱できるか再確認する
+- package managerをnpmへ統一し、rootの通常の`npm ci`とローカルVSCE entrypointでproduction dependencyを同梱できるか再確認する
 - VSCEはpnpmの依存treeを正式にサポートしないため、pnpmと旧staging方式を廃止する
 
 ## 目的
@@ -24,7 +24,7 @@ npmで管理しているproduction dependencyをVSIXへ確実に同梱し、`sha
 
 ## これまでの実装
 
-- `scripts/package-vsix.mjs`を追加し、root packageから`npx --no-install vsce`を実行する方式にした
+- `scripts/package-vsix.mjs`を追加し、root packageからローカルVSCEのNode entrypointを実行する方式にした
 - `package:vsix`を追加し、`package`からplatform-specific VSIX生成を呼び出すようにした
 - release workflowをLinux、macOS、Windowsのmatrix package jobとpublish jobへ分割した
 - runnerのOS / architectureからVSIX targetを決め、`sharp`のnative packageを同じrunnerで同梱するようにした

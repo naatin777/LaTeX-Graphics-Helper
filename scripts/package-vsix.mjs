@@ -78,8 +78,15 @@ function runCommand(command, args, options) {
 const { outputPath, target } = parsePackageArguments(process.argv.slice(2));
 await mkdir(path.dirname(outputPath), { recursive: true });
 await runCommand(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['--no-install', 'vsce', 'package', '--target', target, '--out', outputPath],
+  process.execPath,
+  [
+    path.join(rootDirectory, 'node_modules', '@vscode', 'vsce', 'vsce'),
+    'package',
+    '--target',
+    target,
+    '--out',
+    outputPath,
+  ],
   {
     cwd: rootDirectory,
   },
