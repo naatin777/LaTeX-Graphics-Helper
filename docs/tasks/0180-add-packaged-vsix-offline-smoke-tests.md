@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done
 
 ## 目的
 
@@ -69,7 +69,14 @@ VS Codeのdownload、VSIX生成、VSIX installはテスト準備のためnetwork
 - `npm run package:vsix -- --target darwin-arm64 --out /tmp/lgh-packaged-offline-smoke.vsix`
 - 生成したVSIXをinstallしたextensionからmergeを実行し、5ページのPDFを確認した
 - 生成したVSIXをinstallしたextensionでPDF→JPEGを実行し、存在しない`pdftocairo` pathによる失敗通知と出力不在を確認した
-- 新しい0180用PRの`Check`、`Test`、`Playwright`をLinux、macOS、Windowsで実行し、packaged Electron PlaywrightでCrop / Merge / SplitとCLI失敗経路が成功するまでStatusを`Todo`に維持する
+- PR #367をcleanなbaseから実行し、`Check`、`Test`、`Playwright`の全jobがLinux、macOS、Windowsで成功した。packaged Electron PlaywrightでCrop / Merge / SplitとCLI失敗経路を確認したため、Statusを`Done`へ更新する
+
+## Remote Evidence
+
+- PR #367はmerge commit `e7398fb917fc96d0a04f624224b8df09b618373b`で`next/v1`へmergeされた
+- [Check workflow](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29712412583)がsuccessした
+- [Test workflow](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29712412596)のLinux、macOS、Windowsがsuccessした
+- [Playwright workflow](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29712412575)のLinux、macOS、Windowsがsuccessした
 
 ローカルmacOSでは、packaged VSIX経路のElectron起動時にVS Code 1.128.0がmacOSのLaunchServices内で`SIGABRT`する環境依存の失敗が発生した。同じ環境の既存Electron testは成功しているため、3 OSのpackaged UI経路はPRのGitHub Actionsで確認する。
 
