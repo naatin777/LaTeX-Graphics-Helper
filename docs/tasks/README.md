@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md) - 入力対応のprototype実装と3 OS CI確認中。
+- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md) - 実装と3 OS CI確認済み。PR review待ち。
 
 ## Task boundaries
 

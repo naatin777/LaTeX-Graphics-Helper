@@ -12,7 +12,7 @@ In Progress
 - macOS arm64で2x2の生成画像をGIF/TIFFへencodeし、sharpでdecodeできることを確認した。
 - GhostscriptはmacOSで`10.07.1`。最小EPSを`-dSAFER -dEPSCrop -sDEVICE=pdfwrite`で処理できた。
 - `source_format.ts`と既存のPDF/PNG/JPEG/WebP/AVIF commandへGIF/TIFF/EPSの入力対応を追加し、GIF/TIFFは先頭page/frame、EPSはGhostscriptでPDFを経由するprototypeを実装した。
-- Linux / Windowsでの`sharp.format`と実fixture変換はまだ未確認。CIのGhostscriptはLinux/macOSが未固定、Windowsは`gs10071`固定である。
+- Linux / Windowsを含む3 OSのExtension Hostで実fixture変換が成功した。CIのGhostscriptはLinux/macOSが未固定、Windowsは`gs10071`固定である。
 
 ### 今回の実装判断
 
@@ -23,10 +23,16 @@ In Progress
 
 ### 残りの確認
 
-- Linux / Windowsの`sharp.format`と実fixture変換をCIで確認する。
+- Linux / Windowsの`sharp.format`と実fixture変換をCIで確認する。確認済み。
 - GIF animation / multi-page TIFFを展開しない先頭page/frame仕様を3 OSで確認する。
 - EPSのBoundingBox正常系・欠落・不正、vector / fontの変換結果、timeout・memory・disk制限を確認する。
 - CI結果を確認してprototypeをsupportedへ昇格するか、見送るかをmaintainerが決定する。
+
+### Remote Evidence
+
+- [Check workflow run 29715915828](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915828)
+- [Test workflow run 29715915852](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915852): Linux、macOS、Windows pass
+- [Packaged Electron Playwright workflow run 29715915831](https://github.com/naatin777/LaTeX-Graphics-Helper/actions/runs/29715915831): Linux、macOS、Windows pass
 
 ## 目的
 
