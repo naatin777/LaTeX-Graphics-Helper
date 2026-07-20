@@ -6,7 +6,7 @@ test runtimeはdirectory名やrunner統一ではなく、検証するcontractと
 
 ## VS Code Extension Host
 
-pre-package testはすべてVS Code Extension Hostを正式なownerとする。`pnpm run test`は`build:test`の後に`vscode-test`を実行し、`out/test/**/*.test.js`を除外せずに実行する。このruntimeの選択は[ADR-0018](../../adr/0018-use-extension-host-for-pre-package-tests.md)を正本とする。
+pre-package testはすべてVS Code Extension Hostを正式なownerとする。`npm test`は`build:test`の後に`vscode-test`を実行し、`out/test/**/*.test.js`を除外せずに実行する。このruntimeの選択は[ADR-0018](../../adr/0018-use-extension-host-for-pre-package-tests.md)を正本とする。
 
 このruntimeでは、次のcontractを確認する。
 
@@ -121,20 +121,20 @@ mock は使ってよい。
 例:
 
 ```ts
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import sharp from "sharp";
-import * as vscode from "vscode";
+import sharp from 'sharp';
+import * as vscode from 'vscode';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-const sourcePng = path.join(testDirectory, "..", "..", "test", "fixtures", "test.png");
-const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "lgh-convert-test-"));
+const sourcePng = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png');
+const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-test-'));
 
 try {
-  const sourceWebp = path.join(temporaryDirectory, "source.webp");
+  const sourceWebp = path.join(temporaryDirectory, 'source.webp');
 
   await sharp(await readFile(sourcePng))
     .webp()

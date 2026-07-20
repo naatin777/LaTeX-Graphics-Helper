@@ -66,7 +66,7 @@ Node testはprotocol、validation、状態変換などの純粋な契約を、Ex
 ## 関連
 
 - [ADR-0013: VS Code ElectronをWebview visual testに使う](0013-use-vscode-electron-for-webview-visual-tests.md)（置き換え済み）
-- [ADR-0015: runtime stagingからOS別VSIXを生成する](0015-build-platform-specific-vsix-from-runtime-staging.md)
+- [ADR-0015: npmからOS別VSIXを生成する](0015-build-platform-specific-vsix-from-runtime-staging.md)
 - [ADR-0018: pre-package testはVS Code Extension Hostで実行する](0018-use-extension-host-for-pre-package-tests.md)（test allocation）
 - [test policy](../specs/internal/test-policy.md)
 - [VSIX packaging仕様](../specs/internal/packaging.md)

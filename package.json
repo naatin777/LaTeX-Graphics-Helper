@@ -34,23 +34,23 @@
     "format:fix": "oxfmt --config ./oxfmt.config.ts --write src test webview/apps webview/shared package.json tsconfig.json tsconfig.test.json webview/tsconfig.json webview/tsconfig.test.json oxfmt.config.ts oxlint.config.ts",
     "compile": "tsc -p tsconfig.json",
     "compile:test": "tsc -p tsconfig.test.json",
-    "compile:webview": "pnpm run compile:webview:crop_pdf && pnpm run compile:webview:merge_pdf && pnpm run compile:webview:split_pdf",
+    "compile:webview": "npm run compile:webview:crop_pdf && npm run compile:webview:merge_pdf && npm run compile:webview:split_pdf",
     "compile:webview:crop_pdf": "vite build --config webview/apps/crop_pdf/vite.config.ts",
     "compile:webview:merge_pdf": "vite build --config webview/apps/merge_pdf/vite.config.ts",
     "compile:webview:split_pdf": "vite build --config webview/apps/split_pdf/vite.config.ts",
-    "test:webview": "pnpm run test:webview:crop_pdf && pnpm run test:webview:merge_pdf && pnpm run test:webview:split_pdf",
+    "test:webview": "npm run test:webview:crop_pdf && npm run test:webview:merge_pdf && npm run test:webview:split_pdf",
     "test:webview:crop_pdf": "vitest run --config webview/apps/crop_pdf/vitest.config.ts",
     "test:webview:merge_pdf": "vitest run --config webview/apps/merge_pdf/vitest.config.ts",
     "test:webview:split_pdf": "vitest run --config webview/apps/split_pdf/vitest.config.ts",
-    "build": "pnpm run clean && pnpm run compile && pnpm run compile:test && pnpm run compile:webview",
-    "check": "pnpm run lint && pnpm run format && pnpm run typecheck && pnpm run typecheck:test && pnpm run typecheck:webview && pnpm run typecheck:webview:test",
+    "build": "npm run clean && npm run compile && npm run compile:test && npm run compile:webview",
+    "check": "npm run lint && npm run format && npm run typecheck && npm run typecheck:test && npm run typecheck:webview && npm run typecheck:webview:test",
     "check:nls": "node scripts/check-nls.mjs",
-    "check:all": "pnpm run check && pnpm run check:nls",
-    "check:fix": "pnpm run lint:fix && pnpm run format:fix",
+    "check:all": "npm run check && npm run check:nls",
+    "check:fix": "npm run lint:fix && npm run format:fix",
     "test": "vscode-test",
     "test:playwright": "playwright test --project=vscode-electron",
     "test:playwright:vsix": "playwright test --project=vscode-electron",
-    "package": "pnpm run build && pnpm run package:vsix",
+    "package": "npm run build && npm run package:vsix",
     "package:vsix": "node scripts/package-vsix.mjs"
   },
   "dependencies": {
@@ -58,6 +58,7 @@
     "p-limit": "^7.3.0",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.1.200",
+    "proxy-agent": "^8.0.2",
     "puppeteer-core": "^25.3.0",
     "sharp": "^0.35.3",
     "solid-js": "^1.9.14",
@@ -831,8 +832,6 @@
   "icon": "assets/icon.png",
   "engines": {
     "node": ">=22",
-    "pnpm": ">=11.13.1",
     "vscode": "^1.105.0"
-  },
-  "packageManager": "pnpm@11.13.1"
+  }
 }

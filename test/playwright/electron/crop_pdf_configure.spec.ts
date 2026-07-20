@@ -16,6 +16,7 @@ import { captureCropPdfScreenshot } from './helpers/crop_pdf_screenshot.js';
 import {
   expectPdfCanvasesReadable,
   expectWebviewNetworkBlocked,
+  convertPdfToJpeg,
   convertPngToJpeg,
   openCropPdfConfigure,
   waitForWebviewTheme,
@@ -102,12 +103,15 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
   const outputPath = join(workspacePath, 'q a-crop.pdf');
   const rasterInputPath = join(workspacePath, 'packaged-raster-input.png');
   const rasterOutputPath = join(workspacePath, 'packaged-raster-input.jpeg');
+  const failedPdfJpegOutputPaths = [1, 2].map((page) => join(workspacePath, `q a-${page}.jpeg`));
   const splitOutputDirectory = join(workspacePath, 'packaged-split');
   const mergedOutputPath = join(workspacePath, 'packaged-merged.pdf');
   let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
   let window: Page | undefined;
   const consoleMessages: string[] = [];
   const sourceFixtureBytes = await readFile(sourceFixture);
+  const missingPdftocairoPath =
+    process.platform === 'win32' ? 'C:\\lgh-missing\\pdftocairo.exe' : '/lgh-missing/pdftocairo';
 
   try {
     await Promise.all([
@@ -116,7 +120,9 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       mkdir(sharedDataDir),
       mkdir(extensionsDir),
     ]);
-    await writeVscodeUserSettings(userSettingsPath, initialTheme);
+    await writeVscodeUserSettings(userSettingsPath, initialTheme, {
+      'latex-graphics-helper.execPath.pdftocairo': missingPdftocairoPath,
+    });
     await Promise.all([cp(sourceFixture, inputPath), cp(rasterSourceFixture, rasterInputPath)]);
 
     const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
@@ -211,7 +217,9 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       });
     }
 
-    await writeVscodeUserSettings(userSettingsPath, alternateTheme);
+    await writeVscodeUserSettings(userSettingsPath, alternateTheme, {
+      'latex-graphics-helper.execPath.pdftocairo': missingPdftocairoPath,
+    });
     const lightTheme = await waitForWebviewTheme(body, 'vscode-light');
     expect(lightTheme.bodyBackground).not.toBe(darkTheme.bodyBackground);
     expect(lightTheme.bodyForeground).not.toBe(darkTheme.bodyForeground);
@@ -262,6 +270,22 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       exact: true,
     });
     await expect(successNotification).toBeVisible();
+    await vscodeWindow.keyboard.press('Escape');
+
+    await convertPdfToJpeg(vscodeWindow, cropConfigureFixture.fileName);
+    await expect(vscodeWindow.getByRole('alert').filter({ hasText: 'Failed to convert to JPEG:' })).toBeVisible();
+    for (const failedOutputPath of failedPdfJpegOutputPaths) {
+      await expect
+        .poll(async () => {
+          try {
+            await stat(failedOutputPath);
+            return false;
+          } catch {
+            return true;
+          }
+        })
+        .toBe(true);
+    }
     await vscodeWindow.keyboard.press('Escape');
 
     await convertPngToJpeg(vscodeWindow, 'packaged-raster-input.png');

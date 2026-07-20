@@ -1,9 +1,8 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { spawn } from 'node:child_process';
 
 const rootDirectory = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const supportedTargets = new Set([
@@ -14,41 +13,6 @@ const supportedTargets = new Set([
   'win32-arm64',
   'win32-x64',
 ]);
-const runtimeFiles = [
-  'CHANGELOG.md',
-  'LICENSE',
-  'README.ja.md',
-  'README.md',
-  'assets',
-  'media',
-  'out',
-  '.vscodeignore',
-  'package.nls.ja.json',
-  'package.nls.json',
-];
-
-function parsePackageArguments(args) {
-  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
-  const { values } = parseArgs({
-    args: normalizedArgs,
-    options: {
-      out: { type: 'string' },
-      target: { type: 'string' },
-    },
-    strict: true,
-  });
-
-  const target = values.target ?? getCurrentTarget();
-  if (!supportedTargets.has(target)) {
-    throw new Error(`Unsupported VSIX target: ${target}`);
-  }
-  if (target !== getCurrentTarget()) {
-    throw new Error(`VSIX target ${target} must match the current runner target ${getCurrentTarget()}`);
-  }
-
-  const outputPath = path.resolve(rootDirectory, values.out ?? `latex-graphics-helper-${target}.vsix`);
-  return { outputPath, target };
-}
 
 function getCurrentTarget() {
   const platform = {
@@ -67,23 +31,30 @@ function getCurrentTarget() {
   return `${platform}-${architecture}`;
 }
 
-function createRuntimeManifest(packageManifest) {
-  const {
-    devDependencies: _devDependencies,
-    packageManager: _packageManager,
-    pnpm: _pnpm,
-    scripts: _scripts,
-    ...runtimeManifest
-  } = packageManifest;
-  return runtimeManifest;
-}
+function parsePackageArguments(args) {
+  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
+  const { values } = parseArgs({
+    args: normalizedArgs,
+    options: {
+      out: { type: 'string' },
+      target: { type: 'string' },
+    },
+    strict: true,
+  });
+  const currentTarget = getCurrentTarget();
+  const target = values.target ?? currentTarget;
 
-async function copyRuntimeFiles(stageDirectory) {
-  for (const relativePath of runtimeFiles) {
-    await cp(path.join(rootDirectory, relativePath), path.join(stageDirectory, relativePath), {
-      recursive: true,
-    });
+  if (!supportedTargets.has(target)) {
+    throw new Error(`Unsupported VSIX target: ${target}`);
   }
+  if (target !== currentTarget) {
+    throw new Error(`VSIX target ${target} must match the current runner target ${currentTarget}`);
+  }
+
+  return {
+    outputPath: path.resolve(rootDirectory, values.out ?? `latex-graphics-helper-${target}.vsix`),
+    target,
+  };
 }
 
 function runCommand(command, args, options) {
@@ -104,49 +75,12 @@ function runCommand(command, args, options) {
   });
 }
 
-function getPnpmScript() {
-  const npmExecPath = process.env.npm_execpath;
-
-  if (!npmExecPath || npmExecPath.toLowerCase().endsWith('.cmd')) {
-    throw new Error('package-vsix.mjs must be run through pnpm so npm_execpath points to the pnpm JavaScript CLI.');
-  }
-
-  return path.resolve(rootDirectory, npmExecPath);
-}
-
-async function packageVsix({ outputPath, target }) {
-  const packageManifest = JSON.parse(await readFile(path.join(rootDirectory, 'package.json'), 'utf8'));
-  const stageDirectory = await mkdtemp(path.join(os.tmpdir(), 'latex-graphics-helper-vsix-'));
-
-  try {
-    await mkdir(path.dirname(outputPath), { recursive: true });
-    await writeFile(
-      path.join(stageDirectory, 'package.json'),
-      `${JSON.stringify(createRuntimeManifest(packageManifest), null, 2)}\n`,
-    );
-    await copyRuntimeFiles(stageDirectory);
-    await cp(path.join(rootDirectory, 'pnpm-workspace.yaml'), path.join(stageDirectory, 'pnpm-workspace.yaml'));
-    await runCommand(process.execPath, [getPnpmScript(), 'install', '--prod', '--lockfile=false'], {
-      cwd: stageDirectory,
-    });
-    await rm(path.join(stageDirectory, 'pnpm-workspace.yaml'), { force: true });
-
-    await runCommand(
-      process.execPath,
-      [
-        path.join(rootDirectory, 'node_modules', '@vscode', 'vsce', 'vsce'),
-        'package',
-        '--target',
-        target,
-        '--out',
-        outputPath,
-      ],
-      { cwd: stageDirectory },
-    );
-  } finally {
-    await rm(stageDirectory, { force: true, recursive: true });
-  }
-}
-
-const packageArguments = parsePackageArguments(process.argv.slice(2));
-await packageVsix(packageArguments);
+const { outputPath, target } = parsePackageArguments(process.argv.slice(2));
+await mkdir(path.dirname(outputPath), { recursive: true });
+await runCommand(
+  process.platform === 'win32' ? 'npx.cmd' : 'npx',
+  ['--no-install', 'vsce', 'package', '--target', target, '--out', outputPath],
+  {
+    cwd: rootDirectory,
+  },
+);

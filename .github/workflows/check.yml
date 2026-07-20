@@ -16,19 +16,13 @@ jobs:
         steps:
             - uses: actions/checkout@v7
 
-            - run: corepack enable
-              shell: bash
-
-            - run: corepack prepare pnpm@11.13.1 --activate
-              shell: bash
-
             - uses: actions/setup-node@v6
               with:
                   node-version: '22'
-                  cache: pnpm
+                  cache: npm
 
-            - run: pnpm install --frozen-lockfile
+            - run: npm ci
               shell: bash
 
-            - run: pnpm run check
+            - run: npm run check
               shell: bash

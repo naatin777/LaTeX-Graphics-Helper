@@ -15,7 +15,7 @@ pre-commit:
 
       # staged files だけを oxfmt で自動整形する。
       # --write を付けるので、失敗検出ではなく修正が目的。
-      run: pnpm exec oxfmt --write {staged_files}
+      run: npx --no-install oxfmt --write {staged_files}
 
       # format 後に変更された staged files を git add し直す。
       # これがないと、format 済みの差分が commit に入らない。
@@ -27,7 +27,7 @@ pre-commit:
 
       # format 後の staged files に対して lint する。
       # ここでは --fix しない。修正系は format に寄せる。
-      run: pnpm exec oxlint {staged_files}
+      run: npx --no-install oxlint {staged_files}
 
 # push 前は staged files ではなくプロジェクト全体を見る。
 # typecheck はファイル単位で安全に絞りにくいので pre-push に寄せる。
@@ -37,9 +37,9 @@ pre-push:
   commands:
     typecheck:
       # extension runtime / extension test / webview / webview test をまとめて確認する。
-      run: pnpm run check:all
+      run: npm run check:all
 
     build:
       # package 前に壊れていないか見る。
       # pre-push で毎回重すぎるなら、この build は外して CI に任せてもよい。
-      run: pnpm run build
+      run: npm run build

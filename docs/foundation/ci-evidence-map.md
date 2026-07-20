@@ -9,7 +9,7 @@
 
 | Workflow        | Trigger              | Docs-only behavior | Platform                | Main command / Evidence                         | Failure artifact                   | Evidence class                                                 |
 | --------------- | -------------------- | ------------------ | ----------------------- | ----------------------------------------------- | ---------------------------------- | -------------------------------------------------------------- |
-| Check           | PR、main push        | skipしない         | Linux                   | `pnpm run check`                                | なし                               | lint、format、4種typecheck                                     |
+| Check           | PR、main push        | skipしない         | Linux                   | `npm run check`                                 | なし                               | lint、format、4種typecheck                                     |
 | Test            | PR、main push        | skipしない         | Linux / macOS / Windows | `build` → `test` + `test:webview`               | Extension Host user-data directory | Host、operation、filesystem、JSDOM component test              |
 | Playwright      | PR、main push        | skipしない         | Linux / macOS / Windows | `build` → VSIX package → `test:playwright:vsix` | Playwright report / test-results   | installed VSIX、Webview、theme、Host bridge、Sharp native load |
 | Release package | tag                  | 対象外             | Linux / macOS / Windows | `build` → target VSIX package → Electron E2E    | `test-results/`, VSIX              | installed artifact、native dependency、packaged user journey   |
@@ -17,14 +17,14 @@
 
 ## 2. Local command semantics
 
-| Command                         | Includes                                       | Excludes                        | Interpretation                    |
-| ------------------------------- | ---------------------------------------------- | ------------------------------- | --------------------------------- |
-| `pnpm run check`                | lint、format、4種typecheck                     | runtime tests、package、NLS     | static verification               |
-| `pnpm run build`                | clean、compile、test compile、Webview build    | runtime tests、package          | shared prerequisite               |
-| `pnpm run test`                 | fixed VS Code Extension Host test-cli          | Browser、Electron、package      | Host / operation integration      |
-| `pnpm run test:webview`         | crop、merge、split JSDOM component tests       | PDF.js real rendering、Electron | fast component interaction checks |
-| `pnpm run test:playwright:vsix` | Electron project with required `LGH_VSIX_PATH` | Browser、Host Mocha             | installed VSIX journey            |
-| `pnpm run package:vsix`         | runner-matched target package                  | installed execution             | artifact creation only            |
+| Command                        | Includes                                       | Excludes                        | Interpretation                    |
+| ------------------------------ | ---------------------------------------------- | ------------------------------- | --------------------------------- |
+| `npm run check`                | lint、format、4種typecheck                     | runtime tests、package、NLS     | static verification               |
+| `npm run build`                | clean、compile、test compile、Webview build    | runtime tests、package          | shared prerequisite               |
+| `npm test`                     | fixed VS Code Extension Host test-cli          | Browser、Electron、package      | Host / operation integration      |
+| `npm run test:webview`         | crop、merge、split JSDOM component tests       | PDF.js real rendering、Electron | fast component interaction checks |
+| `npm run test:playwright:vsix` | Electron project with required `LGH_VSIX_PATH` | Browser、Host Mocha             | installed VSIX journey            |
+| `npm run package:vsix`         | runner-matched target package                  | installed execution             | artifact creation only            |
 
 ## 3. PR Evidence currently available
 
