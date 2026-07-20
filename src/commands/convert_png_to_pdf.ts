@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
 import { readDrawioExecutablePath } from '../config/drawio_path.js';
+import { readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
 import { readMermaidPuppeteerOptions, readPuppeteerExecutablePath } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
@@ -34,6 +35,9 @@ const PDF_IMAGE_EXTENSIONS = [
   '.jpeg',
   '.webp',
   '.avif',
+  '.gif',
+  '.tif',
+  '.tiff',
   '.svg',
   '.mmd',
   '.mermaid',
@@ -208,7 +212,7 @@ function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgT
 
   return {
     engine: configuration.get<SvgToPdfEngine>('convertToPdf.svg.engine', 'puppeteer'),
-    rsvgConvertPath: configuration.get<string>('execPath.rsvgConvert', 'rsvg-convert'),
+    rsvgConvertPath: readRsvgConvertExecutablePath(configuration),
     puppeteerBrowser: configuration.get<'chrome' | 'firefox'>('puppeteer.browser', 'chrome'),
     puppeteerBrowserChannel: configuration.get('convertToPdf.svg.puppeteer.browserChannel', 'chrome'),
     ...(executablePath ? { puppeteerExecutablePath: executablePath } : {}),

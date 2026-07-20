@@ -4,6 +4,7 @@
 // - latex-graphics-helper.convertToPng commandが登録されること
 // - MermaidをPNGに直接変換できること
 // - JPEG、WebP、AVIFをPNGに変換できること
+// - GIF、TIFFを先頭frame/pageだけPNGに変換できること
 // - SVGをPNGに変換できること
 // - PDFをページごとのPNGに変換できること
 // - PNGからPNGへは変換しないこと
@@ -107,6 +108,32 @@ suite('PNGに変換コマンド', () => {
     }
   });
 
+  test('GIFとTIFFを先頭pageからPNGへ変換する', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePaths = await Promise.all(
+        ['gif', 'tiff'].map(async (extension) => {
+          const sourcePath = path.join(temporaryDirectory, `source-${extension}.${extension}`);
+          const format = extension as 'gif' | 'tiff';
+          await writeAnimatedImageFixture(sourcePath, format);
+          return sourcePath;
+        }),
+      );
+
+      const commandExecution = vscode.commands.executeCommand(
+        CONVERT_TO_PNG_COMMAND,
+        vscode.Uri.file(sourcePaths[0]!),
+        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+      );
+      await runCommandAndClearNotificationsUntilDone(commandExecution);
+
+      await Promise.all(sourcePaths.map((sourcePath) => assertFirstFramePng(replaceExtension(sourcePath, '.png'))));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
   test('SVGを読み取り可能なPNGへ変換する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
@@ -198,6 +225,32 @@ async function writeMermaidFixture(filePath: string): Promise<void> {
   await writeFile(filePath, ['flowchart LR', '  A[Mermaid Alpha] --> B[Mermaid Beta]', ''].join('\n'));
 }
 
+async function writeAnimatedImageFixture(filePath: string, format: 'gif' | 'tiff'): Promise<void> {
+  const red = await sharp({
+    create: {
+      width: 4,
+      height: 4,
+      channels: 4,
+      background: { r: 255, g: 0, b: 0, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+  const blue = await sharp({
+    create: {
+      width: 4,
+      height: 4,
+      channels: 4,
+      background: { r: 0, g: 0, b: 255, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  const output = sharp([red, blue], { join: { animated: true } });
+  await (format === 'gif' ? output.gif() : output.tiff()).toFile(filePath);
+}
+
 async function createTemporaryWorkspaceDirectory(): Promise<string> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   assert.ok(workspaceFolder);
@@ -239,6 +292,21 @@ async function assertReadablePng(filePath: string): Promise<void> {
   assert.ok(metadata.width > 0);
   assert.ok(metadata.height);
   assert.ok(metadata.height > 0);
+}
+
+async function assertFirstFramePng(filePath: string): Promise<void> {
+  const { data, info } = await sharp(await readFile(filePath))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  assert.strictEqual(info.width, 4);
+  assert.strictEqual(info.height, 4);
+
+  for (let index = 0; index < data.length; index += 4) {
+    assert.ok(data[index]! > 220);
+    assert.ok(data[index + 1]! < 30);
+    assert.ok(data[index + 2]! < 30);
+  }
 }
 
 function replaceExtension(filePath: string, extension: string): string {

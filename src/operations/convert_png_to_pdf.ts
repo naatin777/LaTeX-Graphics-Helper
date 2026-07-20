@@ -206,6 +206,13 @@ async function writeImageAsPdf(
 ): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
 
+  if (extension === '.pdf') {
+    await assertWritablePathInWorkspace(outputPath, workspacePath);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, await readFile(sourcePath));
+    return;
+  }
+
   if (isEditableDrawioImagePath(sourcePath)) {
     await writeDrawioAsPdf(sourcePath, outputPath, workspacePath, signal, drawio);
     return;

@@ -1,5 +1,7 @@
 # Node test runtime evaluation
 
+この文書はTask 0201で実施したNode runtime実験と当時の判断を記録する履歴資料である。Node runtime採用は後続の[ADR-0018](../adr/0018-use-extension-host-for-pre-package-tests.md)で置き換えられ、現在のpre-package testはすべてVS Code Extension Hostで実行する。
+
 ## Question
 
 Node-level contractを、VS Code Extension Hostではなくplain Nodeで実行する価値があるか。

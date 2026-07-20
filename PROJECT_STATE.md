@@ -26,7 +26,8 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- なし
+- GIF/TIFF input conversion through existing output commands (PR review中)
+- EPS input conversion deferred until security/resource limits are designed
 
 ## Non-goals
 

@@ -17,11 +17,11 @@ tool scratchはtransaction stagingの代わりではない。
 
 タスク0141の実測結果に基づき、Windowsで次だけを対象にする。
 
-| Tool         | scratch入力 | scratch出力      | 理由                                                                                     |
-| ------------ | ----------- | ---------------- | ---------------------------------------------------------------------------------------- |
-| Ghostscript  | 必須        | 現行cropではなし | Hindi・emojiを含む入力pathで失敗した                                                     |
-| pdftocairo   | 必須        | 必須             | Unicode入力は実測上成功したが、toolへ渡すpathを一律に隔離し、Unicode出力の文字化けを防ぐ |
-| rsvg-convert | 必須        | 必須             | 調査した非ASCII入出力pathで失敗した                                                      |
+| Tool         | scratch入力 | scratch出力 | 理由                                                                                     |
+| ------------ | ----------- | ----------- | ---------------------------------------------------------------------------------------- |
+| Ghostscript  | 必須        | cropで必須  | Hindi・emojiを含む入力pathで失敗した                                                     |
+| pdftocairo   | 必須        | 必須        | Unicode入力は実測上成功したが、toolへ渡すpathを一律に隔離し、Unicode出力の文字化けを防ぐ |
+| rsvg-convert | 必須        | 必須        | 調査した非ASCII入出力pathで失敗した                                                      |
 
 次には適用しない。
 
@@ -187,8 +187,7 @@ platform、temp候補、file APIはテストから注入できるようにし、
 
 ### Ghostscript
 
-- 論理入力がUnicodeでもtool引数は`input.pdf`のASCII absolute pathになる
-- bbox取得成功後にscratchを削除する
+- 論理入力がUnicodeでもtool引数はcropの`input.pdf`のASCII absolute pathになる
 - non-zero exitとcancelではscratchを残す
 
 ### pdftocairo
