@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Not Planned — maintainer判断により実施しない。
 
 ## 目的
 
