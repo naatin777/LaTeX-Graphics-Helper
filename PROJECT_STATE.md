@@ -26,10 +26,10 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-なし — 次の作業は `docs/tasks/README.md` のBacklogから選択する
-## Non-goals
+- 変換入力preflightの仕様検討中 — `docs/specs/internal/input-preflight.md` へ記録
+- GIF/TIFF/EPS実装済み、CI確認待ち
 
-Task 0201完了後も次を行わない。
+## Non-goals
 
 - production codeのリファクタリング
 - test directoryの全面移動

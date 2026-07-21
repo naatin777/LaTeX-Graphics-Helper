@@ -2,7 +2,7 @@
 
 ## Current Task
 
-現在進行中のtaskはありません。次の候補はBacklogを参照してください。
+- [0128: 変換入力preflightの仕様を決める](0128-design-input-preflight-validation.md) — Spec Complete。`docs/specs/internal/input-preflight.md` に記録。実装は別タスク。
 ## Task boundaries
 
 Taskは小さな作業手順やPR単位ではなく、達成する成果または意思決定を単位とする。
