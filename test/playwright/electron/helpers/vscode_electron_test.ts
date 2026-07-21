@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { access, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -155,30 +155,51 @@ export async function disposeElectronTest(
     })
     .finally(() => removeTemporaryRoot(temporaryRoot));
 
-  if (await pathExists(temporaryRoot)) {
+  if (process.platform !== 'win32' && (await pathExists(temporaryRoot))) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
 }
 
 async function removeTemporaryRoot(temporaryRoot: string): Promise<void> {
   if (process.platform === 'win32') {
-    await execFileAsync('cmd.exe', ['/d', '/s', '/c', `rd /s /q "${temporaryRoot}"`], {
-      timeout: WINDOWS_REMOVE_TIMEOUT_MS,
-      windowsHide: true,
-    }).then(
-      () => undefined,
-      () => undefined,
-    );
+    await removeWindowsTemporaryRoot(temporaryRoot);
+    return;
   }
 
-  if (await pathExists(temporaryRoot)) {
-    await rm(temporaryRoot, {
-      recursive: true,
-      force: true,
-      maxRetries: 20,
-      retryDelay: 200,
-    });
+  await rm(temporaryRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 20,
+    retryDelay: 200,
+  });
+}
+
+async function removeWindowsTemporaryRoot(temporaryRoot: string): Promise<void> {
+  await execFileAsync('cmd.exe', ['/d', '/s', '/c', `rd /s /q "${temporaryRoot}"`], {
+    timeout: WINDOWS_REMOVE_TIMEOUT_MS,
+    windowsHide: true,
+  }).then(
+    () => undefined,
+    () => undefined,
+  );
+
+  if (!(await pathExists(temporaryRoot))) {
+    return;
   }
+
+  // Large VSIX trees can take minutes to delete on Windows even after every
+  // VS Code process has exited. The runner workspace is ephemeral, so defer a
+  // final native retry instead of consuming the Playwright test timeout.
+  const cleaner = spawn(
+    'cmd.exe',
+    ['/d', '/s', '/c', `ping 127.0.0.1 -n 3 >nul & rd /s /q "${temporaryRoot}"`],
+    {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    },
+  );
+  cleaner.unref();
 }
 
 async function readVSCodeLogs(logRoot: string): Promise<string> {
