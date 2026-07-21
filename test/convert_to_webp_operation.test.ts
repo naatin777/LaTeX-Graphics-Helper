@@ -40,6 +40,8 @@ suite('WebPに変換する処理', () => {
     ghostscriptPath: 'gs',
         mermaid: {
           browserChannel: 'chrome',
+            theme: 'default',
+            backgroundColor: 'white',
         },
         drawio: {
           drawioPath: 'drawio',

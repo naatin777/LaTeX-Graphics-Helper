@@ -19,6 +19,8 @@ suite('Mermaid Puppeteer settings', () => {
     assert.deepEqual(options, {
       browserChannel: 'chrome-beta',
       executablePath: '/legacy/chrome',
+      theme: 'default',
+      backgroundColor: 'white',
     });
   });
 
@@ -33,7 +35,11 @@ suite('Mermaid Puppeteer settings', () => {
       'convertToPdf',
     );
 
-    assert.deepEqual(options, { browserChannel: 'chrome-dev' });
+    assert.deepEqual(options, {
+      browserChannel: 'chrome-dev',
+      theme: 'default',
+      backgroundColor: 'white',
+    });
   });
 
   test('shares the common executable path with SVG conversion', () => {

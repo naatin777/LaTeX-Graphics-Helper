@@ -299,5 +299,7 @@
   "quickPick.cropPdf.margin.detectedBounds": "検出した内容の範囲にクロップ",
   "quickPick.cropPdf.margin.keepAroundContent": "内容の周囲に{0} pt残す",
   "quickPick.cropPdf.margin.title": "PDFのクロップ余白を選択",
-  "quickPick.cropPdf.margin.placeholder": "選択した余白をすべてのPDFファイルに適用します。"
+  "quickPick.cropPdf.margin.placeholder": "選択した余白をすべてのPDFファイルに適用します。",
+  "config.mermaid.theme": "Mermaidのテーマ",
+  "config.mermaid.backgroundColor": "Mermaidの背景色"
 }

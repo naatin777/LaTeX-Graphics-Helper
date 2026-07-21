@@ -281,5 +281,7 @@
   "quickPick.cropPdf.margin.detectedBounds": "Crop to the detected content bounds",
   "quickPick.cropPdf.margin.keepAroundContent": "Keep {0} pt around the content",
   "quickPick.cropPdf.margin.title": "Select PDF crop margin",
-  "quickPick.cropPdf.margin.placeholder": "The selected margin is applied to all PDF files."
+  "quickPick.cropPdf.margin.placeholder": "The selected margin is applied to all PDF files.",
+  "config.mermaid.theme": "Mermaid theme",
+  "config.mermaid.backgroundColor": "Mermaid background color"
 }

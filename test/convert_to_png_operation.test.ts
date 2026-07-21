@@ -45,7 +45,9 @@ suite('PNGに変換する処理', () => {
         jobs: [job],
         pdftocairoPath: 'pdftocairo',
     ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome' },
+        mermaid: { browserChannel: 'chrome',
+            theme: 'default',
+            backgroundColor: 'white' },
         drawio,
         runPdfToPng: async (pdfPath, pngPath, page) => {
           assert.ok(pdfPath.endsWith('.pdf'));

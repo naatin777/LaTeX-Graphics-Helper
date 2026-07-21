@@ -408,6 +408,23 @@
           "default": "chrome",
           "description": "%config.mermaid.puppeteer.browserChannel%"
         },
+        "latex-graphics-helper.mermaid.theme": {
+          "type": "string",
+          "enum": [
+            "default",
+            "forest",
+            "dark",
+            "neutral",
+            "base"
+          ],
+          "default": "default",
+          "description": "%config.mermaid.theme%"
+        },
+        "latex-graphics-helper.mermaid.backgroundColor": {
+          "type": "string",
+          "default": "white",
+          "description": "%config.mermaid.backgroundColor%"
+        },
         "latex-graphics-helper.puppeteer.executablePath": {
           "type": "string",
           "default": "",

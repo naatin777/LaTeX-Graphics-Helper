@@ -403,17 +403,15 @@ function asSvgOutputPath(outputPath: string): `${string}.svg` {
 }
 
 function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {
+  const config: Record<string, unknown> = { headless: true };
   if (options.executablePath) {
-    return {
-      executablePath: options.executablePath,
-      headless: true,
-    };
+    config.executablePath = options.executablePath;
+  } else {
+    config.channel = options.browserChannel;
   }
-
-  return {
-    channel: options.browserChannel,
-    headless: true,
-  };
+  config.theme = options.theme;
+  config.backgroundColor = options.backgroundColor;
+  return config;
 }
 
 function isAbortError(error: unknown): boolean {

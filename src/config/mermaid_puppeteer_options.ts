@@ -35,6 +35,8 @@ export function readMermaidPuppeteerOptions(
       `${legacySection}.mermaid.puppeteer.browserChannel`,
       'chrome',
     ),
+    theme: configuration.get<string>('mermaid.theme', 'default'),
+    backgroundColor: configuration.get<string>('mermaid.backgroundColor', 'white'),
     ...(executablePath ? { executablePath } : {}),
   };
 }
