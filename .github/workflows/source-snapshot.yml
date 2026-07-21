@@ -1,0 +1,20 @@
+name: Source Snapshot
+
+on:
+    pull_request:
+
+jobs:
+    snapshot:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Archive source
+              run: tar --exclude=.git -czf source-snapshot.tar.gz .
+              shell: bash
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: source-snapshot
+                  path: source-snapshot.tar.gz
+                  retention-days: 1
