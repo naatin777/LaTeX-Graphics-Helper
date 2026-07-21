@@ -1,6 +1,6 @@
 // Test target:
-// - editable Draw.io画像をPNGへ変換するとき、Draw.io CLIへPNG出力を要求せずPDFを経由すること
-// - Draw.io runnerを注入しても、最終出力は読み取り可能なPNGとして反映されること
+// - editable Draw.io画像をJPEGへ変換するとき、Draw.io CLIへPDF出力を要求しPNG中間を経てJPEGへ変換すること
+// - 最終出力が読み取り可能なJPEGとして反映されること
 
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -10,18 +10,22 @@ import path from 'node:path';
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 
-import { convertToPngFiles, type ConvertToPngJob, type DrawioToPngOptions } from '../src/operations/convert_to_png.js';
+import {
+  convertToJpegFiles,
+  type ConvertToJpegJob,
+  type DrawioToJpegOptions,
+} from '../src/operations/convert_to_jpeg.js';
 
-suite('PNGに変換する処理', () => {
-  test('編集可能なDraw.io画像はPDFを経由してPNGへ変換する', async () => {
-    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-png-'));
+suite('JPEGに変換する処理', () => {
+  test('編集可能なDraw.io画像はPDFを経由してJPEGへ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-jpeg-'));
 
     try {
       const sourcePath = path.join(workspacePath, 'source.drawio.png');
-      const outputPath = path.join(workspacePath, 'source.png');
+      const outputPath = path.join(workspacePath, 'source.jpeg');
       await writeFile(sourcePath, 'editable drawio image placeholder');
       const drawioCalls: string[][] = [];
-      const drawio: DrawioToPngOptions = {
+      const drawio: DrawioToJpegOptions = {
         drawioPath: 'drawio',
         runDrawio: async (_executable, args) => {
           drawioCalls.push(args);
@@ -34,14 +38,14 @@ suite('PNGに変換する処理', () => {
           await writeFile(pdfPath, await document.save());
         },
       };
-      const job: ConvertToPngJob = {
+      const job: ConvertToJpegJob = {
         sourcePath,
         outputPath,
         workspacePath,
         page: 1,
       };
 
-      await convertToPngFiles({
+      await convertToJpegFiles({
         jobs: [job],
         pdftocairoPath: 'pdftocairo',
         mermaid: { browserChannel: 'chrome' },
@@ -71,17 +75,17 @@ suite('PNGに変換する処理', () => {
       assert.strictEqual(args[3], '-o');
       assert.ok(args[4]?.endsWith('.pdf'));
       assert.strictEqual(args[5], sourcePath);
-      await assertReadablePng(outputPath);
+      await assertReadableJpeg(outputPath);
     } finally {
       await rm(workspacePath, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     }
   });
 });
 
-async function assertReadablePng(filePath: string): Promise<void> {
+async function assertReadableJpeg(filePath: string): Promise<void> {
   const metadata = await sharp(await readFile(filePath)).metadata();
 
-  assert.strictEqual(metadata.format, 'png');
+  assert.strictEqual(metadata.format, 'jpeg');
   assert.ok(metadata.width);
   assert.ok(metadata.width > 0);
   assert.ok(metadata.height);

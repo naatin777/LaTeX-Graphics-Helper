@@ -19,6 +19,7 @@ import {
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 
 export type { MermaidPuppeteerOptions };
 
@@ -48,6 +49,7 @@ export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
+  outputChannel?: LineOutputChannel;
 }
 
 export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -75,6 +77,7 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
               options.drawio,
               options.runPdfToSvg,
               options,
+              options.outputChannel,
               options.signal,
             ),
           ),
@@ -104,6 +107,7 @@ async function stageSvgConversion(
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
   scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -116,7 +120,17 @@ async function stageSvgConversion(
   );
   const stagedOutputPath = path.join(stageDirectory, 'result.svg');
 
-  await writeSourceAsSvg(job, stagedOutputPath, pdftocairoPath, mermaid, drawio, runPdfToSvg, scratchOptions, signal);
+  await writeSourceAsSvg(
+    job,
+    stagedOutputPath,
+    pdftocairoPath,
+    mermaid,
+    drawio,
+    runPdfToSvg,
+    scratchOptions,
+    outputChannel,
+    signal,
+  );
   signal?.throwIfAborted();
 
   return {
@@ -135,6 +149,7 @@ async function writeSourceAsSvg(
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
   scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
@@ -153,6 +168,7 @@ async function writeSourceAsSvg(
       job.page,
       runPdfToSvg,
       scratchOptions,
+      outputChannel,
       signal,
     );
     return;
@@ -194,8 +210,9 @@ async function writePdfPageAsSvg(
   workspacePath: string,
   pdftocairoPath: string,
   page = 1,
-  runPdfToSvg?: RunPdfToSvg,
-  scratchOptions: PdfToolScratchOptions = {},
+  runPdfToSvg: RunPdfToSvg | undefined,
+  scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -209,7 +226,8 @@ async function writePdfPageAsSvg(
       outputPath,
       scratchOutputFileName: 'output.svg',
       scratch: scratchOptions,
-      ...(signal !== undefined && { signal }),
+      signal,
+      outputChannel,
       run: async (toolSourcePath, toolOutputPath) => {
         if (runPdfToSvg) {
           await runPdfToSvg(toolSourcePath, toolOutputPath, page, signal);

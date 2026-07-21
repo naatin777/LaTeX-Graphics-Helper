@@ -57,11 +57,7 @@ export async function convertToJpegCommand(
           mermaid,
           drawio,
           platform: process.platform,
-          ...(runtime.signal !== undefined && { signal: runtime.signal }),
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveOutputConflicts: runtime.resolveConflicts,
-          }),
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+          runtime,
         }),
     });
   } catch (error) {
