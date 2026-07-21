@@ -18,6 +18,7 @@ export type { CommittedConversionOutput, OutputConflictDecision, PreparedConvers
 import type { ConversionRuntime } from './conversion_runtime.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
+import { runPreflightBatch } from './input_preflight.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
@@ -94,6 +95,9 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   options.runtime.signal?.throwIfAborted();
   validateJobs(options.jobs, options.definition);
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
+  options.runtime.signal?.throwIfAborted();
+
+  await runPreflight(options);
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -387,6 +391,28 @@ export function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): 
 
 export function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
+}
+
+async function runPreflight(
+  options: ConvertToRasterFilesOptions,
+): Promise<void> {
+  const sourcePaths = options.jobs.map((j) => j.sourcePath);
+  const result = await runPreflightBatch(sourcePaths);
+  for (const report of result.reports) {
+    options.runtime.outputChannel?.appendLine(
+      `[preflight] file: ${report.sourcePath}`,
+    );
+    options.runtime.outputChannel?.appendLine(
+      `[preflight]   format: ${report.format}, size: ${report.fileSize} B`,
+    );
+    options.runtime.outputChannel?.appendLine(
+      `[preflight]   result: ${report.result}${report.reason ? ' (' + report.reason + ')' : ''}`,
+    );
+  }
+  if (!result.canProceed) {
+    const reasons = result.errors.map((e) => e.reason ?? 'unknown error').join('\n');
+    throw new Error(`Preflight validation failed:\n${reasons}`);
+  }
 }
 
 export function errorMessage(error: unknown): string {

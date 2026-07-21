@@ -8,6 +8,7 @@ import pLimit from 'p-limit';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../application/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
+import { runPreflightBatch } from './input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
@@ -58,6 +59,9 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateJobPaths(options.jobs);
+  options.signal?.throwIfAborted();
+
+  await runSvgPreflight(options);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -355,6 +359,27 @@ async function executeDrawio(executable: string, args: string[], signal?: AbortS
     args,
     ...(signal !== undefined && { signal }),
   });
+}
+
+
+async function runSvgPreflight(options: ConvertToSvgFilesOptions): Promise<void> {
+  const sourcePaths = options.jobs.map((j) => j.sourcePath);
+  const result = await runPreflightBatch(sourcePaths);
+  for (const report of result.reports) {
+    options.outputChannel?.appendLine(
+      `[preflight] file: ${report.sourcePath}`,
+    );
+    options.outputChannel?.appendLine(
+      `[preflight]   format: ${report.format}, size: ${report.fileSize} B`,
+    );
+    options.outputChannel?.appendLine(
+      `[preflight]   result: ${report.result}${report.reason ? ' (' + report.reason + ')' : ''}`,
+    );
+  }
+  if (!result.canProceed) {
+    const reasons = result.errors.map((e) => e.reason ?? 'unknown error').join('\n');
+    throw new Error(`Preflight validation failed:\n${reasons}`);
+  }
 }
 
 async function validateJobPaths(jobs: ConvertToSvgJob[]): Promise<void> {
