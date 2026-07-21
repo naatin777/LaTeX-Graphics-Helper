@@ -1,21 +1,24 @@
 import * as vscode from 'vscode';
 
+const NOTIFICATION_CLEAR_INTERVAL_MS = 500;
+
 export async function runCommandAndClearNotifications<T>(
   commandExecution: Thenable<T>,
   waitBeforeClear: () => Promise<void>,
 ): Promise<T> {
   await waitBeforeClear();
-  return await runCommandAndClearNotificationsUntilDone(commandExecution);
+  return runCommandAndClearNotificationsUntilDone(commandExecution);
 }
 
 export async function runCommandAndClearNotificationsUntilDone<T>(commandExecution: Thenable<T>): Promise<T> {
   const commandPromise = Promise.resolve(commandExecution);
+  const completion = waitForCompletion(commandPromise);
 
-  while ((await Promise.race([waitForCompletion(commandPromise), clearAndContinue()])) !== 'done') {
+  while ((await Promise.race([completion, clearAfterDelay()])) !== 'done') {
     // Keep dismissing notifications until the command can complete.
   }
 
-  return await commandPromise;
+  return commandPromise;
 }
 
 async function waitForCompletion(promise: Promise<unknown>): Promise<'done'> {
@@ -28,9 +31,9 @@ async function waitForCompletion(promise: Promise<unknown>): Promise<'done'> {
   return 'done';
 }
 
-async function clearAndContinue(): Promise<'continue'> {
+async function clearAfterDelay(): Promise<'continue'> {
+  await sleep(NOTIFICATION_CLEAR_INTERVAL_MS);
   await vscode.commands.executeCommand('notifications.clearAll');
-  await sleep(50);
   return 'continue';
 }
 
