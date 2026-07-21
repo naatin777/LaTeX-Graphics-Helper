@@ -68,6 +68,7 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
       scratchOptions.outputChannel = options.outputChannel;
     }
     const scratch = await createAsciiInputScratch(scratchOptions);
+    await copyFile(stagingEpsPath, scratch.inputPath);
     await validateAsciiScratchInput(scratch);
     ghostscriptInputPath = scratch.inputPath;
     options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
@@ -97,7 +98,7 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
       return { pdfPath, stagingDirectory: options.stagingDirectory };
     } finally {
-      await removeSuccessfulScratch(scratch);
+      await removeSuccessfulScratch(scratch, options.outputChannel);
     }
   }
 
