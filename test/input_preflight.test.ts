@@ -15,11 +15,7 @@ function assertOk(report: PreflightReport): void {
 }
 
 function assertError(report: PreflightReport, messageContains?: string): void {
-  strictEqual(
-    report.result,
-    'error',
-    `Expected ERROR for ${path.basename(report.sourcePath)}, got ${report.result}`,
-  );
+  strictEqual(report.result, 'error', `Expected ERROR for ${path.basename(report.sourcePath)}, got ${report.result}`);
   if (messageContains !== undefined) {
     ok(
       report.reason?.includes(messageContains),
@@ -65,10 +61,7 @@ suite('Preflight — 共通検査', () => {
   });
 
   test('全件okの場合はcanProceedがtrue', async () => {
-    const result = await runPreflightBatch([
-      path.join(FIXTURES, 'valid.pdf'),
-      path.join(FIXTURES, 'valid.png'),
-    ]);
+    const result = await runPreflightBatch([path.join(FIXTURES, 'valid.pdf'), path.join(FIXTURES, 'valid.png')]);
     strictEqual(result.canProceed, true);
     strictEqual(result.errors.length, 0);
   });
@@ -152,25 +145,19 @@ suite('Preflight — Draw.io', () => {
 
 suite('Preflight — EPS', () => {
   test('有効なEPSをokとして検出する', async () => {
-    const result = await runPreflightBatch([
-      path.resolve('test', 'fixtures', 'eps', 'minimal.eps'),
-    ]);
+    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'minimal.eps')]);
     strictEqual(result.canProceed, true);
     assertOk(result.reports[0]!);
   });
 
   test('headerがないEPSをerrorとして検出する', async () => {
-    const result = await runPreflightBatch([
-      path.resolve('test', 'fixtures', 'eps', 'no-header.eps'),
-    ]);
+    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'no-header.eps')]);
     strictEqual(result.canProceed, false);
     assertError(result.errors[0]!, 'PostScript header');
   });
 
   test('BoundingBoxが不正なEPSをerrorとして検出する', async () => {
-    const result = await runPreflightBatch([
-      path.resolve('test', 'fixtures', 'eps', 'invalid-bbox.eps'),
-    ]);
+    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'invalid-bbox.eps')]);
     strictEqual(result.canProceed, false);
     assertError(result.errors[0]!, 'Invalid BoundingBox');
   });

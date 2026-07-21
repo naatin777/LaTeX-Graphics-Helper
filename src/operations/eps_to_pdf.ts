@@ -61,8 +61,12 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
       inputFileName: 'source.eps',
       toolName: 'Ghostscript',
     };
-    if (options.signal !== undefined) { scratchOptions.signal = options.signal; }
-    if (options.outputChannel !== undefined) { scratchOptions.outputChannel = options.outputChannel; }
+    if (options.signal !== undefined) {
+      scratchOptions.signal = options.signal;
+    }
+    if (options.outputChannel !== undefined) {
+      scratchOptions.outputChannel = options.outputChannel;
+    }
     const scratch = await createAsciiInputScratch(scratchOptions);
     await validateAsciiScratchInput(scratch);
     ghostscriptInputPath = scratch.inputPath;
@@ -170,15 +174,11 @@ export function validateEpsInput(epsPath: string): void {
     const ury = parseInt(bbMatch[4]!, 10);
 
     if (llx >= urx || lly >= ury) {
-      throw new Error(
-        `Invalid BoundingBox in EPS (llx=${llx} >= urx=${urx} or lly=${lly} >= ury=${ury}): ${epsPath}`,
-      );
+      throw new Error(`Invalid BoundingBox in EPS (llx=${llx} >= urx=${urx} or lly=${lly} >= ury=${ury}): ${epsPath}`);
     }
 
     if (urx - llx > 100_000 || ury - lly > 100_000) {
-      throw new Error(
-        `EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`,
-      );
+      throw new Error(`EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`);
     }
   }
 }

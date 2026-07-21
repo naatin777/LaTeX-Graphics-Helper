@@ -52,7 +52,9 @@ export async function assertPreflightPassed(
   const result = await runPreflightBatch(sourcePaths);
 
   for (const report of result.reports) {
-    outputChannel?.appendLine(`[preflight] ${report.sourcePath}: ${report.result}${report.reason ? ' — ' + report.reason : ''}`);
+    outputChannel?.appendLine(
+      `[preflight] ${report.sourcePath}: ${report.result}${report.reason ? ' — ' + report.reason : ''}`,
+    );
   }
 
   if (!result.canProceed) {
@@ -119,11 +121,7 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
 
 // ── PDF ──
 
-async function validatePdfInput(
-  sourcePath: string,
-  format: SourceFormat,
-  fileSize: number,
-): Promise<PreflightReport> {
+async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
     const header = readFileSync(sourcePath).slice(0, 5).toString('utf8');
 
@@ -323,11 +321,15 @@ function safeStatSync(filePath: string): { size: number } {
 }
 
 function formatSize(bytes: number): string {
-  if (bytes < 1024) {return `${bytes} B`;}
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
 
   const kb = bytes / 1024;
 
-  if (kb < 1024) {return `${kb.toFixed(1)} KB`;}
+  if (kb < 1024) {
+    return `${kb.toFixed(1)} KB`;
+  }
 
   const mb = kb / 1024;
 

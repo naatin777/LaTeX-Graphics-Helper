@@ -48,10 +48,8 @@ suite('JPEGに変換する処理', () => {
       await convertToJpegFiles({
         jobs: [job],
         pdftocairoPath: 'pdftocairo',
-    ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome',
-            theme: 'default',
-            backgroundColor: 'white' },
+        ghostscriptPath: 'gs',
+        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio,
         runPdfToPng: async (pdfPath, pngPath, page) => {
           assert.ok(pdfPath.endsWith('.pdf'));

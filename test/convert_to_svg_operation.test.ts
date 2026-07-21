@@ -35,11 +35,11 @@ suite('SVGに変換する処理', () => {
           },
         ],
         pdftocairoPath: 'pdftocairo',
-    ghostscriptPath: 'gs',
+        ghostscriptPath: 'gs',
         mermaid: {
           browserChannel: 'chrome',
-            theme: 'default',
-            backgroundColor: 'white',
+          theme: 'default',
+          backgroundColor: 'white',
         },
         drawio: {
           drawioPath: 'drawio',
@@ -88,7 +88,7 @@ suite('SVGに変換する処理', () => {
             },
           ],
           pdftocairoPath: 'pdftocairo',
-    ghostscriptPath: 'gs',
+          ghostscriptPath: 'gs',
           mermaid: {
             browserChannel: 'chrome',
             theme: 'default',
@@ -128,7 +128,7 @@ suite('SVGに変換する処理', () => {
             },
           ],
           pdftocairoPath: 'pdftocairo',
-    ghostscriptPath: 'gs',
+          ghostscriptPath: 'gs',
           mermaid: {
             browserChannel: 'chrome',
             theme: 'default',

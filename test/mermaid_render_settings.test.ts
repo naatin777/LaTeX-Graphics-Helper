@@ -2,10 +2,7 @@
 
 import assert from 'node:assert/strict';
 
-import {
-  readMermaidPuppeteerOptions,
-  type MermaidConfiguration,
-} from '../src/config/mermaid_puppeteer_options.js';
+import { readMermaidPuppeteerOptions, type MermaidConfiguration } from '../src/config/mermaid_puppeteer_options.js';
 
 suite('Mermaid theme and backgroundColor settings', () => {
   test('defaults to theme=default and backgroundColor=white', () => {
@@ -15,10 +12,7 @@ suite('Mermaid theme and backgroundColor settings', () => {
   });
 
   test('reads custom theme from mermaid.theme', () => {
-    const options = readMermaidPuppeteerOptions(
-      fakeConfiguration({ 'mermaid.theme': 'dark' }),
-      'convertToPdf',
-    );
+    const options = readMermaidPuppeteerOptions(fakeConfiguration({ 'mermaid.theme': 'dark' }), 'convertToPdf');
     assert.strictEqual(options.theme, 'dark');
   });
 
