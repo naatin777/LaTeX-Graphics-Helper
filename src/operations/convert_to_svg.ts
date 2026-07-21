@@ -410,7 +410,7 @@ function validateJobs(jobs: ConvertToSvgJob[]): void {
 function isSupportedSourcePath(sourcePath: string): boolean {
   const extension = path.extname(sourcePath).toLowerCase();
 
-  return extension === '.pdf' || sourceFormatForPath(sourcePath) === 'mermaid' || isEditableDrawioImagePath(sourcePath);
+  return extension === '.pdf' || extension === '.eps' || sourceFormatForPath(sourcePath) === 'mermaid' || isEditableDrawioImagePath(sourcePath);
 }
 
 function asSvgOutputPath(outputPath: string): `${string}.svg` {
