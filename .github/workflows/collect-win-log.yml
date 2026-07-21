@@ -1,0 +1,23 @@
+name: Collect Windows Failure Log
+
+on:
+    pull_request:
+
+permissions:
+    actions: read
+
+jobs:
+    collect:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download Windows job log
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: gh api repos/${{ github.repository }}/actions/jobs/88691949896/logs > windows-failure.log
+              shell: bash
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: windows-failure-log
+                  path: windows-failure.log
+                  retention-days: 1
