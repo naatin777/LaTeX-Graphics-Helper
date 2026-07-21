@@ -14,6 +14,7 @@ import {
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { assertPreflightPassed } from './input_preflight.js';
 
 const SPLIT_CONCURRENCY = 2;
 
@@ -52,6 +53,7 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateInputPaths(options.jobs);
+  await assertPreflightPassed(options.jobs);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

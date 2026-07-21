@@ -23,6 +23,7 @@ import {
   type AsciiScratch,
   type LineOutputChannel,
 } from './external_tool_ascii_scratch.js';
+import { assertPreflightPassed } from './input_preflight.js';
 
 const execFileAsync = promisify(execFile);
 const CONVERSION_CONCURRENCY = 2;
@@ -65,6 +66,9 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   validateJobs(options.jobs);
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
+
+  await assertPreflightPassed(options.jobs, options.outputChannel);
+  options.signal?.throwIfAborted();
 
   if (!options.resolveOutputConflicts) {
     await assertOutputsDoNotExist(options.jobs);

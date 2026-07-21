@@ -11,6 +11,7 @@ import {
 } from '../application/source_format.js';
 import { isWindowsReservedPathComponent, resolveOutputPath } from '../config/resolve_output_path.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
+import { assertPreflightPassed } from './input_preflight.js';
 
 import type { CommittedConversionOutput, PreparedConversionOutput } from './commit_conversion_outputs.js';
 import { runExternalTool } from './run_external_tool.js';
@@ -46,6 +47,8 @@ export async function convertDrawioToPdfFiles(
   const operationName = options.splitByPage ? 'convert-drawio-to-pdf' : 'convert-drawio-to-pdf-directly';
   validateJobs(options.jobs, options.splitByPage);
   await validateJobPaths(options.jobs, operationName);
+
+  await assertPreflightPassed(options.jobs);
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
 

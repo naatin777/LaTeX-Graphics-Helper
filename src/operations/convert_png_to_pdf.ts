@@ -17,7 +17,7 @@ import sharp from 'sharp';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../application/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
-import { runPreflightBatch } from './input_preflight.js';
+import { assertPreflightPassed } from './input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
@@ -110,7 +110,7 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
-  await runPdfPreflight(options);
+  await assertPreflightPassed(options.jobs, options.outputChannel);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -580,25 +580,6 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
 }
 
 
-async function runPdfPreflight(options: ConvertPngToPdfFilesOptions): Promise<void> {
-  const sourcePaths = options.jobs.map((j) => j.sourcePath);
-  const result = await runPreflightBatch(sourcePaths);
-  for (const report of result.reports) {
-    options.outputChannel?.appendLine(
-      `[preflight] file: ${report.sourcePath}`,
-    );
-    options.outputChannel?.appendLine(
-      `[preflight]   format: ${report.format}, size: ${report.fileSize} B`,
-    );
-    options.outputChannel?.appendLine(
-      `[preflight]   result: ${report.result}${report.reason ? ' (' + report.reason + ')' : ''}`,
-    );
-  }
-  if (!result.canProceed) {
-    const reasons = result.errors.map((e) => e.reason ?? 'unknown error').join('\n');
-    throw new Error(`Preflight validation failed:\n${reasons}`);
-  }
-}
 
 function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly string[]): void {
   if (jobs.length === 0) {

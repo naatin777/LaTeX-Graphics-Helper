@@ -12,6 +12,7 @@ import {
   type OutputConflictDecision,
 } from './commit_conversion_outputs.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { assertPreflightPassed } from './input_preflight.js';
 
 export interface MergePdfOptions {
   sourcePaths: string[];
@@ -34,6 +35,9 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
   }
 
   options.signal?.throwIfAborted();
+  await assertPreflightPassed(sourcePaths.map(s => ({ sourcePath: s })));
+  options.signal?.throwIfAborted();
+
   await Promise.all([
     ...sourcePaths.map((sourcePath) => assertExistingPathInWorkspace(sourcePath, workspacePath)),
     assertWritablePathInWorkspace(outputPath, workspacePath),

@@ -14,6 +14,7 @@ import {
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { assertPreflightPassed } from './input_preflight.js';
 
 export interface CropBox {
   left: number;
@@ -48,6 +49,10 @@ export interface CropPdfConfigureOptions {
 export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
+
+  await assertPreflightPassed([options.job]);
+  options.signal?.throwIfAborted();
+
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
   const stagingRootPath = path.join(options.job.workspacePath, '.latex-graphics-helper', 'crop-pdf-configure', runId);
   const artifacts: ConversionArtifactRoot[] = [{ rootPath: stagingRootPath, workspacePath: options.job.workspacePath }];

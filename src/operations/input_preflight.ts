@@ -12,7 +12,7 @@ import {
   type SourceFormat,
 } from '../application/source_format.js';
 import { validateEpsInput } from './eps_to_pdf.js';
-
+import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 export type PreflightResult = 'ok' | 'warning' | 'error';
 
 export interface PreflightReport {
@@ -38,8 +38,27 @@ export async function runPreflightBatch(sourcePaths: string[]): Promise<BatchPre
   const reports = await Promise.all(sourcePaths.map((sourcePath) => runPreflight(sourcePath)));
   const errors = reports.filter((r) => r.result === 'error');
   const warnings = reports.filter((r) => r.result === 'warning');
-
   return { reports, errors, warnings, canProceed: errors.length === 0 };
+}
+/**
+ * Runs preflight on all source files and throws if any error is found.
+ * Warning-only results are logged to outputChannel but do not block.
+ */
+export async function assertPreflightPassed(
+  jobs: { sourcePath: string }[],
+  outputChannel?: LineOutputChannel,
+): Promise<void> {
+  const sourcePaths = jobs.map((j) => j.sourcePath);
+  const result = await runPreflightBatch(sourcePaths);
+
+  for (const report of result.reports) {
+    outputChannel?.appendLine(`[preflight] ${report.sourcePath}: ${report.result}${report.reason ? ' — ' + report.reason : ''}`);
+  }
+
+  if (!result.canProceed) {
+    const reasons = result.errors.map((e) => e.reason ?? 'unknown error').join('\n');
+    throw new Error(`Preflight validation failed:\n${reasons}`);
+  }
 }
 
 async function runPreflight(sourcePath: string): Promise<PreflightReport> {
