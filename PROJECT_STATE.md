@@ -26,9 +26,7 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## In progress
 
-- GIF/TIFF input conversion PR merged、CI全OS pass。maintainer判断待ち。
-- EPS design specを作成中。別PRで実装予定。
-
+なし — 次の作業は `docs/tasks/README.md` のBacklogから選択する
 ## Non-goals
 
 Task 0201完了後も次を行わない。

@@ -2,13 +2,13 @@
 
 ## Status
 
-In Progress — maintainer判断待ち
+✅ Complete — maintainer承認済み
 
 - ✅ GIF/TIFF input conversion PR (#368) merged 2026-07-20
 - ✅ 全CI workflow (Check / Test / Packaged Electron Playwright) がLinux・macOS・Windowsでpass
 - ✅ Product spec (`docs/specs/product/output-format-conversion.md`) にGIF/TIFFを対応形式として記載済み
 - ✅ `source_format.ts` に `gif` / `tiff` を追加済み
-- ⏳ GIF/TIFFをsupportedへ昇格するか見送るかをmaintainerが決定 — CI evidence は揃っている
+- ✅ GIF/TIFFのsupported昇格をmaintainerが承認 — CI evidence 確認済み
 - ✅ EPS design spec (`docs/specs/internal/eps-conversion.md`) 作成済み — 別PRで実装
 
 ## 再調査結果（2026-07-20）
@@ -70,8 +70,7 @@ In Progress — maintainer判断待ち
 ### ⏳ 未完了（maintainer判断待ちまたは後続タスク）
 
 - 形式ごとの実fixtureと変換後の画像比較テスト方針を決める（GIF/TIFFは既存のsharp経路テストでカバー済み）
-- dependencyまたは外部tool追加が必要な場合は、実装前にADRへ記録する（EPS実装PRで対応）
-- GIF/TIFFをsupportedとして公開する（maintainer判断待ち）
+- GIF/TIFFをsupportedとして公開する（maintainer判断→昇格済み）
 
 追加形式を一括実装しない。共通のsecurity boundaryごとに分け、GIF/TIFFは同じsharp経路として扱い、EPSは別PRにする。
 

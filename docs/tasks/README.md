@@ -2,8 +2,7 @@
 
 ## Current Task
 
-- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md) - GIF/TIFF input conversion (#368) merged。CI全OS pass。EPS design specを作成中。maintainer判断待ち。
-
+現在進行中のtaskはありません。次の候補はBacklogを参照してください。
 ## Task boundaries
 
 Taskは小さな作業手順やPR単位ではなく、達成する成果または意思決定を単位とする。
