@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Spec Complete — `docs/specs/product/combine-images-to-single-pdf.md` に記録済み。実装は別タスク。
 
 ## 目的
 
@@ -30,7 +30,9 @@ Todo
 
 ## 関連
 
+- [複数画像→1PDFの製品仕様](../specs/product/combine-images-to-single-pdf.md)
 - [output-format-conversion.md](../specs/internal/output-format-conversion.md)
+- [EPS変換の内部契約](../specs/internal/eps-conversion.md)
 
 ## 確認方法
 
