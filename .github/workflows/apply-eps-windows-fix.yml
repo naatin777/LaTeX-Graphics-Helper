@@ -1,0 +1,70 @@
+name: Apply EPS Windows Fix
+
+on:
+    pull_request:
+
+permissions:
+    contents: write
+
+jobs:
+    apply:
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.head_ref }}
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22.23.1'
+                  package-manager-cache: false
+
+            - name: Patch EPS ASCII scratch handling
+              run: |
+                  python - <<'PY'
+                  from pathlib import Path
+
+                  path = Path('src/operations/eps_to_pdf.ts')
+                  content = path.read_text()
+                  before = """    const scratch = await createAsciiInputScratch(scratchOptions);
+                      await validateAsciiScratchInput(scratch);
+                      ghostscriptInputPath = scratch.inputPath;
+                      options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
+                      options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
+
+                      try {
+                        options.signal?.throwIfAborted();
+                  """
+                  after = """    const scratch = await createAsciiInputScratch(scratchOptions);
+
+                      try {
+                        await copyFile(stagingEpsPath, scratch.inputPath);
+                        await validateAsciiScratchInput(scratch);
+                        ghostscriptInputPath = scratch.inputPath;
+                        options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
+                        options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
+                        options.signal?.throwIfAborted();
+                  """
+                  if before not in content:
+                      raise SystemExit('Expected EPS scratch block was not found')
+                  content = content.replace(before, after, 1)
+                  content = content.replace(
+                      '      await removeSuccessfulScratch(scratch);',
+                      '      await removeSuccessfulScratch(scratch, options.outputChannel);',
+                      1,
+                  )
+                  path.write_text(content)
+                  PY
+
+                  git rm .github/workflows/apply-eps-windows-fix.yml
+                  npm ci
+                  npm run check
+                  git diff --check
+
+                  git config user.name github-actions[bot]
+                  git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+                  git add src/operations/eps_to_pdf.ts
+                  git commit -m "fix: copy EPS into Windows ASCII scratch"
+                  git push origin HEAD:${{ github.head_ref }}
+              shell: bash
