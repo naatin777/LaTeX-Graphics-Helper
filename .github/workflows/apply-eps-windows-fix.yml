@@ -42,6 +42,7 @@ jobs:
 
                   git rm .github/workflows/apply-eps-windows-fix.yml
                   git rm -f .github/workflows/collect-current-windows-log.yml
+                  npm install -g npm@12.0.1
                   npm ci
                   npm run check
                   git diff --check
