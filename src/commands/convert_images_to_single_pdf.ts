@@ -83,9 +83,7 @@ export async function convertImagesToSinglePdfCommand(
           cancellation.dispose();
         }
 
-        await vscode.window.showInformationMessage(
-          userMessage('message.convertToOutput.success', jobs.length, 'PDF'),
-        );
+        await vscode.window.showInformationMessage(userMessage('message.convertToOutput.success', jobs.length, 'PDF'));
       },
     );
   } catch (error) {
