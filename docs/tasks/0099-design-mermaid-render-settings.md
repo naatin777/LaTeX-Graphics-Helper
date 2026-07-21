@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Spec Complete — `docs/specs/product/mermaid-render-settings.md` に記録済み。実装は別タスク。
 
 ## 目的
 

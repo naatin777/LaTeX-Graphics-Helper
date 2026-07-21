@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md) — Spec Complete。実装は別タスク。
+- [0099: Mermaid描画設定の仕様を決める](0099-design-mermaid-render-settings.md) — Spec Complete。実装は別タスク。
 ## Task boundaries
 
 Taskは小さな作業手順やPR単位ではなく、達成する成果または意思決定を単位とする。
