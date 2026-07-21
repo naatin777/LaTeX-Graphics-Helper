@@ -4,13 +4,15 @@ import assert from 'node:assert/strict';
 import { copyFile, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { COMBINE_IMAGES_TO_PDF_COMMAND } from '../src/commands/convert_images_to_single_pdf.js';
 
-const VALID_PNG = path.resolve('test', 'fixtures', 'test.png');
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const VALID_PNG = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png');
 
 suite('画像を1つのPDFへ結合するコマンド', () => {
   let sandbox: sinon.SinonSandbox;
