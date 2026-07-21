@@ -4,7 +4,6 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
-import sharp from 'sharp';
 
 import { isEditableDrawioImagePath, isMermaidPath, isSupportedImageInputPath } from '../application/source_format.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
@@ -18,31 +17,24 @@ import {
 export type { CommittedConversionOutput, OutputConflictDecision, PreparedConversionOutput };
 import type { ConversionRuntime } from './conversion_runtime.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
-import type { RunPdfToPng } from './convert_to_png.js';
-
-// RunPdfToPng is defined in convert_to_png.ts and re-exported there.
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
 
 const execFileAsync = promisify(execFile);
 
-export type RasterEncoder<Output> = (
-  sourceBuffer: Buffer,
-  outputPath: string,
-  output: Output | undefined,
-) => Promise<void>;
+export type RasterEncoder = (sourceBuffer: Buffer, outputPath: string) => Promise<void>;
 
-export interface RasterSourceOptions {
+export interface DrawioOptions {
   drawioPath: string;
   runDrawio?: RunDrawio;
 }
 
-export interface RasterConversionDefinition<Output> {
+export interface RasterConversionDefinition {
   operationName: string;
   stagingDirectoryName: string;
   resultExtension: string;
-  encoder: RasterEncoder<Output>;
+  encoder: RasterEncoder;
   unsupportedInputMessage: (sourcePath: string) => string;
 }
 
@@ -53,33 +45,32 @@ export interface RasterJob {
   page?: number;
 }
 
-export interface ConvertToRasterFilesOptions<Output> extends PdfToolScratchOptions {
+export type RunPdfToPng = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
+
+export interface ConvertToRasterFilesOptions extends PdfToolScratchOptions {
   jobs: RasterJob[];
+  runtime: ConversionRuntime;
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
-  source: RasterSourceOptions;
-  output?: Output;
-  definition: RasterConversionDefinition<Output>;
-  runPdfToPng?: RunPdfToPng;
-  runId?: string;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  signal?: AbortSignal;
+  drawio: DrawioOptions;
+  runPdfToPng?: RunPdfToPng | undefined;
+  runId?: string | undefined;
+  definition: RasterConversionDefinition;
 }
 
 interface RasterStageTools {
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
-  source: RasterSourceOptions;
-  runPdfToPng?: RunPdfToPng;
+  drawio: DrawioOptions;
+  runPdfToPng: RunPdfToPng | undefined;
 }
 
-interface RasterStageContext<Output> {
+interface RasterStageContext {
   runId: string;
-  runtime: Pick<ConversionRuntime, 'signal'>;
+  runtime: ConversionRuntime;
   tools: RasterStageTools;
   scratch: PdfToolScratchOptions;
-  output: Output | undefined;
-  definition: RasterConversionDefinition<Output>;
+  definition: RasterConversionDefinition;
 }
 
 interface RasterStagePaths {
@@ -96,95 +87,65 @@ interface RasterRenderRequest {
   page?: number;
 }
 
-export async function convertRasterFiles<Output>(
-  options: ConvertToRasterFilesOptions<Output>,
-): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+export async function convertRasterFiles(options: ConvertToRasterFilesOptions): Promise<CommittedConversionOutput[]> {
+  options.runtime.signal?.throwIfAborted();
   validateJobs(options.jobs, options.definition);
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
-  options.signal?.throwIfAborted();
+  options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && {
-      resolveConflicts: options.resolveOutputConflicts,
-    }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-  };
   const tools: RasterStageTools = {
     pdftocairoPath: options.pdftocairoPath,
     mermaid: options.mermaid,
-    source: options.source,
-    ...(options.runPdfToPng !== undefined && { runPdfToPng: options.runPdfToPng }),
+    drawio: options.drawio,
+    runPdfToPng: options.runPdfToPng,
   };
   const scratch: PdfToolScratchOptions = {
-    ...(options.platform !== undefined && { platform: options.platform }),
-    ...(options.scratchBaseCandidates !== undefined && {
-      scratchBaseCandidates: options.scratchBaseCandidates,
-    }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+    platform: options.platform,
+    scratchBaseCandidates: options.scratchBaseCandidates,
   };
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: options.definition.operationName,
     runId,
-    runtime,
+    runtime: options.runtime,
     stage: (job, index, stageRunId, stageRuntime) =>
       stageRasterConversion(job, index, {
         runId: stageRunId,
-        runtime: {
-          ...(stageRuntime.signal !== undefined && { signal: stageRuntime.signal }),
-        },
+        runtime: stageRuntime,
         tools,
         scratch,
-        output: options.output,
         definition: options.definition,
       }),
   });
 }
 
-async function stageRasterConversion<Output>(
+async function stageRasterConversion(
   job: RasterJob,
   index: number,
-  context: RasterStageContext<Output>,
+  context: RasterStageContext,
 ): Promise<PreparedConversionOutput> {
   context.runtime.signal?.throwIfAborted();
   const { stagingDirectoryName, resultExtension } = context.definition;
-  const paths: RasterStagePaths = {
-    stageDirectory: path.join(
-      job.workspacePath,
-      '.latex-graphics-helper',
-      stagingDirectoryName,
-      context.runId,
-      `${index + 1}`,
-    ),
-    stagedOutputPath: path.join(
-      job.workspacePath,
-      '.latex-graphics-helper',
-      stagingDirectoryName,
-      context.runId,
-      `${index + 1}`,
-      `result.${resultExtension}`,
-    ),
-    stagingRootPath: path.join(job.workspacePath, '.latex-graphics-helper', stagingDirectoryName, context.runId),
-  };
+  const stagingRootPath = path.join(job.workspacePath, '.latex-graphics-helper', stagingDirectoryName, context.runId);
+  const stageDirectory = path.join(stagingRootPath, `${index + 1}`);
+  const stagedOutputPath = path.join(stageDirectory, `result.${resultExtension}`);
 
-  await writeSourceAsRaster(job, paths, context);
+  await writeSourceAsRaster(job, { stageDirectory, stagedOutputPath, stagingRootPath }, context);
   context.runtime.signal?.throwIfAborted();
 
   return {
-    stagedOutputPath: paths.stagedOutputPath,
+    stagedOutputPath,
     outputPath: job.outputPath,
     workspacePath: job.workspacePath,
-    stagingRootPath: paths.stagingRootPath,
+    stagingRootPath,
   };
 }
 
-async function writeSourceAsRaster<Output>(
+async function writeSourceAsRaster(
   job: RasterJob,
   paths: RasterStagePaths,
-  context: RasterStageContext<Output>,
+  context: RasterStageContext,
 ): Promise<void> {
   const sourcePath = job.sourcePath;
   const extension = path.extname(sourcePath).toLowerCase();
@@ -215,10 +176,10 @@ async function writeSourceAsRaster<Output>(
   await writeImageAsRaster(request, context);
 }
 
-async function writeDrawioAsRaster<Output>(
+async function writeDrawioAsRaster(
   job: RasterJob,
   paths: RasterStagePaths,
-  context: RasterStageContext<Output>,
+  context: RasterStageContext,
 ): Promise<void> {
   context.runtime.signal?.throwIfAborted();
   const pdfPath = path.join(paths.stageDirectory, 'drawio.pdf');
@@ -226,8 +187,8 @@ async function writeDrawioAsRaster<Output>(
   await mkdir(path.dirname(pdfPath), { recursive: true });
   context.runtime.signal?.throwIfAborted();
 
-  await (context.tools.source.runDrawio ?? executeDrawio)(
-    context.tools.source.drawioPath,
+  await (context.tools.drawio.runDrawio ?? executeDrawio)(
+    context.tools.drawio.drawioPath,
     ['-x', '-f', 'pdf', '-o', pdfPath, job.sourcePath],
     context.runtime.signal,
   );
@@ -243,10 +204,7 @@ async function writeDrawioAsRaster<Output>(
   );
 }
 
-async function writePdfPageAsRaster<Output>(
-  request: RasterRenderRequest,
-  context: RasterStageContext<Output>,
-): Promise<void> {
+async function writePdfPageAsRaster(request: RasterRenderRequest, context: RasterStageContext): Promise<void> {
   const pngPath = path.join(request.stageDirectory ?? path.dirname(request.outputPath), 'source.png');
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(pngPath, request.workspacePath);
@@ -258,7 +216,8 @@ async function writePdfPageAsRaster<Output>(
     outputPath: pngPath,
     scratchOutputFileName: 'output.png',
     scratch: context.scratch,
-    ...(context.runtime.signal !== undefined && { signal: context.runtime.signal }),
+    signal: context.runtime.signal,
+    outputChannel: context.runtime.outputChannel,
     run: async (toolSourcePath, toolOutputPath) => {
       if (context.tools.runPdfToPng) {
         await context.tools.runPdfToPng(toolSourcePath, toolOutputPath, request.page ?? 1, context.runtime.signal);
@@ -290,10 +249,7 @@ async function writePdfPageAsRaster<Output>(
   await writeImageAsRaster({ ...request, sourcePath: pngPath }, context);
 }
 
-async function writeMermaidAsRaster<Output>(
-  request: RasterRenderRequest,
-  context: RasterStageContext<Output>,
-): Promise<void> {
+async function writeMermaidAsRaster(request: RasterRenderRequest, context: RasterStageContext): Promise<void> {
   const pngPath = path.join(request.stageDirectory ?? path.dirname(request.outputPath), 'mermaid.png');
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(pngPath, request.workspacePath);
@@ -317,16 +273,13 @@ async function writeMermaidAsRaster<Output>(
   await writeImageAsRaster({ ...request, sourcePath: pngPath }, context);
 }
 
-async function writeImageAsRaster<Output>(
-  request: RasterRenderRequest,
-  context: RasterStageContext<Output>,
-): Promise<void> {
+async function writeImageAsRaster(request: RasterRenderRequest, context: RasterStageContext): Promise<void> {
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(request.outputPath, request.workspacePath);
   await mkdir(path.dirname(request.outputPath), { recursive: true });
   const sourceBuffer = await readFile(request.sourcePath);
   context.runtime.signal?.throwIfAborted();
-  await context.definition.encoder(sourceBuffer, request.outputPath, context.output);
+  await context.definition.encoder(sourceBuffer, request.outputPath);
 }
 
 async function executeDrawio(executable: string, args: string[], signal?: AbortSignal): Promise<void> {
@@ -351,7 +304,7 @@ async function validateJobPaths(jobs: RasterJob[], stagingDirectoryName: string)
   );
 }
 
-function validateJobs<Output>(jobs: RasterJob[], definition: RasterConversionDefinition<Output>): void {
+function validateJobs(jobs: RasterJob[], definition: RasterConversionDefinition): void {
   if (jobs.length === 0) {
     throw new Error('No files were selected.');
   }
@@ -409,11 +362,3 @@ export function errorMessage(error: unknown): string {
 
   return String(error);
 }
-
-export const pngEncoder: RasterEncoder<undefined> = async (sourceBuffer, outputPath) => {
-  await sharp(sourceBuffer).png().toFile(outputPath);
-};
-
-export const jpegEncoder: RasterEncoder<undefined> = async (sourceBuffer, outputPath) => {
-  await sharp(sourceBuffer).jpeg().toFile(outputPath);
-};

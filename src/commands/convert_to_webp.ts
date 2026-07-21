@@ -65,11 +65,7 @@ export async function convertToWebpCommand(
           drawio,
           webp,
           platform: process.platform,
-          ...(runtime.signal !== undefined && { signal: runtime.signal }),
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveOutputConflicts: runtime.resolveConflicts,
-          }),
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+          runtime,
         }),
     });
   } catch (error) {

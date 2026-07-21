@@ -65,6 +65,7 @@ suite('WebPに変換する処理', () => {
             .png()
             .toFile(pngPath);
         },
+        runtime: {},
         runId: 'test-run',
       });
 

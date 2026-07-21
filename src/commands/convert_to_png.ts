@@ -50,20 +50,15 @@ export async function convertToPngCommand(
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('PNG', sourceUris.length),
-      run: (runtime) => {
-        return convertToPngFiles({
+      run: (runtime) =>
+        convertToPngFiles({
           jobs,
           pdftocairoPath,
           mermaid,
           drawio,
           platform: process.platform,
-          ...(runtime.signal !== undefined && { signal: runtime.signal }),
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveOutputConflicts: runtime.resolveConflicts,
-          }),
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-        });
-      },
+          runtime,
+        }),
     });
   } catch (error) {
     if (isAbortError(error)) {

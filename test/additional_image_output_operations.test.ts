@@ -46,7 +46,7 @@ async function convertImage(
   workspacePath: string,
 ): Promise<void> {
   const job = { sourcePath, outputPath, workspacePath };
-  const resolveOutputConflicts = async (): Promise<'overwrite'> => 'overwrite';
+  const runtime = { resolveConflicts: async (): Promise<'overwrite'> => 'overwrite' };
 
   if (outputFormat === 'pdf') {
     await convertPngToPdfFiles({
@@ -62,7 +62,7 @@ async function convertImage(
     pdftocairoPath: 'pdftocairo',
     mermaid: { browserChannel: 'chrome' },
     drawio: { drawioPath: 'drawio' },
-    resolveOutputConflicts,
+    runtime,
     runId: `${inputFormat}-${outputFormat}`,
   };
 

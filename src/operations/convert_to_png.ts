@@ -1,44 +1,43 @@
-import { type CommittedConversionOutput, convertRasterFiles, pngEncoder } from './raster_conversion.js';
-import { type MermaidPuppeteerOptions, type RunDrawio } from './convert_png_to_pdf.js';
+import sharp from 'sharp';
+
+import {
+  type CommittedConversionOutput,
+  convertRasterFiles,
+  type DrawioOptions,
+  type RasterConversionDefinition,
+  type RasterJob,
+  type RunPdfToPng,
+} from './raster_conversion.js';
+import type { MermaidPuppeteerOptions } from './convert_png_to_pdf.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
 import { type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
-import { type OutputConflictDecision } from './commit_conversion_outputs.js';
 
-export interface ConvertToPngJob {
-  sourcePath: string;
-  outputPath: string;
-  workspacePath: string;
-  page?: number;
-}
-
-export interface DrawioToPngOptions {
-  drawioPath: string;
-  runDrawio?: RunDrawio;
-}
-
-export type RunPdfToPng = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
+export type ConvertToPngJob = RasterJob;
+export type DrawioToPngOptions = DrawioOptions;
+export type { RunPdfToPng };
 
 export interface ConvertToPngFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToPngJob[];
+  runtime: ConversionRuntime;
   pdftocairoPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToPngOptions;
-  runPdfToPng?: RunPdfToPng;
-  runId?: string;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  signal?: AbortSignal;
+  runPdfToPng?: RunPdfToPng | undefined;
+  runId?: string | undefined;
 }
 
+const pngDefinition: RasterConversionDefinition = {
+  operationName: 'convert-to-png',
+  stagingDirectoryName: 'convert-to-png',
+  resultExtension: 'png',
+  encoder: (sourceBuffer, outputPath) =>
+    sharp(sourceBuffer)
+      .png()
+      .toFile(outputPath)
+      .then(() => undefined),
+  unsupportedInputMessage: (sourcePath) => `Unsupported input for PNG conversion: ${sourcePath}`,
+};
+
 export async function convertToPngFiles(options: ConvertToPngFilesOptions): Promise<CommittedConversionOutput[]> {
-  return convertRasterFiles({
-    ...options,
-    source: options.drawio,
-    output: undefined,
-    definition: {
-      operationName: 'convert-to-png',
-      stagingDirectoryName: 'convert-to-png',
-      resultExtension: 'png',
-      encoder: pngEncoder,
-      unsupportedInputMessage: (sourcePath) => `Unsupported input for PNG conversion: ${sourcePath}`,
-    },
-  });
+  return convertRasterFiles({ ...options, definition: pngDefinition });
 }

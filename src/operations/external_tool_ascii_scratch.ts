@@ -30,7 +30,7 @@ export async function createAsciiInputScratch(options: {
   baseCandidates: readonly string[];
   inputFileName: string;
   signal?: AbortSignal;
-  outputChannel?: LineOutputChannel;
+  outputChannel?: LineOutputChannel | undefined;
   toolName?: string;
 }): Promise<AsciiScratch> {
   assertAsciiFileName(options.inputFileName);
@@ -70,7 +70,7 @@ export async function createAsciiInputOutputScratch(options: {
   inputFileName: string;
   outputFileName: string;
   signal?: AbortSignal;
-  outputChannel?: LineOutputChannel;
+  outputChannel?: LineOutputChannel | undefined;
   toolName?: string;
 }): Promise<AsciiInputOutputScratch> {
   assertAsciiFileName(options.outputFileName);
@@ -123,7 +123,10 @@ export async function validateAsciiScratchOutput(scratch: AsciiInputOutputScratc
   assertContained(realOutputPath, realRootPath);
 }
 
-export async function removeSuccessfulScratch(scratch: AsciiScratch, outputChannel?: LineOutputChannel): Promise<void> {
+export async function removeSuccessfulScratch(
+  scratch: AsciiScratch,
+  outputChannel?: LineOutputChannel | undefined,
+): Promise<void> {
   try {
     await rm(scratch.rootPath, { recursive: true, force: true });
   } catch (error) {

@@ -60,7 +60,7 @@ suite('PNGに変換する処理', () => {
             .png()
             .toFile(pngPath);
         },
-        resolveOutputConflicts: async () => 'overwrite',
+        runtime: { resolveConflicts: async () => 'overwrite' },
       });
 
       assert.strictEqual(drawioCalls.length, 1);
