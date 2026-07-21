@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import * as vscode from 'vscode';
 
+import { readDrawioExecutablePath } from '../config/drawio_path.js';
+import { readGhostscriptExecutablePath, readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
 import { combineImagesToPdf } from '../operations/combine_images_to_pdf.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -26,11 +28,15 @@ export async function convertImagesToSinglePdfCommand(
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(sourceUris[0]!);
     const workspacePath = workspaceFolder?.uri.fsPath ?? path.dirname(sourceUris[0]!.fsPath);
 
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const rsvgConvertPath = readRsvgConvertExecutablePath(configuration);
+    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const drawioPath = readDrawioExecutablePath(configuration);
+
     let outputPath: string;
 
     if (sourceUris.length === 1) {
       const sourceUri = sourceUris[0]!;
-      const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
       const template =
         configuration.get<string>('outputPath.convertImagesToSinglePdf') ??
         '${fileDirname}/${fileBasenameNoExtension}.pdf';
@@ -65,6 +71,9 @@ export async function convertImagesToSinglePdfCommand(
           outputPath,
           workspacePath,
           signal: controller.signal,
+          rsvgConvertPath,
+          ghostscriptPath,
+          drawioPath,
           resolveOutputConflicts,
           ...(outputChannel !== undefined && { outputChannel }),
         });

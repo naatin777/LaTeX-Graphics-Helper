@@ -21,6 +21,7 @@ import {
 import { readLatexInsertionConfig, type LatexInsertionConfig } from './latex_config.js';
 import { escapeLatex, escapeLatexLabel } from './latex_escape.js';
 import { LatexSnippet } from './latex_snippet.js';
+import { getImageTemplate, renderTemplate, type TemplateContext } from './latex_template.js';
 
 const CLIPBOARD_IMAGE_TYPES = [
   { mime: 'image/png', ext: 'png' },
@@ -178,6 +179,21 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
     fileName: string,
     relativeFilePath: string,
   ): vscode.SnippetString {
+    // Use template if customized
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const template = getImageTemplate(configuration);
+    const defaultTemplate = configuration.inspect<string>('insertLatex.imageTemplate')?.defaultValue;
+    if (template !== defaultTemplate) {
+      const ext = path.extname(relativeFilePath).toLowerCase().replace('.', '');
+      const ctx: TemplateContext = {
+        path: relativeFilePath,
+        name: fileName,
+        ext,
+        dir: path.dirname(relativeFilePath) || '.',
+      };
+      return new vscode.SnippetString(renderTemplate(template, ctx));
+    }
+
     const snippet = new LatexSnippet(config);
 
     snippet.wrapEnvironment('figure', () => {

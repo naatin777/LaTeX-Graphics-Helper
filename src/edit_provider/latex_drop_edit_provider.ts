@@ -7,6 +7,7 @@ import { localeMap } from '../locale_map.js';
 import { readLatexInsertionConfig, type LatexInsertionConfig } from './latex_config.js';
 import { escapeLatex, escapeLatexLabel } from './latex_escape.js';
 import { LatexSnippet } from './latex_snippet.js';
+import { getPdfTemplate, renderTemplate, type TemplateContext } from './latex_template.js';
 
 export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
   async provideDocumentDropEdits(
@@ -73,6 +74,21 @@ export class LatexDropEditProvider implements vscode.DocumentDropEditProvider {
     fileName: string,
     relativeFilePath: string,
   ): vscode.SnippetString {
+    // Use template if customized
+    const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const template = getPdfTemplate(configuration);
+    const defaultTemplate = configuration.inspect<string>('insertLatex.pdfTemplate')?.defaultValue;
+    if (template !== defaultTemplate) {
+      const ext = path.extname(relativeFilePath).toLowerCase().replace('.', '');
+      const ctx: TemplateContext = {
+        path: relativeFilePath,
+        name: fileName,
+        ext,
+        dir: path.dirname(relativeFilePath) || '.',
+      };
+      return new vscode.SnippetString(renderTemplate(template, ctx));
+    }
+
     const snippet = new LatexSnippet(config);
 
     snippet.wrapEnvironment('figure', () => {

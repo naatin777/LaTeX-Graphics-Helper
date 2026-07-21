@@ -409,8 +409,6 @@ function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<
   } else {
     config.channel = options.browserChannel;
   }
-  config.theme = options.theme;
-  config.backgroundColor = options.backgroundColor;
   return config;
 }
 

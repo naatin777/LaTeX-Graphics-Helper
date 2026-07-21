@@ -318,8 +318,6 @@ function createMermaidPuppeteerConfig(
   } else {
     config.channel = options.browserChannel;
   }
-  config.theme = options.theme;
-  config.backgroundColor = options.backgroundColor;
   return config;
 }
 
