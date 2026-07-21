@@ -1,0 +1,23 @@
+name: Collect Windows Test Log
+
+on:
+    pull_request:
+
+permissions:
+    actions: read
+
+jobs:
+    collect:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download failed Windows job log
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: gh api repos/${{ github.repository }}/actions/jobs/88672943621/logs > windows-test.log
+              shell: bash
+
+            - uses: actions/upload-artifact@v7
+              with:
+                  name: windows-test-log
+                  path: windows-test.log
+                  retention-days: 1
