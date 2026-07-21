@@ -211,7 +211,7 @@
         {
           "command": "latex-graphics-helper.convertImagesToSinglePdf",
           "group": "latex-graphics-helper.convert@7",
-          "when": "(resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|gif|tif|tiff|svg|eps|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
+          "when": "resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|gif|tif|tiff|svg|eps)$/i && config.latex-graphics-helper.contextMenu.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -305,6 +305,10 @@
         },
         {
           "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
+          "when": "false"
+        },
+        {
+          "command": "latex-graphics-helper.convertImagesToSinglePdf",
           "when": "false"
         }
       ]
