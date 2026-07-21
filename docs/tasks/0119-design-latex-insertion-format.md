@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Spec Complete — `docs/specs/product/latex-insertion-format.md` に記録済み。実装は別タスク。
 
 ## 目的
 
