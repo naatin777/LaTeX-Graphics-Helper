@@ -27,28 +27,11 @@ jobs:
 
                   path = Path('src/operations/eps_to_pdf.ts')
                   content = path.read_text()
-                  before = """    const scratch = await createAsciiInputScratch(scratchOptions);
-                      await validateAsciiScratchInput(scratch);
-                      ghostscriptInputPath = scratch.inputPath;
-                      options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
-                      options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
-
-                      try {
-                        options.signal?.throwIfAborted();
-                  """
-                  after = """    const scratch = await createAsciiInputScratch(scratchOptions);
-
-                      try {
-                        await copyFile(stagingEpsPath, scratch.inputPath);
-                        await validateAsciiScratchInput(scratch);
-                        ghostscriptInputPath = scratch.inputPath;
-                        options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
-                        options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
-                        options.signal?.throwIfAborted();
-                  """
-                  if before not in content:
-                      raise SystemExit('Expected EPS scratch block was not found')
-                  content = content.replace(before, after, 1)
+                  needle = '    const scratch = await createAsciiInputScratch(scratchOptions);\n    await validateAsciiScratchInput(scratch);'
+                  replacement = '    const scratch = await createAsciiInputScratch(scratchOptions);\n    await copyFile(stagingEpsPath, scratch.inputPath);\n    await validateAsciiScratchInput(scratch);'
+                  if content.count(needle) != 1:
+                      raise SystemExit(f'Expected one EPS scratch block, found {content.count(needle)}')
+                  content = content.replace(needle, replacement, 1)
                   content = content.replace(
                       '      await removeSuccessfulScratch(scratch);',
                       '      await removeSuccessfulScratch(scratch, options.outputChannel);',
@@ -58,6 +41,7 @@ jobs:
                   PY
 
                   git rm .github/workflows/apply-eps-windows-fix.yml
+                  git rm -f .github/workflows/collect-current-windows-log.yml
                   npm ci
                   npm run check
                   git diff --check
