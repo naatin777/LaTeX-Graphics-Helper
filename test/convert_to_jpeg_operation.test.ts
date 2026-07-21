@@ -48,6 +48,7 @@ suite('JPEGに変換する処理', () => {
       await convertToJpegFiles({
         jobs: [job],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio,
         runPdfToPng: async (pdfPath, pngPath, page) => {

@@ -7,6 +7,7 @@ import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import pLimit from 'p-limit';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../application/source_format.js';
+import { convertEpsToPdf } from './eps_to_pdf.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
@@ -43,6 +44,7 @@ export type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number,
 export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToSvgJob[];
   pdftocairoPath: string;
+  ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToSvgOptions;
   runPdfToSvg?: RunPdfToSvg;
@@ -73,6 +75,7 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
               index,
               runId,
               options.pdftocairoPath,
+              options.ghostscriptPath,
               options.mermaid,
               options.drawio,
               options.runPdfToSvg,
@@ -103,6 +106,7 @@ async function stageSvgConversion(
   index: number,
   runId: string,
   pdftocairoPath: string,
+  ghostscriptPath: string,
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
@@ -124,6 +128,7 @@ async function stageSvgConversion(
     job,
     stagedOutputPath,
     pdftocairoPath,
+    ghostscriptPath,
     mermaid,
     drawio,
     runPdfToSvg,
@@ -145,6 +150,7 @@ async function writeSourceAsSvg(
   job: ConvertToSvgJob,
   outputPath: string,
   pdftocairoPath: string,
+  ghostscriptPath: string,
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
@@ -156,6 +162,22 @@ async function writeSourceAsSvg(
 
   if (isEditableDrawioImagePath(job.sourcePath)) {
     await writeDrawioAsSvg(job.sourcePath, outputPath, job.workspacePath, drawio, signal);
+    return;
+  }
+
+  if (extension === '.eps') {
+    await writeEpsAsSvg(
+      job.sourcePath,
+      outputPath,
+      job.workspacePath,
+      ghostscriptPath,
+      pdftocairoPath,
+      job.page,
+      runPdfToSvg,
+      scratchOptions,
+      outputChannel,
+      signal,
+    );
     return;
   }
 
@@ -175,6 +197,51 @@ async function writeSourceAsSvg(
   }
 
   await writeMermaidAsSvg(job.sourcePath, outputPath, job.workspacePath, mermaid, signal);
+}
+
+
+async function writeEpsAsSvg(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  ghostscriptPath: string,
+  pdftocairoPath: string,
+  page: number | undefined,
+  runPdfToSvg: RunPdfToSvg | undefined,
+  scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
+  const epsStaging = path.join(path.dirname(outputPath), 'eps-staging');
+  await mkdir(epsStaging, { recursive: true });
+  signal?.throwIfAborted();
+
+  const epsOptions: Parameters<typeof convertEpsToPdf>[0] = {
+    epsPath: sourcePath,
+    workspacePath,
+    ghostscriptPath,
+    stagingDirectory: epsStaging,
+  };
+  if (signal !== undefined) { epsOptions.signal = signal; }
+  if (outputChannel !== undefined) { epsOptions.outputChannel = outputChannel; }
+  if (scratchOptions.scratchBaseCandidates !== undefined) { epsOptions.scratchBaseCandidates = scratchOptions.scratchBaseCandidates; }
+  if (scratchOptions.platform !== undefined) { epsOptions.platform = scratchOptions.platform; }
+
+  const { pdfPath } = await convertEpsToPdf(epsOptions);
+
+  signal?.throwIfAborted();
+  await writePdfPageAsSvg(
+    pdfPath,
+    outputPath,
+    workspacePath,
+    pdftocairoPath,
+    page ?? 1,
+    runPdfToSvg,
+    scratchOptions,
+    outputChannel,
+    signal,
+  );
 }
 
 async function writeDrawioAsSvg(

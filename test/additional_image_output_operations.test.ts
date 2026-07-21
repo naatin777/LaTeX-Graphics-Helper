@@ -60,6 +60,7 @@ async function convertImage(
   const common = {
     jobs: [job],
     pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
     mermaid: { browserChannel: 'chrome' },
     drawio: { drawioPath: 'drawio' },
     runtime,

@@ -20,6 +20,7 @@ export interface ConvertToPngFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToPngJob[];
   runtime: ConversionRuntime;
   pdftocairoPath: string;
+  ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToPngOptions;
   runPdfToPng?: RunPdfToPng | undefined;

@@ -24,6 +24,7 @@ export interface ConvertToWebpFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToWebpJob[];
   runtime: ConversionRuntime;
   pdftocairoPath: string;
+  ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToWebpOptions;
   webp: WebpOutputOptions;

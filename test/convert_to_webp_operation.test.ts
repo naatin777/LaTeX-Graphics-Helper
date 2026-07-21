@@ -37,6 +37,7 @@ suite('WebPに変換する処理', () => {
           },
         ],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: {
           browserChannel: 'chrome',
         },

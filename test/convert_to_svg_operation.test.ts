@@ -35,6 +35,7 @@ suite('SVGに変換する処理', () => {
           },
         ],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: {
           browserChannel: 'chrome',
         },
@@ -85,6 +86,7 @@ suite('SVGに変換する処理', () => {
             },
           ],
           pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
           mermaid: {
             browserChannel: 'chrome',
           },
@@ -122,6 +124,7 @@ suite('SVGに変換する処理', () => {
             },
           ],
           pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
           mermaid: {
             browserChannel: 'chrome',
           },

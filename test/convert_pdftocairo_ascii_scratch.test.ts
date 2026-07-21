@@ -105,6 +105,7 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToPngFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio: { drawioPath: 'drawio' },
         runPdfToPng: runPdfTool,
@@ -124,6 +125,7 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToJpegFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio: { drawioPath: 'drawio' },
         runPdfToPng: runPdfTool,
@@ -143,6 +145,7 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToWebpFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio: { drawioPath: 'drawio' },
         webp: { effort: 0 },
@@ -163,6 +166,7 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToAvifFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio: { drawioPath: 'drawio' },
         avif: { effort: 0 },
@@ -183,6 +187,7 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToSvgFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoPath: 'pdftocairo',
+    ghostscriptPath: 'gs',
         mermaid: { browserChannel: 'chrome' },
         drawio: { drawioPath: 'drawio' },
         runPdfToSvg: runPdfTool,

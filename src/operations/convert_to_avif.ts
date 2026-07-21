@@ -24,6 +24,7 @@ export interface ConvertToAvifFilesOptions extends PdfToolScratchOptions {
   jobs: ConvertToAvifJob[];
   runtime: ConversionRuntime;
   pdftocairoPath: string;
+  ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToAvifOptions;
   avif: AvifOutputOptions;

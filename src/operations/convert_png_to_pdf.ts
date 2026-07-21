@@ -16,6 +16,7 @@ import {
 import sharp from 'sharp';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../application/source_format.js';
+import { convertEpsToPdf } from './eps_to_pdf.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
@@ -95,6 +96,7 @@ export interface ConvertPngToPdfFilesOptions {
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
   drawio?: DrawioToPdfOptions;
+  ghostscriptPath?: string;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
   outputChannel?: LineOutputChannel;
@@ -134,6 +136,7 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
               options.mermaid,
               options.drawio,
               scratchOptions,
+              options.ghostscriptPath,
             ),
           ),
         ),
@@ -162,6 +165,7 @@ async function stagePngConversion(
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
   scratchOptions: RsvgToolScratchOptions = {},
+  ghostscriptPath?: string,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -183,6 +187,7 @@ async function stagePngConversion(
     mermaid,
     drawio,
     scratchOptions,
+    ghostscriptPath,
   );
   signal?.throwIfAborted();
 
@@ -203,6 +208,7 @@ async function writeImageAsPdf(
   mermaid?: MermaidPuppeteerOptions,
   drawio?: DrawioToPdfOptions,
   scratchOptions: RsvgToolScratchOptions = {},
+  ghostscriptPath?: string,
 ): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
 
@@ -225,6 +231,17 @@ async function writeImageAsPdf(
 
   if (extension === SVG_EXTENSION) {
     await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf, scratchOptions);
+    return;
+  }
+
+  if (extension === '.eps') {
+    await writeEpsAsPdf(
+      sourcePath,
+      outputPath,
+      workspacePath,
+      signal,
+      ghostscriptPath,
+    );
     return;
   }
 
@@ -308,6 +325,41 @@ function asPdfOutputPath(outputPath: string): `${string}.pdf` {
   }
 
   return outputPath as `${string}.pdf`;
+}
+
+
+async function writeEpsAsPdf(
+  sourcePath: string,
+  outputPath: string,
+  workspacePath: string,
+  signal: AbortSignal | undefined,
+  ghostscriptPath: string | undefined,
+): Promise<void> {
+  if (!ghostscriptPath) {
+    throw new Error('Ghostscript is required for EPS conversion');
+  }
+
+  signal?.throwIfAborted();
+  const epsStaging = path.join(path.dirname(outputPath), 'eps-staging');
+  await mkdir(epsStaging, { recursive: true });
+  signal?.throwIfAborted();
+
+  const epsOptions: Parameters<typeof convertEpsToPdf>[0] = {
+    epsPath: sourcePath,
+    workspacePath,
+    ghostscriptPath,
+    stagingDirectory: epsStaging,
+  };
+  if (signal !== undefined) { epsOptions.signal = signal; }
+
+  const { pdfPath } = await convertEpsToPdf(epsOptions);
+
+  signal?.throwIfAborted();
+  await assertWritablePathInWorkspace(outputPath, workspacePath);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+
+  // Just copy the generated PDF to the output path
+  await writeFile(outputPath, await readFile(pdfPath));
 }
 
 async function writeRasterImageAsPdf(
