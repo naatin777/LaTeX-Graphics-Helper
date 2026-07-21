@@ -1,4 +1,5 @@
 import { readFileSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import sharp from 'sharp';
@@ -40,6 +41,7 @@ export async function runPreflightBatch(sourcePaths: string[]): Promise<BatchPre
   const warnings = reports.filter((r) => r.result === 'warning');
   return { reports, errors, warnings, canProceed: errors.length === 0 };
 }
+
 /**
  * Runs preflight on all source files and throws if any error is found.
  * Warning-only results are logged to outputChannel but do not block.
@@ -150,7 +152,11 @@ async function validateRasterInput(
   const details: Record<string, unknown> = { fileSize };
 
   try {
-    const metadata = await sharp(sourcePath).metadata();
+    // Read the file before handing it to libvips. Passing a path directly can
+    // retain a Windows file handle beyond metadata(), which blocks the
+    // conversion that immediately follows preflight for WebP inputs.
+    const sourceBuffer = await readFile(sourcePath);
+    const metadata = await sharp(sourceBuffer).metadata();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
       return {
