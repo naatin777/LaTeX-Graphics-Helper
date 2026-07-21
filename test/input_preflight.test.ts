@@ -2,9 +2,13 @@
 
 import { ok, strictEqual } from 'node:assert/strict';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { runPreflightBatch, type PreflightReport } from '../src/operations/input_preflight.js';
-const FIXTURES = path.resolve('test', 'fixtures', 'preflight');
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'preflight');
+const EPS_FIXTURES = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps');
 
 function assertOk(report: PreflightReport): void {
   strictEqual(
@@ -145,19 +149,19 @@ suite('Preflight — Draw.io', () => {
 
 suite('Preflight — EPS', () => {
   test('有効なEPSをokとして検出する', async () => {
-    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'minimal.eps')]);
+    const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'minimal.eps')]);
     strictEqual(result.canProceed, true);
     assertOk(result.reports[0]!);
   });
 
   test('headerがないEPSをerrorとして検出する', async () => {
-    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'no-header.eps')]);
+    const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'no-header.eps')]);
     strictEqual(result.canProceed, false);
     assertError(result.errors[0]!, 'PostScript header');
   });
 
   test('BoundingBoxが不正なEPSをerrorとして検出する', async () => {
-    const result = await runPreflightBatch([path.resolve('test', 'fixtures', 'eps', 'invalid-bbox.eps')]);
+    const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'invalid-bbox.eps')]);
     strictEqual(result.canProceed, false);
     assertError(result.errors[0]!, 'Invalid BoundingBox');
   });
