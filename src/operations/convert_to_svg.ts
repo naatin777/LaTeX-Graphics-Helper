@@ -203,7 +203,6 @@ async function writeSourceAsSvg(
   await writeMermaidAsSvg(job.sourcePath, outputPath, job.workspacePath, mermaid, signal);
 }
 
-
 async function writeEpsAsSvg(
   sourcePath: string,
   outputPath: string,
@@ -227,10 +226,18 @@ async function writeEpsAsSvg(
     ghostscriptPath,
     stagingDirectory: epsStaging,
   };
-  if (signal !== undefined) { epsOptions.signal = signal; }
-  if (outputChannel !== undefined) { epsOptions.outputChannel = outputChannel; }
-  if (scratchOptions.scratchBaseCandidates !== undefined) { epsOptions.scratchBaseCandidates = scratchOptions.scratchBaseCandidates; }
-  if (scratchOptions.platform !== undefined) { epsOptions.platform = scratchOptions.platform; }
+  if (signal !== undefined) {
+    epsOptions.signal = signal;
+  }
+  if (outputChannel !== undefined) {
+    epsOptions.outputChannel = outputChannel;
+  }
+  if (scratchOptions.scratchBaseCandidates !== undefined) {
+    epsOptions.scratchBaseCandidates = scratchOptions.scratchBaseCandidates;
+  }
+  if (scratchOptions.platform !== undefined) {
+    epsOptions.platform = scratchOptions.platform;
+  }
 
   const { pdfPath } = await convertEpsToPdf(epsOptions);
 
@@ -361,8 +368,6 @@ async function executeDrawio(executable: string, args: string[], signal?: AbortS
   });
 }
 
-
-
 async function validateJobPaths(jobs: ConvertToSvgJob[]): Promise<void> {
   await Promise.all(
     jobs.flatMap((job) => [
@@ -391,7 +396,12 @@ function validateJobs(jobs: ConvertToSvgJob[]): void {
 function isSupportedSourcePath(sourcePath: string): boolean {
   const extension = path.extname(sourcePath).toLowerCase();
 
-  return extension === '.pdf' || extension === '.eps' || sourceFormatForPath(sourcePath) === 'mermaid' || isEditableDrawioImagePath(sourcePath);
+  return (
+    extension === '.pdf' ||
+    extension === '.eps' ||
+    sourceFormatForPath(sourcePath) === 'mermaid' ||
+    isEditableDrawioImagePath(sourcePath)
+  );
 }
 
 function asSvgOutputPath(outputPath: string): `${string}.svg` {

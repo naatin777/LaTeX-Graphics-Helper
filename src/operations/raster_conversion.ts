@@ -298,10 +298,18 @@ async function writeEpsAsRaster(job: RasterJob, paths: RasterStagePaths, context
     ghostscriptPath: context.tools.ghostscriptPath,
     stagingDirectory: epsStaging,
   };
-  if (context.runtime.signal !== undefined) { epsOptions.signal = context.runtime.signal; }
-  if (context.runtime.outputChannel !== undefined) { epsOptions.outputChannel = context.runtime.outputChannel; }
-  if (context.scratch.scratchBaseCandidates !== undefined) { epsOptions.scratchBaseCandidates = context.scratch.scratchBaseCandidates; }
-  if (context.scratch.platform !== undefined) { epsOptions.platform = context.scratch.platform; }
+  if (context.runtime.signal !== undefined) {
+    epsOptions.signal = context.runtime.signal;
+  }
+  if (context.runtime.outputChannel !== undefined) {
+    epsOptions.outputChannel = context.runtime.outputChannel;
+  }
+  if (context.scratch.scratchBaseCandidates !== undefined) {
+    epsOptions.scratchBaseCandidates = context.scratch.scratchBaseCandidates;
+  }
+  if (context.scratch.platform !== undefined) {
+    epsOptions.platform = context.scratch.platform;
+  }
   const { pdfPath } = await convertEpsToPdf(epsOptions);
 
   context.runtime.signal?.throwIfAborted();
@@ -388,8 +396,6 @@ export function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): 
 export function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === 'AbortError';
 }
-
-
 
 export function errorMessage(error: unknown): string {
   if (error instanceof Error) {

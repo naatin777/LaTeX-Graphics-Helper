@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { readDrawioExecutablePath } from '../config/drawio_path.js';
 import { readGhostscriptExecutablePath, readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
 import { combineImagesToPdf } from '../operations/combine_images_to_pdf.js';
 
@@ -18,20 +17,19 @@ export async function convertImagesToSinglePdfCommand(
   dependencies?: CommandDependencies,
 ): Promise<void> {
   const outputChannel = dependencies?.outputChannel;
+
   try {
-    const sourceUris = uris ?? (uri ? [uri] : []);
+    const sourceUris = selectedUris(uri, uris);
 
     if (sourceUris.length === 0) {
       throw new Error('No files were selected.');
     }
 
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(sourceUris[0]!);
-    const workspacePath = workspaceFolder?.uri.fsPath ?? path.dirname(sourceUris[0]!.fsPath);
-
+    const workspaceFolder = requireSingleWorkspace(sourceUris);
+    const workspacePath = workspaceFolder.uri.fsPath;
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const rsvgConvertPath = readRsvgConvertExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
-    const drawioPath = readDrawioExecutablePath(configuration);
 
     let outputPath: string;
 
@@ -48,13 +46,16 @@ export async function convertImagesToSinglePdfCommand(
         defaultUri: vscode.Uri.file(path.join(workspacePath, 'combined.pdf')),
         filters: { 'PDF files': ['pdf'] },
       });
+
       if (!saveUri) {
         return;
       }
+
+      assertOutputInsideWorkspace(saveUri, workspaceFolder);
       outputPath = saveUri.fsPath;
     }
 
-    const jobs = sourceUris.map((u) => ({ sourcePath: u.fsPath }));
+    const jobs = sourceUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
 
     await vscode.window.withProgress(
       {
@@ -64,23 +65,25 @@ export async function convertImagesToSinglePdfCommand(
       },
       async (_progress, token) => {
         const controller = new AbortController();
-        token.onCancellationRequested(() => controller.abort());
+        const cancellation = token.onCancellationRequested(() => controller.abort());
 
-        await combineImagesToPdf({
-          jobs,
-          outputPath,
-          workspacePath,
-          signal: controller.signal,
-          rsvgConvertPath,
-          ghostscriptPath,
-          drawioPath,
-          resolveOutputConflicts,
-          ...(outputChannel !== undefined && { outputChannel }),
-        });
+        try {
+          await combineImagesToPdf({
+            jobs,
+            outputPath,
+            workspacePath,
+            signal: controller.signal,
+            rsvgConvertPath,
+            ghostscriptPath,
+            platform: process.platform,
+            resolveOutputConflicts,
+            ...(outputChannel !== undefined && { outputChannel }),
+          });
+        } finally {
+          cancellation.dispose();
+        }
 
-        await vscode.window.showInformationMessage(
-          userMessage('message.convertToOutput.success', jobs.length, 'PDF'),
-        );
+        await vscode.window.showInformationMessage(userMessage('message.convertToOutput.success', jobs.length, 'PDF'));
       },
     );
   } catch (error) {
@@ -90,5 +93,45 @@ export async function convertImagesToSinglePdfCommand(
 
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'PDF', message));
+  }
+}
+
+function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
+  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
+  return [...new Map(candidates.map((candidate) => [candidate.toString(), candidate])).values()];
+}
+
+function requireSingleWorkspace(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {
+  for (const sourceUri of sourceUris) {
+    if (sourceUri.scheme !== 'file') {
+      throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
+    }
+  }
+
+  const firstSource = sourceUris[0]!;
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(firstSource);
+
+  if (!workspaceFolder) {
+    throw new Error(`The file must be inside an open workspace: ${firstSource.fsPath}`);
+  }
+
+  for (const sourceUri of sourceUris.slice(1)) {
+    const sourceWorkspace = vscode.workspace.getWorkspaceFolder(sourceUri);
+    if (!sourceWorkspace || sourceWorkspace.uri.toString() !== workspaceFolder.uri.toString()) {
+      throw new Error(`All selected files must be inside the same open workspace: ${sourceUri.fsPath}`);
+    }
+  }
+
+  return workspaceFolder;
+}
+
+function assertOutputInsideWorkspace(outputUri: vscode.Uri, workspaceFolder: vscode.WorkspaceFolder): void {
+  if (outputUri.scheme !== 'file') {
+    throw new Error(`Only local output files are supported: ${outputUri.toString()}`);
+  }
+
+  const outputWorkspace = vscode.workspace.getWorkspaceFolder(outputUri);
+  if (!outputWorkspace || outputWorkspace.uri.toString() !== workspaceFolder.uri.toString()) {
+    throw new Error(`The output file must be inside the selected workspace: ${outputUri.fsPath}`);
   }
 }

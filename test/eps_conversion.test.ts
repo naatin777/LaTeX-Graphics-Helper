@@ -2,16 +2,17 @@
 
 import { ok, strictEqual } from 'node:assert/strict';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { sourceFormatForPath } from '../src/application/source_format.js';
 import { validateEpsInput } from '../src/operations/eps_to_pdf.js';
 
-const FIXTURES_DIR = path.resolve('test', 'fixtures', 'eps');
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const FIXTURES_DIR = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps');
 
 suite('EPS preflight validation', () => {
   test('accepts a valid minimal EPS file', () => {
     const epsPath = path.join(FIXTURES_DIR, 'minimal.eps');
-    // Should not throw
     validateEpsInput(epsPath);
     ok(true, 'validateEpsInput did not throw for valid EPS');
   });

@@ -18,7 +18,10 @@ import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/conver
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/convert_to_png.js';
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/convert_to_svg.js';
 import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/convert_to_webp.js';
-import { convertImagesToSinglePdfCommand, COMBINE_IMAGES_TO_PDF_COMMAND } from './commands/convert_images_to_single_pdf.js';
+import {
+  convertImagesToSinglePdfCommand,
+  COMBINE_IMAGES_TO_PDF_COMMAND,
+} from './commands/convert_images_to_single_pdf.js';
 import { cropPdfAuto, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
 import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/crop_pdf_configure.js';
 import {

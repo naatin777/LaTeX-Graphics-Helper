@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { access, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { type ElectronApplication, type Page, type TestInfo } from '@playwright/test';
 
 const execFileAsync = promisify(execFile);
+const WINDOWS_REMOVE_TIMEOUT_MS = 10_000;
 
 interface ElectronTestPaths {
   extensionsDir: string;
@@ -124,28 +125,77 @@ export async function disposeElectronTest(
 ): Promise<void> {
   await Promise.resolve()
     .then(async () => {
-      if (electronApp) {
-        const electronProcess = electronApp.process();
-        const closePromise = electronApp.close().then(
-          () => undefined,
-          () => undefined,
-        );
-        await Promise.race([closePromise, timeout(5_000)]);
-        await terminateElectronProcess(electronProcess);
+      if (!electronApp) {
+        return;
       }
-    })
-    .finally(() => {
-      return rm(temporaryRoot, {
-        recursive: true,
-        force: true,
-        maxRetries: 20,
-        retryDelay: 200,
-      });
-    });
 
-  if (await pathExists(temporaryRoot)) {
+      const electronProcess = electronApp.process();
+
+      if (process.platform === 'win32') {
+        // Kill the entire process tree while the parent PID still exists.
+        // A graceful close can exit the parent before renderer/extension-host
+        // children, leaving them alive and locking the VS Code test directory.
+        await terminateElectronProcess(electronProcess);
+        await Promise.race([
+          electronApp.close().then(
+            () => undefined,
+            () => undefined,
+          ),
+          timeout(1_000),
+        ]);
+        return;
+      }
+
+      const closePromise = electronApp.close().then(
+        () => undefined,
+        () => undefined,
+      );
+      await Promise.race([closePromise, timeout(5_000)]);
+      await terminateElectronProcess(electronProcess);
+    })
+    .finally(() => removeTemporaryRoot(temporaryRoot));
+
+  if (process.platform !== 'win32' && (await pathExists(temporaryRoot))) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
+}
+
+async function removeTemporaryRoot(temporaryRoot: string): Promise<void> {
+  if (process.platform === 'win32') {
+    await removeWindowsTemporaryRoot(temporaryRoot);
+    return;
+  }
+
+  await rm(temporaryRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 20,
+    retryDelay: 200,
+  });
+}
+
+async function removeWindowsTemporaryRoot(temporaryRoot: string): Promise<void> {
+  await execFileAsync('cmd.exe', ['/d', '/s', '/c', `rd /s /q "${temporaryRoot}"`], {
+    timeout: WINDOWS_REMOVE_TIMEOUT_MS,
+    windowsHide: true,
+  }).then(
+    () => undefined,
+    () => undefined,
+  );
+
+  if (!(await pathExists(temporaryRoot))) {
+    return;
+  }
+
+  // Large VSIX trees can take minutes to delete on Windows even after every
+  // VS Code process has exited. The runner workspace is ephemeral, so defer a
+  // final native retry instead of consuming the Playwright test timeout.
+  const cleaner = spawn('cmd.exe', ['/d', '/s', '/c', `ping 127.0.0.1 -n 3 >nul & rd /s /q "${temporaryRoot}"`], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
+  cleaner.unref();
 }
 
 async function readVSCodeLogs(logRoot: string): Promise<string> {

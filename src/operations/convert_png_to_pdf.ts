@@ -241,13 +241,7 @@ async function writeImageAsPdf(
   }
 
   if (extension === '.eps') {
-    await writeEpsAsPdf(
-      sourcePath,
-      outputPath,
-      workspacePath,
-      signal,
-      ghostscriptPath,
-    );
+    await writeEpsAsPdf(sourcePath, outputPath, workspacePath, signal, ghostscriptPath);
     return;
   }
 
@@ -329,7 +323,6 @@ function asPdfOutputPath(outputPath: string): `${string}.pdf` {
   return outputPath as `${string}.pdf`;
 }
 
-
 async function writeEpsAsPdf(
   sourcePath: string,
   outputPath: string,
@@ -352,7 +345,9 @@ async function writeEpsAsPdf(
     ghostscriptPath,
     stagingDirectory: epsStaging,
   };
-  if (signal !== undefined) { epsOptions.signal = signal; }
+  if (signal !== undefined) {
+    epsOptions.signal = signal;
+  }
 
   const { pdfPath } = await convertEpsToPdf(epsOptions);
 
@@ -576,8 +571,6 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
     ]),
   );
 }
-
-
 
 function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly string[]): void {
   if (jobs.length === 0) {

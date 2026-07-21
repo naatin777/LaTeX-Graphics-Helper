@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 
 export interface TemplateContext {
   path: string;
@@ -36,13 +36,9 @@ export function renderTemplate(template: string, context: TemplateContext): stri
 }
 
 export function getPdfTemplate(configuration: vscode.WorkspaceConfiguration): string {
-  return (
-    configuration.get<string>('insertLatex.pdfTemplate') || DEFAULT_PDF_TEMPLATE
-  );
+  return configuration.get<string>('insertLatex.pdfTemplate') || DEFAULT_PDF_TEMPLATE;
 }
 
 export function getImageTemplate(configuration: vscode.WorkspaceConfiguration): string {
-  return (
-    configuration.get<string>('insertLatex.imageTemplate') || DEFAULT_IMAGE_TEMPLATE
-  );
+  return configuration.get<string>('insertLatex.imageTemplate') || DEFAULT_IMAGE_TEMPLATE;
 }
