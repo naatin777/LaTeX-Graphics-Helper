@@ -4,12 +4,14 @@ import assert from 'node:assert/strict';
 import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
 import { combineImagesToPdf } from '../src/operations/combine_images_to_pdf.js';
 
-const VALID_PNG = path.resolve('test', 'fixtures', 'test.png');
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const VALID_PNG = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png');
 
 async function setupWorkspace(): Promise<string> {
   return mkdtemp(path.join(os.tmpdir(), 'lgh-combine-'));
