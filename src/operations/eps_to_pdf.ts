@@ -154,7 +154,6 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
  * Performs a minimal preflight check on an EPS file.
  */
 export function validateEpsInput(epsPath: string): void {
-  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
   const head = readFileSync(epsPath, { encoding: 'utf8' }).slice(0, 1024);
 
   if (!head.startsWith('%!PS-Adobe-') && !head.startsWith('%!PS')) {
