@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
+import * as vscode from 'vscode';
 
 import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
 import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
@@ -18,6 +19,9 @@ import { convertToWebpFiles } from '../src/operations/convert_to_webp.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const EPS_FIXTURE = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps', 'minimal.eps');
+const GHOSTSCRIPT_PATH = vscode.workspace
+  .getConfiguration('latex-graphics-helper')
+  .get<string>('execPath.ghostscript', 'gs');
 
 suite('EPSの出力経路', () => {
   test('EPSをPDFへ変換する', async () => {
@@ -30,7 +34,7 @@ suite('EPSの出力経路', () => {
       await convertPngToPdfFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         supportedExtensions: ['.eps'],
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         operationName: 'test-eps',
       });
 
@@ -52,7 +56,7 @@ suite('EPSの出力経路', () => {
       await convertToPngFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
@@ -77,7 +81,7 @@ suite('EPSの出力経路', () => {
       await convertToJpegFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
@@ -101,7 +105,7 @@ suite('EPSの出力経路', () => {
       await convertToWebpFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         webp: { effort: 0 },
@@ -126,7 +130,7 @@ suite('EPSの出力経路', () => {
       await convertToAvifFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         avif: { effort: 0 },
@@ -151,7 +155,7 @@ suite('EPSの出力経路', () => {
       await convertToSvgFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
+        ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         runId: 'test-run',
@@ -176,7 +180,7 @@ suite('EPSの出力経路', () => {
         convertPngToPdfFiles({
           jobs: [{ sourcePath, outputPath, workspacePath }],
           supportedExtensions: ['.eps'],
-          ghostscriptPath: 'gs',
+          ghostscriptPath: GHOSTSCRIPT_PATH,
           operationName: 'test-eps',
         }),
         /Preflight validation failed/,
