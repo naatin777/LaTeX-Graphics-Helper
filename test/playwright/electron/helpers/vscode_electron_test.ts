@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { type ElectronApplication, type Page, type TestInfo } from '@playwright/test';
 
 const execFileAsync = promisify(execFile);
-const WINDOWS_REMOVE_TIMEOUT_MS = 60_000;
+const WINDOWS_REMOVE_TIMEOUT_MS = 10_000;
 
 interface ElectronTestPaths {
   extensionsDir: string;
@@ -125,15 +125,33 @@ export async function disposeElectronTest(
 ): Promise<void> {
   await Promise.resolve()
     .then(async () => {
-      if (electronApp) {
-        const electronProcess = electronApp.process();
-        const closePromise = electronApp.close().then(
-          () => undefined,
-          () => undefined,
-        );
-        await Promise.race([closePromise, timeout(5_000)]);
-        await terminateElectronProcess(electronProcess);
+      if (!electronApp) {
+        return;
       }
+
+      const electronProcess = electronApp.process();
+
+      if (process.platform === 'win32') {
+        // Kill the entire process tree while the parent PID still exists.
+        // A graceful close can exit the parent before renderer/extension-host
+        // children, leaving them alive and locking the VS Code test directory.
+        await terminateElectronProcess(electronProcess);
+        await Promise.race([
+          electronApp.close().then(
+            () => undefined,
+            () => undefined,
+          ),
+          timeout(1_000),
+        ]);
+        return;
+      }
+
+      const closePromise = electronApp.close().then(
+        () => undefined,
+        () => undefined,
+      );
+      await Promise.race([closePromise, timeout(5_000)]);
+      await terminateElectronProcess(electronProcess);
     })
     .finally(() => removeTemporaryRoot(temporaryRoot));
 
