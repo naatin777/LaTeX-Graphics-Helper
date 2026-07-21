@@ -42,9 +42,7 @@ export interface CombineImagesToPdfOptions {
   outputChannel?: LineOutputChannel;
 }
 
-export async function combineImagesToPdf(
-  options: CombineImagesToPdfOptions,
-): Promise<CommittedConversionOutput[]> {
+export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
 
@@ -124,11 +122,7 @@ function validateJobs(jobs: CombineImagesJob[]): void {
   }
 }
 
-async function convertToPdf(
-  sourcePath: string,
-  outputPath: string,
-  options: CombineImagesToPdfOptions,
-): Promise<void> {
+async function convertToPdf(sourcePath: string, outputPath: string, options: CombineImagesToPdfOptions): Promise<void> {
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (extension === '.svg') {
