@@ -13,6 +13,13 @@ pre-commit:
       glob: "*.{ts,tsx,js,jsx}"
       run: npx --no oxlint {staged_files}
 
+commit-msg:
+  parallel: false
+
+  commands:
+    commitlint:
+      run: npx --no -- commitlint --edit {1}
+
 pre-push:
   parallel: false
 
