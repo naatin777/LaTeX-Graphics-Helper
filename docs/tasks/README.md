@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md) - GIF/TIFF実装をPR review中。EPSは別PRへ分離。
+- [0129: 追加画像形式とEPS対応の仕様を決める](0129-design-additional-image-and-eps-formats.md) - GIF/TIFF input conversion (#368) merged。CI全OS pass。EPS design specを作成中。maintainer判断待ち。
 
 ## Task boundaries
 
