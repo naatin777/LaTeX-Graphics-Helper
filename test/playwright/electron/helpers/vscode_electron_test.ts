@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { type ElectronApplication, type Page, type TestInfo } from '@playwright/test';
 
 const execFileAsync = promisify(execFile);
+const WINDOWS_REMOVE_TIMEOUT_MS = 60_000;
 
 interface ElectronTestPaths {
   extensionsDir: string;
@@ -134,17 +135,31 @@ export async function disposeElectronTest(
         await terminateElectronProcess(electronProcess);
       }
     })
-    .finally(() => {
-      return rm(temporaryRoot, {
-        recursive: true,
-        force: true,
-        maxRetries: 20,
-        retryDelay: 200,
-      });
-    });
+    .finally(() => removeTemporaryRoot(temporaryRoot));
 
   if (await pathExists(temporaryRoot)) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
+  }
+}
+
+async function removeTemporaryRoot(temporaryRoot: string): Promise<void> {
+  if (process.platform === 'win32') {
+    await execFileAsync('cmd.exe', ['/d', '/s', '/c', `rd /s /q "${temporaryRoot}"`], {
+      timeout: WINDOWS_REMOVE_TIMEOUT_MS,
+      windowsHide: true,
+    }).then(
+      () => undefined,
+      () => undefined,
+    );
+  }
+
+  if (await pathExists(temporaryRoot)) {
+    await rm(temporaryRoot, {
+      recursive: true,
+      force: true,
+      maxRetries: 20,
+      retryDelay: 200,
+    });
   }
 }
 
