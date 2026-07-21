@@ -19,9 +19,9 @@ import { convertToWebpFiles } from '../src/operations/convert_to_webp.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const EPS_FIXTURE = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps', 'minimal.eps');
-const GHOSTSCRIPT_PATH = vscode.workspace
-  .getConfiguration('latex-graphics-helper')
-  .get<string>('execPath.ghostscript', 'gs');
+const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+const GHOSTSCRIPT_PATH = configuration.get<string>('execPath.ghostscript', 'gs');
+const PDFTOCAIRO_PATH = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
 
 suite('EPSの出力経路', () => {
   test('EPSをPDFへ変換する', async () => {
@@ -55,7 +55,7 @@ suite('EPSの出力経路', () => {
 
       await convertToPngFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: 'pdftocairo',
+        pdftocairoPath: PDFTOCAIRO_PATH,
         ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
@@ -80,7 +80,7 @@ suite('EPSの出力経路', () => {
 
       await convertToJpegFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: 'pdftocairo',
+        pdftocairoPath: PDFTOCAIRO_PATH,
         ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
@@ -104,7 +104,7 @@ suite('EPSの出力経路', () => {
 
       await convertToWebpFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: 'pdftocairo',
+        pdftocairoPath: PDFTOCAIRO_PATH,
         ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
@@ -129,7 +129,7 @@ suite('EPSの出力経路', () => {
 
       await convertToAvifFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: 'pdftocairo',
+        pdftocairoPath: PDFTOCAIRO_PATH,
         ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
@@ -154,7 +154,7 @@ suite('EPSの出力経路', () => {
 
       await convertToSvgFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: 'pdftocairo',
+        pdftocairoPath: PDFTOCAIRO_PATH,
         ghostscriptPath: GHOSTSCRIPT_PATH,
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
