@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
@@ -15,7 +16,8 @@ import { convertToPngFiles } from '../src/operations/convert_to_png.js';
 import { convertToSvgFiles } from '../src/operations/convert_to_svg.js';
 import { convertToWebpFiles } from '../src/operations/convert_to_webp.js';
 
-const EPS_FIXTURE = path.resolve('test', 'fixtures', 'eps', 'minimal.eps');
+const testDirectory = path.dirname(fileURLToPath(import.meta.url));
+const EPS_FIXTURE = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps', 'minimal.eps');
 
 suite('EPSの出力経路', () => {
   test('EPSをPDFへ変換する', async () => {
