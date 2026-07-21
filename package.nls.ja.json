@@ -303,5 +303,7 @@
   "config.mermaid.theme": "Mermaidのテーマ",
   "config.mermaid.backgroundColor": "Mermaidの背景色",
   "config.insertLatex.pdfTemplate": "PDF挿入時のLaTeXテンプレート（ドラッグ＆ドロップ）",
-  "config.insertLatex.imageTemplate": "画像挿入時のLaTeXテンプレート（ドラッグ＆ドロップ／クリップボード貼り付け）"
+  "config.insertLatex.imageTemplate": "画像挿入時のLaTeXテンプレート（ドラッグ＆ドロップ／クリップボード貼り付け）",
+  "command.convertImagesToSinglePdf": "画像を1つのPDFに結合",
+  "config.outputPath.convertImagesToSinglePdf": "画像結合PDFの出力先"
 }

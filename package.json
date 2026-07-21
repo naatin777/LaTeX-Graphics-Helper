@@ -169,6 +169,11 @@
         "command": "latex-graphics-helper.convertToSvg",
         "title": "%command.convertToSvg%",
         "category": "LaTeX Graphics Helper"
+      },
+      {
+        "command": "latex-graphics-helper.convertImagesToSinglePdf",
+        "title": "%command.convertImagesToSinglePdf%",
+        "category": "LaTeX Graphics Helper"
       }
     ],
     "menus": {
@@ -202,6 +207,11 @@
           "command": "latex-graphics-helper.convertDrawioToPdfDirectly",
           "group": "latex-graphics-helper",
           "when": "(resourceExtname =~ /^\\.(drawio|dio)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled && config.latex-graphics-helper.contextMenu.convertDrawio.enabled"
+        },
+        {
+          "command": "latex-graphics-helper.convertImagesToSinglePdf",
+          "group": "latex-graphics-helper.convert@7",
+          "when": "(resourceExtname =~ /^\\.(png|jpg|jpeg|webp|avif|gif|tif|tiff|svg|eps|mmd|mermaid)$/i || resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i) && config.latex-graphics-helper.contextMenu.enabled"
         }
       ],
       "latex-graphics-helper.cropPdf": [
@@ -655,10 +665,10 @@
           "default": "${fileDirname}/${fileBasenameNoExtension}-${page}.svg",
           "description": "%config.outputPath.convertPdfToSvg%"
         },
-        "latex-graphics-helper.outputPath.convertPngToPdf": {
+        "latex-graphics-helper.outputPath.convertImagesToSinglePdf": {
           "type": "string",
           "default": "${fileDirname}/${fileBasenameNoExtension}.pdf",
-          "description": "%config.outputPath.convertPngToPdf%"
+          "description": "%config.outputPath.convertImagesToSinglePdf%"
         },
         "latex-graphics-helper.outputPath.convertPngToJpeg": {
           "type": "string",

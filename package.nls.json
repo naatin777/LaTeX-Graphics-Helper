@@ -285,5 +285,7 @@
   "config.mermaid.theme": "Mermaid theme",
   "config.mermaid.backgroundColor": "Mermaid background color",
   "config.insertLatex.pdfTemplate": "LaTeX template for PDF insertion (drag & drop)",
-  "config.insertLatex.imageTemplate": "LaTeX template for image insertion (drag & drop / clipboard paste)"
+  "config.insertLatex.imageTemplate": "LaTeX template for image insertion (drag & drop / clipboard paste)",
+  "command.convertImagesToSinglePdf": "Combine Images into Single PDF",
+  "config.outputPath.convertImagesToSinglePdf": "Output path for combine images to single PDF"
 }

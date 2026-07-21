@@ -18,6 +18,7 @@ import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/conver
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/convert_to_png.js';
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/convert_to_svg.js';
 import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/convert_to_webp.js';
+import { convertImagesToSinglePdfCommand, COMBINE_IMAGES_TO_PDF_COMMAND } from './commands/convert_images_to_single_pdf.js';
 import { cropPdfAuto, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
 import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/crop_pdf_configure.js';
 import {
@@ -55,6 +56,7 @@ export const PUBLIC_COMMAND_IDS = [
   CONVERT_TO_WEBP_COMMAND,
   CONVERT_TO_AVIF_COMMAND,
   CONVERT_TO_SVG_COMMAND,
+  COMBINE_IMAGES_TO_PDF_COMMAND,
   TOGGLE_SAFE_MODE_COMMAND,
 ] as const;
 
@@ -96,6 +98,9 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
   registerFileCommand(context, CONVERT_TO_WEBP_COMMAND, (uri, uris) => convertToWebpCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_AVIF_COMMAND, (uri, uris) => convertToAvifCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_SVG_COMMAND, (uri, uris) => convertToSvgCommand(uri, uris, dependencies));
+  registerFileCommand(context, COMBINE_IMAGES_TO_PDF_COMMAND, (uri, uris) =>
+    convertImagesToSinglePdfCommand(uri, uris, dependencies),
+  );
   registerFileCommand(context, CONVERT_PNG_TO_PDF_COMMAND, (uri, uris) =>
     convertPngToPdfCommand(uri, uris, dependencies),
   );
