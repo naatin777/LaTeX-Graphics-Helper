@@ -190,15 +190,11 @@ async function removeWindowsTemporaryRoot(temporaryRoot: string): Promise<void> 
   // Large VSIX trees can take minutes to delete on Windows even after every
   // VS Code process has exited. The runner workspace is ephemeral, so defer a
   // final native retry instead of consuming the Playwright test timeout.
-  const cleaner = spawn(
-    'cmd.exe',
-    ['/d', '/s', '/c', `ping 127.0.0.1 -n 3 >nul & rd /s /q "${temporaryRoot}"`],
-    {
-      detached: true,
-      stdio: 'ignore',
-      windowsHide: true,
-    },
-  );
+  const cleaner = spawn('cmd.exe', ['/d', '/s', '/c', `ping 127.0.0.1 -n 3 >nul & rd /s /q "${temporaryRoot}"`], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true,
+  });
   cleaner.unref();
 }
 
