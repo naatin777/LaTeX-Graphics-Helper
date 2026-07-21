@@ -1,4 +1,4 @@
-name: Collect Current Windows Log
+name: Collect Apply EPS Fix Log
 
 on:
     pull_request:
@@ -10,14 +10,14 @@ jobs:
     collect:
         runs-on: ubuntu-latest
         steps:
-            - name: Download Windows job log
+            - name: Download apply job log
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: gh api repos/${{ github.repository }}/actions/jobs/88687205492/logs > windows-test.log
+              run: gh api repos/${{ github.repository }}/actions/jobs/88690872207/logs > apply-eps-fix.log
               shell: bash
 
             - uses: actions/upload-artifact@v7
               with:
-                  name: current-windows-test-log
-                  path: windows-test.log
+                  name: apply-eps-fix-log
+                  path: apply-eps-fix.log
                   retention-days: 1
