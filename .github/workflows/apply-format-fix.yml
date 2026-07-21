@@ -1,0 +1,39 @@
+name: Apply Format Fix
+
+on:
+    pull_request:
+
+permissions:
+    contents: write
+
+jobs:
+    format:
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  ref: ${{ github.head_ref }}
+
+            - uses: actions/setup-node@v6
+              with:
+                  node-version: '22.23.1'
+                  package-manager-cache: false
+
+            - run: npm install -g npm@12.0.1
+              shell: bash
+
+            - run: npm ci
+              shell: bash
+
+            - name: Format branch and remove temporary workflow
+              run: |
+                  npm run format:fix
+                  git rm .github/workflows/apply-format-fix.yml
+                  git diff --check
+                  git config user.name github-actions[bot]
+                  git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+                  git add src test webview package.json tsconfig.json tsconfig.test.json oxfmt.config.ts oxlint.config.ts
+                  git commit -m "style: format v1 sources"
+                  git push origin HEAD:${{ github.head_ref }}
+              shell: bash
