@@ -36,11 +36,9 @@ export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Pr
     operationName: 'convert-to-webp',
     stagingDirectoryName: 'convert-to-webp',
     resultExtension: 'webp',
-    encoder: (sourceBuffer, outputPath) =>
-      sharp(sourceBuffer)
-        .webp({ effort: options.webp.effort })
-        .toFile(outputPath)
-        .then(() => undefined),
+    encoder: async (sourceBuffer, outputPath) => {
+      await sharp(sourceBuffer).webp({ effort: options.webp.effort }).toFile(outputPath);
+    },
     unsupportedInputMessage: (sourcePath) => `Unsupported input for WebP conversion: ${sourcePath}`,
   };
 

@@ -36,11 +36,9 @@ export async function convertToAvifFiles(options: ConvertToAvifFilesOptions): Pr
     operationName: 'convert-to-avif',
     stagingDirectoryName: 'convert-to-avif',
     resultExtension: 'avif',
-    encoder: (sourceBuffer, outputPath) =>
-      sharp(sourceBuffer)
-        .avif({ effort: options.avif.effort })
-        .toFile(outputPath)
-        .then(() => undefined),
+    encoder: async (sourceBuffer, outputPath) => {
+      await sharp(sourceBuffer).avif({ effort: options.avif.effort }).toFile(outputPath);
+    },
     unsupportedInputMessage: (sourcePath) => `Unsupported input for AVIF conversion: ${sourcePath}`,
   };
 

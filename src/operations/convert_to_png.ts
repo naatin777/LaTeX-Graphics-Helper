@@ -30,11 +30,9 @@ const pngDefinition: RasterConversionDefinition = {
   operationName: 'convert-to-png',
   stagingDirectoryName: 'convert-to-png',
   resultExtension: 'png',
-  encoder: (sourceBuffer, outputPath) =>
-    sharp(sourceBuffer)
-      .png()
-      .toFile(outputPath)
-      .then(() => undefined),
+  encoder: async (sourceBuffer, outputPath) => {
+    await sharp(sourceBuffer).png().toFile(outputPath);
+  },
   unsupportedInputMessage: (sourcePath) => `Unsupported input for PNG conversion: ${sourcePath}`,
 };
 

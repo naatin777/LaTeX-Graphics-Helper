@@ -30,11 +30,9 @@ const jpegDefinition: RasterConversionDefinition = {
   operationName: 'convert-to-jpeg',
   stagingDirectoryName: 'convert-to-jpeg',
   resultExtension: 'jpeg',
-  encoder: (sourceBuffer, outputPath) =>
-    sharp(sourceBuffer)
-      .jpeg()
-      .toFile(outputPath)
-      .then(() => undefined),
+  encoder: async (sourceBuffer, outputPath) => {
+    await sharp(sourceBuffer).jpeg().toFile(outputPath);
+  },
   unsupportedInputMessage: (sourcePath) => `Unsupported input for JPEG conversion: ${sourcePath}`,
 };
 

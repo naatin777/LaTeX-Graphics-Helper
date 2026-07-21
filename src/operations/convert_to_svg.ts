@@ -77,6 +77,7 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
               options.drawio,
               options.runPdfToSvg,
               options,
+              options.outputChannel,
               options.signal,
             ),
           ),
@@ -105,7 +106,8 @@ async function stageSvgConversion(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: ConvertToSvgFilesOptions,
+  scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
@@ -118,7 +120,17 @@ async function stageSvgConversion(
   );
   const stagedOutputPath = path.join(stageDirectory, 'result.svg');
 
-  await writeSourceAsSvg(job, stagedOutputPath, pdftocairoPath, mermaid, drawio, runPdfToSvg, scratchOptions, signal);
+  await writeSourceAsSvg(
+    job,
+    stagedOutputPath,
+    pdftocairoPath,
+    mermaid,
+    drawio,
+    runPdfToSvg,
+    scratchOptions,
+    outputChannel,
+    signal,
+  );
   signal?.throwIfAborted();
 
   return {
@@ -136,7 +148,8 @@ async function writeSourceAsSvg(
   mermaid: MermaidPuppeteerOptions,
   drawio: DrawioToSvgOptions,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: ConvertToSvgFilesOptions,
+  scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
   const extension = path.extname(job.sourcePath).toLowerCase();
@@ -155,6 +168,7 @@ async function writeSourceAsSvg(
       job.page,
       runPdfToSvg,
       scratchOptions,
+      outputChannel,
       signal,
     );
     return;
@@ -197,7 +211,8 @@ async function writePdfPageAsSvg(
   pdftocairoPath: string,
   page = 1,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: ConvertToSvgFilesOptions,
+  scratchOptions: PdfToolScratchOptions,
+  outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -212,7 +227,7 @@ async function writePdfPageAsSvg(
       scratchOutputFileName: 'output.svg',
       scratch: scratchOptions,
       signal,
-      outputChannel: scratchOptions.outputChannel,
+      outputChannel,
       run: async (toolSourcePath, toolOutputPath) => {
         if (runPdfToSvg) {
           await runPdfToSvg(toolSourcePath, toolOutputPath, page, signal);
