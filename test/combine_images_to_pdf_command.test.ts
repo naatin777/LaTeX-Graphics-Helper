@@ -46,4 +46,11 @@ suite('画像を1つのPDFへ結合するコマンド', () => {
       await rm(outsideDirectory, { recursive: true, force: true });
     }
   });
+
+  test('file scheme以外の入力を拒否する', async () => {
+    await vscode.commands.executeCommand(COMBINE_IMAGES_TO_PDF_COMMAND, vscode.Uri.parse('untitled:test.png'));
+
+    assert.ok(showErrorMessage.calledOnce);
+    assert.match(String(showErrorMessage.firstCall.args[0]), /Only local files/);
+  });
 });
