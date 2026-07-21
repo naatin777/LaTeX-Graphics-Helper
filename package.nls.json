@@ -283,5 +283,7 @@
   "quickPick.cropPdf.margin.title": "Select PDF crop margin",
   "quickPick.cropPdf.margin.placeholder": "The selected margin is applied to all PDF files.",
   "config.mermaid.theme": "Mermaid theme",
-  "config.mermaid.backgroundColor": "Mermaid background color"
+  "config.mermaid.backgroundColor": "Mermaid background color",
+  "config.insertLatex.pdfTemplate": "LaTeX template for PDF insertion (drag & drop)",
+  "config.insertLatex.imageTemplate": "LaTeX template for image insertion (drag & drop / clipboard paste)"
 }

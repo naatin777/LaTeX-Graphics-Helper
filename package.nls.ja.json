@@ -301,5 +301,7 @@
   "quickPick.cropPdf.margin.title": "PDFのクロップ余白を選択",
   "quickPick.cropPdf.margin.placeholder": "選択した余白をすべてのPDFファイルに適用します。",
   "config.mermaid.theme": "Mermaidのテーマ",
-  "config.mermaid.backgroundColor": "Mermaidの背景色"
+  "config.mermaid.backgroundColor": "Mermaidの背景色",
+  "config.insertLatex.pdfTemplate": "PDF挿入時のLaTeXテンプレート（ドラッグ＆ドロップ）",
+  "config.insertLatex.imageTemplate": "画像挿入時のLaTeXテンプレート（ドラッグ＆ドロップ／クリップボード貼り付け）"
 }

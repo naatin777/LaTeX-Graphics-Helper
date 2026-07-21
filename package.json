@@ -425,6 +425,16 @@
           "default": "white",
           "description": "%config.mermaid.backgroundColor%"
         },
+        "latex-graphics-helper.insertLatex.pdfTemplate": {
+          "type": "string",
+          "default": "\\begin{figure}[H]\n  \\centering\n  \\includegraphics[width=\\linewidth]{${path}}\n  \\caption{${name}}\n  \\label{fig:${name}}\n\\end{figure}",
+          "description": "%config.insertLatex.pdfTemplate%"
+        },
+        "latex-graphics-helper.insertLatex.imageTemplate": {
+          "type": "string",
+          "default": "\\begin{figure}[H]\n  \\centering\n  \\resizebox{\\linewidth}{!}{\\includegraphics{${path}}}\n  \\caption{${name}}\n  \\label{fig:${name}}\n\\end{figure}",
+          "description": "%config.insertLatex.imageTemplate%"
+        },
         "latex-graphics-helper.puppeteer.executablePath": {
           "type": "string",
           "default": "",
