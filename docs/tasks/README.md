@@ -2,7 +2,7 @@
 
 ## Current Task
 
-現在進行中のtaskはありません。Backlogの設計タスクはすべてSpec Complete。残りは条件付きメンテナンスタスクのみ。
+現在進行中のtaskはありません。Backlogの設計タスクはすべてSpec Complete。実装待ちのものは 0096（画像結合）のみ。
 ## Task boundaries
 
 Taskは小さな作業手順やPR単位ではなく、達成する成果または意思決定を単位とする。

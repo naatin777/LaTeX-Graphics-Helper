@@ -13,22 +13,17 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 
 ## Implemented
 
-- PDF crop
-- PDF split
-- PDF merge
-- PDF to PNG/JPEG/WebP/AVIF/SVG conversion
-- PNG/JPEG/WebP/AVIF/GIF/TIFF/SVG to PDF conversion
-- EPS to PDF/PNG/JPEG/WebP/AVIF/SVG conversion
+- PDF crop / split / merge
+- PDF to/from PNG/JPEG/WebP/AVIF/SVG/GIF/TIFF/EPS conversion
 - Draw.io to PDF conversion
-- Native Draw.io PDF conversion by page or as one PDF
-- Puppeteer Chrome/Firefox selection for SVG conversion
-- Insert LaTeX code from PDF
-- Insert LaTeX code from clipboard image
-- Input preflight validation (all formats)
+- Mermaid theme/backgroundColor settings
+- LaTeX insertion templates (settings)
+- Input preflight validation (all operations)
+- Insert LaTeX code (PDF, clipboard image)
 
 ## In progress
 
-なし — 次の作業は `docs/tasks/README.md` のBacklogから選択する
+なし
 ## Non-goals
 
 - production codeのリファクタリング
