@@ -1,40 +1,43 @@
 import * as vscode from 'vscode';
 
-import type { CommandDependencies } from './commands/command_dependencies.js';
+import type { CommandDependencies } from './commands/shared/command_dependencies.js';
 import {
   convertToPdfCommand,
   convertPngToPdfInternalCommand,
   CONVERT_TO_PDF_COMMAND,
   CONVERT_PNG_TO_PDF_COMMAND,
-} from './commands/convert_to_pdf.js';
+} from './commands/conversion/convert_to_pdf.js';
 import {
   convertDrawioToPagePdfsCommand,
   convertDrawioToSinglePdfCommand,
   CONVERT_DRAWIO_TO_PDF_COMMAND,
   CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND,
-} from './commands/convert_drawio_to_pdf.js';
-import { convertToAvifCommand, CONVERT_TO_AVIF_COMMAND } from './commands/convert_to_avif.js';
-import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/convert_to_jpeg.js';
-import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/convert_to_png.js';
-import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/convert_to_svg.js';
-import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/convert_to_webp.js';
-import { combineImagesToPdfCommand, COMBINE_IMAGES_TO_PDF_COMMAND } from './commands/combine_images_to_pdf.js';
-import { cropPdfAutoCommand, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
-import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/crop_pdf_configure.js';
+} from './commands/conversion/convert_drawio_to_pdf.js';
+import { convertToAvifCommand, CONVERT_TO_AVIF_COMMAND } from './commands/conversion/convert_to_avif.js';
+import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/conversion/convert_to_jpeg.js';
+import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/conversion/convert_to_png.js';
+import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/conversion/convert_to_svg.js';
+import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/conversion/convert_to_webp.js';
+import {
+  combineImagesToPdfCommand,
+  COMBINE_IMAGES_TO_PDF_COMMAND,
+} from './commands/conversion/combine_images_to_pdf.js';
+import { cropPdfAutoCommand, CROP_PDF_AUTO_COMMAND } from './commands/pdf/crop_pdf_auto.js';
+import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/pdf/crop_pdf_configure.js';
 import {
   mergePdfConfigureCommand,
   mergePdfSelectedFilesCommand,
   MERGE_PDF_CONFIGURE_COMMAND,
   MERGE_PDF_SELECTED_FILES_COMMAND,
-} from './commands/merge_pdf.js';
-import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from './commands/safe_mode.js';
+} from './commands/pdf/merge_pdf.js';
+import { initializeSafeMode, TOGGLE_SAFE_MODE_COMMAND } from './commands/lifecycle/safe_mode.js';
 import {
   splitPdfAllPagesCommand,
   splitPdfConfigureCommand,
   SPLIT_PDF_ALL_PAGES_COMMAND,
   SPLIT_PDF_CONFIGURE_COMMAND,
-} from './commands/split_pdf_commands.js';
-import { undoLastConversionCommand, UNDO_LAST_CONVERSION_COMMAND } from './commands/undo_last_conversion.js';
+} from './commands/pdf/split_pdf_commands.js';
+import { undoLastConversionCommand, UNDO_LAST_CONVERSION_COMMAND } from './commands/lifecycle/undo_last_conversion.js';
 import { LatexDropEditProvider } from './edit_provider/latex_drop_edit_provider.js';
 import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provider.js';
 

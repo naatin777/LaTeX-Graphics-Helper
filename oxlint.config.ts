@@ -84,11 +84,11 @@ const corePatterns = [
     message: 'Core code must not import command/UI code.',
   },
   {
-    group: ['../webview/*', '../../webview/*'],
+    group: ['../presentation/*', '../../presentation/*'],
     message: 'Core code must not import Webview presentation code.',
   },
   {
-    group: ['@webview-shared/*', '../../webview/*', '../../../webview/*'],
+    group: ['@webview-shared/*', '../../presentation/*', '../../../presentation/*'],
     message: 'Core code must not import Webview modules.',
   },
 ];
@@ -256,11 +256,11 @@ export default defineConfig({
 
   overrides: [
     {
-      files: ['src/application/**/*.ts', 'src/operations/**/*.ts', 'src/latex/**/*.ts', 'src/config/**/*.ts'],
+      files: ['src/application/**/*.ts', 'src/operations/**/*.ts', 'src/config/**/*.ts'],
       rules: restrictedImports(corePaths, corePatterns),
     },
     {
-      files: ['src/commands/**/*.ts', 'src/webview/**/*.ts', 'src/extension.ts'],
+      files: ['src/commands/**/*.ts', 'src/presentation/**/*.ts', 'src/extension.ts'],
       rules: restrictedImports(extensionOnly, [
         {
           group: ['../../webview/apps/*', '../../../webview/apps/*', '@webview-shared/*'],

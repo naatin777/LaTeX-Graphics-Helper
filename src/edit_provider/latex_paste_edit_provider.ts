@@ -2,21 +2,21 @@ import path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { withCancellationSignal } from '../commands/progress_cancellation.js';
-import { resolveOutputConflicts } from '../commands/safe_mode.js';
-import { rememberLastConversion } from '../commands/undo_last_conversion.js';
-import { userMessage } from '../commands/user_messages.js';
-import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { withCancellationSignal } from '../commands/lifecycle/progress_cancellation.js';
+import { resolveOutputConflicts } from '../commands/lifecycle/safe_mode.js';
+import { rememberLastConversion } from '../commands/lifecycle/undo_last_conversion.js';
+import { userMessage } from '../commands/shared/user_messages.js';
+import { resolveOutputPath } from '../config/output/resolve_output_path.js';
 import { localeMap } from '../locale_map.js';
-import type { CommittedConversionOutput } from '../operations/commit_conversion_outputs.js';
-import type { OutputConflictDecision } from '../operations/commit_conversion_outputs.js';
-import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
+import type { CommittedConversionOutput } from '../operations/lifecycle/commit_conversion_outputs.js';
+import type { OutputConflictDecision } from '../operations/lifecycle/commit_conversion_outputs.js';
+import type { LineOutputChannel } from '../operations/external_tools/external_tool_ascii_scratch.js';
 import {
   cleanupClipboardSourceArtifact,
   saveClipboardImage,
   type ClipboardImageData,
   type ClipboardPasteKind,
-} from '../operations/save_clipboard_image.js';
+} from '../operations/input/save_clipboard_image.js';
 
 import { readLatexInsertionConfig, type LatexInsertionConfig } from './latex_config.js';
 import { escapeLatex, escapeLatexLabel } from './latex_escape.js';

@@ -20,6 +20,29 @@
 | docs file                    | document role + topic                       | 英語の`kebab-case`                          | `naming-conventions.md`、`output-format-conversion.md`                | `notes.md`、日付だけの仕様file                                          | `docs/specs/`、`docs/adr/`は既存の役割に従う                                |
 | legacy alias                 | 旧surfaceを意味する固定語 + 対象            | `legacy`または`compatibility`を説明文で使う | `legacy outputPath.convertPngToPdf`、`convertPngToPdfInternalCommand` | 新しいformal API名に`direct`、`normal`、`new`を使う                     | 互換性の説明では`legacy`を使ってよいが、新機能の曖昧な相対名には使わない    |
 
+## Directory layout
+
+`src/`は責務境界の下に、複数の関連moduleを持つ領域だけを分割する。
+
+```text
+src/
+  application/{policy,protocols}/
+  commands/{conversion,pdf,lifecycle,shared}/
+  config/{output,rendering,external_tools}/
+  operations/{conversion,pdf,lifecycle,input,external_tools}/
+  edit_provider/
+  presentation/webview/
+  security/
+
+test/
+  {application,commands,config,edit_provider,operations,presentation,security,integration}/
+  fixtures/
+  helpers/
+  playwright/electron/
+```
+
+`security/`と`presentation/webview/`は現在1責務・1moduleのため、空の下位directoryを作らない。`fixtures/`、`helpers/`、`playwright/electron/`はsource責務ではなくtest runtime資産として分離する。
+
 ## Naming and compatibility
 
 1. public command ID、user setting key、output template semantics、NLS keyはpublic surfaceである。

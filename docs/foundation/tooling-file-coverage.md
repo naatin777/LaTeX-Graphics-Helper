@@ -36,8 +36,8 @@ oxlint.config.ts
 
 `oxlint.config.ts`には次のoverrideがある。
 
-- extension core: `src/application`, `src/operations`, `src/latex`, `src/config`
-- extension runtime: `src/commands`, `src/webview`, `src/extension.ts`
+- extension core: `src/application`, `src/operations`, `src/edit_provider`, `src/config`
+- extension runtime: `src/commands`, `src/presentation`, `src/extension.ts`
 - Webview app generic: `webview/apps/*/src`
 - Webview shared
 - Vite / Vitest config

@@ -34,9 +34,9 @@
     "types": ["vite/client"],
     "paths": {
       "@webview-shared/*": ["./shared/*"],
-      "@lgh-crop-pdf-protocol": ["../src/application/crop_pdf_protocol.ts"],
-      "@lgh-merge-pdf-protocol": ["../src/application/merge_pdf_protocol.ts"],
-      "@lgh-split-pdf-protocol": ["../src/application/split_pdf_protocol.ts"]
+      "@lgh-crop-pdf-protocol": ["../src/application/protocols/crop_pdf_protocol.ts"],
+      "@lgh-merge-pdf-protocol": ["../src/application/protocols/merge_pdf_protocol.ts"],
+      "@lgh-split-pdf-protocol": ["../src/application/protocols/split_pdf_protocol.ts"]
     }
   },
   "include": [
@@ -44,7 +44,7 @@
     "shared/**/*",
     "vite.config.ts",
     "vitest.config.ts",
-    "../src/application/crop_pdf_protocol.ts"
+    "../src/application/protocols/crop_pdf_protocol.ts"
   ],
   "exclude": ["dist", "node_modules", "**/*.test.ts", "**/*.test.tsx"]
 }
