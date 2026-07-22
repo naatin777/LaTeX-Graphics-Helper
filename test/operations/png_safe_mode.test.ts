@@ -42,7 +42,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       runId: 'batch-success',
-      resolveOutputConflicts: async () => 'overwrite',
+      runtime: { resolveConflicts: async () => 'overwrite' },
     });
 
     assert.strictEqual(outputs.length, 2);
@@ -67,9 +67,11 @@ suite('PNG変換のSafe Mode', () => {
 
     const outputs = await convertToPdfFiles({
       jobs,
-      resolveOutputConflicts: async (conflicts) => {
-        decisions.push(conflicts);
-        return 'keep-both';
+      runtime: {
+        resolveConflicts: async (conflicts) => {
+          decisions.push(conflicts);
+          return 'keep-both';
+        },
       },
     });
 
@@ -90,7 +92,7 @@ suite('PNG変換のSafe Mode', () => {
     await assert.rejects(
       convertToPdfFiles({
         jobs,
-        resolveOutputConflicts: async () => 'cancel',
+        runtime: { resolveConflicts: async () => 'cancel' },
       }),
       /cancelled/,
     );
@@ -111,7 +113,7 @@ suite('PNG変換のSafe Mode', () => {
     await assert.rejects(
       convertToPdfFiles({
         jobs,
-        resolveOutputConflicts: async () => 'overwrite',
+        runtime: { resolveConflicts: async () => 'overwrite' },
       }),
     );
 
@@ -125,7 +127,7 @@ suite('PNG変換のSafe Mode', () => {
 
     const outputs = await convertToPdfFiles({
       jobs,
-      resolveOutputConflicts: async () => 'overwrite',
+      runtime: { resolveConflicts: async () => 'overwrite' },
     });
     const undoRecord = await createConversionUndoRecord(outputs);
 
@@ -144,8 +146,10 @@ suite('PNG変換のSafe Mode', () => {
     await assert.rejects(
       convertToPdfFiles({
         jobs,
-        signal: abortController.signal,
-        resolveOutputConflicts: async () => 'overwrite',
+        runtime: {
+          signal: abortController.signal,
+          resolveConflicts: async () => 'overwrite',
+        },
       }),
       { name: 'AbortError' },
     );
@@ -167,7 +171,7 @@ suite('PNG変換のSafe Mode', () => {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(calls),
       },
-      resolveOutputConflicts: async () => 'overwrite',
+      runtime: { resolveConflicts: async () => 'overwrite' },
     });
 
     assert.strictEqual(outputs.length, 2);
@@ -192,7 +196,7 @@ suite('PNG変換のSafe Mode', () => {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },
-      resolveOutputConflicts: async () => 'keep-both',
+      runtime: { resolveConflicts: async () => 'keep-both' },
     });
 
     assert.deepStrictEqual(
@@ -215,7 +219,7 @@ suite('PNG変換のSafe Mode', () => {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },
-      resolveOutputConflicts: async () => 'overwrite',
+      runtime: { resolveConflicts: async () => 'overwrite' },
     });
 
     const undoRecord = await createConversionUndoRecord(outputs);

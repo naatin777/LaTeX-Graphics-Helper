@@ -23,7 +23,7 @@ export type { CommittedConversionOutput, OutputConflictDecision, PreparedConvers
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_to_pdf.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
 import {
@@ -106,13 +106,7 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
   options.runtime.signal?.throwIfAborted();
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.runtime.outputChannel,
-    options.runtime.signal,
-    options.runtime.reportProgress,
-    options.runtime.onConfirmWarnings,
-  );
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(options.runtime));
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

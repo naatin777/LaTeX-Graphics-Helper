@@ -15,6 +15,7 @@ import { assertExistingPathInWorkspace } from '../../security/workspace_path.js'
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
+import type { ConversionRuntime } from '../../operations/lifecycle/conversion_runtime.js';
 import { createPreflightWarningConfirmation } from '../lifecycle/preflight_warning_confirmation.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
@@ -55,14 +56,17 @@ export async function mergePdfSelectedFilesCommand(
       },
       async (_progress, token) => {
         return withCancellationSignal(token, async (signal) => {
+          const runtime: ConversionRuntime = {
+            signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
+            onConfirmWarnings: createPreflightWarningConfirmation('merge-pdf'),
+          };
           return mergePdf({
             sourcePaths: sourceUris.map((sourceUri) => sourceUri.fsPath),
             outputPath: outputUri.fsPath,
             workspacePath: workspace.uri.fsPath,
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-            onConfirmWarnings: createPreflightWarningConfirmation('merge-pdf'),
+            runtime,
           });
         });
       },
@@ -229,15 +233,17 @@ async function applyConfiguredMerge(params: {
             abortController.abort();
           }
 
-          const onConfirmWarnings = createPreflightWarningConfirmation('merge-pdf');
+          const runtime: ConversionRuntime = {
+            signal: abortController.signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
+            onConfirmWarnings: createPreflightWarningConfirmation('merge-pdf'),
+          };
           return await mergePdf({
             sourcePaths: sourceUris.map((sourceUri) => sourceUri.fsPath),
             outputPath: outputUri.fsPath,
             workspacePath: workspace.uri.fsPath,
-            signal: abortController.signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-            onConfirmWarnings,
+            runtime,
           });
         } finally {
           cancellationSubscription.dispose();

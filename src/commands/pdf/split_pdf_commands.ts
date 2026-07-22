@@ -19,6 +19,7 @@ import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '..
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
+import type { ConversionRuntime } from '../../operations/lifecycle/conversion_runtime.js';
 import { createPreflightWarningConfirmation } from '../lifecycle/preflight_warning_confirmation.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
@@ -53,13 +54,13 @@ export async function splitPdfAllPagesCommand(
       async (progress, token) => {
         return withCancellationSignal(token, async (signal) => {
           progress.report({ message: userMessage('message.progress.preparePdfSplit') });
-          return splitPdfAllPages({
-            jobs,
+          const runtime: ConversionRuntime = {
             signal,
-            resolveOutputConflicts,
             ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
             onConfirmWarnings: createPreflightWarningConfirmation('split-pdf'),
-          });
+          };
+          return splitPdfAllPages({ jobs, runtime });
         });
       },
     );
@@ -301,7 +302,12 @@ async function applyConfiguredSplit(params: {
           }
 
           progress.report({ message: userMessage('message.progress.preparePdfSplit') });
-          const onConfirmWarnings = createPreflightWarningConfirmation('split-pdf');
+          const runtime: ConversionRuntime = {
+            signal: abortController.signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
+            onConfirmWarnings: createPreflightWarningConfirmation('split-pdf'),
+          };
           return await splitPdfByPageGroups({
             jobs: [
               {
@@ -319,10 +325,7 @@ async function applyConfiguredSplit(params: {
                 },
               },
             ],
-            signal: abortController.signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-            onConfirmWarnings,
+            runtime,
           });
         } finally {
           cancellationSubscription.dispose();

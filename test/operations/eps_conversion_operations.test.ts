@@ -165,7 +165,7 @@ suite('EPSの出力経路', () => {
         mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawio: { drawioPath: 'drawio' },
         runId: 'test-run',
-        resolveOutputConflicts: async () => 'overwrite' as const,
+        runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
       const svgContent = await readFile(outputPath, 'utf8');

@@ -88,7 +88,7 @@ suite('Draw.ioの複雑なpath変換', () => {
           },
         ],
         drawio,
-        resolveOutputConflicts: async () => 'overwrite',
+        runtime: { resolveConflicts: async () => 'overwrite' },
         runId: 'drawio-complex-path',
       });
 

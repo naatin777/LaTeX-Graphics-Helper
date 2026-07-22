@@ -4,10 +4,7 @@ import { logicalSourcePathForOutputTemplate } from '../../application/policy/sou
 import { readGhostscriptExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
-import {
-  combineImagesToPdf,
-  type CombineImagesToPdfOptions,
-} from '../../operations/conversion/combine_images_to_pdf.js';
+import { combineImagesToPdf } from '../../operations/conversion/combine_images_to_pdf.js';
 import { assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
@@ -56,29 +53,16 @@ export async function combineImagesToPdfCommand(
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('PDF', jobs.length),
-      run: (runtime) => {
-        const combineOptions: CombineImagesToPdfOptions = {
+      run: (runtime) =>
+        combineImagesToPdf({
           jobs,
           outputPath,
           workspacePath,
+          runtime,
           svgToPdf,
           ghostscriptPath,
           platform: process.platform,
-        };
-        if (runtime.signal !== undefined) {
-          combineOptions.signal = runtime.signal;
-        }
-        if (runtime.resolveConflicts !== undefined) {
-          combineOptions.resolveOutputConflicts = runtime.resolveConflicts;
-        }
-        if (runtime.outputChannel !== undefined) {
-          combineOptions.outputChannel = runtime.outputChannel;
-        }
-        if (runtime.reportProgress !== undefined) {
-          combineOptions.reportProgress = runtime.reportProgress;
-        }
-        return combineImagesToPdf(combineOptions);
-      },
+        }),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

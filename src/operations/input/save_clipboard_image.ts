@@ -134,17 +134,9 @@ async function saveClipboardImageAsPdf(
       },
     ],
     runId,
+    runtime,
     supportedExtensions: [`.${request.data.type.ext}`] as const,
   };
-  if (runtime.signal !== undefined) {
-    convertOptions.signal = runtime.signal;
-  }
-  if (runtime.resolveConflicts !== undefined) {
-    convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
-  }
-  if (runtime.outputChannel !== undefined) {
-    convertOptions.outputChannel = runtime.outputChannel;
-  }
   return convertToPdfFiles(convertOptions);
 }
 

@@ -9,7 +9,6 @@ import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '..
 
 import {
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
@@ -21,7 +20,7 @@ import {
   type AsciiScratch,
   type LineOutputChannel,
 } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 const execFileAsync = promisify(execFile);
@@ -43,14 +42,11 @@ export interface CropPdfOptions {
   jobs: CropPdfJob[];
   margin: number;
   ghostscriptPath: string;
+  runtime?: ConversionRuntime;
   runId?: string;
   runGhostscript?: RunGhostscript;
-  signal?: AbortSignal;
-  outputChannel?: LineOutputChannel;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 interface Box {
@@ -61,47 +57,32 @@ interface Box {
 }
 
 export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs);
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
-  if (!options.resolveOutputConflicts) {
+  if (!runtime?.resolveConflicts) {
     await assertOutputsDoNotExist(options.jobs);
   }
 
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
   const platform = options.platform ?? process.platform;
   const scratchBaseCandidates = options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
-  const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) {
-    runtime.signal = options.signal;
-  }
-  if (options.resolveOutputConflicts !== undefined) {
-    runtime.resolveConflicts = options.resolveOutputConflicts;
-  }
-  if (options.outputChannel !== undefined) {
-    runtime.outputChannel = options.outputChannel;
-  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: 'crop-pdf-auto',
     stagingOperationName: 'crop-pdf',
     runId,
-    runtime,
+    runtime: runtime ?? {},
     stage: (job, index, currentRunId, batchRuntime) =>
       convertPdf({
         job,

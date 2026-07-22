@@ -12,6 +12,7 @@ import {
 } from '../../application/protocols/crop_pdf_protocol.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { localeMap } from '../../locale_map.js';
+import type { ConversionRuntime } from '../../operations/lifecycle/conversion_runtime.js';
 import { cropPdfWithConfiguredBox } from '../../operations/pdf/crop_pdf_configure.js';
 import type { LineOutputChannel } from '../../operations/external_tools/external_tool_ascii_scratch.js';
 import { getWebviewHtml } from '../../presentation/webview/get_webview_html.js';
@@ -191,6 +192,12 @@ async function applyConfiguredCrop(params: {
       async (progress, token) =>
         withCancellationSignal(token, async (signal) => {
           progress.report({ message: userMessage('message.progress.prepareConversion', 'PDF') });
+          const runtime: ConversionRuntime = {
+            signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
+            onConfirmWarnings: createPreflightWarningConfirmation('crop-pdf-configure'),
+          };
           return cropPdfWithConfiguredBox({
             job: {
               sourcePath,
@@ -199,10 +206,7 @@ async function applyConfiguredCrop(params: {
               cropBox,
               target,
             },
-            signal,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-            onConfirmWarnings: createPreflightWarningConfirmation('crop-pdf-configure'),
+            runtime,
           });
         }),
     );

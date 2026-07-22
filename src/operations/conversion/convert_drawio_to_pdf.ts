@@ -11,7 +11,7 @@ import {
 } from '../../application/policy/source_format.js';
 import { isWindowsReservedPathComponent, resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 
 import type { CommittedConversionOutput, PreparedConversionOutput } from '../lifecycle/commit_conversion_outputs.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
@@ -48,13 +48,7 @@ export async function convertDrawioToPdfFiles(
   validateJobs(options.jobs, options.outputMode);
   await validateJobPaths(options.jobs, operationName);
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.runtime?.outputChannel,
-    options.runtime?.signal,
-    options.runtime?.reportProgress,
-    options.runtime?.onConfirmWarnings,
-  );
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(options.runtime));
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
 

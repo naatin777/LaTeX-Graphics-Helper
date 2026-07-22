@@ -161,7 +161,7 @@ suite('Windows Ghostscript ASCII scratch', () => {
           ghostscriptPath: 'gs',
           runId: 'ghostscript-cancel',
           runGhostscript,
-          signal: abortController.signal,
+          runtime: { signal: abortController.signal },
           platform: 'win32',
           scratchBaseCandidates: [paths.scratchBasePath],
         }),

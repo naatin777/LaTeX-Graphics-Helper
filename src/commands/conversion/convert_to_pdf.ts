@@ -19,7 +19,6 @@ import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import {
   convertToPdfFiles,
   validateSvgToPdfOptions,
-  type ConvertToPdfFilesOptions,
   type ConvertToPdfJob,
   type SvgToPdfEngine,
   type SvgToPdfOptions,
@@ -144,8 +143,8 @@ async function convertSelectedSourcesToPdf(
         cancelledMessage: userMessage(messages.cancelledKey),
         failedMessage: (reason) => userMessage(messages.failedKey, reason),
       },
-      run: (runtime) => {
-        const convertOptions: ConvertToPdfFilesOptions = {
+      run: (runtime) =>
+        convertToPdfFiles({
           jobs,
           supportedExtensions: messages.supportedExtensions,
           svgToPdf,
@@ -153,18 +152,8 @@ async function convertSelectedSourcesToPdf(
           drawio,
           ghostscriptPath,
           operationName: messages.operationName,
-        };
-        if (runtime.signal !== undefined) {
-          convertOptions.signal = runtime.signal;
-        }
-        if (runtime.resolveConflicts !== undefined) {
-          convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
-        }
-        if (runtime.outputChannel !== undefined) {
-          convertOptions.outputChannel = runtime.outputChannel;
-        }
-        return convertToPdfFiles(convertOptions);
-      },
+          runtime,
+        }),
     });
   } catch (error) {
     if (isAbortError(error)) {

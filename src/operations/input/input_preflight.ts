@@ -18,6 +18,7 @@ import {
 } from '../../application/policy/source_format.js';
 import { validateEpsInput } from '../conversion/eps_to_pdf.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
+import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 
 export type PreflightResult = 'ok' | 'warning' | 'error';
 
@@ -38,6 +39,13 @@ export interface BatchPreflightResult {
 }
 
 export type ConfirmWarningsHandler = (warnings: PreflightReport[]) => Promise<boolean>;
+
+export interface AssertPreflightPassedOptions {
+  outputChannel?: LineOutputChannel;
+  signal?: AbortSignal;
+  onProgress?: (completed: number, total: number) => void;
+  onConfirmWarnings?: ConfirmWarningsHandler;
+}
 
 const PREFLIGHT_CONCURRENCY = 2;
 const EPS_INSPECTION_BYTES = 64 * 1024;
@@ -117,29 +125,43 @@ function formatPreflightReport(report: PreflightReport): string {
  * called to decide whether to proceed. If it returns false, the operation
  * is cancelled via AbortError.
  */
+export function preflightOptionsFromRuntime(runtime?: ConversionRuntime): AssertPreflightPassedOptions {
+  const options: AssertPreflightPassedOptions = {};
+  if (runtime?.outputChannel !== undefined) {
+    options.outputChannel = runtime.outputChannel;
+  }
+  if (runtime?.signal !== undefined) {
+    options.signal = runtime.signal;
+  }
+  if (runtime?.onConfirmWarnings !== undefined) {
+    options.onConfirmWarnings = runtime.onConfirmWarnings;
+  }
+  if (runtime?.reportProgress !== undefined) {
+    options.onProgress = runtime.reportProgress;
+  }
+  return options;
+}
+
 export async function assertPreflightPassed(
   jobs: { sourcePath: string }[],
-  outputChannel?: LineOutputChannel,
-  signal?: AbortSignal,
-  onProgress?: (completed: number, total: number) => void,
-  onConfirmWarnings?: ConfirmWarningsHandler,
+  options?: AssertPreflightPassedOptions,
 ): Promise<void> {
   const sourcePaths = jobs.map((job) => job.sourcePath);
   const batchOptions: PreflightBatchOptions = {};
-  if (signal !== undefined) {
-    batchOptions.signal = signal;
+  if (options?.signal !== undefined) {
+    batchOptions.signal = options.signal;
   }
-  if (onProgress !== undefined) {
-    batchOptions.onProgress = onProgress;
+  if (options?.onProgress !== undefined) {
+    batchOptions.onProgress = options.onProgress;
   }
   const result = await runPreflightBatch(sourcePaths, batchOptions);
 
   for (const report of result.reports) {
-    outputChannel?.appendLine(formatPreflightReport(report));
+    options?.outputChannel?.appendLine(formatPreflightReport(report));
   }
 
-  if (result.warnings.length > 0 && onConfirmWarnings !== undefined) {
-    const proceed = await onConfirmWarnings(result.warnings);
+  if (result.warnings.length > 0 && options?.onConfirmWarnings !== undefined) {
+    const proceed = await options.onConfirmWarnings(result.warnings);
     if (!proceed) {
       const error = new DOMException('Cancelled by user after preflight warnings', 'AbortError');
       throw error;

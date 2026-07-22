@@ -11,11 +11,10 @@ import {
   commitConversionOutputs,
   type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 
 export interface CropBox {
   left: number;
@@ -41,25 +40,17 @@ export interface CropPdfConfigureJob {
 
 export interface CropPdfConfigureOptions {
   job: CropPdfConfigureJob;
+  runtime?: ConversionRuntime;
   runId?: string;
-  signal?: AbortSignal;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  outputChannel?: LineOutputChannel;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   await validateJobPaths(options.job);
 
-  await assertPreflightPassed(
-    [options.job],
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed([options.job], preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
   const stagingRootPath = path.join(options.job.workspacePath, '.latex-graphics-helper', 'crop-pdf-configure', runId);
@@ -68,20 +59,20 @@ export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions)
   try {
     const preparedOutput = await createConfiguredCropOutput(options, runId);
 
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
     const commitOptions: CommitConversionOutputsOptions = { operationName: 'crop-pdf-configure' as const };
-    if (options.signal !== undefined) {
-      commitOptions.signal = options.signal;
+    if (runtime?.signal !== undefined) {
+      commitOptions.signal = runtime.signal;
     }
-    if (options.resolveOutputConflicts !== undefined) {
-      commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    if (runtime?.resolveConflicts !== undefined) {
+      commitOptions.resolveConflicts = runtime.resolveConflicts;
     }
-    if (options.outputChannel !== undefined) {
-      commitOptions.outputChannel = options.outputChannel;
+    if (runtime?.outputChannel !== undefined) {
+      commitOptions.outputChannel = runtime.outputChannel;
     }
     return await commitConversionOutputs([preparedOutput], commitOptions);
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
+    await cleanupConversionArtifacts(artifacts, runtime?.outputChannel, error);
     throw error instanceof Error ? error : new Error(String(error));
   }
 }
@@ -90,7 +81,8 @@ async function createConfiguredCropOutput(
   options: CropPdfConfigureOptions,
   runId: string,
 ): Promise<PreparedConversionOutput> {
-  const { job, signal } = options;
+  const { job, runtime } = options;
+  const signal = runtime?.signal;
   const workDirectory = path.join(
     job.workspacePath,
     '.latex-graphics-helper',

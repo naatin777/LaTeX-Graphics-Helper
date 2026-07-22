@@ -11,12 +11,10 @@ import {
   commitConversionOutputs,
   type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
-  type OutputConflictDecision,
 } from '../lifecycle/commit_conversion_outputs.js';
 import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
@@ -30,22 +28,19 @@ export interface CombineImagesToPdfOptions {
   jobs: CombineImagesJob[];
   outputPath: string;
   workspacePath: string;
+  runtime?: ConversionRuntime;
   runId?: string;
-  signal?: AbortSignal;
-  reportProgress?: ConversionRuntime['reportProgress'];
-  onConfirmWarnings?: ConfirmWarningsHandler;
   svgToPdf?: SvgToPdfOptions;
   rsvgConvertPath?: string;
   runRsvgConvert?: RunRsvgConvert;
   ghostscriptPath?: string;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  outputChannel?: LineOutputChannel;
 }
 
 export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs);
 
   await Promise.all([
@@ -56,16 +51,10 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
       options.workspacePath,
     ),
   ]);
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    options.reportProgress,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const stagingRootPath = path.join(options.workspacePath, '.latex-graphics-helper', 'combine-images', runId);
@@ -76,7 +65,7 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
     const pdfPaths: string[] = [];
 
     for (let index = 0; index < options.jobs.length; index += 1) {
-      options.signal?.throwIfAborted();
+      runtime?.signal?.throwIfAborted();
       const job = options.jobs[index]!;
       const pdfPath = path.join(stagingRootPath, `page-${index + 1}.pdf`);
       const writeOptions: WriteSourceAsPdfOptions = {
@@ -86,21 +75,21 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
         svgToPdf: svgToPdfOptions(options),
         scratchOptions: scratchOptions(options),
       };
-      if (options.signal !== undefined) {
-        writeOptions.signal = options.signal;
+      if (runtime?.signal !== undefined) {
+        writeOptions.signal = runtime.signal;
       }
       if (options.ghostscriptPath !== undefined) {
         writeOptions.ghostscriptPath = options.ghostscriptPath;
       }
       await writeSourceAsPdf(writeOptions);
       pdfPaths.push(pdfPath);
-      options.reportProgress?.(index + 1, options.jobs.length);
+      runtime?.reportProgress?.(index + 1, options.jobs.length);
     }
 
     const mergedDocument = await PDFDocument.create();
 
     for (const pdfPath of pdfPaths) {
-      options.signal?.throwIfAborted();
+      runtime?.signal?.throwIfAborted();
       const sourceDocument = await PDFDocument.load(await readFile(pdfPath));
       const pages = await mergedDocument.copyPages(sourceDocument, sourceDocument.getPageIndices());
 
@@ -109,29 +98,29 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
       }
     }
 
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
     const stagedOutputPath = path.join(stagingRootPath, 'result.pdf');
     await writeFile(stagedOutputPath, await mergedDocument.save());
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
 
     const commitOptions: CommitConversionOutputsOptions = {
       operationName: 'combine-images-to-pdf',
     };
-    if (options.signal !== undefined) {
-      commitOptions.signal = options.signal;
+    if (runtime?.signal !== undefined) {
+      commitOptions.signal = runtime.signal;
     }
-    if (options.resolveOutputConflicts !== undefined) {
-      commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    if (runtime?.resolveConflicts !== undefined) {
+      commitOptions.resolveConflicts = runtime.resolveConflicts;
     }
-    if (options.outputChannel !== undefined) {
-      commitOptions.outputChannel = options.outputChannel;
+    if (runtime?.outputChannel !== undefined) {
+      commitOptions.outputChannel = runtime.outputChannel;
     }
     return commitConversionOutputs(
       [{ stagedOutputPath, outputPath: options.outputPath, workspacePath: options.workspacePath, stagingRootPath }],
       commitOptions,
     );
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
+    await cleanupConversionArtifacts(artifacts, runtime?.outputChannel, error);
     throw error instanceof Error ? error : new Error(String(error));
   }
 }
@@ -175,8 +164,8 @@ function scratchOptions(options: CombineImagesToPdfOptions): RsvgToolScratchOpti
   if (options.scratchBaseCandidates !== undefined) {
     result.scratchBaseCandidates = options.scratchBaseCandidates;
   }
-  if (options.outputChannel !== undefined) {
-    result.outputChannel = options.outputChannel;
+  if (options.runtime?.outputChannel !== undefined) {
+    result.outputChannel = options.runtime.outputChannel;
   }
   return result;
 }

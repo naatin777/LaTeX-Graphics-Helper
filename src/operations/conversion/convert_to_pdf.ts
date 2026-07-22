@@ -17,16 +17,14 @@ import { errorMessage, isAbortError } from '../../commands/shared/command_utils.
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../../application/policy/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 
 import {
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
 import {
@@ -104,9 +102,8 @@ export interface WriteSourceAsPdfOptions {
 
 export interface ConvertToPdfFilesOptions {
   jobs: ConvertToPdfJob[];
+  runtime?: ConversionRuntime;
   runId?: string;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  signal?: AbortSignal;
   supportedExtensions?: readonly string[];
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
@@ -114,53 +111,36 @@ export interface ConvertToPdfFilesOptions {
   ghostscriptPath?: string;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
-  outputChannel?: LineOutputChannel;
   operationName?: string;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs, options.supportedExtensions ?? DEFAULT_SUPPORTED_IMAGE_EXTENSIONS);
   await validateJobPaths(options.jobs);
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const platform = options.platform ?? process.platform;
   const scratchOptions: RsvgToolScratchOptions = { platform };
-  if (options.outputChannel !== undefined) {
-    scratchOptions.outputChannel = options.outputChannel;
+  if (runtime?.outputChannel !== undefined) {
+    scratchOptions.outputChannel = runtime.outputChannel;
   }
   if (options.scratchBaseCandidates !== undefined) {
     scratchOptions.scratchBaseCandidates = options.scratchBaseCandidates;
   }
   const operationName = options.operationName ?? 'convert-png-to-pdf';
-  const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) {
-    runtime.signal = options.signal;
-  }
-  if (options.resolveOutputConflicts !== undefined) {
-    runtime.resolveConflicts = options.resolveOutputConflicts;
-  }
-  if (options.outputChannel !== undefined) {
-    runtime.outputChannel = options.outputChannel;
-  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName,
     stagingOperationName: 'convert-png-to-pdf',
     runId,
-    runtime,
+    runtime: runtime ?? {},
     stage: (job, index, currentRunId, batchRuntime) =>
       stageSourceToPdf(
         job,

@@ -85,7 +85,7 @@ suite('画像→1PDF結合', () => {
         jobs: sourcePaths.map((sourcePath) => ({ sourcePath })),
         outputPath,
         workspacePath,
-        reportProgress: (completed, total) => progress.push([completed, total]),
+        runtime: { reportProgress: (completed, total) => progress.push([completed, total]) },
       });
 
       const pdfBytes = await readFile(outputPath);

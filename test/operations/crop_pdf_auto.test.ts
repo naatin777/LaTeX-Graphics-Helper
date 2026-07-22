@@ -242,7 +242,7 @@ suite('PDF自動crop処理', () => {
         jobs: [{ sourcePath, workspacePath, outputPath }],
         margin: 0,
         ghostscriptPath: 'gs',
-        signal: abortController.signal,
+        runtime: { signal: abortController.signal },
         runGhostscript: async () => {
           ghostscriptCalled = true;
           return { stdout: '', stderr: '%%HiResBoundingBox: 10 10 90 90\n' };
@@ -276,7 +276,7 @@ suite('PDF自動crop処理', () => {
         jobs: [{ sourcePath, workspacePath, outputPath }],
         margin: 0,
         ghostscriptPath: 'gs',
-        signal: abortController.signal,
+        runtime: { signal: abortController.signal },
         runGhostscript,
       }),
       { name: 'AbortError' },
@@ -319,7 +319,7 @@ suite('PDF自動crop処理', () => {
         jobs,
         margin: 0,
         ghostscriptPath: 'gs',
-        signal: abortController.signal,
+        runtime: { signal: abortController.signal },
         runGhostscript,
       }),
       { name: 'AbortError' },
@@ -404,7 +404,7 @@ suite('PDF自動crop処理', () => {
         margin: 0,
         ghostscriptPath: 'gs',
         runGhostscript,
-        outputChannel: mockOutputChannel,
+        runtime: { outputChannel: mockOutputChannel },
       }),
       /Ghostscript failed/,
     );

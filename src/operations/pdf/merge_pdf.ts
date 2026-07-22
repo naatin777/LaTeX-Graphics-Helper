@@ -10,33 +10,29 @@ import {
   commitConversionOutputs,
   type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
-  type OutputConflictDecision,
 } from '../lifecycle/commit_conversion_outputs.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 
 export interface MergePdfOptions {
   sourcePaths: string[];
   outputPath: string;
   workspacePath: string;
+  runtime?: ConversionRuntime;
   runId?: string;
-  signal?: AbortSignal;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  outputChannel?: LineOutputChannel;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function mergePdf(options: MergePdfOptions): Promise<CommittedConversionOutput[]> {
-  const { sourcePaths, outputPath, workspacePath } = options;
+  const { sourcePaths, outputPath, workspacePath, runtime } = options;
 
-  options.outputChannel?.appendLine(`[merge-pdf] input paths: ${sourcePaths.join(', ')}`);
-  options.outputChannel?.appendLine(`[merge-pdf] requested output: ${outputPath}`);
+  runtime?.outputChannel?.appendLine(`[merge-pdf] input paths: ${sourcePaths.join(', ')}`);
+  runtime?.outputChannel?.appendLine(`[merge-pdf] requested output: ${outputPath}`);
 
   if (sourcePaths.length < 2) {
     throw new Error('Select at least two PDF files.');
   }
 
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', runId);
@@ -49,54 +45,51 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
     assertWritablePathInWorkspace(stagingRootPath, workspacePath),
     assertWritablePathInWorkspace(stagedOutputPath, workspacePath),
   ]);
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
   await assertPreflightPassed(
     sourcePaths.map((sourcePath) => ({ sourcePath })),
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
+    preflightOptionsFromRuntime(runtime),
   );
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
   const mergedDocument = await PDFDocument.create();
 
   for (const sourcePath of sourcePaths) {
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
     const sourceDocument = await PDFDocument.load(await readFile(sourcePath));
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
     const pages = await mergedDocument.copyPages(sourceDocument, sourceDocument.getPageIndices());
 
     for (const page of pages) {
-      options.signal?.throwIfAborted();
+      runtime?.signal?.throwIfAborted();
       mergedDocument.addPage(page);
     }
   }
 
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
   const artifacts: ConversionArtifactRoot[] = [{ rootPath: stagingRootPath, workspacePath }];
 
   try {
     await assertWritablePathInWorkspace(stagedOutputPath, workspacePath);
     await mkdir(path.dirname(stagedOutputPath), { recursive: true });
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
     await writeFile(stagedOutputPath, await mergedDocument.save());
-    options.signal?.throwIfAborted();
+    runtime?.signal?.throwIfAborted();
 
     const commitOptions: CommitConversionOutputsOptions = { operationName: 'merge-pdf' as const };
-    if (options.signal !== undefined) {
-      commitOptions.signal = options.signal;
+    if (runtime?.signal !== undefined) {
+      commitOptions.signal = runtime.signal;
     }
-    if (options.resolveOutputConflicts !== undefined) {
-      commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    if (runtime?.resolveConflicts !== undefined) {
+      commitOptions.resolveConflicts = runtime.resolveConflicts;
     }
-    if (options.outputChannel !== undefined) {
-      commitOptions.outputChannel = options.outputChannel;
+    if (runtime?.outputChannel !== undefined) {
+      commitOptions.outputChannel = runtime.outputChannel;
     }
     return commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }], commitOptions);
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
+    await cleanupConversionArtifacts(artifacts, runtime?.outputChannel, error);
     throw error instanceof Error ? error : new Error(String(error));
   }
 }

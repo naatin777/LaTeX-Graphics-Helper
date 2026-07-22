@@ -481,9 +481,11 @@ suite('Preflight — warning確認', () => {
       await writeFile(sourcePath, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
       let receivedWarnings: PreflightReport[] | undefined;
       await rejects(
-        assertPreflightPassed([{ sourcePath }], undefined, undefined, undefined, async (warnings) => {
-          receivedWarnings = warnings;
-          return false;
+        assertPreflightPassed([{ sourcePath }], {
+          onConfirmWarnings: async (warnings) => {
+            receivedWarnings = warnings;
+            return false;
+          },
         }),
         (error: unknown) => error instanceof Error && error.name === 'AbortError',
       );
@@ -501,7 +503,7 @@ suite('Preflight — warning確認', () => {
 
     try {
       await writeFile(sourcePath, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
-      await assertPreflightPassed([{ sourcePath }], undefined, undefined, undefined, async () => true);
+      await assertPreflightPassed([{ sourcePath }], { onConfirmWarnings: async () => true });
     } finally {
       await rm(testRoot, { recursive: true, force: true });
     }

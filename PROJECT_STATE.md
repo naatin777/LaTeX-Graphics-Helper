@@ -18,12 +18,15 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - Draw.io to PDF conversion
 - Mermaid theme/backgroundColor settings
 - LaTeX insertion templates (settings)
-- Input preflight validation (all operations)
+- Input preflight validation (all operations) with deep PDF/SVG inspection
+- Preflight warning confirmation dialog
 - Insert LaTeX code (PDF, clipboard image)
+- ConversionRuntime consistently used across all operations
 
 ## In progress
 
 なし
+
 ## Non-goals
 
 - production codeのリファクタリング

@@ -15,11 +15,7 @@ import {
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
-import {
-  convertToSvgFiles,
-  type ConvertToSvgFilesOptions,
-  type ConvertToSvgJob,
-} from '../../operations/conversion/convert_to_svg.js';
+import { convertToSvgFiles, type ConvertToSvgJob } from '../../operations/conversion/convert_to_svg.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
@@ -61,26 +57,16 @@ export async function convertToSvgCommand(
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('SVG', sourceUris.length),
-      run: (runtime) => {
-        const convertOptions: ConvertToSvgFilesOptions = {
+      run: (runtime) =>
+        convertToSvgFiles({
           jobs,
           pdftocairoPath,
           ghostscriptPath,
           mermaid: puppeteer,
           drawio,
+          runtime,
           platform: process.platform,
-        };
-        if (runtime.signal !== undefined) {
-          convertOptions.signal = runtime.signal;
-        }
-        if (runtime.resolveConflicts !== undefined) {
-          convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
-        }
-        if (runtime.outputChannel !== undefined) {
-          convertOptions.outputChannel = runtime.outputChannel;
-        }
-        return convertToSvgFiles(convertOptions);
-      },
+        }),
     });
   } catch (error) {
     if (isAbortError(error)) {

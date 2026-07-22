@@ -7,17 +7,17 @@ import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../../application/policy/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { errorMessage } from './raster_conversion.js';
 import { isAbortError } from '../../commands/shared/command_utils.js';
 
 import {
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
+import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_to_pdf.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
@@ -25,7 +25,6 @@ import {
   runPdftocairoWithAsciiScratch,
   type PdfToolScratchOptions,
 } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 export type { MermaidPuppeteerOptions };
@@ -52,46 +51,28 @@ export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioToSvgOptions;
+  runtime?: ConversionRuntime;
   runPdfToSvg?: RunPdfToSvg;
   runId?: string;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  signal?: AbortSignal;
-  outputChannel?: LineOutputChannel;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Promise<CommittedConversionOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateJobPaths(options.jobs);
-  options.signal?.throwIfAborted();
+  runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) {
-    runtime.signal = options.signal;
-  }
-  if (options.resolveOutputConflicts !== undefined) {
-    runtime.resolveConflicts = options.resolveOutputConflicts;
-  }
-  if (options.outputChannel !== undefined) {
-    runtime.outputChannel = options.outputChannel;
-  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: 'convert-to-svg',
     runId,
-    runtime,
+    runtime: runtime ?? {},
     stage: (job, index, currentRunId, batchRuntime) =>
       stageSvgConversion(
         job,

@@ -7,12 +7,10 @@ import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '..
 
 import {
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
-import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
+import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 export interface SplitPdfJob {
@@ -30,89 +28,53 @@ export interface SplitPdfPageGroupsJob {
 
 export interface SplitPdfOptions {
   jobs: SplitPdfJob[];
+  runtime?: ConversionRuntime;
   runId?: string;
-  signal?: AbortSignal;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  outputChannel?: LineOutputChannel;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export interface SplitPdfByPageGroupsOptions {
   jobs: SplitPdfPageGroupsJob[];
+  runtime?: ConversionRuntime;
   runId?: string;
-  signal?: AbortSignal;
-  resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
-  outputChannel?: LineOutputChannel;
-  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export type SplitPdfOutput = CommittedConversionOutput;
 
 export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitPdfOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateInputPaths(options.jobs);
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) {
-    runtime.signal = options.signal;
-  }
-  if (options.resolveOutputConflicts !== undefined) {
-    runtime.resolveConflicts = options.resolveOutputConflicts;
-  }
-  if (options.outputChannel !== undefined) {
-    runtime.outputChannel = options.outputChannel;
-  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: 'split-pdf',
     runId,
-    runtime,
+    runtime: runtime ?? {},
     stage: (job, index, currentRunId, batchRuntime) =>
       splitPdf({ job, index, runId: currentRunId, signal: batchRuntime.signal }),
   });
 }
 
 export async function splitPdfByPageGroups(options: SplitPdfByPageGroupsOptions): Promise<SplitPdfOutput[]> {
-  options.signal?.throwIfAborted();
+  const { runtime } = options;
+  runtime?.signal?.throwIfAborted();
   validatePageGroupJobs(options.jobs);
   await validatePageGroupInputPaths(options.jobs);
-  await assertPreflightPassed(
-    options.jobs,
-    options.outputChannel,
-    options.signal,
-    undefined,
-    options.onConfirmWarnings,
-  );
-  options.signal?.throwIfAborted();
+  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) {
-    runtime.signal = options.signal;
-  }
-  if (options.resolveOutputConflicts !== undefined) {
-    runtime.resolveConflicts = options.resolveOutputConflicts;
-  }
-  if (options.outputChannel !== undefined) {
-    runtime.outputChannel = options.outputChannel;
-  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: 'split-pdf',
     runId,
-    runtime,
+    runtime: runtime ?? {},
     stage: (job, index, currentRunId, batchRuntime) =>
       splitPdfPageGroups({ job, index, runId: currentRunId, signal: batchRuntime.signal }),
   });

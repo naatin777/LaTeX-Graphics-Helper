@@ -33,7 +33,7 @@ suite('PDF結合operation', () => {
         outputPath,
         workspacePath,
         runId: 'safe-mode',
-        resolveOutputConflicts: async () => 'keep-both',
+        runtime: { resolveConflicts: async () => 'keep-both' },
       });
       await rememberLastConversion(outputs);
 
@@ -62,7 +62,7 @@ suite('PDF結合operation', () => {
         outputPath,
         workspacePath,
         runId: 'undo',
-        resolveOutputConflicts: async () => 'overwrite',
+        runtime: { resolveConflicts: async () => 'overwrite' },
       });
       const undoRecord = await createConversionUndoRecord(outputs);
 
@@ -91,8 +91,10 @@ suite('PDF結合operation', () => {
           sourcePaths: [firstPath, secondPath],
           outputPath,
           workspacePath,
-          signal: abortController.signal,
-          resolveOutputConflicts: async () => 'overwrite',
+          runtime: {
+            signal: abortController.signal,
+            resolveConflicts: async () => 'overwrite',
+          },
         }),
         { name: 'AbortError' },
       );
@@ -153,7 +155,7 @@ suite('PDF結合operation', () => {
           outputPath,
           workspacePath,
           runId: 'cancelled',
-          resolveOutputConflicts: async () => 'cancel',
+          runtime: { resolveConflicts: async () => 'cancel' },
         }),
         /cancelled/,
       );

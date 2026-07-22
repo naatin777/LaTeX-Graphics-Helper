@@ -178,7 +178,7 @@ suite('PDF全ページ分割', () => {
             outputPathForPage: () => outputPath,
           },
         ],
-        signal: abortController.signal,
+        runtime: { signal: abortController.signal },
       }),
       { name: 'AbortError' },
     );

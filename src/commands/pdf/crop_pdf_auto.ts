@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { readGhostscriptExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import { localeMap } from '../../locale_map.js';
+import type { ConversionRuntime } from '../../operations/lifecycle/conversion_runtime.js';
 import { cropPdfFiles, type CropPdfJob } from '../../operations/pdf/crop_pdf_auto.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
@@ -52,14 +53,17 @@ export async function cropPdfAutoCommand(
       async (progress, token) => {
         return withCancellationSignal(token, async (signal) => {
           progress.report({ message: userMessage('message.progress.prepareConversion', 'PDF') });
+          const runtime: ConversionRuntime = {
+            signal,
+            ...(outputChannel !== undefined && { outputChannel }),
+            resolveConflicts: resolveOutputConflicts,
+            onConfirmWarnings: createPreflightWarningConfirmation('crop-pdf'),
+          };
           return cropPdfFiles({
             jobs,
             margin: selectedMargin,
             ghostscriptPath,
-            signal,
-            ...(outputChannel !== undefined && { outputChannel }),
-            resolveOutputConflicts,
-            onConfirmWarnings: createPreflightWarningConfirmation('crop-pdf'),
+            runtime,
           });
         });
       },
