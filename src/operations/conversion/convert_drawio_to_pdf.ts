@@ -48,7 +48,7 @@ export async function convertDrawioToPdfFiles(
   validateJobs(options.jobs, options.outputMode);
   await validateJobPaths(options.jobs, operationName);
 
-  await assertPreflightPassed(options.jobs, undefined, options.runtime?.signal);
+  await assertPreflightPassed(options.jobs, options.runtime?.outputChannel, options.runtime?.signal);
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
 
@@ -104,7 +104,7 @@ async function stageDrawioJob(options: {
 
   await runDrawioCommand(
     drawioPath,
-    [conversionInputPath, '-o', allPagesPdfPath, '-xf', 'pdf', '-t', '-a', '--crop'],
+    [conversionInputPath, '-o', allPagesPdfPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
     runtime,
     runDrawio,
   );
