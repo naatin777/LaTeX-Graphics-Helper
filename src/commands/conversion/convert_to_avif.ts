@@ -8,7 +8,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
-import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
@@ -20,7 +19,6 @@ import {
   convertToAvifFiles,
   type AvifOutputOptions,
   type ConvertToAvifJob,
-  type DrawioToAvifOptions,
 } from '../../operations/conversion/convert_to_avif.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
@@ -28,7 +26,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError, selectedUris } from '../shared/command_utils.js';
+import { isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
 
@@ -56,7 +54,7 @@ export async function convertToAvifCommand(
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioToAvifOptions(configuration);
+    const drawio = readDrawioOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
@@ -203,12 +201,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readDrawioToAvifOptions(configuration: vscode.WorkspaceConfiguration): DrawioToAvifOptions {
-  return {
-    drawioPath: readDrawioExecutablePath(configuration),
-  };
 }
 
 function readAvifOutputOptions(configuration: vscode.WorkspaceConfiguration): AvifOutputOptions {

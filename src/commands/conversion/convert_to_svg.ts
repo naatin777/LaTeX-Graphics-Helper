@@ -8,7 +8,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
-import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
@@ -20,7 +19,6 @@ import {
   convertToSvgFiles,
   type ConvertToSvgFilesOptions,
   type ConvertToSvgJob,
-  type DrawioToSvgOptions,
 } from '../../operations/conversion/convert_to_svg.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
@@ -28,7 +26,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError, selectedUris } from '../shared/command_utils.js';
+import { isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
 
@@ -55,7 +53,7 @@ export async function convertToSvgCommand(
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const puppeteer = readMermaidPuppeteerOptions(configuration, 'convertToSvg');
-    const drawio = readDrawioToSvgOptions(configuration);
+    const drawio = readDrawioOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     await runOutputConversion({
@@ -197,10 +195,4 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readDrawioToSvgOptions(configuration: vscode.WorkspaceConfiguration): DrawioToSvgOptions {
-  return {
-    drawioPath: readDrawioExecutablePath(configuration),
-  };
 }

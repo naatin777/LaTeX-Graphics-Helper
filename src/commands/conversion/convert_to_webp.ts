@@ -8,7 +8,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
-import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
@@ -19,7 +18,6 @@ import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import {
   convertToWebpFiles,
   type ConvertToWebpJob,
-  type DrawioToWebpOptions,
   type WebpOutputOptions,
 } from '../../operations/conversion/convert_to_webp.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
@@ -28,7 +26,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError, selectedUris } from '../shared/command_utils.js';
+import { isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
 
@@ -56,7 +54,7 @@ export async function convertToWebpCommand(
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioToWebpOptions(configuration);
+    const drawio = readDrawioOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
@@ -203,12 +201,6 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readDrawioToWebpOptions(configuration: vscode.WorkspaceConfiguration): DrawioToWebpOptions {
-  return {
-    drawioPath: readDrawioExecutablePath(configuration),
-  };
 }
 
 function readWebpOutputOptions(configuration: vscode.WorkspaceConfiguration): WebpOutputOptions {

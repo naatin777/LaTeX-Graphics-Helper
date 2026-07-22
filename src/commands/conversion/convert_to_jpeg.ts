@@ -8,7 +8,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
-import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
@@ -16,18 +15,14 @@ import {
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
-import {
-  convertToJpegFiles,
-  type ConvertToJpegJob,
-  type DrawioToJpegOptions,
-} from '../../operations/conversion/convert_to_jpeg.js';
+import { convertToJpegFiles, type ConvertToJpegJob } from '../../operations/conversion/convert_to_jpeg.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError, selectedUris } from '../shared/command_utils.js';
+import { isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_JPEG_COMMAND = 'latex-graphics-helper.convertToJpeg';
 
@@ -54,7 +49,7 @@ export async function convertToJpegCommand(
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioToJpegOptions(configuration);
+    const drawio = readDrawioOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     await runOutputConversion({
@@ -198,10 +193,4 @@ function outputTemplateForSource(
       return DEFAULT_OUTPUT_PATH;
     }
   }
-}
-
-function readDrawioToJpegOptions(configuration: vscode.WorkspaceConfiguration): DrawioToJpegOptions {
-  return {
-    drawioPath: readDrawioExecutablePath(configuration),
-  };
 }

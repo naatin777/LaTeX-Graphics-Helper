@@ -7,7 +7,7 @@ import type { LineOutputChannel } from '../../operations/external_tools/external
 import { withCancellationSignal } from './progress_cancellation.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError } from '../shared/command_utils.js';
+import { isAbortError, errorMessage } from '../shared/command_utils.js';
 
 export interface ConversionCommandMessages {
   progressTitle: string;
@@ -95,8 +95,4 @@ export async function runOutputConversion(options: {
     options.outputChannel?.appendLine(`[${options.operationName}] failure: ${reason}`);
     await vscode.window.showErrorMessage(options.messages.failedMessage(reason));
   }
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
