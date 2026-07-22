@@ -2,6 +2,7 @@
 // - editable Draw.io画像をSVGへ変換するとき、Draw.io CLIへSVG出力を要求すること
 // - 変換結果を.latex-graphics-helper配下で作成してから指定出力先へ反映すること
 // - Draw.io CLI / pdftocairo の失敗をユーザー向けエラーに包むこと
+// - external toolが成功終了しても不正なSVGをcommitしないこと
 //
 // Not tested:
 // - Draw.io CLI実体での変換
@@ -9,7 +10,7 @@
 // - Safe Modeダイアログの画面表示
 
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -69,6 +70,36 @@ suite('SVGに変換する処理', () => {
     }
   });
 
+  test('Draw.io CLIが成功終了しても非SVG出力をcommitしない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-svg-invalid-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'source.drawio.png');
+      const outputPath = path.join(workspacePath, 'source.svg');
+      await writeFile(sourcePath, 'editable drawio image placeholder');
+
+      await assert.rejects(
+        convertToSvgFiles({
+          jobs: [{ sourcePath, outputPath, workspacePath, page: 1 }],
+          pdftocairoPath: 'pdftocairo',
+          ghostscriptPath: 'gs',
+          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawio: {
+            drawioPath: 'drawio',
+            runDrawio: async (_executable, args) => {
+              await writeFile(args[args.indexOf('-o') + 1]!, '<html>not svg</html>');
+            },
+          },
+          runId: 'invalid-output',
+        }),
+        /non-SVG output/,
+      );
+      await assert.rejects(access(outputPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('Draw.io CLIの失敗をstderrつきのエラーに包む', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-svg-operation-'));
 
@@ -104,6 +135,35 @@ suite('SVGに変換する処理', () => {
         }),
         /Draw\.io CLI failed: spawn drawio ENOENT\ndrawio missing/,
       );
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('pdftocairoが成功終了しても空SVGをcommitしない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-svg-empty-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'source.pdf');
+      const outputPath = path.join(workspacePath, 'source.svg');
+      await writeFile(sourcePath, '%PDF-1.7\n');
+
+      await assert.rejects(
+        convertToSvgFiles({
+          jobs: [{ sourcePath, outputPath, workspacePath, page: 1 }],
+          pdftocairoPath: 'pdftocairo',
+          ghostscriptPath: 'gs',
+          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawio: { drawioPath: 'drawio' },
+          platform: 'linux',
+          runPdfToSvg: async (_sourcePath, toolOutputPath) => {
+            await writeFile(toolOutputPath, '');
+          },
+          runId: 'empty-output',
+        }),
+        /empty output/,
+      );
+      await assert.rejects(access(outputPath));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }
