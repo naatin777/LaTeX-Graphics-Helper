@@ -51,7 +51,7 @@ export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions)
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
 
-  await assertPreflightPassed([options.job], undefined, options.signal);
+  await assertPreflightPassed([options.job], options.outputChannel, options.signal);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
@@ -165,7 +165,6 @@ function setPageCropBox(page: PDFPage | undefined, cropBox: CropBox): void {
   }
 
   validateCropBox(cropBox, page);
-
   const width = cropBox.right - cropBox.left;
   const height = cropBox.top - cropBox.bottom;
   page.setMediaBox(cropBox.left, cropBox.bottom, width, height);
