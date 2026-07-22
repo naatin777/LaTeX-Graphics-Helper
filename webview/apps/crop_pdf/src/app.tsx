@@ -165,7 +165,7 @@ export function App() {
     try {
       await renderPromise;
     } catch {
-      setInputError('PDF preview must render before applying.');
+      setInputError(labels().previewApplyError);
       return;
     }
 
