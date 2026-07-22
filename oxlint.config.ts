@@ -252,6 +252,7 @@ export default defineConfig({
      * Project-specific rules
      */
     'project/max-conditional-spreads-per-object': 'error',
+    'project/require-sharp-buffer-input': 'error',
   },
 
   overrides: [
