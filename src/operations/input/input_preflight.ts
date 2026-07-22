@@ -203,12 +203,12 @@ async function validateRasterInput(
   fileSize: number,
 ): Promise<PreflightReport> {
   const details: Record<string, unknown> = { fileSize };
+  const image = sharp(sourcePath);
 
   try {
-    // Read before handing the data to libvips. Passing a path directly can keep
-    // a Windows handle open beyond metadata(), blocking immediate conversion.
-    const sourceBuffer = await readFile(sourcePath);
-    const metadata = await sharp(sourceBuffer).metadata();
+    // metadata() reads image headers without decoding compressed pixels. Destroy
+    // the Sharp stream explicitly so Windows does not retain the input handle.
+    const metadata = await image.metadata();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
       return {
@@ -239,6 +239,8 @@ async function validateRasterInput(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { sourcePath, format, fileSize, result: 'error', reason: `Image validation failed: ${message}` };
+  } finally {
+    image.destroy();
   }
 }
 
