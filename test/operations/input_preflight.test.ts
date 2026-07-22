@@ -139,7 +139,9 @@ suite('Preflight — 共通検査', () => {
   test('失敗理由に入力pathを含める', async () => {
     const missingPath = path.join(FIXTURES, 'missing.pdf');
     await rejects(assertPreflightPassed([{ sourcePath: missingPath }]), (error: unknown) => {
-      return error instanceof Error && error.message.includes(missingPath) && error.message.includes('File not readable');
+      return (
+        error instanceof Error && error.message.includes(missingPath) && error.message.includes('File not readable')
+      );
     });
   });
 });
@@ -269,10 +271,7 @@ suite('Preflight — Raster', () => {
     const sourcePath = path.join(testRoot, 'large.png');
 
     try {
-      await writeFile(
-        sourcePath,
-        '<svg xmlns="http://www.w3.org/2000/svg" width="20000" height="10000"></svg>',
-      );
+      await writeFile(sourcePath, '<svg xmlns="http://www.w3.org/2000/svg" width="20000" height="10000"></svg>');
       const result = await runPreflightBatch([sourcePath]);
       strictEqual(result.canProceed, true);
       strictEqual(result.warnings.length, 0);

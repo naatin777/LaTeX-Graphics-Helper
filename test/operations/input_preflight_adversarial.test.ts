@@ -3,10 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import {
-  assertPreflightPassed,
-  runPreflightBatch,
-} from '../../src/operations/input/input_preflight.js';
+import { assertPreflightPassed, runPreflightBatch } from '../../src/operations/input/input_preflight.js';
 
 suite('Preflight adversarial inputs', () => {
   let testRootPath: string;

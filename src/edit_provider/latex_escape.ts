@@ -3,11 +3,11 @@ const LATEX_TEXT_ESCAPES: Readonly<Record<string, string>> = {
   '\\': '\\textbackslash{}',
   '{': '\\{',
   '}': '\\}',
-  '$': '\\$',
+  $: '\\$',
   '&': '\\&',
   '#': '\\#',
   '%': '\\%',
-  '_': '\\_',
+  _: '\\_',
   '^': '\\textasciicircum{}',
   '~': '\\textasciitilde{}',
 };

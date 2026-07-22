@@ -101,9 +101,7 @@ export async function assertPreflightPassed(
   }
 
   if (!result.canProceed) {
-    const reasons = result.errors
-      .map((error) => `${error.sourcePath}: ${error.reason ?? 'unknown error'}`)
-      .join('\n');
+    const reasons = result.errors.map((error) => `${error.sourcePath}: ${error.reason ?? 'unknown error'}`).join('\n');
     throw new Error(`Preflight validation failed:\n${reasons}`);
   }
 }
@@ -177,11 +175,7 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
   return { sourcePath, format, fileSize, result: 'ok' };
 }
 
-async function validatePdfInput(
-  sourcePath: string,
-  format: SourceFormat,
-  fileSize: number,
-): Promise<PreflightReport> {
+async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
     const header = (await readFilePrefix(sourcePath, 5)).toString('utf8');
 
@@ -246,11 +240,7 @@ async function validateRasterInput(
   }
 }
 
-async function validateSvgInput(
-  sourcePath: string,
-  format: SourceFormat,
-  fileSize: number,
-): Promise<PreflightReport> {
+async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
     const root = createSubstringScanner(['<svg'], true);
     const scan = await scanTextFile(sourcePath, (chunk) => root.feed(chunk));
