@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { copyFile, mkdir, readFile, stat } from 'node:fs/promises';
+import { copyFile, mkdir, open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -31,7 +31,6 @@ export interface EpsToPdfOptions {
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
   timeout?: number;
-  maxOutputSize?: number;
   runGhostscript?: RunGhostscript;
 }
 
@@ -51,19 +50,15 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
   const platform = options.platform ?? process.platform;
   const pixbuf = options.timeout ?? 30_000;
-  const maxOutputSize = options.maxOutputSize ?? 100 * 1024 * 1024;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
 
   await mkdir(options.stagingDirectory, { recursive: true });
 
-  // Copy EPS to staging
   const stagingEpsPath = path.join(options.stagingDirectory, 'source.eps');
   await copyFile(options.epsPath, stagingEpsPath);
   options.signal?.throwIfAborted();
 
   const pdfPath = path.join(options.stagingDirectory, 'eps-result.pdf');
-
-  // Windows: use ASCII scratch for both Ghostscript input and output.
   let ghostscriptInputPath = stagingEpsPath;
   let ghostscriptOutputPath = pdfPath;
 
@@ -110,11 +105,11 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
       options.signal?.throwIfAborted();
       await validateAsciiScratchOutput(scratch);
-      await validateGeneratedPdf(ghostscriptOutputPath, maxOutputSize);
+      await validateGeneratedPdf(ghostscriptOutputPath);
       options.signal?.throwIfAborted();
       await copyFile(ghostscriptOutputPath, pdfPath);
       options.signal?.throwIfAborted();
-      await validateGeneratedPdf(pdfPath, maxOutputSize);
+      await validateGeneratedPdf(pdfPath);
       options.signal?.throwIfAborted();
       options.outputChannel?.appendLine(`[scratch] staged output: ${pdfPath}`);
       scratchSucceeded = true;
@@ -129,7 +124,6 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
     }
   }
 
-  // Non-Windows: execute Ghostscript directly
   await runGhostscript(
     options.ghostscriptPath,
     [
@@ -146,18 +140,12 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
   );
 
   options.signal?.throwIfAborted();
-  await validateGeneratedPdf(pdfPath, maxOutputSize);
+  await validateGeneratedPdf(pdfPath);
 
   return { pdfPath, stagingDirectory: options.stagingDirectory };
 }
 
-/**
- * Validates that the output PDF from Ghostscript is valid:
- * - File exists and is non-empty
- * - Can be parsed as PDF (starts with %PDF)
- * - File size is within limits
- */
-async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<void> {
+async function validateGeneratedPdf(pdfPath: string): Promise<void> {
   const fileStat = await stat(pdfPath);
 
   if (!fileStat.isFile()) {
@@ -166,12 +154,6 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
 
   if (fileStat.size === 0) {
     throw new Error(`EPS conversion produced empty PDF: ${pdfPath}`);
-  }
-
-  if (fileStat.size > maxSize) {
-    throw new Error(
-      `EPS conversion output exceeds size limit (${(fileStat.size / 1024 / 1024).toFixed(1)} MB > ${(maxSize / 1024 / 1024).toFixed(0)} MB)`,
-    );
   }
 
   const pdfBytes = await readFile(pdfPath);
@@ -226,11 +208,18 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
   }
 }
 
-/**
- * Performs a minimal preflight check on an EPS file.
- */
+/** Performs a minimal preflight check on an EPS file. */
 export async function validateEpsInput(epsPath: string): Promise<void> {
-  const head = (await readFile(epsPath, { encoding: 'utf8' })).slice(0, 1024);
+  const handle = await open(epsPath, 'r');
+  let head: string;
+
+  try {
+    const buffer = Buffer.alloc(1024);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    head = buffer.subarray(0, bytesRead).toString('utf8');
+  } finally {
+    await handle.close();
+  }
 
   if (!head.startsWith('%!PS-Adobe-') && !head.startsWith('%!PS')) {
     throw new Error(`Not a valid EPS file (missing PostScript header): ${epsPath}`);
@@ -244,8 +233,6 @@ export async function validateEpsInput(epsPath: string): Promise<void> {
 
   const boundingBox = bbMatch[1]!.trim();
 
-  // A deferred BoundingBox is resolved by Ghostscript and checked against the
-  // generated PDF. It is valid input, but cannot be checked during preflight.
   if (boundingBox === '(atend)') {
     return;
   }
@@ -262,17 +249,8 @@ export async function validateEpsInput(epsPath: string): Promise<void> {
   const urx = numericValues[2] ?? Number.NaN;
   const ury = numericValues[3] ?? Number.NaN;
 
-  if (
-    ![llx, lly, urx, ury].every(Number.isInteger) ||
-    [llx, lly, urx, ury].some((value) => value < -(2 ** 31) || value > 2 ** 31 - 1) ||
-    llx >= urx ||
-    lly >= ury
-  ) {
+  if (![llx, lly, urx, ury].every(Number.isSafeInteger) || llx >= urx || lly >= ury) {
     throw new Error(`Invalid BoundingBox in EPS (llx=${llx}, lly=${lly}, urx=${urx}, ury=${ury}): ${epsPath}`);
-  }
-
-  if (urx - llx > 100_000 || ury - lly > 100_000) {
-    throw new Error(`EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`);
   }
 }
 

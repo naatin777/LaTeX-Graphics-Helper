@@ -1,3 +1,5 @@
+import { once } from 'node:events';
+import { createReadStream } from 'node:fs';
 import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -14,6 +16,7 @@ import {
 } from '../../application/policy/source_format.js';
 import { validateEpsInput } from '../conversion/eps_to_pdf.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
+
 export type PreflightResult = 'ok' | 'warning' | 'error';
 
 export interface PreflightReport {
@@ -32,9 +35,8 @@ export interface BatchPreflightResult {
   canProceed: boolean;
 }
 
-const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
-const MAX_PIXEL_COUNT = 100_000_000; // 100 MPixel
 const PREFLIGHT_CONCURRENCY = 2;
+const EPS_INSPECTION_BYTES = 64 * 1024;
 
 export type PreflightValidator = (sourcePath: string) => Promise<PreflightReport>;
 
@@ -75,8 +77,8 @@ export async function runPreflightBatch(
   );
 
   options.signal?.throwIfAborted();
-  const errors = reports.filter((r) => r.result === 'error');
-  const warnings = reports.filter((r) => r.result === 'warning');
+  const errors = reports.filter((report) => report.result === 'error');
+  const warnings = reports.filter((report) => report.result === 'warning');
   return { reports, errors, warnings, canProceed: errors.length === 0 };
 }
 
@@ -89,7 +91,7 @@ export async function assertPreflightPassed(
   outputChannel?: LineOutputChannel,
   signal?: AbortSignal,
 ): Promise<void> {
-  const sourcePaths = jobs.map((j) => j.sourcePath);
+  const sourcePaths = jobs.map((job) => job.sourcePath);
   const result = await runPreflightBatch(sourcePaths, signal !== undefined ? { signal } : {});
 
   for (const report of result.reports) {
@@ -99,7 +101,7 @@ export async function assertPreflightPassed(
   }
 
   if (!result.canProceed) {
-    const reasons = result.errors.map((e) => e.reason ?? 'unknown error').join('\n');
+    const reasons = result.errors.map((error) => `${error.sourcePath}: ${error.reason ?? 'unknown error'}`).join('\n');
     throw new Error(`Preflight validation failed:\n${reasons}`);
   }
 }
@@ -130,21 +132,20 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
     };
   }
 
+  if (!fileStat.isFile) {
+    return {
+      sourcePath,
+      format,
+      fileSize: fileStat.size,
+      result: 'error',
+      reason: 'Input is not a regular file',
+    };
+  }
+
   const fileSize = fileStat.size;
 
   if (fileSize === 0) {
     return { sourcePath, format, fileSize, result: 'error', reason: 'Empty file' };
-  }
-
-  if (fileSize > MAX_FILE_SIZE) {
-    return {
-      sourcePath,
-      format,
-      fileSize,
-      result: 'error',
-      reason: `File size ${formatSize(fileSize)} exceeds limit (${formatSize(MAX_FILE_SIZE)})`,
-      details: { fileSize, limit: MAX_FILE_SIZE },
-    };
   }
 
   if (format === 'pdf') {
@@ -174,16 +175,9 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
   return { sourcePath, format, fileSize, result: 'ok' };
 }
 
-// ── PDF ──
-
 async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
-  let handle;
-
   try {
-    handle = await open(sourcePath, 'r');
-    const headerBuffer = Buffer.alloc(5);
-    const { bytesRead } = await handle.read(headerBuffer, 0, headerBuffer.length, 0);
-    const header = headerBuffer.subarray(0, bytesRead).toString('utf8');
+    const header = (await readFilePrefix(sourcePath, 5)).toString('utf8');
 
     if (header !== '%PDF-') {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Not a valid PDF file' };
@@ -191,32 +185,23 @@ async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSi
 
     // Lightweight check only. Deeper validation (pages, encryption, MediaBox)
     // is done by the conversion operation when it processes the PDF.
-
     return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: `PDF read failed: ${message}` };
-  } finally {
-    await handle?.close();
   }
 }
-
-// ── Raster ──
 
 async function validateRasterInput(
   sourcePath: string,
   format: SourceFormat,
   fileSize: number,
 ): Promise<PreflightReport> {
-  const details: Record<string, unknown> = { fileSize };
+  const inputBuffer = await readFile(sourcePath);
+  const image = sharp(inputBuffer, { limitInputPixels: false });
 
   try {
-    // Read the file before handing it to libvips. Passing a path directly can
-    // retain a Windows file handle beyond metadata(), which blocks the
-    // conversion that immediately follows preflight for WebP inputs.
-    const sourceBuffer = await readFile(sourcePath);
-    const metadata = await sharp(sourceBuffer).metadata();
+    const metadata = await image.metadata();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
       return {
@@ -224,26 +209,16 @@ async function validateRasterInput(
         format,
         fileSize,
         result: 'error',
-        reason: `Could not read image dimensions`,
+        reason: 'Could not read image dimensions',
       };
     }
 
-    details.width = metadata.width;
-    details.height = metadata.height;
-    details.format = metadata.format;
-
-    const pixelCount = metadata.width * metadata.height;
-
-    if (pixelCount > MAX_PIXEL_COUNT) {
-      return {
-        sourcePath,
-        format,
-        fileSize,
-        result: 'warning',
-        reason: `Image dimensions ${metadata.width}x${metadata.height} (${formatPixelCount(pixelCount)}) exceed recommended limit (${formatPixelCount(MAX_PIXEL_COUNT)})`,
-        details,
-      };
-    }
+    const details: Record<string, unknown> = {
+      fileSize,
+      width: metadata.width,
+      height: metadata.height,
+      format: metadata.format,
+    };
 
     if (metadata.pages !== undefined && metadata.pages > 1) {
       return {
@@ -259,22 +234,26 @@ async function validateRasterInput(
     return { sourcePath, format, fileSize, result: 'ok', details };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: `Image validation failed: ${message}` };
+  } finally {
+    await destroySharpInput(image);
   }
 }
 
-// ── SVG ──
-
 async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
-    const content = (await readFile(sourcePath, 'utf8')).trim();
+    const root = createSubstringScanner(['<svg'], true);
+    const dim = createSubstringScanner(['width=', 'height=', 'viewbox='], true);
+    const scan = await scanTextFile(sourcePath, (chunk) => {
+      root.feed(chunk);
+      dim.feed(chunk);
+    });
 
-    if (content.length === 0) {
+    if (!scan.hasNonWhitespace) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty SVG file' };
     }
 
-    if (!content.includes('<svg') && !content.includes('<SVG')) {
+    if (!root.found()) {
       return {
         sourcePath,
         format,
@@ -284,28 +263,53 @@ async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSi
       };
     }
 
-    const hasViewBox = /viewBox\s*=\s*["'][^"']+["']/i.test(content);
-    const hasDimensions = /(?:width|height)\s*=\s*["']\d+/i.test(content);
-
-    if (!hasViewBox && !hasDimensions) {
+    if (!dim.found()) {
       return {
         sourcePath,
         format,
         fileSize,
         result: 'warning',
-        reason: 'SVG has no viewBox or width/height attributes',
+        reason: 'SVG has no width, height, or viewBox attribute',
       };
     }
 
-    return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
+    const inputBuffer = await readFile(sourcePath);
+    const image = sharp(inputBuffer, { limitInputPixels: false });
+    try {
+      const metadata = await image.metadata();
+      if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
+        return {
+          sourcePath,
+          format,
+          fileSize,
+          result: 'warning',
+          reason: 'SVG has no usable width/height or viewBox',
+        };
+      }
+
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'ok',
+        details: { fileSize, width: metadata.width, height: metadata.height },
+      };
+    } catch {
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'warning',
+        reason: 'SVG dimensions could not be determined',
+      };
+    } finally {
+      await destroySharpInput(image);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: `SVG read failed: ${message}` };
   }
 }
-
-// ── Mermaid ──
 
 async function validateMermaidInput(
   sourcePath: string,
@@ -313,9 +317,9 @@ async function validateMermaidInput(
   fileSize: number,
 ): Promise<PreflightReport> {
   try {
-    const content = (await readFile(sourcePath, 'utf8')).trim();
+    const scan = await scanTextFile(sourcePath);
 
-    if (content.length === 0) {
+    if (!scan.hasNonWhitespace) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty Mermaid file' };
     }
 
@@ -324,16 +328,13 @@ async function validateMermaidInput(
       format,
       fileSize,
       result: 'ok',
-      details: { fileSize, lines: content.split('\n').length },
+      details: { fileSize, lines: scan.lineCount },
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: `Mermaid read failed: ${message}` };
   }
 }
-
-// ── Draw.io ──
 
 async function validateDrawioInput(
   sourcePath: string,
@@ -341,18 +342,20 @@ async function validateDrawioInput(
   fileSize: number,
 ): Promise<PreflightReport> {
   try {
-    const content = (await readFile(sourcePath, 'utf8')).trim();
-
-    if (content.length === 0) {
-      return { sourcePath, format, fileSize, result: 'error', reason: 'Empty Draw.io file' };
-    }
-
-    // editable PNG/SVG won't have XML structure
+    // Embedded Draw.io PNG/SVG files are binary or XML image containers. Their
+    // actual editability is verified by the Draw.io conversion itself.
     if (isEditableDrawioImagePath(sourcePath)) {
       return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
     }
 
-    if (!content.includes('<mxGraphModel') && !content.includes('mxfile')) {
+    const structure = createSubstringScanner(['<mxGraphModel', 'mxfile']);
+    const scan = await scanTextFile(sourcePath, (chunk) => structure.feed(chunk));
+
+    if (!scan.hasNonWhitespace) {
+      return { sourcePath, format, fileSize, result: 'error', reason: 'Empty Draw.io file' };
+    }
+
+    if (!structure.found()) {
       return {
         sourcePath,
         format,
@@ -365,12 +368,9 @@ async function validateDrawioInput(
     return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: `Draw.io read failed: ${message}` };
   }
 }
-
-// ── EPS ──
 
 async function validateEpsPreflight(
   sourcePath: string,
@@ -380,7 +380,7 @@ async function validateEpsPreflight(
   try {
     await validateEpsInput(sourcePath);
 
-    const head = (await readFile(sourcePath, 'utf8')).slice(0, 64 * 1024);
+    const head = (await readFilePrefix(sourcePath, EPS_INSPECTION_BYTES)).toString('utf8');
     if (/^%%BoundingBox:\s*\(atend\)\s*$/m.test(head)) {
       return {
         sourcePath,
@@ -395,37 +395,94 @@ async function validateEpsPreflight(
     return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-
     return { sourcePath, format, fileSize, result: 'error', reason: message };
   }
 }
 
-// ── Helpers ──
+interface TextScanResult {
+  hasNonWhitespace: boolean;
+  lineCount: number;
+}
 
-async function safeStat(filePath: string): Promise<{ size: number; error?: string }> {
+async function scanTextFile(filePath: string, inspect?: (chunk: string) => void): Promise<TextScanResult> {
+  const stream = createReadStream(filePath, { encoding: 'utf8' });
+  let hasNonWhitespace = false;
+  let lineCount = 1;
+
+  for await (const chunk of stream) {
+    const text = typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+    hasNonWhitespace ||= /\S/u.test(text);
+    lineCount += countOccurrences(text, '\n');
+    inspect?.(text);
+  }
+
+  return { hasNonWhitespace, lineCount: hasNonWhitespace ? lineCount : 0 };
+}
+
+interface TextScanner {
+  feed: (chunk: string) => void;
+  found: () => boolean;
+}
+
+function createSubstringScanner(tokens: readonly string[], caseInsensitive = false): TextScanner {
+  const normalizedTokens = caseInsensitive ? tokens.map((token) => token.toLowerCase()) : [...tokens];
+  const maxTokenLength = Math.max(...normalizedTokens.map((token) => token.length));
+  let tail = '';
+  let matched = false;
+
+  return {
+    feed(chunk) {
+      if (matched) {
+        return;
+      }
+
+      const candidate = tail + (caseInsensitive ? chunk.toLowerCase() : chunk);
+      matched = normalizedTokens.some((token) => candidate.includes(token));
+      tail = candidate.slice(-Math.max(0, maxTokenLength - 1));
+    },
+    found() {
+      return matched;
+    },
+  };
+}
+
+async function readFilePrefix(filePath: string, maxBytes: number): Promise<Buffer> {
+  const handle = await open(filePath, 'r');
+
   try {
-    return await stat(filePath);
+    const buffer = Buffer.alloc(maxBytes);
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+    return buffer.subarray(0, bytesRead);
+  } finally {
+    await handle.close();
+  }
+}
+
+async function destroySharpInput(image: ReturnType<typeof sharp>): Promise<void> {
+  if (image.destroyed) {
+    return;
+  }
+
+  const closed = once(image, 'close');
+  image.destroy();
+  await closed;
+}
+
+async function safeStat(filePath: string): Promise<{ size: number; isFile: boolean; error?: string }> {
+  try {
+    const fileStat = await stat(filePath);
+    return { size: fileStat.size, isFile: fileStat.isFile() };
   } catch (error) {
-    return { size: 0, error: error instanceof Error ? error.message : String(error) };
+    return { size: 0, isFile: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) {
-    return `${bytes} B`;
+function countOccurrences(value: string, character: string): number {
+  let count = 0;
+  for (const current of value) {
+    if (current === character) {
+      count += 1;
+    }
   }
-
-  const kb = bytes / 1024;
-
-  if (kb < 1024) {
-    return `${kb.toFixed(1)} KB`;
-  }
-
-  const mb = kb / 1024;
-
-  return `${mb.toFixed(1)} MB`;
-}
-
-function formatPixelCount(pixels: number): string {
-  return `${(pixels / 1_000_000).toFixed(1)} MPixel`;
+  return count;
 }

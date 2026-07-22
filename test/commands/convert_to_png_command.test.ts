@@ -169,7 +169,8 @@ suite('PNGに変換コマンド', () => {
       });
 
       const outputPath = replaceExtension(sourcePath, '.png');
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const metadataBuffer = await readFile(outputPath);
+      const metadata = await sharp(metadataBuffer).metadata();
       assert.strictEqual(metadata.hasAlpha, true);
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
@@ -302,7 +303,8 @@ async function writeTwoPagePdf(filePath: string): Promise<void> {
 }
 
 async function assertReadablePng(filePath: string): Promise<void> {
-  const image = sharp(await readFile(filePath));
+  const imageBuffer = await readFile(filePath);
+  const image = sharp(imageBuffer);
   const metadata = await image.metadata();
 
   assert.strictEqual(metadata.format, 'png');
@@ -313,10 +315,8 @@ async function assertReadablePng(filePath: string): Promise<void> {
 }
 
 async function assertFirstFramePng(filePath: string): Promise<void> {
-  const { data, info } = await sharp(await readFile(filePath))
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  const buffer = await readFile(filePath);
+  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   assert.strictEqual(info.width, 4);
   assert.strictEqual(info.height, 4);
 

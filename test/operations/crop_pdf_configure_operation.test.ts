@@ -309,7 +309,8 @@ async function assertRenderedCropMatchesSource(params: {
     pageNumber,
     path.join(temporaryDirectory, `output-page-${pageNumber}`),
   );
-  const sourceImage = sharp(await readFile(sourcePngPath));
+  const sourceImageBuffer = await readFile(sourcePngPath);
+  const sourceImage = sharp(sourceImageBuffer);
   const sourceMetadata = await sourceImage.metadata();
 
   assert.ok(sourceMetadata.height !== undefined);

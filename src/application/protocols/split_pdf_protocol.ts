@@ -5,7 +5,9 @@ export interface SplitPdfLabels {
   previewDescription: string;
   previewAriaLabel: string;
   groups: string;
+  groupLabel: string;
   pages: string;
+  pageLabel: string;
   pagesPlaceholder: string;
   outputName: string;
   outputNamePlaceholder: string;
@@ -219,7 +221,9 @@ function isSplitPdfLabels(value: unknown): value is SplitPdfLabels {
     'previewDescription',
     'previewAriaLabel',
     'groups',
+    'groupLabel',
     'pages',
+    'pageLabel',
     'pagesPlaceholder',
     'outputName',
     'outputNamePlaceholder',

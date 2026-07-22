@@ -213,6 +213,8 @@ async function stageSourceToPdf(
   }
   await writeSourceAsPdf(writeOptions);
   signal?.throwIfAborted();
+  await validateGeneratedPdf(stagedOutputPath);
+  signal?.throwIfAborted();
 
   return {
     stagedOutputPath,
@@ -383,8 +385,6 @@ async function writeEpsAsPdf(
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(outputPath, workspacePath);
   await mkdir(path.dirname(outputPath), { recursive: true });
-
-  // Just copy the generated PDF to the output path
   await writeFile(outputPath, await readFile(pdfPath));
 }
 
@@ -457,7 +457,8 @@ async function writeSvgAsPdf(
 }
 
 async function readSvgSize(sourcePath: string): Promise<{ width: number; height: number }> {
-  const metadata = await sharp(sourcePath).metadata();
+  const sourceBuffer = await readFile(sourcePath);
+  const metadata = await sharp(sourceBuffer).metadata();
   const { width, height } = metadata;
 
   if (!width || !height) {
@@ -513,10 +514,8 @@ async function writeSvgAsPdfWithPuppeteer(
     await page.setJavaScriptEnabled(false);
     await page.setRequestInterception(true);
     page.on('request', (request) => {
-      if (request.isNavigationRequest()) {
-        request.continue().catch(() => {});
-        return;
-      }
+      // The SVG is injected as inline content. No network or subframe navigation
+      // is required, including requests created from foreignObject content.
       request.abort().catch(() => {});
     });
     await page.setContent(svgPageHtml(svg, size), { waitUntil: 'load' });
@@ -569,6 +568,33 @@ function svgPageHtml(svg: string, size: { width: number; height: number }): stri
     '</body>',
     '</html>',
   ].join('');
+}
+
+async function validateGeneratedPdf(outputPath: string): Promise<void> {
+  let pdfDocument: PDFDocument;
+
+  try {
+    pdfDocument = await PDFDocument.load(await readFile(outputPath));
+  } catch (error) {
+    throw new Error(`PDF conversion produced an unparsable PDF: ${errorMessage(error)}`, { cause: error });
+  }
+
+  if (pdfDocument.getPageCount() === 0) {
+    throw new Error(`PDF conversion produced no pages: ${outputPath}`);
+  }
+
+  for (const page of pdfDocument.getPages()) {
+    for (const [boxName, box] of [
+      ['MediaBox', page.getMediaBox()],
+      ['CropBox', page.getCropBox()],
+      ['TrimBox', page.getTrimBox()],
+    ] as const) {
+      const values = [box.x, box.y, box.width, box.height];
+      if (!values.every(Number.isFinite) || box.width <= 0 || box.height <= 0) {
+        throw new Error(`PDF conversion produced invalid ${boxName} dimensions: ${outputPath}`);
+      }
+    }
+  }
 }
 
 async function normalizePdfPageSize(outputPath: string, width: number, height: number): Promise<void> {

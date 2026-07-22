@@ -64,7 +64,8 @@ suite('EPSの出力経路', () => {
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const buffer = await readFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
       assert.ok(metadata.width && metadata.width > 0, 'PNG should have valid width');
       assert.ok(metadata.height && metadata.height > 0, 'PNG should have valid height');
       assert.strictEqual(metadata.format, 'png');
@@ -89,7 +90,8 @@ suite('EPSの出力経路', () => {
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const buffer = await readFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
       assert.ok(metadata.width && metadata.width > 0, 'JPEG should have valid width');
       assert.strictEqual(metadata.format, 'jpeg');
     } finally {
@@ -114,7 +116,8 @@ suite('EPSの出力経路', () => {
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const buffer = await readFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
       assert.ok(metadata.width && metadata.width > 0, 'WebP should have valid width');
       assert.strictEqual(metadata.format, 'webp');
     } finally {
@@ -139,7 +142,8 @@ suite('EPSの出力経路', () => {
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const buffer = await readFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
       assert.ok(metadata.width && metadata.width > 0, 'AVIF should have valid width');
       assert.strictEqual(metadata.format, 'heif');
     } finally {

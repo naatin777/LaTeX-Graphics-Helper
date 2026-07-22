@@ -240,6 +240,51 @@ suite('変換結果の反映処理', () => {
     assert.strictEqual(await readFile(outputPath, 'utf8'), 'old');
   });
 
+  test('commit後に外部変更された出力はrollbackで上書きせずbackupを残す', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-commit-test-'));
+    const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
+    const outputs = await Promise.all(
+      ['first', 'second'].map(async (name) => {
+        const stagedOutputPath = path.join(stagingRootPath, `${name}.pdf`);
+        const outputPath = path.join(workspacePath, `${name}.pdf`);
+        await writeFixture(stagedOutputPath, `new-${name}`);
+        await writeFixture(outputPath, `old-${name}`);
+        return { stagedOutputPath, outputPath, workspacePath, stagingRootPath };
+      }),
+    );
+    let copyCount = 0;
+    let recoveryBackupPath = '';
+
+    await assert.rejects(
+      commitConversionOutputs(outputs, {
+        resolveConflicts: async () => 'overwrite',
+        copyFile: async (source, destination, flags) => {
+          copyCount += 1;
+          await copyFile(source, destination, flags);
+          if (copyCount === 3) {
+            await writeFile(outputs[0]!.outputPath, 'external change after commit');
+          }
+          if (copyCount === 4) {
+            throw new Error('injected second output failure');
+          }
+        },
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof CommitRollbackError);
+        assert.match(error.originalError.message, /injected second output failure/);
+        assert.strictEqual(error.rollbackErrors.length, 1);
+        assert.strictEqual(error.rollbackErrors[0]?.outputPath, outputs[0]?.outputPath);
+        recoveryBackupPath = error.cleanupPreservePaths[0] ?? '';
+        assert.ok(recoveryBackupPath);
+        return true;
+      },
+    );
+
+    assert.strictEqual(await readFile(outputs[0]!.outputPath, 'utf8'), 'external change after commit');
+    assert.strictEqual(await readFile(outputs[1]!.outputPath, 'utf8'), 'old-second');
+    assert.strictEqual(await readFile(recoveryBackupPath, 'utf8'), 'old-first');
+  });
+
   test('conflict判断後に変更された出力は上書きしない', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-commit-test-'));
     const stagedOutputPath = path.join(workspacePath, '.latex-graphics-helper', 'result.pdf');

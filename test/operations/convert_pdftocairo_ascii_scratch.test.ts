@@ -341,7 +341,8 @@ async function writeToolFixture(outputPath: string): Promise<void> {
 }
 
 async function assertRasterFormat(filePath: string, expectedFormat: string): Promise<void> {
-  const metadata = await sharp(await readFile(filePath)).metadata();
+  const buffer = await readFile(filePath);
+  const metadata = await sharp(buffer).metadata();
 
   assert.strictEqual(metadata.format, expectedFormat);
   assert.ok(metadata.width);

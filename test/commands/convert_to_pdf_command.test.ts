@@ -359,7 +359,8 @@ async function removeTemporaryDirectory(directoryPath: string): Promise<void> {
 }
 
 async function assertPdfPageSizeMatchesImage(pdfPath: string, imagePath: string): Promise<void> {
-  const imageMetadata = await sharp(imagePath).metadata();
+  const imageBuffer = await readFile(imagePath);
+  const imageMetadata = await sharp(imageBuffer).metadata();
   assert.ok(imageMetadata.width);
   assert.ok(imageMetadata.height);
 

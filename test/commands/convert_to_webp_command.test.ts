@@ -189,7 +189,8 @@ async function writeTwoPagePdf(filePath: string): Promise<void> {
 }
 
 async function writeImageFixture(filePath: string, extension: string): Promise<void> {
-  const image = sharp(await readFile(fixturePngPath));
+  const fixtureBuffer = await readFile(fixturePngPath);
+  const image = sharp(fixtureBuffer);
 
   if (extension === 'jpeg') {
     await image.jpeg().toFile(filePath);
@@ -211,7 +212,8 @@ async function writeImageFixture(filePath: string, extension: string): Promise<v
 
 async function assertReadableWebp(filePath: string): Promise<void> {
   await assertFileExists(filePath);
-  const image = sharp(await readFile(filePath));
+  const buffer = await readFile(filePath);
+  const image = sharp(buffer);
   const metadata = await image.metadata();
 
   assert.strictEqual(metadata.format, 'webp');
