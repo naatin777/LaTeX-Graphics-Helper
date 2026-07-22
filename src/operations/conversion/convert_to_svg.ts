@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -135,6 +135,8 @@ async function stageSvgConversion(
     outputChannel,
     signal,
   );
+  signal?.throwIfAborted();
+  await validateGeneratedSvg(stagedOutputPath);
   signal?.throwIfAborted();
 
   return {
@@ -362,6 +364,18 @@ async function executeDrawio(executable: string, args: string[], signal?: AbortS
     args,
     ...(signal !== undefined && { signal }),
   });
+}
+
+async function validateGeneratedSvg(outputPath: string): Promise<void> {
+  const content = (await readFile(outputPath, 'utf8')).trim();
+
+  if (content.length === 0) {
+    throw new Error(`SVG conversion produced empty output: ${outputPath}`);
+  }
+
+  if (!/<svg(?:\s|>)/iu.test(content)) {
+    throw new Error(`SVG conversion produced non-SVG output: ${outputPath}`);
+  }
 }
 
 async function validateJobPaths(jobs: ConvertToSvgJob[]): Promise<void> {
