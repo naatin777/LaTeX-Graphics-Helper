@@ -84,7 +84,8 @@ suite('JPEGに変換する処理', () => {
 });
 
 async function assertReadableJpeg(filePath: string): Promise<void> {
-  const metadata = await sharp(await readFile(filePath)).metadata();
+  const buffer = await readFile(filePath);
+  const metadata = await sharp(buffer).metadata();
 
   assert.strictEqual(metadata.format, 'jpeg');
   assert.ok(metadata.width);

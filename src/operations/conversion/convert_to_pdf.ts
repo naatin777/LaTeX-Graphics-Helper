@@ -457,7 +457,8 @@ async function writeSvgAsPdf(
 }
 
 async function readSvgSize(sourcePath: string): Promise<{ width: number; height: number }> {
-  const metadata = await sharp(sourcePath).metadata();
+  const sourceBuffer = await readFile(sourcePath);
+  const metadata = await sharp(sourceBuffer).metadata();
   const { width, height } = metadata;
 
   if (!width || !height) {

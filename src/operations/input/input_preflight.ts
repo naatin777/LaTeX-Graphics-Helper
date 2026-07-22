@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 import { createReadStream } from 'node:fs';
-import { open, stat } from 'node:fs/promises';
+import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import pLimit from 'p-limit';
@@ -197,10 +197,10 @@ async function validateRasterInput(
   format: SourceFormat,
   fileSize: number,
 ): Promise<PreflightReport> {
-  const image = sharp(sourcePath, { limitInputPixels: false });
+  const inputBuffer = await readFile(sourcePath);
+  const image = sharp(inputBuffer, { limitInputPixels: false });
 
   try {
-    // metadata() reads image headers without decoding compressed pixels.
     const metadata = await image.metadata();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
@@ -273,7 +273,8 @@ async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSi
       };
     }
 
-    const image = sharp(sourcePath, { limitInputPixels: false });
+    const inputBuffer = await readFile(sourcePath);
+    const image = sharp(inputBuffer, { limitInputPixels: false });
     try {
       const metadata = await image.metadata();
       if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {

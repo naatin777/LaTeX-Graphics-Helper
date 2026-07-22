@@ -1,4 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 
 export async function captureCropPdfScreenshot(
@@ -64,7 +65,8 @@ export async function captureCropPdfScreenshot(
     clip: bodyBounds,
     path: baseScreenshotPath,
   });
-  const metadata = await sharp(baseScreenshotPath).metadata();
+  const baseScreenshotBuffer = await readFile(baseScreenshotPath);
+  const metadata = await sharp(baseScreenshotBuffer).metadata();
 
   if (!metadata.width || !metadata.height) {
     throw new Error('VS Code Webview screenshot has no dimensions.');
@@ -119,5 +121,5 @@ export async function captureCropPdfScreenshot(
     }),
   );
 
-  return sharp(baseScreenshotPath).composite(overlays).png().toBuffer();
+  return sharp(baseScreenshotBuffer).composite(overlays).png().toBuffer();
 }

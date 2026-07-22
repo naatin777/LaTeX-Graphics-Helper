@@ -112,10 +112,8 @@ async function assertFirstFrameOutput(outputFormat: (typeof outputFormats)[numbe
     return;
   }
 
-  const { data, info } = await sharp(await readFile(filePath))
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  const buffer = await readFile(filePath);
+  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   assert.strictEqual(info.width, 4);
   assert.strictEqual(info.height, 4);
   assert.strictEqual(info.format, 'raw');

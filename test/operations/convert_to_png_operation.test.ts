@@ -84,7 +84,8 @@ suite('PNGに変換する処理', () => {
 });
 
 async function assertReadablePng(filePath: string): Promise<void> {
-  const metadata = await sharp(await readFile(filePath)).metadata();
+  const buffer = await readFile(filePath);
+  const metadata = await sharp(buffer).metadata();
 
   assert.strictEqual(metadata.format, 'png');
   assert.ok(metadata.width);

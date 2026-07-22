@@ -100,7 +100,8 @@ suite('WebPに変換する処理', () => {
         },
       ]);
 
-      const metadata = await sharp(await readFile(outputPath)).metadata();
+      const buffer = await readFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
       assert.strictEqual(metadata.format, 'webp');
       assert.ok(metadata.width);
       assert.ok(metadata.height);
