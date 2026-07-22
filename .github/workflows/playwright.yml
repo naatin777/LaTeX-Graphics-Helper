@@ -1,72 +1,71 @@
 name: Playwright
 
 on:
-    pull_request:
-    push:
-        branches:
-            - main
-            - next/**
+  pull_request:
+  push:
+    branches:
+      - main
 
 concurrency:
-    group: playwright-${{ github.ref }}
-    cancel-in-progress: true
+  group: playwright-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    playwright:
-        name: packaged Electron Playwright (${{ matrix.label }})
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      label: Linux
-                      test_command: xvfb-run npm run test:playwright:vsix
-                      artifact_suffix: linux
-                    - os: macos-latest
-                      label: macOS
-                      test_command: npm run test:playwright:vsix
-                      artifact_suffix: macos
-                    - os: windows-latest
-                      label: Windows
-                      test_command: npm run test:playwright:vsix
-                      artifact_suffix: windows
-        steps:
-            - uses: actions/checkout@v7
+  playwright:
+    name: packaged Electron Playwright (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: Linux
+            test_command: xvfb-run npm run test:playwright:vsix
+            artifact_suffix: linux
+          - os: macos-latest
+            label: macOS
+            test_command: npm run test:playwright:vsix
+            artifact_suffix: macos
+          - os: windows-latest
+            label: Windows
+            test_command: npm run test:playwright:vsix
+            artifact_suffix: windows
+    steps:
+      - uses: actions/checkout@v7
 
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: '22.23.1'
-                  package-manager-cache: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.23.1"
+          package-manager-cache: false
 
-            - run: npm install -g npm@12.0.1
-              shell: bash
+      - run: npm install -g npm@12.0.1
+        shell: bash
 
-            - run: node --version && npm --version
-              shell: bash
+      - run: node --version && npm --version
+        shell: bash
 
-            - run: npm ci
-              shell: bash
+      - run: npm ci
+        shell: bash
 
-            - name: Build extension and Webview
-              run: npm run build
-              shell: bash
+      - name: Build extension and Webview
+        run: npm run build
+        shell: bash
 
-            - name: Package current runner VSIX
-              run: npm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
-              shell: bash
+      - name: Package current runner VSIX
+        run: npm run package:vsix -- --out "latex-graphics-helper-${{ matrix.label }}.vsix"
+        shell: bash
 
-            - name: Install VSIX and run Electron Playwright
-              run: ${{ matrix.test_command }}
-              shell: bash
-              env:
-                  LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ matrix.label }}.vsix
+      - name: Install VSIX and run Electron Playwright
+        run: ${{ matrix.test_command }}
+        shell: bash
+        env:
+          LGH_VSIX_PATH: ${{ github.workspace }}/latex-graphics-helper-${{ matrix.label }}.vsix
 
-            - if: failure()
-              uses: actions/upload-artifact@v7
-              with:
-                  name: packaged-electron-playwright-${{ matrix.artifact_suffix }}
-                  path: |
-                      playwright-report/
-                      test-results/
-                  if-no-files-found: ignore
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: packaged-electron-playwright-${{ matrix.artifact_suffix }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

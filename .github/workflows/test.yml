@@ -1,96 +1,95 @@
 name: Test
 
 on:
-    pull_request:
-    push:
-        branches:
-            - main
-            - next/**
+  pull_request:
+  push:
+    branches:
+      - main
 
 concurrency:
-    group: test-${{ github.ref }}
-    cancel-in-progress: true
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    test:
-        name: test (${{ matrix.label }})
-        runs-on: ${{ matrix.os }}
-        timeout-minutes: 20
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      label: Linux
-                      test_command: xvfb-run npm test
-                    - os: macos-latest
-                      label: macOS
-                      test_command: npm test
-                    - os: windows-latest
-                      label: Windows
-                      test_command: npm test
-        steps:
-            - uses: actions/checkout@v7
+  test:
+    name: test (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: Linux
+            test_command: xvfb-run npm test
+          - os: macos-latest
+            label: macOS
+            test_command: npm test
+          - os: windows-latest
+            label: Windows
+            test_command: npm test
+    steps:
+      - uses: actions/checkout@v7
 
-            - uses: actions/setup-node@v6
-              with:
-                  node-version: '22.23.1'
-                  package-manager-cache: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.23.1"
+          package-manager-cache: false
 
-            - run: npm install -g npm@12.0.1
-              shell: bash
+      - run: npm install -g npm@12.0.1
+        shell: bash
 
-            - run: node --version && npm --version
-              shell: bash
+      - run: node --version && npm --version
+        shell: bash
 
-            - run: npm ci
-              shell: bash
+      - run: npm ci
+        shell: bash
 
-            - id: build
-              name: Build extension and Webview
-              run: npm run build
-              shell: bash
+      - id: build
+        name: Build extension and Webview
+        run: npm run build
+        shell: bash
 
-            - if: matrix.os == 'ubuntu-latest'
-              run: bash .github/scripts/install-test-tools-linux.sh
-              shell: bash
+      - if: matrix.os == 'ubuntu-latest'
+        run: bash .github/scripts/install-test-tools-linux.sh
+        shell: bash
 
-            - if: matrix.os == 'macos-latest'
-              run: bash .github/scripts/install-image-tools-macos.sh
-              shell: bash
+      - if: matrix.os == 'macos-latest'
+        run: bash .github/scripts/install-image-tools-macos.sh
+        shell: bash
 
-            - if: matrix.os == 'windows-latest'
-              run: .github/scripts/install-image-tools-windows.ps1
-              shell: pwsh
+      - if: matrix.os == 'windows-latest'
+        run: .github/scripts/install-image-tools-windows.ps1
+        shell: pwsh
 
-            - if: matrix.os != 'windows-latest'
-              run: bash .github/scripts/verify-image-tools-unix.sh
-              shell: bash
+      - if: matrix.os != 'windows-latest'
+        run: bash .github/scripts/verify-image-tools-unix.sh
+        shell: bash
 
-            - if: matrix.os == 'windows-latest'
-              run: .github/scripts/verify-image-tools-windows.ps1
-              shell: pwsh
+      - if: matrix.os == 'windows-latest'
+        run: .github/scripts/verify-image-tools-windows.ps1
+        shell: pwsh
 
-            - name: Run Node and VS Code Extension Host tests
-              run: ${{ matrix.test_command }}
-              shell: bash
-              env:
-                  LGH_VSCODE_TEST_USER_DATA_DIR: .vscode-test-ci-data
+      - name: Run Node and VS Code Extension Host tests
+        run: ${{ matrix.test_command }}
+        shell: bash
+        env:
+          LGH_VSCODE_TEST_USER_DATA_DIR: .vscode-test-ci-data
 
-            - if: always() && steps.build.outcome == 'success'
-              name: Run Webview component tests
-              run: npm run test:webview
-              shell: bash
+      - if: always() && steps.build.outcome == 'success'
+        name: Run Webview component tests
+        run: npm run test:webview
+        shell: bash
 
-            - if: failure()
-              uses: actions/upload-artifact@v7
-              with:
-                  name: extension-host-test-${{ matrix.label }}
-                  path: .vscode-test-ci-data/
-                  if-no-files-found: ignore
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: extension-host-test-${{ matrix.label }}
+          path: .vscode-test-ci-data/
+          if-no-files-found: ignore
 
-            - if: always()
-              name: Cleanup VS Code test data
-              run: |
-                  node --input-type=module -e "import { rm } from 'node:fs/promises'; await rm('.vscode-test-ci-data', { recursive: true, force: true, maxRetries: 20, retryDelay: 200 });"
-              shell: bash
+      - if: always()
+        name: Cleanup VS Code test data
+        run: |
+          node --input-type=module -e "import { rm } from 'node:fs/promises'; await rm('.vscode-test-ci-data', { recursive: true, force: true, maxRetries: 20, retryDelay: 200 });"
+        shell: bash
