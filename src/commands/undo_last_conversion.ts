@@ -26,7 +26,7 @@ export async function rememberLastConversion(
     record = await createConversionUndoRecord(outputs);
   } catch (error) {
     await cleanupConversionArtifacts(toArtifactRoots(outputs), outputChannel);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 
   const previousConversion = lastConversion;

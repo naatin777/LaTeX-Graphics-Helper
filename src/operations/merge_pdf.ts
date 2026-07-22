@@ -82,12 +82,18 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
     options.signal?.throwIfAborted();
 
     const commitOptions: CommitConversionOutputsOptions = { operationName: 'merge-pdf' as const };
-    if (options.signal !== undefined) commitOptions.signal = options.signal;
-    if (options.resolveOutputConflicts !== undefined) commitOptions.resolveConflicts = options.resolveOutputConflicts;
-    if (options.outputChannel !== undefined) commitOptions.outputChannel = options.outputChannel;
+    if (options.signal !== undefined) {
+      commitOptions.signal = options.signal;
+    }
+    if (options.resolveOutputConflicts !== undefined) {
+      commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    }
+    if (options.outputChannel !== undefined) {
+      commitOptions.outputChannel = options.outputChannel;
+    }
     return commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }], commitOptions);
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

@@ -37,8 +37,12 @@ export async function runRsvgConvertWithAsciiScratch(options: {
     outputFileName: 'output.pdf',
     toolName: 'rsvg-convert',
   };
-  if (options.signal !== undefined) scratchArgs.signal = options.signal;
-  if (options.scratch.outputChannel !== undefined) scratchArgs.outputChannel = options.scratch.outputChannel;
+  if (options.signal !== undefined) {
+    scratchArgs.signal = options.signal;
+  }
+  if (options.scratch.outputChannel !== undefined) {
+    scratchArgs.outputChannel = options.scratch.outputChannel;
+  }
   const scratch = await createAsciiInputOutputScratch(scratchArgs);
 
   try {
@@ -61,7 +65,7 @@ export async function runRsvgConvertWithAsciiScratch(options: {
     await removeSuccessfulScratch(scratch, options.scratch.outputChannel);
   } catch (error) {
     options.scratch.outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 

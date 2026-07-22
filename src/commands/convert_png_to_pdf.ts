@@ -146,9 +146,15 @@ async function convertSelectedPngFilesToPdf(
           ghostscriptPath,
           operationName: messages.operationName,
         };
-        if (runtime.signal !== undefined) convertOptions.signal = runtime.signal;
-        if (runtime.resolveConflicts !== undefined) convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
-        if (runtime.outputChannel !== undefined) convertOptions.outputChannel = runtime.outputChannel;
+        if (runtime.signal !== undefined) {
+          convertOptions.signal = runtime.signal;
+        }
+        if (runtime.resolveConflicts !== undefined) {
+          convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
+        }
+        if (runtime.outputChannel !== undefined) {
+          convertOptions.outputChannel = runtime.outputChannel;
+        }
         return convertPngToPdfFiles(convertOptions);
       },
     });

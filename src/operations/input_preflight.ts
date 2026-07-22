@@ -69,7 +69,7 @@ export async function runPreflightBatch(
             options.signal.throwIfAborted();
           }
 
-          throw error;
+          throw error instanceof Error ? error : new Error(String(error));
         }
       }),
     ),

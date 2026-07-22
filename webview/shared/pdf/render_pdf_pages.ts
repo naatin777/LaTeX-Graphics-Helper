@@ -121,7 +121,7 @@ export async function renderPdfPages(
       }
     })().catch((error: unknown) => {
       options.onRenderError?.(error);
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     });
 
     renderPromises.set(pageNumber, renderPromise);
@@ -138,7 +138,7 @@ export async function renderPdfPages(
                 continue;
               }
 
-              const pageNumber = Number((entry.target as HTMLElement).dataset.pdfPage);
+              const pageNumber = Number((entry.target as unknown as HTMLElement).dataset.pdfPage);
               void renderPage(pageNumber).catch(() => undefined);
             }
           },

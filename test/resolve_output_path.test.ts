@@ -133,6 +133,7 @@ suite('出力パスのテンプレート解決', () => {
 
   test('Windowsで多言語・絵文字・全角文字・全角空白を保持する', () => {
     const fileName = '　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf';
+    // oxlint-disable-next-line typescript/no-unnecessary-template-expression -- intentional literal ${} syntax
     const result = resolveOutputPathWithPlatform(`${'${workspaceFolder}'}\\output\\${fileName}`, windowsContext(), {
       platform: 'win32',
     });

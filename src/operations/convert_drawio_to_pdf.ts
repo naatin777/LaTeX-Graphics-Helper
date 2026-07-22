@@ -228,8 +228,12 @@ async function executeDrawio(
   outputChannel?: ConversionRuntime['outputChannel'],
 ): Promise<void> {
   const toolOptions: Parameters<typeof runExternalTool>[0] = { toolName: 'drawio' as const, executable, args };
-  if (signal !== undefined) toolOptions.signal = signal;
-  if (outputChannel !== undefined) toolOptions.outputChannel = outputChannel;
+  if (signal !== undefined) {
+    toolOptions.signal = signal;
+  }
+  if (outputChannel !== undefined) {
+    toolOptions.outputChannel = outputChannel;
+  }
   await runExternalTool(toolOptions);
 }
 
@@ -266,7 +270,7 @@ function safeName(value: string): string {
 }
 
 function safePageName(value: string | undefined, page: number): string {
-  const normalized = [...(value ?? String(page))]
+  const normalized = Array.from(value ?? String(page))
     .map((character) => (character.charCodeAt(0) <= 31 ? '_' : character))
     .join('')
     .replace(/[\\/<>:"|?*]/g, '_')

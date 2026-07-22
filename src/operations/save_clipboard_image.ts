@@ -68,9 +68,15 @@ export async function saveClipboardImage(
         operationName: 'clipboard-paste' as const,
         ...testOverrides.commit,
       };
-      if (runtime.resolveConflicts !== undefined) commitOptions.resolveConflicts = runtime.resolveConflicts;
-      if (runtime.signal !== undefined) commitOptions.signal = runtime.signal;
-      if (runtime.outputChannel !== undefined) commitOptions.outputChannel = runtime.outputChannel;
+      if (runtime.resolveConflicts !== undefined) {
+        commitOptions.resolveConflicts = runtime.resolveConflicts;
+      }
+      if (runtime.signal !== undefined) {
+        commitOptions.signal = runtime.signal;
+      }
+      if (runtime.outputChannel !== undefined) {
+        commitOptions.outputChannel = runtime.outputChannel;
+      }
       outputs = await commitConversionOutputs([stagedImage], commitOptions);
     }
 
@@ -79,7 +85,7 @@ export async function saveClipboardImage(
     if (!commitOwnsClipboardArtifact) {
       await cleanupClipboardSourceArtifact({ outputs: [], artifact }, false, runtime);
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -130,9 +136,15 @@ async function saveClipboardImageAsPdf(
     runId,
     supportedExtensions: [`.${request.data.type.ext}`] as const,
   };
-  if (runtime.signal !== undefined) convertOptions.signal = runtime.signal;
-  if (runtime.resolveConflicts !== undefined) convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
-  if (runtime.outputChannel !== undefined) convertOptions.outputChannel = runtime.outputChannel;
+  if (runtime.signal !== undefined) {
+    convertOptions.signal = runtime.signal;
+  }
+  if (runtime.resolveConflicts !== undefined) {
+    convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
+  }
+  if (runtime.outputChannel !== undefined) {
+    convertOptions.outputChannel = runtime.outputChannel;
+  }
   return convertPngToPdfFiles(convertOptions);
 }
 

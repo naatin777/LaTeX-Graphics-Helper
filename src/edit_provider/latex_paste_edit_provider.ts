@@ -166,7 +166,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
       });
     } catch (error) {
       if (!isAbortError(error)) {
-        throw error;
+        throw error instanceof Error ? error : new Error(String(error));
       }
 
       this.outputChannel?.appendLine('[clipboard-paste] cancellation requested');

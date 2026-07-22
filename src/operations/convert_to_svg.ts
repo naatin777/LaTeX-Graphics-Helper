@@ -65,9 +65,15 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) runtime.signal = options.signal;
-  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
-  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -261,7 +267,7 @@ async function writeDrawioAsSvg(
     );
   } catch (error) {
     if (isAbortError(error)) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
 
     throw new Error(`Draw.io CLI failed: ${errorMessage(error)}`, { cause: error });
@@ -311,7 +317,7 @@ async function writePdfPageAsSvg(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
 
     throw new Error(`pdftocairo failed: ${errorMessage(error)}`, { cause: error });
@@ -339,7 +345,7 @@ async function writeMermaidAsSvg(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
 
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
@@ -396,7 +402,7 @@ function asSvgOutputPath(outputPath: string): `${string}.svg` {
     throw new Error(`SVG output path must end with .svg: ${outputPath}`);
   }
 
-  return outputPath as `${string}.svg`;
+  return outputPath as unknown as `${string}.svg`;
 }
 
 function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {

@@ -73,14 +73,18 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
           settled.find((result) => result.status === 'rejected' && !isAbortError(result.reason)) ??
           settled.find((result) => result.status === 'rejected');
         if (failure?.status === 'rejected') {
-          throw failure.reason;
+          throw failure.reason instanceof Error ? failure.reason : new Error(String(failure.reason));
         }
 
         signal.throwIfAborted();
         const stagedOutputs = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
         const commitOptions: CommitConversionOutputsOptions = { signal, operationName: options.operationName };
-        if (runtime.resolveConflicts !== undefined) commitOptions.resolveConflicts = runtime.resolveConflicts;
-        if (runtime.outputChannel !== undefined) commitOptions.outputChannel = runtime.outputChannel;
+        if (runtime.resolveConflicts !== undefined) {
+          commitOptions.resolveConflicts = runtime.resolveConflicts;
+        }
+        if (runtime.outputChannel !== undefined) {
+          commitOptions.outputChannel = runtime.outputChannel;
+        }
         return commitConversionOutputs(stagedOutputs.flat(), commitOptions);
       },
       runtime.outputChannel,

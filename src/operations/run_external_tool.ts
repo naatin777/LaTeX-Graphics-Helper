@@ -35,6 +35,6 @@ export async function runExternalTool(options: {
     options.outputChannel?.appendLine(
       `[${options.toolName}] failure: ${stderr || (error instanceof Error ? error.message : String(error))}`,
     );
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

@@ -64,7 +64,7 @@ export async function withStagingCleanup<T>(
     return await operation();
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, outputChannel, error);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -125,7 +125,7 @@ async function removePath(
       return;
     }
 
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 
   await assertWritablePathInWorkspace(normalizedPath, workspacePath);

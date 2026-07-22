@@ -117,7 +117,7 @@ export async function commitConversionOutputs(
       options.outputChannel,
       error,
     );
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -250,7 +250,7 @@ async function commitResolvedOutputs(
       throw new CommitRollbackError(error, rollbackErrors, recoveryBackupPaths);
     }
 
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 
   return committed.map(({ outputPath, workspacePath, previousFilePath, stagingRootPath }) => {
@@ -378,7 +378,7 @@ async function pathExists(filePath: string): Promise<boolean> {
     if (isFileNotFoundError(error)) {
       return false;
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 

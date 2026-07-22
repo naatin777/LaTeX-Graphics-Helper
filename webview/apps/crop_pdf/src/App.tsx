@@ -120,7 +120,7 @@ export function App() {
         })
         .catch((error: unknown) => {
           setRenderError(error instanceof Error ? error.message : String(error));
-          throw error;
+          throw error instanceof Error ? error : new Error(String(error));
         })
         .then(() => {
           applyPreviewZoom(pdfPages, previewZoom());

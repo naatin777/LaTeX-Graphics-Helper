@@ -30,9 +30,9 @@ suite('Safe Modeダイアログの判断', () => {
   setup(() => {
     sandbox = createSandbox();
     storage = new MemoryState();
-    showWarningMessageStub = sandbox.stub(vscode.window, 'showWarningMessage') as sinon.SinonStub;
+    showWarningMessageStub = sandbox.stub(vscode.window, 'showWarningMessage');
     sandbox.stub(vscode.window, 'createStatusBarItem').returns(new FakeStatusBarItem() as vscode.StatusBarItem);
-    sandbox.stub(vscode.commands, 'registerCommand').returns(new FakeDisposable() as vscode.Disposable);
+    sandbox.stub(vscode.commands, 'registerCommand').returns(new FakeDisposable());
     initializeSafeMode(createExtensionContext(storage));
   });
 

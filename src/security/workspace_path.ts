@@ -43,7 +43,7 @@ async function findNearestExistingPath(targetPath: string): Promise<string> {
       return candidatePath;
     } catch (error) {
       if (!isFileNotFoundError(error)) {
-        throw error;
+        throw error instanceof Error ? error : new Error(String(error));
       }
     }
 

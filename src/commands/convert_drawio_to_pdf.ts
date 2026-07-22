@@ -26,9 +26,15 @@ export async function convertDrawioToPdfCommand(
     defaultOutputPath: DEFAULT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf',
   };
-  if (uri !== undefined) commandOptions.uri = uri;
-  if (uris !== undefined) commandOptions.uris = uris;
-  if (dependencies?.outputChannel !== undefined) commandOptions.outputChannel = dependencies.outputChannel;
+  if (uri !== undefined) {
+    commandOptions.uri = uri;
+  }
+  if (uris !== undefined) {
+    commandOptions.uris = uris;
+  }
+  if (dependencies?.outputChannel !== undefined) {
+    commandOptions.outputChannel = dependencies.outputChannel;
+  }
   await runDrawioPdfCommand(commandOptions);
 }
 
@@ -43,9 +49,15 @@ export async function convertDrawioToPdfDirectlyCommand(
     defaultOutputPath: DEFAULT_DIRECT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf-directly',
   };
-  if (uri !== undefined) commandOptions.uri = uri;
-  if (uris !== undefined) commandOptions.uris = uris;
-  if (dependencies?.outputChannel !== undefined) commandOptions.outputChannel = dependencies.outputChannel;
+  if (uri !== undefined) {
+    commandOptions.uri = uri;
+  }
+  if (uris !== undefined) {
+    commandOptions.uris = uris;
+  }
+  if (dependencies?.outputChannel !== undefined) {
+    commandOptions.outputChannel = dependencies.outputChannel;
+  }
   await runDrawioPdfCommand(commandOptions);
 }
 

@@ -86,7 +86,7 @@ const appOverrides: OxlintOverride[] = [
 export default defineConfig({
   plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'node', 'promise', 'vitest'],
   categories: { correctness: 'error', suspicious: 'warn', perf: 'warn' },
-  options: { reportUnusedDisableDirectives: 'warn' },
+  options: { reportUnusedDisableDirectives: 'warn', typeAware: true },
   ignorePatterns: [
     'out/**',
     'dist/**',
@@ -119,6 +119,14 @@ export default defineConfig({
     'promise/always-return': 'off',
     'promise/catch-or-return': 'off',
     'project/max-conditional-spreads-per-object': 'error',
+    'typescript/only-throw-error': [
+      'error',
+      {
+        allowRethrowing: false,
+        allowThrowingAny: false,
+        allowThrowingUnknown: false,
+      },
+    ],
   },
   overrides: [
     {

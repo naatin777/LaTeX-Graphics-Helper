@@ -129,13 +129,23 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const platform = options.platform ?? process.platform;
   const scratchOptions: RsvgToolScratchOptions = { platform };
-  if (options.outputChannel !== undefined) scratchOptions.outputChannel = options.outputChannel;
-  if (options.scratchBaseCandidates !== undefined) scratchOptions.scratchBaseCandidates = options.scratchBaseCandidates;
+  if (options.outputChannel !== undefined) {
+    scratchOptions.outputChannel = options.outputChannel;
+  }
+  if (options.scratchBaseCandidates !== undefined) {
+    scratchOptions.scratchBaseCandidates = options.scratchBaseCandidates;
+  }
   const operationName = options.operationName ?? 'convert-png-to-pdf';
   const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) runtime.signal = options.signal;
-  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
-  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -186,11 +196,21 @@ async function stagePngConversion(
     workspacePath: job.workspacePath,
     scratchOptions,
   };
-  if (signal !== undefined) writeOptions.signal = signal;
-  if (svgToPdf !== undefined) writeOptions.svgToPdf = svgToPdf;
-  if (mermaid !== undefined) writeOptions.mermaid = mermaid;
-  if (drawio !== undefined) writeOptions.drawio = drawio;
-  if (ghostscriptPath !== undefined) writeOptions.ghostscriptPath = ghostscriptPath;
+  if (signal !== undefined) {
+    writeOptions.signal = signal;
+  }
+  if (svgToPdf !== undefined) {
+    writeOptions.svgToPdf = svgToPdf;
+  }
+  if (mermaid !== undefined) {
+    writeOptions.mermaid = mermaid;
+  }
+  if (drawio !== undefined) {
+    writeOptions.drawio = drawio;
+  }
+  if (ghostscriptPath !== undefined) {
+    writeOptions.ghostscriptPath = ghostscriptPath;
+  }
   await writeImageAsPdf(writeOptions);
   signal?.throwIfAborted();
 
@@ -295,7 +315,7 @@ async function writeMermaidAsPdf(
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
 
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
@@ -319,7 +339,7 @@ function asPdfOutputPath(outputPath: string): `${string}.pdf` {
     throw new Error(`Mermaid PDF output path must end with .pdf: ${outputPath}`);
   }
 
-  return outputPath as `${string}.pdf`;
+  return outputPath as unknown as `${string}.pdf`;
 }
 
 async function writeEpsAsPdf(

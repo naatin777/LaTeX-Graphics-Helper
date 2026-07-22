@@ -41,7 +41,7 @@ suite('LaTeXクリップボード画像挿入', () => {
           document,
           [new vscode.Range(0, 0, 0, 0)],
           pngDataTransfer(),
-          {} as vscode.DocumentPasteEditContext,
+          {} as unknown as vscode.DocumentPasteEditContext,
           tokenSource.token,
           {
             ...testAppConfig(),
@@ -100,7 +100,7 @@ suite('LaTeXクリップボード画像挿入', () => {
           document,
           [new vscode.Range(0, 0, 0, 0)],
           pngDataTransfer(),
-          {} as vscode.DocumentPasteEditContext,
+          {} as unknown as vscode.DocumentPasteEditContext,
           tokenSource.token,
           {
             ...testAppConfig(),
@@ -173,7 +173,7 @@ suite('LaTeXクリップボード画像挿入', () => {
           document,
           [new vscode.Range(0, 0, 0, 0)],
           pngDataTransfer(),
-          {} as vscode.DocumentPasteEditContext,
+          {} as unknown as vscode.DocumentPasteEditContext,
           tokenSource.token,
           {
             ...testAppConfig(),
@@ -213,7 +213,7 @@ suite('LaTeXクリップボード画像挿入', () => {
           document,
           [new vscode.Range(0, 0, 0, 0)],
           pngDataTransfer(),
-          {} as vscode.DocumentPasteEditContext,
+          {} as unknown as vscode.DocumentPasteEditContext,
           tokenSource.token,
           {
             ...testAppConfig(),
@@ -265,7 +265,7 @@ suite('LaTeXクリップボード画像挿入', () => {
           document,
           [new vscode.Range(0, 0, 0, 0)],
           pngDataTransfer(),
-          {} as vscode.DocumentPasteEditContext,
+          {} as unknown as vscode.DocumentPasteEditContext,
           tokenSource.token,
           {
             ...testAppConfig(),
@@ -310,7 +310,7 @@ suite('LaTeXクリップボード画像挿入', () => {
         document,
         [new vscode.Range(0, 0, 0, 0)],
         pngDataTransfer(),
-        {} as vscode.DocumentPasteEditContext,
+        {} as unknown as vscode.DocumentPasteEditContext,
         tokenSource.token,
         {
           ...testAppConfig(),
@@ -362,7 +362,7 @@ suite('LaTeXクリップボード画像挿入', () => {
         document,
         [new vscode.Range(0, 0, 0, 0)],
         pngDataTransfer(),
-        {} as vscode.DocumentPasteEditContext,
+        {} as unknown as vscode.DocumentPasteEditContext,
         tokenSource.token,
         {
           ...testAppConfig(),
@@ -399,7 +399,7 @@ function pngDataTransfer(): vscode.DataTransfer {
         },
       };
     },
-  } as vscode.DataTransfer;
+  } as unknown as vscode.DataTransfer;
 }
 
 function testAppConfig() {
@@ -443,7 +443,7 @@ async function findFiles(rootPath: string, predicate: (filePath: string) => bool
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
       return [];
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 

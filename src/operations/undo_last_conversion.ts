@@ -88,7 +88,7 @@ export async function undoConversionOutputs(
     } catch (rollbackError) {
       throw new Error(`Undo failed and rollback was incomplete: ${String(error)}`, { cause: rollbackError });
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   } finally {
     await Promise.all(
       rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
@@ -119,7 +119,7 @@ async function createRollbackCopies(
     await Promise.all(
       rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
     );
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 

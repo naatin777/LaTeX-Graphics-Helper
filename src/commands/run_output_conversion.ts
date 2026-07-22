@@ -57,8 +57,12 @@ export async function runOutputConversion(options: {
               progress.report({ message: userMessage('message.progress.completedCount', completed, total) });
             },
           };
-          if (options.outputChannel !== undefined) runtimeOptions.outputChannel = options.outputChannel;
-          if (options.resolveConflicts !== undefined) runtimeOptions.resolveConflicts = options.resolveConflicts;
+          if (options.outputChannel !== undefined) {
+            runtimeOptions.outputChannel = options.outputChannel;
+          }
+          if (options.resolveConflicts !== undefined) {
+            runtimeOptions.resolveConflicts = options.resolveConflicts;
+          }
           return options.run(runtimeOptions);
         }),
     );

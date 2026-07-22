@@ -51,7 +51,7 @@ export async function createAsciiInputScratch(options: {
       return { rootPath: scratchRootPath, inputPath };
     } catch (error) {
       if (isAbortError(error)) {
-        throw error;
+        throw error instanceof Error ? error : new Error(String(error));
       }
 
       if (scratchRootPath) {
@@ -123,10 +123,7 @@ export async function validateAsciiScratchOutput(scratch: AsciiInputOutputScratc
   assertContained(realOutputPath, realRootPath);
 }
 
-export async function removeSuccessfulScratch(
-  scratch: AsciiScratch,
-  outputChannel?: LineOutputChannel | undefined,
-): Promise<void> {
+export async function removeSuccessfulScratch(scratch: AsciiScratch, outputChannel?: LineOutputChannel): Promise<void> {
   try {
     await rm(scratch.rootPath, { recursive: true, force: true });
   } catch (error) {

@@ -61,10 +61,18 @@ export async function convertImagesToSinglePdfCommand(
           ghostscriptPath,
           platform: process.platform,
         };
-        if (runtime.signal !== undefined) combineOptions.signal = runtime.signal;
-        if (runtime.resolveConflicts !== undefined) combineOptions.resolveOutputConflicts = runtime.resolveConflicts;
-        if (runtime.outputChannel !== undefined) combineOptions.outputChannel = runtime.outputChannel;
-        if (runtime.reportProgress !== undefined) combineOptions.reportProgress = runtime.reportProgress;
+        if (runtime.signal !== undefined) {
+          combineOptions.signal = runtime.signal;
+        }
+        if (runtime.resolveConflicts !== undefined) {
+          combineOptions.resolveOutputConflicts = runtime.resolveConflicts;
+        }
+        if (runtime.outputChannel !== undefined) {
+          combineOptions.outputChannel = runtime.outputChannel;
+        }
+        if (runtime.reportProgress !== undefined) {
+          combineOptions.reportProgress = runtime.reportProgress;
+        }
         return combineImagesToPdf(combineOptions);
       },
     });

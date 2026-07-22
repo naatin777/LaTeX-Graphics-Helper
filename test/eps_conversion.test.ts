@@ -23,9 +23,9 @@ suite('EPS preflight validation', () => {
       validateEpsInput(epsPath);
     } catch (error) {
       strictEqual(
-        (error as Error).message.includes('PostScript header'),
+        (error as unknown as Error).message.includes('PostScript header'),
         true,
-        `Unexpected error message: ${(error as Error).message}`,
+        `Unexpected error message: ${(error as unknown as Error).message}`,
       );
       return;
     }
@@ -38,9 +38,9 @@ suite('EPS preflight validation', () => {
       validateEpsInput(epsPath);
     } catch (error) {
       strictEqual(
-        (error as Error).message.includes('Invalid BoundingBox'),
+        (error as unknown as Error).message.includes('Invalid BoundingBox'),
         true,
-        `Unexpected error message: ${(error as Error).message}`,
+        `Unexpected error message: ${(error as unknown as Error).message}`,
       );
       return;
     }

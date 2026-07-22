@@ -146,7 +146,7 @@ suite('画像を1つのPDFへ結合するコマンド', () => {
           {
             isCancellationRequested: false,
             onCancellationRequested: () => ({ dispose: () => undefined }),
-          } as vscode.CancellationToken,
+          },
         ),
       );
 
@@ -295,6 +295,6 @@ async function readDirectoryNames(directoryPath: string): Promise<string[]> {
       return [];
     }
 
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

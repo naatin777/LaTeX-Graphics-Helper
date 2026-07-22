@@ -279,7 +279,7 @@ async function writeMermaidAsRaster(request: RasterRenderRequest, context: Raste
     });
   } catch (error) {
     if (isAbortError(error)) {
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
 
     throw new Error(`Mermaid CLI failed: ${errorMessage(error)}`, { cause: error });
@@ -382,7 +382,7 @@ export function asPngOutputPath(outputPath: string): `${string}.png` {
     throw new Error(`PNG output path must end with .png: ${outputPath}`);
   }
 
-  return outputPath as `${string}.png`;
+  return outputPath as unknown as `${string}.png`;
 }
 
 export function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {

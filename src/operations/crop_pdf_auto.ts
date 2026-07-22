@@ -79,9 +79,15 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   const platform = options.platform ?? process.platform;
   const scratchBaseCandidates = options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
   const runtime: ConversionRuntime = {};
-  if (options.signal !== undefined) runtime.signal = options.signal;
-  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
-  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -155,8 +161,12 @@ async function convertPdf(params: {
         baseCandidates: scratchBaseCandidates,
         inputFileName: 'input.pdf',
       };
-      if (signal !== undefined) scratchArgs.signal = signal;
-      if (outputChannel !== undefined) scratchArgs.outputChannel = outputChannel;
+      if (signal !== undefined) {
+        scratchArgs.signal = signal;
+      }
+      if (outputChannel !== undefined) {
+        scratchArgs.outputChannel = outputChannel;
+      }
       scratch = await createAsciiInputScratch(scratchArgs);
       signal?.throwIfAborted();
       await copyFile(copiedSourcePath, scratch.inputPath);
@@ -213,7 +223,7 @@ async function convertPdf(params: {
     if (scratch) {
       outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -238,7 +248,7 @@ async function readBoundingBoxes(
       outputChannel.appendLine(`Ghostscript error: ${message}`);
       outputChannel.appendLine(`Command: ${ghostscriptPath}`);
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -306,7 +316,7 @@ async function assertOutputsDoNotExist(jobs: CropPdfJob[]): Promise<void> {
       if (isFileNotFoundError(error)) {
         continue;
       }
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 }
