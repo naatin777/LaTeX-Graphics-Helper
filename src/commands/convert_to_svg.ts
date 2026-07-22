@@ -10,7 +10,12 @@ import { readGhostscriptExecutablePath, readPdftocairoExecutablePath } from '../
 import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
-import { convertToSvgFiles, type ConvertToSvgJob, type DrawioToSvgOptions } from '../operations/convert_to_svg.js';
+import {
+  convertToSvgFiles,
+  type ConvertToSvgFilesOptions,
+  type ConvertToSvgJob,
+  type DrawioToSvgOptions,
+} from '../operations/convert_to_svg.js';
 import { assertExistingPathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -51,20 +56,20 @@ export async function convertToSvgCommand(
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('SVG', sourceUris.length),
-      run: (runtime) =>
-        convertToSvgFiles({
+      run: (runtime) => {
+        const convertOptions: ConvertToSvgFilesOptions = {
           jobs,
           pdftocairoPath,
           ghostscriptPath,
           mermaid: puppeteer,
           drawio,
           platform: process.platform,
-          ...(runtime.signal !== undefined && { signal: runtime.signal }),
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveOutputConflicts: runtime.resolveConflicts,
-          }),
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-        }),
+        };
+        if (runtime.signal !== undefined) convertOptions.signal = runtime.signal;
+        if (runtime.resolveConflicts !== undefined) convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
+        if (runtime.outputChannel !== undefined) convertOptions.outputChannel = runtime.outputChannel;
+        return convertToSvgFiles(convertOptions);
+      },
     });
   } catch (error) {
     if (isAbortError(error)) {

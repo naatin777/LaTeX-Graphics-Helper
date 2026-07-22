@@ -128,19 +128,14 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
   const platform = options.platform ?? process.platform;
-  const scratchOptions: RsvgToolScratchOptions = {
-    platform,
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-    ...(options.scratchBaseCandidates !== undefined && {
-      scratchBaseCandidates: options.scratchBaseCandidates,
-    }),
-  };
+  const scratchOptions: RsvgToolScratchOptions = { platform };
+  if (options.outputChannel !== undefined) scratchOptions.outputChannel = options.outputChannel;
+  if (options.scratchBaseCandidates !== undefined) scratchOptions.scratchBaseCandidates = options.scratchBaseCandidates;
   const operationName = options.operationName ?? 'convert-png-to-pdf';
-  const runtime: ConversionRuntime = {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && { resolveConflicts: options.resolveOutputConflicts }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-  };
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) runtime.signal = options.signal;
+  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
+  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -185,17 +180,18 @@ async function stagePngConversion(
   );
   const stagingRootPath = path.join(job.workspacePath, '.latex-graphics-helper', 'convert-png-to-pdf', runId);
 
-  await writeImageAsPdf({
+  const writeOptions: WriteImageAsPdfOptions = {
     sourcePath: job.sourcePath,
     outputPath: stagedOutputPath,
     workspacePath: job.workspacePath,
-    ...(signal !== undefined && { signal }),
-    ...(svgToPdf !== undefined && { svgToPdf }),
-    ...(mermaid !== undefined && { mermaid }),
-    ...(drawio !== undefined && { drawio }),
     scratchOptions,
-    ...(ghostscriptPath !== undefined && { ghostscriptPath }),
-  });
+  };
+  if (signal !== undefined) writeOptions.signal = signal;
+  if (svgToPdf !== undefined) writeOptions.svgToPdf = svgToPdf;
+  if (mermaid !== undefined) writeOptions.mermaid = mermaid;
+  if (drawio !== undefined) writeOptions.drawio = drawio;
+  if (ghostscriptPath !== undefined) writeOptions.ghostscriptPath = ghostscriptPath;
+  await writeImageAsPdf(writeOptions);
   signal?.throwIfAborted();
 
   return {

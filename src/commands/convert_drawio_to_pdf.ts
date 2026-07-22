@@ -20,15 +20,16 @@ export async function convertDrawioToPdfCommand(
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,
 ): Promise<void> {
-  await runDrawioPdfCommand({
-    ...(uri !== undefined && { uri }),
-    ...(uris !== undefined && { uris }),
-    splitByPage: true,
-    outputSetting: 'outputPath.convertDrawioToPdf',
+  const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
+    splitByPage: true as const,
+    outputSetting: 'outputPath.convertDrawioToPdf' as const,
     defaultOutputPath: DEFAULT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf',
-    ...(dependencies?.outputChannel !== undefined && { outputChannel: dependencies.outputChannel }),
-  });
+  };
+  if (uri !== undefined) commandOptions.uri = uri;
+  if (uris !== undefined) commandOptions.uris = uris;
+  if (dependencies?.outputChannel !== undefined) commandOptions.outputChannel = dependencies.outputChannel;
+  await runDrawioPdfCommand(commandOptions);
 }
 
 export async function convertDrawioToPdfDirectlyCommand(
@@ -36,15 +37,16 @@ export async function convertDrawioToPdfDirectlyCommand(
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,
 ): Promise<void> {
-  await runDrawioPdfCommand({
-    ...(uri !== undefined && { uri }),
-    ...(uris !== undefined && { uris }),
-    splitByPage: false,
-    outputSetting: 'outputPath.convertDrawioToPdfDirectly',
+  const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
+    splitByPage: false as const,
+    outputSetting: 'outputPath.convertDrawioToPdfDirectly' as const,
     defaultOutputPath: DEFAULT_DIRECT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf-directly',
-    ...(dependencies?.outputChannel !== undefined && { outputChannel: dependencies.outputChannel }),
-  });
+  };
+  if (uri !== undefined) commandOptions.uri = uri;
+  if (uris !== undefined) commandOptions.uris = uris;
+  if (dependencies?.outputChannel !== undefined) commandOptions.outputChannel = dependencies.outputChannel;
+  await runDrawioPdfCommand(commandOptions);
 }
 
 async function runDrawioPdfCommand(options: {

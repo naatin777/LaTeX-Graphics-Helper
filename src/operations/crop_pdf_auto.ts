@@ -78,11 +78,10 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
   const platform = options.platform ?? process.platform;
   const scratchBaseCandidates = options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
-  const runtime: ConversionRuntime = {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && { resolveConflicts: options.resolveOutputConflicts }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-  };
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) runtime.signal = options.signal;
+  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
+  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -152,12 +151,13 @@ async function convertPdf(params: {
     let ghostscriptInputPath = copiedSourcePath;
 
     if (platform === 'win32') {
-      scratch = await createAsciiInputScratch({
+      const scratchArgs: Parameters<typeof createAsciiInputScratch>[0] = {
         baseCandidates: scratchBaseCandidates,
         inputFileName: 'input.pdf',
-        ...(signal !== undefined && { signal }),
-        ...(outputChannel !== undefined && { outputChannel }),
-      });
+      };
+      if (signal !== undefined) scratchArgs.signal = signal;
+      if (outputChannel !== undefined) scratchArgs.outputChannel = outputChannel;
+      scratch = await createAsciiInputScratch(scratchArgs);
       signal?.throwIfAborted();
       await copyFile(copiedSourcePath, scratch.inputPath);
       signal?.throwIfAborted();

@@ -12,7 +12,7 @@ import {
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
 import type { ConversionRuntime } from './conversion_runtime.js';
-import { convertPngToPdfFiles } from './convert_png_to_pdf.js';
+import { convertPngToPdfFiles, type ConvertPngToPdfFilesOptions } from './convert_png_to_pdf.js';
 
 export interface ClipboardImageData {
   type: { ext: string };
@@ -64,15 +64,14 @@ export async function saveClipboardImage(
       outputs = await saveClipboardImageAsPdf(request, stagedImage, runId, runtime);
     } else {
       commitOwnsClipboardArtifact = true;
-      outputs = await commitConversionOutputs([stagedImage], {
-        ...(runtime.resolveConflicts !== undefined && {
-          resolveConflicts: runtime.resolveConflicts,
-        }),
-        ...(runtime.signal !== undefined && { signal: runtime.signal }),
-        operationName: 'clipboard-paste',
-        ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
+      const commitOptions: CommitConversionOutputsOptions = {
+        operationName: 'clipboard-paste' as const,
         ...testOverrides.commit,
-      });
+      };
+      if (runtime.resolveConflicts !== undefined) commitOptions.resolveConflicts = runtime.resolveConflicts;
+      if (runtime.signal !== undefined) commitOptions.signal = runtime.signal;
+      if (runtime.outputChannel !== undefined) commitOptions.outputChannel = runtime.outputChannel;
+      outputs = await commitConversionOutputs([stagedImage], commitOptions);
     }
 
     return { outputs, artifact };
@@ -120,7 +119,7 @@ async function saveClipboardImageAsPdf(
   runId: string,
   runtime: ConversionRuntime,
 ): Promise<CommittedConversionOutput[]> {
-  return convertPngToPdfFiles({
+  const convertOptions: ConvertPngToPdfFilesOptions = {
     jobs: [
       {
         sourcePath: stagedImage.stagedOutputPath,
@@ -129,13 +128,12 @@ async function saveClipboardImageAsPdf(
       },
     ],
     runId,
-    supportedExtensions: [`.${request.data.type.ext}`],
-    ...(runtime.signal !== undefined && { signal: runtime.signal }),
-    ...(runtime.resolveConflicts !== undefined && {
-      resolveOutputConflicts: runtime.resolveConflicts,
-    }),
-    ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-  });
+    supportedExtensions: [`.${request.data.type.ext}`] as const,
+  };
+  if (runtime.signal !== undefined) convertOptions.signal = runtime.signal;
+  if (runtime.resolveConflicts !== undefined) convertOptions.resolveOutputConflicts = runtime.resolveConflicts;
+  if (runtime.outputChannel !== undefined) convertOptions.outputChannel = runtime.outputChannel;
+  return convertPngToPdfFiles(convertOptions);
 }
 
 function clipboardStagingRoot(workspacePath: string, runId: string): string {

@@ -9,6 +9,7 @@ import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '..
 import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
+  type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
@@ -61,14 +62,11 @@ export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions)
     const preparedOutput = await createConfiguredCropOutput(options, runId);
 
     options.signal?.throwIfAborted();
-    return await commitConversionOutputs([preparedOutput], {
-      ...(options.signal !== undefined && { signal: options.signal }),
-      ...(options.resolveOutputConflicts !== undefined && {
-        resolveConflicts: options.resolveOutputConflicts,
-      }),
-      operationName: 'crop-pdf-configure',
-      ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-    });
+    const commitOptions: CommitConversionOutputsOptions = { operationName: 'crop-pdf-configure' as const };
+    if (options.signal !== undefined) commitOptions.signal = options.signal;
+    if (options.resolveOutputConflicts !== undefined) commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    if (options.outputChannel !== undefined) commitOptions.outputChannel = options.outputChannel;
+    return await commitConversionOutputs([preparedOutput], commitOptions);
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
     throw error;

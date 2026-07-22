@@ -3,6 +3,7 @@ import pLimit from 'p-limit';
 import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
+  type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
@@ -77,14 +78,10 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
 
         signal.throwIfAborted();
         const stagedOutputs = settled.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
-        return commitConversionOutputs(stagedOutputs.flat(), {
-          signal,
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveConflicts: runtime.resolveConflicts,
-          }),
-          operationName: options.operationName,
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-        });
+        const commitOptions: CommitConversionOutputsOptions = { signal, operationName: options.operationName };
+        if (runtime.resolveConflicts !== undefined) commitOptions.resolveConflicts = runtime.resolveConflicts;
+        if (runtime.outputChannel !== undefined) commitOptions.outputChannel = runtime.outputChannel;
+        return commitConversionOutputs(stagedOutputs.flat(), commitOptions);
       },
       runtime.outputChannel,
     );

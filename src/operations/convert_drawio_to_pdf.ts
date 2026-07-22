@@ -227,13 +227,10 @@ async function executeDrawio(
   signal?: AbortSignal,
   outputChannel?: ConversionRuntime['outputChannel'],
 ): Promise<void> {
-  await runExternalTool({
-    toolName: 'drawio',
-    executable,
-    args,
-    ...(signal !== undefined && { signal }),
-    ...(outputChannel !== undefined && { outputChannel }),
-  });
+  const toolOptions: Parameters<typeof runExternalTool>[0] = { toolName: 'drawio' as const, executable, args };
+  if (signal !== undefined) toolOptions.signal = signal;
+  if (outputChannel !== undefined) toolOptions.outputChannel = outputChannel;
+  await runExternalTool(toolOptions);
 }
 
 async function validateJobPaths(jobs: DrawioPdfJob[], operationName: string): Promise<void> {

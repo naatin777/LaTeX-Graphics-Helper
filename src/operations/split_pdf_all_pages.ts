@@ -54,11 +54,10 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && { resolveConflicts: options.resolveOutputConflicts }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-  };
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) runtime.signal = options.signal;
+  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
+  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
 
   return runStagedConversionBatch({
     jobs: options.jobs,
@@ -78,11 +77,10 @@ export async function splitPdfByPageGroups(options: SplitPdfByPageGroupsOptions)
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const runtime: ConversionRuntime = {
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.resolveOutputConflicts !== undefined && { resolveConflicts: options.resolveOutputConflicts }),
-    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-  };
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) runtime.signal = options.signal;
+  if (options.resolveOutputConflicts !== undefined) runtime.resolveConflicts = options.resolveOutputConflicts;
+  if (options.outputChannel !== undefined) runtime.outputChannel = options.outputChannel;
 
   return runStagedConversionBatch({
     jobs: options.jobs,

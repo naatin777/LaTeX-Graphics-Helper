@@ -51,16 +51,15 @@ export async function runOutputConversion(options: {
       async (progress, token) =>
         withCancellationSignal(token, async (signal) => {
           progress.report({ message: options.messages.prepareMessage });
-          return options.run({
+          const runtimeOptions: ConversionRuntime = {
             signal,
-            reportProgress: (completed, total) => {
+            reportProgress: (completed: number, total: number) => {
               progress.report({ message: userMessage('message.progress.completedCount', completed, total) });
             },
-            ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-            ...(options.resolveConflicts !== undefined && {
-              resolveConflicts: options.resolveConflicts,
-            }),
-          });
+          };
+          if (options.outputChannel !== undefined) runtimeOptions.outputChannel = options.outputChannel;
+          if (options.resolveConflicts !== undefined) runtimeOptions.resolveConflicts = options.resolveConflicts;
+          return options.run(runtimeOptions);
         }),
     );
     const successMessage = options.messages.successMessage(outputs.length);

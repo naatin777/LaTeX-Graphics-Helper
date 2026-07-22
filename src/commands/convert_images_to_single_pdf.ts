@@ -4,7 +4,7 @@ import { logicalSourcePathForOutputTemplate } from '../application/source_format
 import { readGhostscriptExecutablePath } from '../config/external_tool_paths.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
-import { combineImagesToPdf } from '../operations/combine_images_to_pdf.js';
+import { combineImagesToPdf, type CombineImagesToPdfOptions } from '../operations/combine_images_to_pdf.js';
 import { assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -52,21 +52,21 @@ export async function convertImagesToSinglePdfCommand(
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('PDF', jobs.length),
-      run: (runtime) =>
-        combineImagesToPdf({
+      run: (runtime) => {
+        const combineOptions: CombineImagesToPdfOptions = {
           jobs,
           outputPath,
           workspacePath,
           svgToPdf,
           ghostscriptPath,
           platform: process.platform,
-          ...(runtime.signal !== undefined && { signal: runtime.signal }),
-          ...(runtime.resolveConflicts !== undefined && {
-            resolveOutputConflicts: runtime.resolveConflicts,
-          }),
-          ...(runtime.outputChannel !== undefined && { outputChannel: runtime.outputChannel }),
-          ...(runtime.reportProgress !== undefined && { reportProgress: runtime.reportProgress }),
-        }),
+        };
+        if (runtime.signal !== undefined) combineOptions.signal = runtime.signal;
+        if (runtime.resolveConflicts !== undefined) combineOptions.resolveOutputConflicts = runtime.resolveConflicts;
+        if (runtime.outputChannel !== undefined) combineOptions.outputChannel = runtime.outputChannel;
+        if (runtime.reportProgress !== undefined) combineOptions.reportProgress = runtime.reportProgress;
+        return combineImagesToPdf(combineOptions);
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

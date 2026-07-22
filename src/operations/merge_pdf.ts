@@ -8,6 +8,7 @@ import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '..
 import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
 import {
   commitConversionOutputs,
+  type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
   type OutputConflictDecision,
 } from './commit_conversion_outputs.js';
@@ -80,14 +81,11 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
     await writeFile(stagedOutputPath, await mergedDocument.save());
     options.signal?.throwIfAborted();
 
-    return commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }], {
-      ...(options.signal !== undefined && { signal: options.signal }),
-      ...(options.resolveOutputConflicts !== undefined && {
-        resolveConflicts: options.resolveOutputConflicts,
-      }),
-      operationName: 'merge-pdf',
-      ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-    });
+    const commitOptions: CommitConversionOutputsOptions = { operationName: 'merge-pdf' as const };
+    if (options.signal !== undefined) commitOptions.signal = options.signal;
+    if (options.resolveOutputConflicts !== undefined) commitOptions.resolveConflicts = options.resolveOutputConflicts;
+    if (options.outputChannel !== undefined) commitOptions.outputChannel = options.outputChannel;
+    return commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath }], commitOptions);
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
     throw error;
