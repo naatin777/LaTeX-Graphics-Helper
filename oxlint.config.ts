@@ -96,6 +96,12 @@ export default defineConfig({
     '.vscode-test/**',
     '.playwright/**',
   ],
+  jsPlugins: [
+    {
+      name: 'project',
+      specifier: './scripts/oxlint-project-plugin.mjs',
+    },
+  ],
   rules: {
     curly: 'warn',
     eqeqeq: 'warn',
@@ -105,13 +111,14 @@ export default defineConfig({
     'no-unused-vars': 'off',
     'typescript/no-unused-vars': 'error',
     'typescript/consistent-type-imports': 'warn',
-    'typescript/no-explicit-any': 'warn',
+    'typescript/no-explicit-any': 'error',
     'typescript/no-require-imports': 'error',
     'unicorn/prefer-node-protocol': 'error',
     'import/no-nodejs-modules': 'off',
     'node/no-process-env': 'off',
     'promise/always-return': 'off',
     'promise/catch-or-return': 'off',
+    'project/max-conditional-spreads-per-object': 'error',
   },
   overrides: [
     {
