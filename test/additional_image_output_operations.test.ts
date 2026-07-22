@@ -121,8 +121,8 @@ async function assertFirstFrameOutput(outputFormat: (typeof outputFormats)[numbe
   assert.strictEqual(info.format, 'raw');
 
   for (let index = 0; index < data.length; index += 4) {
-    assert.ok(data[index] > 220);
-    assert.ok(data[index + 1] < 30);
-    assert.ok(data[index + 2] < 30);
+    assert.ok(data[index]! > 220);
+    assert.ok(data[index + 1]! < 30);
+    assert.ok(data[index + 2]! < 30);
   }
 }

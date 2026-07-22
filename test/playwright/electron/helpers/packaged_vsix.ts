@@ -52,7 +52,7 @@ async function findInstalledExtension(extensionsDir: string): Promise<InstalledE
     throw new Error(`Expected one installed LaTeX Graphics Helper extension, found ${matches.length}.`);
   }
 
-  return matches[0];
+  return matches[0]!;
 }
 
 async function readManifest(manifestPath: string): Promise<{ name?: string; publisher?: string } | undefined> {

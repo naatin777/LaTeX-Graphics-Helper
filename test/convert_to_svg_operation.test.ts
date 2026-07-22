@@ -47,14 +47,14 @@ suite('SVGに変換する処理', () => {
             drawioCalls.push(args);
             const outputIndex = args.indexOf('-o') + 1;
             assert.ok(outputIndex > 0);
-            await writeFile(args[outputIndex], '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+            await writeFile(args[outputIndex]!, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
           },
         },
         runId: 'test-run',
       });
 
       assert.strictEqual(drawioCalls.length, 1);
-      const args = drawioCalls[0];
+      const args = drawioCalls[0]!;
       assert.deepStrictEqual(args.slice(0, 5), [
         '-x',
         '-f',

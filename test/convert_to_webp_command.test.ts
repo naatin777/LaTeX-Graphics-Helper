@@ -81,7 +81,7 @@ suite('WebPに変換コマンド', () => {
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_WEBP_COMMAND,
-        vscode.Uri.file(sourcePaths[0]),
+        vscode.Uri.file(sourcePaths[0]!),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);

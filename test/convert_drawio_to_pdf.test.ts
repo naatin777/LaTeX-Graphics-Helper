@@ -38,8 +38,8 @@ suite('Draw.io PDF変換', () => {
         runDrawio: async (_executable, args) => {
           calls.push(args);
           assert.notStrictEqual(args[0], sourcePath);
-          await writeFile(args[0], `${originalSource}\n<!-- mutated staged source -->`);
-          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]);
+          await writeFile(args[0]!, `${originalSource}\n<!-- mutated staged source -->`);
+          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]!);
         },
       });
 
@@ -72,11 +72,11 @@ suite('Draw.io PDF変換', () => {
         '--crop',
       ]);
       assert.strictEqual(
-        await PDFDocument.load(await readFile(outputs[0].outputPath)).then((pdf) => pdf.getPageCount()),
+        await PDFDocument.load(await readFile(outputs[0]!.outputPath)).then((pdf) => pdf.getPageCount()),
         1,
       );
       assert.strictEqual(
-        await PDFDocument.load(await readFile(outputs[1].outputPath)).then((pdf) => pdf.getPageCount()),
+        await PDFDocument.load(await readFile(outputs[1]!.outputPath)).then((pdf) => pdf.getPageCount()),
         1,
       );
       assert.strictEqual(await readFile(sourcePath, 'utf8'), originalSource);
@@ -107,7 +107,7 @@ suite('Draw.io PDF変換', () => {
         runId: 'direct-test',
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
-          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]);
+          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]!);
         },
       });
 
@@ -142,7 +142,7 @@ suite('Draw.io PDF変換', () => {
         runId: 'names-test',
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
-          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]);
+          await copyFile(pdfFixturePath, args[args.indexOf('-o') + 1]!);
         },
       });
 

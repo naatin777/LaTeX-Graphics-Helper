@@ -39,10 +39,10 @@ suite('Mermaid theme and backgroundColor settings', () => {
 function fakeConfiguration(values: Record<string, string>): MermaidConfiguration {
   return {
     get<T>(key: string, defaultValue: T): T {
-      return (key in values ? values[key] : defaultValue) as unknown as T;
+      return (key in values ? values[key] : defaultValue) as T;
     },
-    inspect(key: string) {
-      return key in values ? { workspaceValue: values[key] as unknown } : {};
+    inspect<T>(key: string) {
+      return key in values ? { workspaceValue: values[key] as T } : {};
     },
   };
 }

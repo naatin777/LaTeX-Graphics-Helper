@@ -1,5 +1,4 @@
 // PDF.js reads this Map method while its module is evaluated, so the polyfill must run first.
-// oxlint-disable-next-line import/no-unassigned-import
 import './install_map_get_or_insert_computed';
 
 import * as pdfjsModule from 'pdfjs-dist';

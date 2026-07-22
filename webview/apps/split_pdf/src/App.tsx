@@ -17,7 +17,6 @@ type RowRefs = Partial<Record<InputKind, HTMLInputElement>>;
 type InitPayload = Extract<ExtensionToWebviewMessage, { type: 'init' }>['payload'];
 
 function cancel() {
-  // oxlint-disable-next-line unicorn/require-post-message-target-origin
   vscode.postMessage({ type: 'cancel' });
 }
 
@@ -269,7 +268,6 @@ export function App() {
       type: 'apply',
       payload: { rows: result.rows },
     };
-    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     vscode.postMessage(message);
   };
 
@@ -337,7 +335,6 @@ export function App() {
           const message = error instanceof Error ? error.message : String(error);
           setRenderError(message);
           setPreviewReady(false);
-          // oxlint-disable-next-line unicorn/require-post-message-target-origin
           vscode.postMessage({ type: 'previewLoadFailed', payload: { message } });
         },
       });
@@ -356,7 +353,6 @@ export function App() {
       const message = error instanceof Error ? error.message : String(error);
       setRenderError(message);
       setPreviewReady(false);
-      // oxlint-disable-next-line unicorn/require-post-message-target-origin
       vscode.postMessage({ type: 'previewLoadFailed', payload: { message } });
     }
   };
@@ -400,7 +396,6 @@ export function App() {
     };
 
     window.addEventListener('message', handleMessage);
-    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     vscode.postMessage({ type: 'ready' });
 
     onCleanup(() => {

@@ -146,7 +146,6 @@ export async function mergePdfConfigureCommand(
 
       if (message.type === 'ready') {
         // VS Code Webview.postMessage has no browser targetOrigin parameter.
-        // oxlint-disable-next-line unicorn/require-post-message-target-origin
         void panel.webview.postMessage(initMessage);
         return;
       }

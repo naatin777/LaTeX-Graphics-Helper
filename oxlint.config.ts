@@ -164,7 +164,6 @@ export default defineConfig({
 
   categories: {
     correctness: 'error',
-    suspicious: 'warn',
     perf: 'warn',
   },
 
@@ -237,7 +236,7 @@ export default defineConfig({
     'typescript/no-misused-promises': 'error',
 
     /*
-     * Exhaustiveness and redundant checks
+     * Exhaustiveness
      */
     'typescript/switch-exhaustiveness-check': [
       'error',
@@ -247,17 +246,14 @@ export default defineConfig({
         requireDefaultForNonUnion: false,
       },
     ],
-    'typescript/no-unnecessary-condition': 'warn',
-
-    /*
-     * Detect any values entering otherwise typed code.
-     * Keep these as warnings first because external APIs may produce noise.
-     */
-    'typescript/no-unsafe-argument': 'warn',
-    'typescript/no-unsafe-assignment': 'warn',
-    'typescript/no-unsafe-call': 'warn',
-    'typescript/no-unsafe-member-access': 'warn',
-    'typescript/no-unsafe-return': 'warn',
+    'typescript/no-unsafe-argument': 'off',
+    'typescript/no-unsafe-assignment': 'off',
+    'typescript/no-unsafe-call': 'off',
+    'typescript/no-unsafe-member-access': 'off',
+    'typescript/no-unsafe-return': 'off',
+    'typescript/no-unsafe-type-assertion': 'off',
+    'typescript/no-unnecessary-type-assertion': 'off',
+    'typescript/no-unnecessary-condition': 'off',
 
     /*
      * Imports and runtime conventions

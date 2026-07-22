@@ -575,6 +575,5 @@ async function readJson<T>(relativePath: string): Promise<T> {
 function sortedKeys(record: Record<string, string>): string[] {
   const keys = Object.keys(record);
   // 比較用の一時配列だけを並び替えるため、呼び出し元の値は変更しない。
-  // oxlint-disable-next-line unicorn/no-array-sort
   return keys.sort();
 }

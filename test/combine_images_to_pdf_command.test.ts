@@ -230,14 +230,14 @@ suite('画像を1つのPDFへ結合するコマンド', () => {
         (runDirectory) => !existingRunDirectories.has(runDirectory),
       );
       assert.strictEqual(runDirectories.length, 1);
-      const runRoot = path.join(stagingRoot, runDirectories[0]);
+      const runRoot = path.join(stagingRoot, runDirectories[0]!);
       await access(path.join(runRoot, 'result.pdf.previous'));
       await assertFileDoesNotExist(path.join(runRoot, 'result.pdf'));
 
       await vscode.commands.executeCommand('latex-graphics-helper.undoLastConversion');
 
       assert.deepStrictEqual(await readFile(outputPath), originalOutput);
-      await assertDirectoryMissingOrEmpty(path.join(stagingRoot, runDirectories[0]));
+      await assertDirectoryMissingOrEmpty(path.join(stagingRoot, runDirectories[0]!));
     } finally {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }

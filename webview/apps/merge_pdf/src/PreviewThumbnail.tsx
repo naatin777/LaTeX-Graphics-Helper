@@ -39,7 +39,6 @@ export function PreviewThumbnail(props: {
           const message = error instanceof Error ? error.message : String(error);
           setStatus('error');
           props.onError();
-          // oxlint-disable-next-line unicorn/require-post-message-target-origin
           vscode.postMessage({ type: 'previewLoadFailed', payload: { message } });
         });
     };
