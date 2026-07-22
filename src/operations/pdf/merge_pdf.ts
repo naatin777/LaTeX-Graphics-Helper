@@ -51,8 +51,8 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
   options.signal?.throwIfAborted();
 
   await assertPreflightPassed(
-    sourcePaths.map((s) => ({ sourcePath: s })),
-    undefined,
+    sourcePaths.map((sourcePath) => ({ sourcePath })),
+    options.outputChannel,
     options.signal,
   );
   options.signal?.throwIfAborted();
