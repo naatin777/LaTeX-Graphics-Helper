@@ -1,11 +1,112 @@
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { cleanupConversionArtifacts } from '../src/operations/cleanup_conversion_artifacts.js';
+import { commitConversionOutputs, CommitRollbackError } from '../src/operations/commit_conversion_outputs.js';
+import { cleanupConversionArtifacts, withStagingCleanup } from '../src/operations/cleanup_conversion_artifacts.js';
 
 suite('変換artifactのライフサイクル', () => {
+  test('外側cleanupでもrollback失敗に必要なrecovery backupだけを保持する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const rootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
+    const stagedOutputPath = path.join(rootPath, 'result.pdf');
+    const outputPath = path.join(workspacePath, 'result.pdf');
+    let copyCount = 0;
+
+    try {
+      await writeFile(outputPath, 'original');
+      await writeFixture(stagedOutputPath);
+
+      await assert.rejects(
+        withStagingCleanup([{ rootPath, workspacePath }], () =>
+          commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath: rootPath }], {
+            resolveConflicts: async () => 'overwrite',
+            copyFile: async (source, destination, flags) => {
+              copyCount += 1;
+
+              if (destination === outputPath && copyCount === 2) {
+                await copyFile(source, destination, flags);
+                throw new Error('injected commit copy failure');
+              }
+
+              if (destination === outputPath && copyCount === 3) {
+                throw new Error('injected rollback copy failure');
+              }
+
+              await copyFile(source, destination, flags);
+            },
+          }),
+        ),
+        (error: unknown) => {
+          assert.ok(error instanceof CommitRollbackError);
+          return true;
+        },
+      );
+
+      assert.strictEqual(await readFile(outputPath, 'utf8'), 'fixture');
+      assert.strictEqual(await readFile(`${stagedOutputPath}.previous`, 'utf8'), 'original');
+      await assert.rejects(access(stagedOutputPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('通常のerrorではpreviousという名前のartifactも保持しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const rootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
+
+    try {
+      await writeFixture(path.join(rootPath, 'result.pdf.previous'));
+
+      await assert.rejects(
+        withStagingCleanup([{ rootPath, workspacePath }], async () => {
+          throw new Error('injected ordinary failure');
+        }),
+        /injected ordinary failure/,
+      );
+
+      await assert.rejects(access(rootPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('rollbackが成功した場合はrecovery backupを保持しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
+    const rootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');
+    const stagedOutputPath = path.join(rootPath, 'result.pdf');
+    const outputPath = path.join(workspacePath, 'result.pdf');
+    let copyCount = 0;
+
+    try {
+      await writeFile(outputPath, 'original');
+      await writeFixture(stagedOutputPath);
+
+      await assert.rejects(
+        withStagingCleanup([{ rootPath, workspacePath }], () =>
+          commitConversionOutputs([{ stagedOutputPath, outputPath, workspacePath, stagingRootPath: rootPath }], {
+            resolveConflicts: async () => 'overwrite',
+            copyFile: async (source, destination, flags) => {
+              copyCount += 1;
+              await copyFile(source, destination, flags);
+
+              if (destination === outputPath && copyCount === 2) {
+                throw new Error('injected commit failure');
+              }
+            },
+          }),
+        ),
+        /injected commit failure/,
+      );
+
+      assert.strictEqual(await readFile(outputPath, 'utf8'), 'original');
+      await assert.rejects(access(rootPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('Undo用backupを残してstaging結果と入力コピーを削除する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-cleanup-workspace-'));
     const rootPath = path.join(workspacePath, '.latex-graphics-helper', 'run');

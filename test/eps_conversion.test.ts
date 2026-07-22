@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import { ok, strictEqual } from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

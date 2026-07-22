@@ -44,7 +44,7 @@ suite('Safe Modeステータスバー', () => {
       .callsFake((command: string, callback: (...args: never[]) => unknown) => {
         assert.strictEqual(command, TOGGLE_SAFE_MODE_COMMAND);
         registeredCommand = callback as () => Promise<void>;
-        return new FakeDisposable() as vscode.Disposable;
+        return new FakeDisposable();
       });
   });
 

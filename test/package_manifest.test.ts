@@ -15,7 +15,45 @@ const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
 const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
 const CONVERT_DRAWIO_TO_PDF_COMMAND = 'latex-graphics-helper.convertDrawioToPdf';
 const CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND = 'latex-graphics-helper.convertDrawioToPdfDirectly';
+const COMBINE_IMAGES_TO_SINGLE_PDF_COMMAND = 'latex-graphics-helper.convertImagesToSinglePdf';
 const CONVERT_SUBMENU = 'latex-graphics-helper.convert';
+const CONTEXT_MENU_ENABLED = 'config.latex-graphics-helper.contextMenu.enabled';
+const COMPOUND_DRAWIO_MATCH = 'resourceFilename =~ /\\.(drawio|dio)\\.(png|svg)$/i';
+const COMPOUND_DRAWIO_NOT_MATCH = `!(${COMPOUND_DRAWIO_MATCH})`;
+const CONVERSION_CONTEXT_MENU_SETTINGS = {
+  drawio: {
+    property: 'latex-graphics-helper.contextMenu.convertDrawio.enabled',
+    description: 'config.contextMenu.convertDrawio.enabled',
+  },
+  pdf: {
+    property: 'latex-graphics-helper.contextMenu.convertPdf.enabled',
+    description: 'config.contextMenu.convertPdf.enabled',
+  },
+  png: {
+    property: 'latex-graphics-helper.contextMenu.convertPng.enabled',
+    description: 'config.contextMenu.convertPng.enabled',
+  },
+  jpeg: {
+    property: 'latex-graphics-helper.contextMenu.convertJpeg.enabled',
+    description: 'config.contextMenu.convertJpeg.enabled',
+  },
+  webp: {
+    property: 'latex-graphics-helper.contextMenu.convertWebp.enabled',
+    description: 'config.contextMenu.convertWebp.enabled',
+  },
+  avif: {
+    property: 'latex-graphics-helper.contextMenu.convertAvif.enabled',
+    description: 'config.contextMenu.convertAvif.enabled',
+  },
+  svg: {
+    property: 'latex-graphics-helper.contextMenu.convertSvg.enabled',
+    description: 'config.contextMenu.convertSvg.enabled',
+  },
+  mermaid: {
+    property: 'latex-graphics-helper.contextMenu.convertMermaid.enabled',
+    description: 'config.contextMenu.convertMermaid.enabled',
+  },
+} as const;
 const UNIMPLEMENTED_MANUAL_COMMANDS = [
   'latex-graphics-helper.splitPdf.manual',
   'latex-graphics-helper.mergePdf.manual',
@@ -106,6 +144,118 @@ suite('package.jsonの変換メニュー定義', () => {
       properties['latex-graphics-helper.outputPath.convertDrawioToPdfDirectly']?.default,
       '${fileDirname}/${fileBasenameNoExtension}.pdf',
     );
+  });
+
+  test('入力形式別の変換コンテキストメニュー設定を公開する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const properties = packageJson.contributes.configuration.properties;
+
+    for (const setting of Object.values(CONVERSION_CONTEXT_MENU_SETTINGS)) {
+      assert.deepStrictEqual(properties[setting.property], {
+        type: 'boolean',
+        default: true,
+        description: `%${setting.description}%`,
+      });
+    }
+  });
+
+  test('変換メニューの各入力形式を対応する設定で制御する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const convertSubmenu = explorerContext.find((entry) => entry.submenu === CONVERT_SUBMENU);
+    const commandEntries = new Map(
+      [...explorerContext, ...convertMenu]
+        .filter((entry): entry is typeof entry & { command: string } => entry.command !== undefined)
+        .map((entry) => [entry.command, entry]),
+    );
+    const expectedSettingsByCommand: Record<string, string[]> = {
+      [CONVERT_TO_PDF_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.png.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.jpeg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.webp.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.avif.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_TO_PNG_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.pdf.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.jpeg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.webp.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.avif.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.svg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_TO_JPEG_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.pdf.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.png.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.webp.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.avif.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.svg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_TO_WEBP_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.pdf.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.png.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.jpeg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.avif.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.svg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_TO_AVIF_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.pdf.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.png.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.jpeg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.webp.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.svg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_TO_SVG_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.pdf.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.mermaid.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property,
+      ],
+      [CONVERT_DRAWIO_TO_PDF_COMMAND]: [CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property],
+      [CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND]: [CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property],
+      [COMBINE_IMAGES_TO_SINGLE_PDF_COMMAND]: [
+        CONVERSION_CONTEXT_MENU_SETTINGS.png.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.jpeg.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.webp.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.avif.property,
+        CONVERSION_CONTEXT_MENU_SETTINGS.svg.property,
+      ],
+    };
+
+    assert.ok(convertSubmenu?.when?.includes(CONTEXT_MENU_ENABLED));
+    for (const setting of Object.values(CONVERSION_CONTEXT_MENU_SETTINGS)) {
+      assert.ok(convertSubmenu?.when?.includes(setting.property), `${setting.property} is not on the convert submenu`);
+    }
+    assert.ok(convertSubmenu?.when?.includes('resourceExtname =~ /^\\.(gif|tif|tiff|eps)$/i'));
+
+    for (const [command, settings] of Object.entries(expectedSettingsByCommand)) {
+      const entry = commandEntries.get(command);
+      assert.ok(entry?.when?.includes(CONTEXT_MENU_ENABLED), `${command} does not preserve the global setting`);
+      for (const setting of settings) {
+        assert.ok(entry?.when?.includes(setting), `${setting} is not used by ${command}`);
+      }
+    }
+  });
+
+  test('画像を1つのPDFへ結合するコマンドを複合Draw.io画像から除外する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const explorerContext = packageJson.contributes.menus['explorer/context'] ?? [];
+    const combineImagesToSinglePdf = explorerContext.find(
+      (entry) => entry.command === COMBINE_IMAGES_TO_SINGLE_PDF_COMMAND,
+    );
+
+    assert.ok(combineImagesToSinglePdf?.when?.includes(CONTEXT_MENU_ENABLED));
+    assert.ok(combineImagesToSinglePdf?.when?.includes(COMPOUND_DRAWIO_NOT_MATCH));
+    assert.ok(combineImagesToSinglePdf?.when?.includes('resourceExtname =~ /^\\.(gif|tif|tiff|eps)$/i'));
+    assert.ok(!combineImagesToSinglePdf?.when?.includes(CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property));
   });
 
   test('Explorerの変換サブメニューにPDFに変換コマンドを表示する', async () => {
@@ -425,6 +575,5 @@ async function readJson<T>(relativePath: string): Promise<T> {
 function sortedKeys(record: Record<string, string>): string[] {
   const keys = Object.keys(record);
   // 比較用の一時配列だけを並び替えるため、呼び出し元の値は変更しない。
-  // oxlint-disable-next-line unicorn/no-array-sort
   return keys.sort();
 }

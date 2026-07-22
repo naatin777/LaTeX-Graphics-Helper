@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToPng commandが登録されること
 // - MermaidをPNGに直接変換できること
@@ -156,6 +154,26 @@ suite('PNGに変換コマンド', () => {
 
   test('.mermaidファイルを読み取り可能なPNGへ変換する', async () => {
     await assertMermaidFileConvertsToPng('source.mermaid');
+  });
+
+  test('mermaid.backgroundColor=transparentのPNG出力を透過にする', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'transparent-background.mmd');
+      await writeMermaidFixture(sourcePath);
+
+      await withWorkspaceSettings({ 'latex-graphics-helper.mermaid.backgroundColor': 'transparent' }, async () => {
+        const commandExecution = vscode.commands.executeCommand(CONVERT_TO_PNG_COMMAND, vscode.Uri.file(sourcePath));
+        await runCommandAndClearNotificationsUntilDone(commandExecution);
+      });
+
+      const outputPath = replaceExtension(sourcePath, '.png');
+      const metadata = await sharp(await readFile(outputPath)).metadata();
+      assert.strictEqual(metadata.hasAlpha, true);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 
   test('outputPath.convertToPngが設定されている場合はペア別設定より優先してpageを展開する', async () => {

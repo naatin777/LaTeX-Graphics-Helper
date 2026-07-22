@@ -2,7 +2,7 @@
 
 ## Status
 
-Spec Complete — `docs/specs/product/combine-images-to-single-pdf.md` に記録済み。実装は別タスク。
+Spec + 実装完了 — `docs/specs/product/combine-images-to-single-pdf.md` に記録済み。仕様に基づく実装とテストも完了済み。
 
 ## 目的
 

@@ -37,14 +37,14 @@ export function getWebviewHtml(params: {
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="${styleUri}" rel="stylesheet">
+    <link href="${styleUri.toString()}" rel="stylesheet">
 
     <title>${escapeHtml(title)}</title>
   </head>
 
   <body>
     <div id="root"></div>
-    <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
+    <script nonce="${nonce}" type="module" src="${scriptUri.toString()}"></script>
   </body>
 </html>`;
 }

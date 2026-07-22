@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToWebp commandが登録されること
 // - PNGをWebPへ変換できること

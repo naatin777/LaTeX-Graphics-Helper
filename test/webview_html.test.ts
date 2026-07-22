@@ -11,7 +11,7 @@ suite('Webview HTML生成', () => {
       asWebviewUri(uri: vscode.Uri): vscode.Uri {
         return uri;
       },
-    } as vscode.Webview;
+    } as unknown as vscode.Webview;
 
     const html = getWebviewHtml({
       webview,

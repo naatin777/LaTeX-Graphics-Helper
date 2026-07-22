@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import assert from 'node:assert/strict';
 
 import { readMermaidPuppeteerOptions, type MermaidConfiguration } from '../src/config/mermaid_puppeteer_options.js';

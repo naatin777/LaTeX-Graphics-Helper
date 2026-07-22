@@ -1,15 +1,21 @@
-import path from 'node:path';
-
 import * as vscode from 'vscode';
 
-import { readGhostscriptExecutablePath, readRsvgConvertExecutablePath } from '../config/external_tool_paths.js';
-import { combineImagesToPdf } from '../operations/combine_images_to_pdf.js';
+import { logicalSourcePathForOutputTemplate } from '../application/source_format.js';
+import { readGhostscriptExecutablePath } from '../config/external_tool_paths.js';
+import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';
+import { resolveOutputPath } from '../config/resolve_output_path.js';
+import { combineImagesToPdf, type CombineImagesToPdfOptions } from '../operations/combine_images_to_pdf.js';
+import { assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
+import { readSvgToPdfOptions } from './convert_png_to_pdf.js';
+import { createOutputConversionMessages, runOutputConversion } from './run_output_conversion.js';
 import { resolveOutputConflicts } from './safe_mode.js';
 import { userMessage } from './user_messages.js';
 
 export const COMBINE_IMAGES_TO_PDF_COMMAND = 'latex-graphics-helper.convertImagesToSinglePdf';
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
+const OUTPUT_PATH_SETTING = 'outputPath.convertImagesToSinglePdf';
 
 export async function convertImagesToSinglePdfCommand(
   uri?: vscode.Uri,
@@ -28,72 +34,81 @@ export async function convertImagesToSinglePdfCommand(
     const workspaceFolder = requireSingleWorkspace(sourceUris);
     const workspacePath = workspaceFolder.uri.fsPath;
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const rsvgConvertPath = readRsvgConvertExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const outputTemplate = readOutputFormatOutputTemplate(configuration, OUTPUT_PATH_SETTING);
+    const outputPath = await resolveCombineOutputPath(sourceUris, workspaceFolder, outputTemplate);
 
-    let outputPath: string;
-
-    if (sourceUris.length === 1) {
-      const sourceUri = sourceUris[0]!;
-      const template =
-        configuration.get<string>('outputPath.convertImagesToSinglePdf') ??
-        '${fileDirname}/${fileBasenameNoExtension}.pdf';
-      outputPath = template
-        .replaceAll('${fileDirname}', path.dirname(sourceUri.fsPath))
-        .replaceAll('${fileBasenameNoExtension}', path.basename(sourceUri.fsPath, path.extname(sourceUri.fsPath)));
-    } else {
-      const saveUri = await vscode.window.showSaveDialog({
-        defaultUri: vscode.Uri.file(path.join(workspacePath, 'combined.pdf')),
-        filters: { 'PDF files': ['pdf'] },
-      });
-
-      if (!saveUri) {
-        return;
-      }
-
-      assertOutputInsideWorkspace(saveUri, workspaceFolder);
-      outputPath = saveUri.fsPath;
-    }
-
-    const jobs = sourceUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
-
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: userMessage('message.progress.convertToOutput.title', jobs.length, 'PDF'),
-        cancellable: true,
-      },
-      async (_progress, token) => {
-        const controller = new AbortController();
-        const cancellation = token.onCancellationRequested(() => controller.abort());
-
-        try {
-          await combineImagesToPdf({
-            jobs,
-            outputPath,
-            workspacePath,
-            signal: controller.signal,
-            rsvgConvertPath,
-            ghostscriptPath,
-            platform: process.platform,
-            resolveOutputConflicts,
-            ...(outputChannel !== undefined && { outputChannel }),
-          });
-        } finally {
-          cancellation.dispose();
-        }
-
-        await vscode.window.showInformationMessage(userMessage('message.convertToOutput.success', jobs.length, 'PDF'));
-      },
-    );
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
+    if (outputPath === undefined) {
       return;
     }
 
+    await assertWritablePathInWorkspace(outputPath, workspacePath);
+
+    const svgToPdf = readSvgToPdfOptions(configuration);
+    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const jobs = sourceUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
+
+    await runOutputConversion({
+      operationName: 'combine-images-to-pdf',
+      ...(outputChannel !== undefined && { outputChannel }),
+      resolveConflicts: resolveOutputConflicts,
+      messages: createOutputConversionMessages('PDF', jobs.length),
+      run: (runtime) => {
+        const combineOptions: CombineImagesToPdfOptions = {
+          jobs,
+          outputPath,
+          workspacePath,
+          svgToPdf,
+          ghostscriptPath,
+          platform: process.platform,
+        };
+        if (runtime.signal !== undefined) {
+          combineOptions.signal = runtime.signal;
+        }
+        if (runtime.resolveConflicts !== undefined) {
+          combineOptions.resolveOutputConflicts = runtime.resolveConflicts;
+        }
+        if (runtime.outputChannel !== undefined) {
+          combineOptions.outputChannel = runtime.outputChannel;
+        }
+        if (runtime.reportProgress !== undefined) {
+          combineOptions.reportProgress = runtime.reportProgress;
+        }
+        return combineImagesToPdf(combineOptions);
+      },
+    });
+  } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'PDF', message));
   }
+}
+
+async function resolveCombineOutputPath(
+  sourceUris: vscode.Uri[],
+  workspaceFolder: vscode.WorkspaceFolder,
+  configuredTemplate: string | undefined,
+): Promise<string | undefined> {
+  const sourceUri = sourceUris[0]!;
+
+  if (configuredTemplate !== undefined || sourceUris.length === 1) {
+    const template = configuredTemplate ?? DEFAULT_OUTPUT_PATH;
+    return resolveOutputPath(template, {
+      sourcePath: logicalSourcePathForOutputTemplate(sourceUri.fsPath),
+      workspacePath: workspaceFolder.uri.fsPath,
+      workspaceName: workspaceFolder.name,
+    });
+  }
+
+  const saveUri = await vscode.window.showSaveDialog({
+    defaultUri: vscode.Uri.joinPath(workspaceFolder.uri, 'combined.pdf'),
+    filters: { 'PDF files': ['pdf'] },
+  });
+
+  if (!saveUri) {
+    return undefined;
+  }
+
+  assertOutputInsideWorkspace(saveUri, workspaceFolder);
+  return saveUri.fsPath;
 }
 
 function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {

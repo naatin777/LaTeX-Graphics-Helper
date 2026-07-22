@@ -59,7 +59,7 @@ suite('PDF crop outputPath検証', () => {
       assert.ok(withProgress.notCalled);
       assert.ok(createOutputChannel.notCalled);
       assert.ok(showErrorMessage.calledOnce);
-      assert.match(String(showErrorMessage.firstCall.args[0]), /invalid output path.*NUL/i);
+      assert.match(showErrorMessage.firstCall.args[0], /invalid output path.*NUL/i);
       await assert.rejects(access(path.join(temporaryDirectory, '.latex-graphics-helper')));
     } finally {
       sandbox.restore();

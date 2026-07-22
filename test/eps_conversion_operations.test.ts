@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -10,6 +8,7 @@ import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 import * as vscode from 'vscode';
 
+import { readGhostscriptExecutablePath, readPdftocairoExecutablePath } from '../src/config/external_tool_paths.js';
 import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
 import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
 import { convertToJpegFiles } from '../src/operations/convert_to_jpeg.js';
@@ -20,8 +19,8 @@ import { convertToWebpFiles } from '../src/operations/convert_to_webp.js';
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const EPS_FIXTURE = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'eps', 'minimal.eps');
 const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-const GHOSTSCRIPT_PATH = configuration.get<string>('execPath.ghostscript', 'gs');
-const PDFTOCAIRO_PATH = configuration.get<string>('execPath.pdftocairo', 'pdftocairo');
+const GHOSTSCRIPT_PATH = readGhostscriptExecutablePath(configuration);
+const PDFTOCAIRO_PATH = readPdftocairoExecutablePath(configuration);
 
 suite('EPSの出力経路', () => {
   test('EPSをPDFへ変換する', async () => {

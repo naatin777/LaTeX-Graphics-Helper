@@ -1,5 +1,4 @@
 // PDF.js reads this Map method while its module is evaluated, so the polyfill must run first.
-// oxlint-disable-next-line import/no-unassigned-import
 import './install_map_get_or_insert_computed';
 
 import * as pdfjsModule from 'pdfjs-dist';
@@ -121,7 +120,7 @@ export async function renderPdfPages(
       }
     })().catch((error: unknown) => {
       options.onRenderError?.(error);
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     });
 
     renderPromises.set(pageNumber, renderPromise);
@@ -138,7 +137,7 @@ export async function renderPdfPages(
                 continue;
               }
 
-              const pageNumber = Number((entry.target as HTMLElement).dataset.pdfPage);
+              const pageNumber = Number((entry.target as unknown as HTMLElement).dataset.pdfPage);
               void renderPage(pageNumber).catch(() => undefined);
             }
           },

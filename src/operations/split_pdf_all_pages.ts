@@ -1,22 +1,19 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import pLimit from 'p-limit';
 import { PDFDocument } from 'pdf-lib';
 
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
-import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
-  commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 import { assertPreflightPassed } from './input_preflight.js';
-
-const SPLIT_CONCURRENCY = 2;
+import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
 
 export interface SplitPdfJob {
   sourcePath: string;
@@ -53,75 +50,58 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateInputPaths(options.jobs);
-  await assertPreflightPassed(options.jobs);
+  await assertPreflightPassed(options.jobs, undefined, options.signal);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, 'split-pdf', runId);
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(SPLIT_CONCURRENCY);
-      const stagedByJob = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() => {
-            options.signal?.throwIfAborted();
-            return splitPdf({ job, index, runId, signal: options.signal });
-          }),
-        ),
-      );
-      const stagedPages = stagedByJob.flat();
-
-      options.signal?.throwIfAborted();
-      return commitConversionOutputs(stagedPages, {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: 'split-pdf',
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      });
-    },
-    options.outputChannel,
-  );
+  return runStagedConversionBatch({
+    jobs: options.jobs,
+    operationName: 'split-pdf',
+    runId,
+    runtime,
+    stage: (job, index, currentRunId, batchRuntime) =>
+      splitPdf({ job, index, runId: currentRunId, signal: batchRuntime.signal }),
+  });
 }
 
 export async function splitPdfByPageGroups(options: SplitPdfByPageGroupsOptions): Promise<SplitPdfOutput[]> {
   options.signal?.throwIfAborted();
   validatePageGroupJobs(options.jobs);
   await validatePageGroupInputPaths(options.jobs);
+  await assertPreflightPassed(options.jobs, undefined, options.signal);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, 'split-pdf', runId);
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(SPLIT_CONCURRENCY);
-      const stagedByJob = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() => {
-            options.signal?.throwIfAborted();
-            return splitPdfPageGroups({ job, index, runId, signal: options.signal });
-          }),
-        ),
-      );
-      const stagedGroups = stagedByJob.flat();
-
-      options.signal?.throwIfAborted();
-      return commitConversionOutputs(stagedGroups, {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: 'split-pdf',
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      });
-    },
-    options.outputChannel,
-  );
+  return runStagedConversionBatch({
+    jobs: options.jobs,
+    operationName: 'split-pdf',
+    runId,
+    runtime,
+    stage: (job, index, currentRunId, batchRuntime) =>
+      splitPdfPageGroups({ job, index, runId: currentRunId, signal: batchRuntime.signal }),
+  });
 }
 
 async function splitPdf(params: {

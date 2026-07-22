@@ -158,6 +158,7 @@
   "message.progress.splitPdf.title": "Splitting {0} PDF file(s)",
   "message.progress.mergePdf.title": "Merging {0} PDF file(s)",
   "message.progress.prepareConversion": "Preparing {0} conversion...",
+  "message.progress.completedCount": "Processed {0} of {1} file(s)",
   "message.progress.preparePdfSplit": "Preparing PDF split...",
   "message.progress.convertDrawioToPdf.title": "Converting {0} Draw.io file(s) to split PDFs",
   "message.progress.convertDrawioToPdfDirectly.title": "Converting {0} Draw.io file(s) to one PDF each",

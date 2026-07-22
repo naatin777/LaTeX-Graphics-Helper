@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToJpeg commandが登録されること
 // - PNGをJPEGへ変換できること

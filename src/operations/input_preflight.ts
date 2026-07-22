@@ -2,6 +2,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import pLimit from 'p-limit';
 import sharp from 'sharp';
 
 import {
@@ -34,9 +35,47 @@ export interface BatchPreflightResult {
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
 const MAX_PIXEL_COUNT = 100_000_000; // 100 MPixel
+const PREFLIGHT_CONCURRENCY = 2;
 
-export async function runPreflightBatch(sourcePaths: string[]): Promise<BatchPreflightResult> {
-  const reports = await Promise.all(sourcePaths.map((sourcePath) => runPreflight(sourcePath)));
+export type PreflightValidator = (sourcePath: string) => Promise<PreflightReport>;
+
+export interface PreflightBatchOptions {
+  signal?: AbortSignal;
+  validate?: PreflightValidator;
+}
+
+export async function runPreflightBatch(
+  sourcePaths: string[],
+  options: PreflightBatchOptions = {},
+): Promise<BatchPreflightResult> {
+  const validate = options.validate ?? runPreflight;
+  options.signal?.throwIfAborted();
+
+  const reports: PreflightReport[] = [];
+  reports.length = sourcePaths.length;
+  const limit = pLimit(PREFLIGHT_CONCURRENCY);
+
+  await Promise.all(
+    sourcePaths.map((sourcePath, index) =>
+      limit(async () => {
+        options.signal?.throwIfAborted();
+
+        try {
+          const report = await validate(sourcePath);
+          options.signal?.throwIfAborted();
+          reports[index] = report;
+        } catch (error) {
+          if (options.signal?.aborted) {
+            options.signal.throwIfAborted();
+          }
+
+          throw error instanceof Error ? error : new Error(String(error));
+        }
+      }),
+    ),
+  );
+
+  options.signal?.throwIfAborted();
   const errors = reports.filter((r) => r.result === 'error');
   const warnings = reports.filter((r) => r.result === 'warning');
   return { reports, errors, warnings, canProceed: errors.length === 0 };
@@ -49,9 +88,10 @@ export async function runPreflightBatch(sourcePaths: string[]): Promise<BatchPre
 export async function assertPreflightPassed(
   jobs: { sourcePath: string }[],
   outputChannel?: LineOutputChannel,
+  signal?: AbortSignal,
 ): Promise<void> {
   const sourcePaths = jobs.map((j) => j.sourcePath);
-  const result = await runPreflightBatch(sourcePaths);
+  const result = await runPreflightBatch(sourcePaths, signal !== undefined ? { signal } : {});
 
   for (const report of result.reports) {
     outputChannel?.appendLine(
@@ -307,6 +347,18 @@ function validateDrawioInput(sourcePath: string, format: SourceFormat, fileSize:
 function validateEpsPreflight(sourcePath: string, format: SourceFormat, fileSize: number): PreflightReport {
   try {
     validateEpsInput(sourcePath);
+
+    const head = readFileSync(sourcePath, 'utf8').slice(0, 64 * 1024);
+    if (/^%%BoundingBox:\s*\(atend\)\s*$/m.test(head)) {
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'warning',
+        reason: 'EPS BoundingBox is deferred until conversion output validation.',
+        details: { fileSize, boundingBox: 'atend' },
+      };
+    }
 
     return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
   } catch (error) {

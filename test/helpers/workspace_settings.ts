@@ -55,7 +55,7 @@ async function readWorkspaceSettings(settingsPath: string): Promise<string | und
       return undefined;
     }
 
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -64,7 +64,7 @@ function parseWorkspaceSettings(settingsText: string | undefined): Record<string
     return {};
   }
 
-  return JSON.parse(settingsText) as Record<string, unknown>;
+  return JSON.parse(settingsText);
 }
 
 async function writeWorkspaceSettings(settingsPath: string, settings: Record<string, unknown>): Promise<void> {

@@ -48,7 +48,7 @@ export async function convertDrawioToPdfFiles(
   validateJobs(options.jobs, options.splitByPage);
   await validateJobPaths(options.jobs, operationName);
 
-  await assertPreflightPassed(options.jobs);
+  await assertPreflightPassed(options.jobs, undefined, options.runtime?.signal);
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
 
@@ -227,13 +227,14 @@ async function executeDrawio(
   signal?: AbortSignal,
   outputChannel?: ConversionRuntime['outputChannel'],
 ): Promise<void> {
-  await runExternalTool({
-    toolName: 'drawio',
-    executable,
-    args,
-    ...(signal !== undefined && { signal }),
-    ...(outputChannel !== undefined && { outputChannel }),
-  });
+  const toolOptions: Parameters<typeof runExternalTool>[0] = { toolName: 'drawio' as const, executable, args };
+  if (signal !== undefined) {
+    toolOptions.signal = signal;
+  }
+  if (outputChannel !== undefined) {
+    toolOptions.outputChannel = outputChannel;
+  }
+  await runExternalTool(toolOptions);
 }
 
 async function validateJobPaths(jobs: DrawioPdfJob[], operationName: string): Promise<void> {
@@ -269,7 +270,7 @@ function safeName(value: string): string {
 }
 
 function safePageName(value: string | undefined, page: number): string {
-  const normalized = [...(value ?? String(page))]
+  const normalized = Array.from(value ?? String(page))
     .map((character) => (character.charCodeAt(0) <= 31 ? '_' : character))
     .join('')
     .replace(/[\\/<>:"|?*]/g, '_')

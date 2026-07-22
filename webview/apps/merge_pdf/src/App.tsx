@@ -38,7 +38,6 @@ export function App() {
     };
 
     window.addEventListener('message', handleMessage);
-    // oxlint-disable-next-line unicorn/require-post-message-target-origin
     vscode.postMessage({ type: 'ready' });
 
     onCleanup(() => window.removeEventListener('message', handleMessage));
@@ -132,12 +131,10 @@ export function App() {
       return;
     }
 
-    /* oxlint-disable unicorn/require-post-message-target-origin */
     vscode.postMessage({
       type: 'apply',
       payload: { sourceIds: sources().map((source) => source.sourceId) },
     });
-    /* oxlint-enable unicorn/require-post-message-target-origin */
   };
 
   return (
@@ -225,6 +222,5 @@ export function App() {
 }
 
 function cancel() {
-  // oxlint-disable-next-line unicorn/require-post-message-target-origin
   vscode.postMessage({ type: 'cancel' });
 }

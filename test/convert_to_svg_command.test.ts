@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToSvg commandが登録されること
 // - .mmdをSVGに変換できること
@@ -15,7 +13,7 @@
 //   - fake Draw.io CLIをcommand testで直接扱うとWindowsのexecFile差で不安定になりやすい。
 //   - runnerを注入できるoperation testとして固定する。
 // - Mermaid → PDF / PNG / JPEG / WebP / AVIF
-// - Mermaid theme / look / backgroundColor
+// - Mermaid backgroundColor
 // - context menuの画面上の表示
 // - Safe Modeダイアログの画面表示
 // - VS Codeのprogress notificationの画面表示
@@ -76,6 +74,25 @@ suite('SVGに変換コマンド', () => {
 
   test('.mermaidファイルをSVGへ変換する', async () => {
     await assertMermaidFileConvertsToSvg('source.mermaid');
+  });
+
+  test('mermaid.themeのdark設定をSVG出力へ反映する', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'dark-theme.mmd');
+      await writeMermaidFixture(sourcePath);
+
+      await withWorkspaceSettings({ 'latex-graphics-helper.mermaid.theme': 'dark' }, async () => {
+        const commandExecution = vscode.commands.executeCommand(CONVERT_TO_SVG_COMMAND, vscode.Uri.file(sourcePath));
+        await runCommandAndClearNotificationsUntilDone(commandExecution);
+      });
+
+      const svg = await readFile(replaceExtension(sourcePath, '.svg'), 'utf8');
+      assert.match(svg, /fill:#1f2020/);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 
   test('outputPath.convertToSvgが設定されている場合はペア別設定より優先してpageを展開する', async () => {

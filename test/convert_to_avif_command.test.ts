@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToAvif commandが登録されること
 // - PNGをAVIFへ変換できること

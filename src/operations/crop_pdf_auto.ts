@@ -3,18 +3,16 @@ import { access, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import pLimit from 'p-limit';
 import { PDFDocument, type PDFPage } from 'pdf-lib';
 
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
-import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
-  commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
 import {
   createAsciiInputScratch,
   defaultWindowsScratchBaseCandidates,
@@ -24,9 +22,9 @@ import {
   type LineOutputChannel,
 } from './external_tool_ascii_scratch.js';
 import { assertPreflightPassed } from './input_preflight.js';
+import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
 
 const execFileAsync = promisify(execFile);
-const CONVERSION_CONCURRENCY = 2;
 
 export interface CropPdfJob {
   sourcePath: string;
@@ -67,7 +65,7 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
 
-  await assertPreflightPassed(options.jobs, options.outputChannel);
+  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
   options.signal?.throwIfAborted();
 
   if (!options.resolveOutputConflicts) {
@@ -80,45 +78,37 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
   const platform = options.platform ?? process.platform;
   const scratchBaseCandidates = options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates();
-  const artifacts = stagingArtifactsForJobs(options.jobs, 'crop-pdf', runId);
+  const runtime: ConversionRuntime = {};
+  if (options.signal !== undefined) {
+    runtime.signal = options.signal;
+  }
+  if (options.resolveOutputConflicts !== undefined) {
+    runtime.resolveConflicts = options.resolveOutputConflicts;
+  }
+  if (options.outputChannel !== undefined) {
+    runtime.outputChannel = options.outputChannel;
+  }
 
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(CONVERSION_CONCURRENCY);
-      const converted = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() => {
-            options.signal?.throwIfAborted();
-
-            return convertPdf({
-              job,
-              index,
-              margin: options.margin,
-              ghostscriptPath: options.ghostscriptPath,
-              runId,
-              runGhostscript,
-              platform,
-              scratchBaseCandidates,
-              signal: options.signal,
-              ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-            });
-          }),
-        ),
-      );
-
-      options.signal?.throwIfAborted();
-      return commitConversionOutputs(converted, {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: 'crop-pdf-auto',
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      });
-    },
-    options.outputChannel,
-  );
+  return runStagedConversionBatch({
+    jobs: options.jobs,
+    operationName: 'crop-pdf-auto',
+    stagingOperationName: 'crop-pdf',
+    runId,
+    runtime,
+    stage: (job, index, currentRunId, batchRuntime) =>
+      convertPdf({
+        job,
+        index,
+        margin: options.margin,
+        ghostscriptPath: options.ghostscriptPath,
+        runId: currentRunId,
+        runGhostscript,
+        platform,
+        scratchBaseCandidates,
+        signal: batchRuntime.signal,
+        ...(batchRuntime.outputChannel !== undefined && { outputChannel: batchRuntime.outputChannel }),
+      }),
+  });
 }
 
 async function convertPdf(params: {
@@ -167,12 +157,17 @@ async function convertPdf(params: {
     let ghostscriptInputPath = copiedSourcePath;
 
     if (platform === 'win32') {
-      scratch = await createAsciiInputScratch({
+      const scratchArgs: Parameters<typeof createAsciiInputScratch>[0] = {
         baseCandidates: scratchBaseCandidates,
         inputFileName: 'input.pdf',
-        ...(signal !== undefined && { signal }),
-        ...(outputChannel !== undefined && { outputChannel }),
-      });
+      };
+      if (signal !== undefined) {
+        scratchArgs.signal = signal;
+      }
+      if (outputChannel !== undefined) {
+        scratchArgs.outputChannel = outputChannel;
+      }
+      scratch = await createAsciiInputScratch(scratchArgs);
       signal?.throwIfAborted();
       await copyFile(copiedSourcePath, scratch.inputPath);
       signal?.throwIfAborted();
@@ -228,7 +223,7 @@ async function convertPdf(params: {
     if (scratch) {
       outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -253,7 +248,7 @@ async function readBoundingBoxes(
       outputChannel.appendLine(`Ghostscript error: ${message}`);
       outputChannel.appendLine(`Command: ${ghostscriptPath}`);
     }
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -321,7 +316,7 @@ async function assertOutputsDoNotExist(jobs: CropPdfJob[]): Promise<void> {
       if (isFileNotFoundError(error)) {
         continue;
       }
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     }
   }
 }

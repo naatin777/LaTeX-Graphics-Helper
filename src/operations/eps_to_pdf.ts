@@ -1,15 +1,18 @@
 import { execFile } from 'node:child_process';
-import { copyFile, mkdir, stat } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, stat } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
+import { PDFDocument } from 'pdf-lib';
+
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 import {
-  createAsciiInputScratch,
+  createAsciiInputOutputScratch,
   defaultWindowsScratchBaseCandidates,
   removeSuccessfulScratch,
   validateAsciiScratchInput,
+  validateAsciiScratchOutput,
 } from './external_tool_ascii_scratch.js';
 
 const execFileAsync = promisify(execFile);
@@ -30,7 +33,15 @@ export interface EpsToPdfOptions {
   scratchBaseCandidates?: readonly string[];
   timeout?: number;
   maxOutputSize?: number;
+  runGhostscript?: RunGhostscript;
 }
+
+export type RunGhostscript = (
+  executable: string,
+  args: string[],
+  timeout: number,
+  signal?: AbortSignal,
+) => Promise<void>;
 
 /**
  * Converts an EPS file to a single-page PDF via Ghostscript.
@@ -42,6 +53,7 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
   const platform = options.platform ?? process.platform;
   const pixbuf = options.timeout ?? 30_000;
   const maxOutputSize = options.maxOutputSize ?? 100 * 1024 * 1024;
+  const runGhostscript = options.runGhostscript ?? executeGhostscript;
 
   await mkdir(options.stagingDirectory, { recursive: true });
 
@@ -52,13 +64,15 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
   const pdfPath = path.join(options.stagingDirectory, 'eps-result.pdf');
 
-  // Windows: use ASCII scratch for Ghostscript
+  // Windows: use ASCII scratch for both Ghostscript input and output.
   let ghostscriptInputPath = stagingEpsPath;
+  let ghostscriptOutputPath = pdfPath;
 
   if (platform === 'win32') {
-    const scratchOptions: Parameters<typeof createAsciiInputScratch>[0] = {
+    const scratchOptions: Parameters<typeof createAsciiInputOutputScratch>[0] = {
       baseCandidates: options.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates(),
       inputFileName: 'source.eps',
+      outputFileName: 'output.pdf',
       toolName: 'Ghostscript',
     };
     if (options.signal !== undefined) {
@@ -67,17 +81,20 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
     if (options.outputChannel !== undefined) {
       scratchOptions.outputChannel = options.outputChannel;
     }
-    const scratch = await createAsciiInputScratch(scratchOptions);
-    await copyFile(stagingEpsPath, scratch.inputPath);
-    await validateAsciiScratchInput(scratch);
-    ghostscriptInputPath = scratch.inputPath;
-    options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
-    options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
+    const scratch = await createAsciiInputOutputScratch(scratchOptions);
+    let scratchSucceeded = false;
 
     try {
+      await copyFile(stagingEpsPath, scratch.inputPath);
+      await validateAsciiScratchInput(scratch);
+      ghostscriptInputPath = scratch.inputPath;
+      ghostscriptOutputPath = scratch.outputPath;
+      options.outputChannel?.appendLine(`[scratch] logical input: ${options.epsPath}`);
+      options.outputChannel?.appendLine(`[scratch] tool input: ${scratch.inputPath}`);
+      options.outputChannel?.appendLine(`[scratch] tool output: ${scratch.outputPath}`);
       options.signal?.throwIfAborted();
 
-      await executeGhostscript(
+      await runGhostscript(
         options.ghostscriptPath,
         [
           '-dSAFER',
@@ -85,7 +102,7 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
           '-dBATCH',
           '-dEPSCrop',
           '-sDEVICE=pdfwrite',
-          `-sOutputFile=${pdfPath}`,
+          `-sOutputFile=${ghostscriptOutputPath}`,
           ghostscriptInputPath,
         ],
         pixbuf,
@@ -93,17 +110,28 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
       );
 
       options.signal?.throwIfAborted();
+      await validateAsciiScratchOutput(scratch);
+      await validateGeneratedPdf(ghostscriptOutputPath, maxOutputSize);
+      options.signal?.throwIfAborted();
+      await copyFile(ghostscriptOutputPath, pdfPath);
+      options.signal?.throwIfAborted();
       await validateGeneratedPdf(pdfPath, maxOutputSize);
       options.signal?.throwIfAborted();
+      options.outputChannel?.appendLine(`[scratch] staged output: ${pdfPath}`);
+      scratchSucceeded = true;
 
       return { pdfPath, stagingDirectory: options.stagingDirectory };
     } finally {
-      await removeSuccessfulScratch(scratch, options.outputChannel);
+      if (scratchSucceeded) {
+        await removeSuccessfulScratch(scratch, options.outputChannel);
+      } else {
+        options.outputChannel?.appendLine(`[scratch] retained after failure or cancellation: ${scratch.rootPath}`);
+      }
     }
   }
 
   // Non-Windows: execute Ghostscript directly
-  await executeGhostscript(
+  await runGhostscript(
     options.ghostscriptPath,
     [
       '-dSAFER',
@@ -147,11 +175,55 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
     );
   }
 
-  // Fast check: PDF must start with %PDF
-  const header = readFileSync(pdfPath, { encoding: 'utf8' }).slice(0, 5);
+  const pdfBytes = await readFile(pdfPath);
+  const header = pdfBytes.subarray(0, 5).toString('ascii');
 
   if (header !== '%PDF-') {
     throw new Error(`EPS conversion produced non-PDF output: ${pdfPath}`);
+  }
+
+  let document: PDFDocument;
+
+  try {
+    document = await PDFDocument.load(pdfBytes);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`EPS conversion produced an unparsable PDF: ${message}`, { cause: error });
+  }
+
+  let pageCount: number;
+
+  try {
+    pageCount = document.getPageCount();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`EPS conversion produced an unparsable PDF: ${message}`, { cause: error });
+  }
+
+  if (pageCount !== 1) {
+    throw new Error(`EPS conversion must produce exactly one PDF page (found ${pageCount}): ${pdfPath}`);
+  }
+
+  let page;
+
+  try {
+    page = document.getPage(0);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`EPS conversion produced an unparsable PDF: ${message}`, { cause: error });
+  }
+  const pageBoxes = [
+    ['MediaBox', page.getMediaBox()],
+    ['CropBox', page.getCropBox()],
+    ['TrimBox', page.getTrimBox()],
+  ] as const;
+
+  for (const [boxName, box] of pageBoxes) {
+    const values = [box.x, box.y, box.width, box.height];
+
+    if (!values.every(Number.isFinite) || box.width <= 0 || box.height <= 0) {
+      throw new Error(`EPS conversion produced invalid ${boxName} dimensions: ${pdfPath}`);
+    }
   }
 }
 
@@ -165,22 +237,43 @@ export function validateEpsInput(epsPath: string): void {
     throw new Error(`Not a valid EPS file (missing PostScript header): ${epsPath}`);
   }
 
-  // Check BoundingBox presence
-  const bbMatch = head.match(/%%BoundingBox:\s*(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)/);
+  const bbMatch = head.match(/^%%BoundingBox:\s*(.*?)\s*$/m);
 
-  if (bbMatch) {
-    const llx = parseInt(bbMatch[1]!, 10);
-    const lly = parseInt(bbMatch[2]!, 10);
-    const urx = parseInt(bbMatch[3]!, 10);
-    const ury = parseInt(bbMatch[4]!, 10);
+  if (!bbMatch) {
+    throw new Error(`Missing BoundingBox in EPS: ${epsPath}`);
+  }
 
-    if (llx >= urx || lly >= ury) {
-      throw new Error(`Invalid BoundingBox in EPS (llx=${llx} >= urx=${urx} or lly=${lly} >= ury=${ury}): ${epsPath}`);
-    }
+  const boundingBox = bbMatch[1]!.trim();
 
-    if (urx - llx > 100_000 || ury - lly > 100_000) {
-      throw new Error(`EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`);
-    }
+  // A deferred BoundingBox is resolved by Ghostscript and checked against the
+  // generated PDF. It is valid input, but cannot be checked during preflight.
+  if (boundingBox === '(atend)') {
+    return;
+  }
+
+  const values = boundingBox.split(/\s+/u);
+
+  if (values.length !== 4 || values.some((value) => !/^-?\d+$/u.test(value))) {
+    throw new Error(`Invalid BoundingBox in EPS: ${epsPath}`);
+  }
+
+  const numericValues = values.map((value) => Number(value));
+  const llx = numericValues[0] ?? Number.NaN;
+  const lly = numericValues[1] ?? Number.NaN;
+  const urx = numericValues[2] ?? Number.NaN;
+  const ury = numericValues[3] ?? Number.NaN;
+
+  if (
+    ![llx, lly, urx, ury].every(Number.isInteger) ||
+    [llx, lly, urx, ury].some((value) => value < -(2 ** 31) || value > 2 ** 31 - 1) ||
+    llx >= urx ||
+    lly >= ury
+  ) {
+    throw new Error(`Invalid BoundingBox in EPS (llx=${llx}, lly=${lly}, urx=${urx}, ury=${ury}): ${epsPath}`);
+  }
+
+  if (urx - llx > 100_000 || ury - lly > 100_000) {
+    throw new Error(`EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`);
   }
 }
 

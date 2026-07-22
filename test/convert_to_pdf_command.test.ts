@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToPdf commandが登録されること
 // - PNGをPDFに変換できること

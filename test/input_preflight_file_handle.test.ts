@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import assert from 'node:assert/strict';
 import { mkdtemp, rename, rm } from 'node:fs/promises';
 import os from 'node:os';

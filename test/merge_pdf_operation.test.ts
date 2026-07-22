@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { access, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -96,6 +96,39 @@ suite('PDF結合operation', () => {
       await assert.rejects(access(outputPath));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('preflightより先にworkspace境界を検証し、外部symlink入力を読み込まない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-merge-operation-'));
+    const outsidePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-merge-outside-'));
+
+    try {
+      const linkedSourcePath = path.join(workspacePath, 'linked.pdf');
+      const secondPath = path.join(workspacePath, 'second.pdf');
+      const outputPath = path.join(workspacePath, 'merged.pdf');
+      const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', 'boundary');
+      const outsideSourcePath = path.join(outsidePath, 'malformed.pdf');
+
+      await writeFile(outsideSourcePath, 'not a PDF');
+      await symlink(outsideSourcePath, linkedSourcePath);
+      await copyFile(secondFixturePath, secondPath);
+
+      await assert.rejects(
+        mergePdf({
+          sourcePaths: [linkedSourcePath, secondPath],
+          outputPath,
+          workspacePath,
+          runId: 'boundary',
+        }),
+        /outside the workspace/,
+      );
+
+      await assert.rejects(access(outputPath));
+      await assert.rejects(access(stagingRootPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+      await rm(outsidePath, { recursive: true, force: true });
     }
   });
 

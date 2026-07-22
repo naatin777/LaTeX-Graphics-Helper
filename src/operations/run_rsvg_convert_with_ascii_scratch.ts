@@ -31,16 +31,19 @@ export async function runRsvgConvertWithAsciiScratch(options: {
     return;
   }
 
-  const scratch = await createAsciiInputOutputScratch({
+  const scratchArgs: Parameters<typeof createAsciiInputOutputScratch>[0] = {
     baseCandidates: options.scratch.scratchBaseCandidates ?? defaultWindowsScratchBaseCandidates(),
     inputFileName: 'input.svg',
     outputFileName: 'output.pdf',
     toolName: 'rsvg-convert',
-    ...(options.signal !== undefined && { signal: options.signal }),
-    ...(options.scratch.outputChannel !== undefined && {
-      outputChannel: options.scratch.outputChannel,
-    }),
-  });
+  };
+  if (options.signal !== undefined) {
+    scratchArgs.signal = options.signal;
+  }
+  if (options.scratch.outputChannel !== undefined) {
+    scratchArgs.outputChannel = options.scratch.outputChannel;
+  }
+  const scratch = await createAsciiInputOutputScratch(scratchArgs);
 
   try {
     options.signal?.throwIfAborted();
@@ -62,7 +65,7 @@ export async function runRsvgConvertWithAsciiScratch(options: {
     await removeSuccessfulScratch(scratch, options.scratch.outputChannel);
   } catch (error) {
     options.scratch.outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 

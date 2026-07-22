@@ -57,6 +57,6 @@ export async function runPdftocairoWithAsciiScratch(options: {
     await removeSuccessfulScratch(scratch, options.outputChannel);
   } catch (error) {
     options.outputChannel?.appendLine(`[scratch] retained after failure: ${scratch.rootPath}`);
-    throw error;
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

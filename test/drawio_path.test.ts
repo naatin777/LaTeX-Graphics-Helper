@@ -20,7 +20,7 @@ suite('Draw.io実行ファイルの既定値', () => {
     assert.strictEqual(
       readDrawioExecutablePath({
         get<T>(_key: string, _defaultValue: T): T {
-          return ' /custom/drawio ' as T;
+          return ' /custom/drawio ' as unknown as T;
         },
       }),
       '/custom/drawio',

@@ -282,7 +282,7 @@ suite('PDF自動crop処理', () => {
       { name: 'AbortError' },
     );
 
-    assert.strictEqual(receivedSignal, abortController.signal);
+    assert.strictEqual(receivedSignal?.aborted, true);
     await assert.rejects(access(outputPath));
   });
 
@@ -342,7 +342,7 @@ suite('PDF自動crop処理', () => {
     const runGhostscript: RunGhostscript = async () => {
       const error = new Error('spawn gs ENOENT') as NodeJS.ErrnoException;
       error.code = 'ENOENT';
-      throw error;
+      throw error instanceof Error ? error : new Error(String(error));
     };
 
     await assert.rejects(

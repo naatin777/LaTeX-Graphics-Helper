@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import assert from 'node:assert/strict';
 
 import { renderTemplate, type TemplateContext } from '../src/edit_provider/latex_template.js';
