@@ -26,7 +26,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
+import { assertLocalFileInWorkspace, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
 
@@ -98,15 +98,7 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToSvgJob[]> {
-  if (sourceUri.scheme !== 'file') {
-    throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
-  }
-
-  const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
-
-  if (!workspace) {
-    throw new Error(`The file must be inside an open workspace: ${sourceUri.fsPath}`);
-  }
+  const workspace = assertLocalFileInWorkspace(sourceUri);
 
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();

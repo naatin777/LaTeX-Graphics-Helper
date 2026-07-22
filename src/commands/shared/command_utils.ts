@@ -1,4 +1,4 @@
-import type * as vscode from 'vscode';
+import * as vscode from 'vscode';
 
 import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 
@@ -17,4 +17,18 @@ export function errorMessage(error: unknown): string {
 
 export function readDrawioOptions(configuration: vscode.WorkspaceConfiguration): { drawioPath: string } {
   return { drawioPath: readDrawioExecutablePath(configuration) };
+}
+
+export function assertLocalFileInWorkspace(sourceUri: vscode.Uri): vscode.WorkspaceFolder {
+  if (sourceUri.scheme !== 'file') {
+    throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
+  }
+
+  const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
+
+  if (!workspace) {
+    throw new Error(`The file must be inside an open workspace: ${sourceUri.fsPath}`);
+  }
+
+  return workspace;
 }
