@@ -1,3 +1,4 @@
+import { once } from 'node:events';
 import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -206,8 +207,7 @@ async function validateRasterInput(
   const image = sharp(sourcePath);
 
   try {
-    // metadata() reads image headers without decoding compressed pixels. Destroy
-    // the Sharp stream explicitly so Windows does not retain the input handle.
+    // metadata() reads image headers without decoding compressed pixels.
     const metadata = await image.metadata();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
@@ -240,7 +240,11 @@ async function validateRasterInput(
     const message = error instanceof Error ? error.message : String(error);
     return { sourcePath, format, fileSize, result: 'error', reason: `Image validation failed: ${message}` };
   } finally {
-    image.destroy();
+    if (!image.destroyed) {
+      const closed = once(image, 'close');
+      image.destroy();
+      await closed;
+    }
   }
 }
 
