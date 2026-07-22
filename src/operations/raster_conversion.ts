@@ -19,6 +19,7 @@ import type { ConversionRuntime } from './conversion_runtime.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
 import { assertPreflightPassed } from './input_preflight.js';
+import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
@@ -97,7 +98,7 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
   options.runtime.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.runtime.outputChannel);
+  await assertPreflightPassed(options.jobs, options.runtime.outputChannel, options.runtime.signal);
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -274,6 +275,7 @@ async function writeMermaidAsRaster(request: RasterRenderRequest, context: Raste
       outputFormat: 'png',
       puppeteerConfig: createMermaidPuppeteerConfig(context.tools.mermaid),
       quiet: true,
+      ...createMermaidCliRenderOptions(context.tools.mermaid),
     });
   } catch (error) {
     if (isAbortError(error)) {

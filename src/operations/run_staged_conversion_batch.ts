@@ -13,6 +13,7 @@ const CONVERSION_CONCURRENCY = 2;
 export interface StagedConversionBatch<Job extends { workspacePath: string }> {
   jobs: Job[];
   operationName: string;
+  stagingOperationName?: string;
   runId: string;
   runtime?: ConversionRuntime;
   stage: (
@@ -28,7 +29,11 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
   options: StagedConversionBatch<Job>,
 ): Promise<CommittedConversionOutput[]> {
   const runtime = options.runtime ?? {};
-  const artifacts = stagingArtifactsForJobs(options.jobs, options.operationName, options.runId);
+  const artifacts = stagingArtifactsForJobs(
+    options.jobs,
+    options.stagingOperationName ?? options.operationName,
+    options.runId,
+  );
   const abortController = new AbortController();
   const abortFromCaller = () => abortController.abort(options.runtime?.signal?.reason);
 
@@ -56,13 +61,16 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
               try {
                 return await options.stage(job, index, options.runId, batchRuntime);
               } catch (error) {
-                abortController.abort(error);
-                throw error;
+                const stageError = error instanceof Error ? error : new Error(String(error));
+                abortController.abort(stageError);
+                throw stageError;
               }
             }),
           ),
         );
-        const failure = settled.find((result) => result.status === 'rejected');
+        const failure =
+          settled.find((result) => result.status === 'rejected' && !isAbortError(result.reason)) ??
+          settled.find((result) => result.status === 'rejected');
         if (failure?.status === 'rejected') {
           throw failure.reason;
         }
@@ -83,4 +91,8 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
   } finally {
     options.runtime?.signal?.removeEventListener('abort', abortFromCaller);
   }
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError';
 }

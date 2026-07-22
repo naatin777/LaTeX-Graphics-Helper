@@ -11,6 +11,10 @@ export interface ConversionArtifactRoot {
   preservePaths?: readonly string[];
 }
 
+export interface CleanupPreservingError {
+  readonly cleanupPreservePaths?: readonly string[];
+}
+
 export function stagingArtifactsForJobs(
   jobs: readonly { workspacePath: string }[],
   operation: string,
@@ -29,8 +33,18 @@ export function stagingArtifactsForJobs(
 export async function cleanupConversionArtifacts(
   artifacts: readonly ConversionArtifactRoot[],
   outputChannel?: LineOutputChannel,
+  failure?: unknown,
 ): Promise<void> {
-  for (const artifact of deduplicateArtifacts(artifacts)) {
+  const inheritedPreservePaths = getCleanupPreservePaths(failure);
+  const artifactsWithInheritedPreserves = artifacts.map((artifact) => ({
+    ...artifact,
+    preservePaths: [
+      ...(artifact.preservePaths ?? []),
+      ...inheritedPreservePaths.filter((preservePath) => isWithin(preservePath, artifact.rootPath)),
+    ],
+  }));
+
+  for (const artifact of deduplicateArtifacts(artifactsWithInheritedPreserves)) {
     try {
       await removeUnusedArtifactEntries(artifact);
     } catch (error) {
@@ -49,9 +63,29 @@ export async function withStagingCleanup<T>(
   try {
     return await operation();
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, outputChannel);
+    await cleanupConversionArtifacts(artifacts, outputChannel, error);
     throw error;
   }
+}
+
+function getCleanupPreservePaths(error: unknown): readonly string[] {
+  if (!isCleanupPreservingError(error)) {
+    return [];
+  }
+
+  return error.cleanupPreservePaths ?? [];
+}
+
+function isCleanupPreservingError(error: unknown): error is CleanupPreservingError {
+  if (typeof error !== 'object' || error === null || !('cleanupPreservePaths' in error)) {
+    return false;
+  }
+
+  const preservePaths = (error as { cleanupPreservePaths?: unknown }).cleanupPreservePaths;
+  return (
+    preservePaths === undefined ||
+    (Array.isArray(preservePaths) && preservePaths.every((value): value is string => typeof value === 'string'))
+  );
 }
 
 async function removeUnusedArtifactEntries(artifact: ConversionArtifactRoot): Promise<void> {

@@ -4,28 +4,27 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
-import pLimit from 'p-limit';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../application/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
 import { assertPreflightPassed } from './input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
-import { stagingArtifactsForJobs, withStagingCleanup } from './cleanup_conversion_artifacts.js';
 import {
-  commitConversionOutputs,
   type CommittedConversionOutput,
   type OutputConflictDecision,
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
+import type { ConversionRuntime } from './conversion_runtime.js';
 import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
+import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from './run_external_tool.js';
 import { runPdftocairoWithAsciiScratch, type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
+import { runStagedConversionBatch } from './run_staged_conversion_batch.js';
 
 export type { MermaidPuppeteerOptions };
 
-const CONVERSION_CONCURRENCY = 2;
 const execFileAsync = promisify(execFile);
 
 export interface ConvertToSvgJob {
@@ -61,48 +60,36 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.outputChannel);
+  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const artifacts = stagingArtifactsForJobs(options.jobs, 'convert-to-svg', runId);
+  const runtime: ConversionRuntime = {
+    ...(options.signal !== undefined && { signal: options.signal }),
+    ...(options.resolveOutputConflicts !== undefined && { resolveConflicts: options.resolveOutputConflicts }),
+    ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
+  };
 
-  return withStagingCleanup(
-    artifacts,
-    async () => {
-      const limit = pLimit(CONVERSION_CONCURRENCY);
-      const stagedOutputs = await Promise.all(
-        options.jobs.map((job, index) =>
-          limit(() =>
-            stageSvgConversion(
-              job,
-              index,
-              runId,
-              options.pdftocairoPath,
-              options.ghostscriptPath,
-              options.mermaid,
-              options.drawio,
-              options.runPdfToSvg,
-              options,
-              options.outputChannel,
-              options.signal,
-            ),
-          ),
-        ),
-      );
-
-      options.signal?.throwIfAborted();
-      return commitConversionOutputs(stagedOutputs, {
-        ...(options.signal !== undefined && { signal: options.signal }),
-        ...(options.resolveOutputConflicts !== undefined && {
-          resolveConflicts: options.resolveOutputConflicts,
-        }),
-        operationName: 'convert-to-svg',
-        ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
-      });
-    },
-    options.outputChannel,
-  );
+  return runStagedConversionBatch({
+    jobs: options.jobs,
+    operationName: 'convert-to-svg',
+    runId,
+    runtime,
+    stage: (job, index, currentRunId, batchRuntime) =>
+      stageSvgConversion(
+        job,
+        index,
+        currentRunId,
+        options.pdftocairoPath,
+        options.ghostscriptPath,
+        options.mermaid,
+        options.drawio,
+        options.runPdfToSvg,
+        options,
+        batchRuntime.outputChannel,
+        batchRuntime.signal,
+      ),
+  });
 }
 
 async function stageSvgConversion(
@@ -349,6 +336,7 @@ async function writeMermaidAsSvg(
       outputFormat: 'svg',
       puppeteerConfig: createMermaidPuppeteerConfig(mermaid),
       quiet: true,
+      ...createMermaidCliRenderOptions(mermaid),
     });
   } catch (error) {
     if (isAbortError(error)) {

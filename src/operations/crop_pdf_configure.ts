@@ -50,7 +50,7 @@ export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions)
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
 
-  await assertPreflightPassed([options.job]);
+  await assertPreflightPassed([options.job], undefined, options.signal);
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;
@@ -70,7 +70,7 @@ export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions)
       ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     });
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, options.outputChannel);
+    await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
     throw error;
   }
 }

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
@@ -61,6 +62,46 @@ suite('Split PDF page groups', () => {
       await access(
         path.join(workspacePath, '.latex-graphics-helper', 'split-pdf', 'run', '1-source', 'groups', '1.pdf'),
       );
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('rejects a malformed PDF during common preflight before creating staging', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-split-groups-test-'));
+    const sourcePath = path.join(workspacePath, 'source.pdf');
+    const outputPath = path.join(workspacePath, 'group.pdf');
+    const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'split-pdf', 'run');
+    const invalidPdfPath = path.resolve(
+      path.dirname(fileURLToPath(import.meta.url)),
+      '..',
+      '..',
+      'test',
+      'fixtures',
+      'preflight',
+      'invalid-header.pdf',
+    );
+
+    try {
+      await copyFile(invalidPdfPath, sourcePath);
+
+      await assert.rejects(
+        splitPdfByPageGroups({
+          jobs: [
+            {
+              sourcePath,
+              workspacePath,
+              pageGroups: [[1]],
+              outputPathForGroup: () => outputPath,
+            },
+          ],
+          runId: 'run',
+        }),
+        /Preflight validation failed/,
+      );
+
+      await assert.rejects(access(outputPath));
+      await assert.rejects(access(stagingRootPath));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

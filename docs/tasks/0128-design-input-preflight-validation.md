@@ -2,11 +2,12 @@
 
 ## Status
 
-Spec Complete — `docs/specs/internal/input-preflight.md` に記録済み。実装は別タスク。
+Spec Complete — `docs/specs/internal/input-preflight.md` に記録済み。残る実装は0204で追跡する。
 
 ## 目的
 
 PDF操作・画像変換・Draw.io・Mermaid変換を開始する前に、入力ファイルの破損、形式不一致、異常な構造、描画不能を検査し、処理途中の失敗や不完全な出力を減らす。
+
 ## 対象形式
 
 - PDF
@@ -20,6 +21,7 @@ PDF操作・画像変換・Draw.io・Mermaid変換を開始する前に、入力
 - EPS
 - Mermaid（`.mmd`、`.mermaid`）
 - Draw.io（`.drawio`、`.dio`、editable PNG / SVG）
+
 ## 完了条件
 
 - 全形式で「正常」「warningあり」「処理不能」を区別する
@@ -102,6 +104,7 @@ PDF操作・画像変換・Draw.io・Mermaid変換を開始する前に、入力
 - 入力ファイルの自動修復実装
 - password入力UIの実装
 - 既存処理へのpreflight組み込み
+
 ## 関連
 
 - [PDF処理バックエンドの予備調査](../research/2026-07-10-pdf-processing-backends.md)
@@ -109,7 +112,7 @@ PDF操作・画像変換・Draw.io・Mermaid変換を開始する前に、入力
 - [出力形式基準の変換仕様](../specs/internal/output-format-conversion.md)
 - [入力preflightの内部契約](../specs/internal/input-preflight.md)
 - [EPS変換の内部契約](../specs/internal/eps-conversion.md)
-
+- [0204: 変換入力preflightの未実装契約を完了する](0204-complete-input-preflight-implementation.md)
 
 ## 確認方法
 

@@ -4,7 +4,11 @@ import path from 'node:path';
 
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
-import { cleanupConversionArtifacts, type ConversionArtifactRoot } from './cleanup_conversion_artifacts.js';
+import {
+  cleanupConversionArtifacts,
+  type CleanupPreservingError,
+  type ConversionArtifactRoot,
+} from './cleanup_conversion_artifacts.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 import { filesHaveEqualContents, hashFile } from './file_content_hash.js';
 
@@ -55,17 +59,23 @@ export interface RollbackFailure {
   error: Error;
 }
 
-export class CommitRollbackError extends Error {
+export class CommitRollbackError extends Error implements CleanupPreservingError {
   readonly originalError: Error;
   readonly rollbackErrors: readonly RollbackFailure[];
+  readonly cleanupPreservePaths: readonly string[];
 
-  constructor(originalError: unknown, rollbackErrors: readonly RollbackFailure[]) {
+  constructor(
+    originalError: unknown,
+    rollbackErrors: readonly RollbackFailure[],
+    cleanupPreservePaths: readonly string[] = [],
+  ) {
     const normalizedOriginalError = asError(originalError);
     const details = rollbackErrors.map(({ outputPath, error }) => `${outputPath}: ${error.message}`).join('; ');
     super(`Commit failed: ${normalizedOriginalError.message}; rollback failed: ${details}`);
     this.name = 'CommitRollbackError';
     this.originalError = normalizedOriginalError;
     this.rollbackErrors = rollbackErrors;
+    this.cleanupPreservePaths = [...new Set(cleanupPreservePaths)];
   }
 }
 
@@ -102,16 +112,10 @@ export async function commitConversionOutputs(
 
     return await commitResolvedOutputs(resolvedOutputs, options);
   } catch (error) {
-    const rollbackError = error instanceof CommitRollbackError ? error : undefined;
-    const preservePaths = rollbackError
-      ? rollbackError.rollbackErrors.flatMap((failure) => {
-          const output = resolvedOutputs.find((item) => item.outputPath === failure.outputPath);
-          return output?.previousFilePath ? [output.previousFilePath] : [];
-        })
-      : [];
     await cleanupConversionArtifacts(
-      toArtifactRoots(resolvedOutputs.length > 0 ? resolvedOutputs : outputs, preservePaths),
+      toArtifactRoots(resolvedOutputs.length > 0 ? resolvedOutputs : outputs),
       options.outputChannel,
+      error,
     );
     throw error;
   }
@@ -239,7 +243,11 @@ async function commitResolvedOutputs(
           );
         }
       }
-      throw new CommitRollbackError(error, rollbackErrors);
+      const recoveryBackupPaths = rollbackErrors.flatMap((failure) => {
+        const output = outputs.find((item) => item.outputPath === failure.outputPath);
+        return output?.previousFilePath ? [output.previousFilePath] : [];
+      });
+      throw new CommitRollbackError(error, rollbackErrors, recoveryBackupPaths);
     }
 
     throw error;
@@ -262,17 +270,13 @@ async function commitResolvedOutputs(
   });
 }
 
-function toArtifactRoots(
-  outputs: PreparedConversionOutput[],
-  preservePaths: readonly string[] = [],
-): ConversionArtifactRoot[] {
+function toArtifactRoots(outputs: PreparedConversionOutput[]): ConversionArtifactRoot[] {
   return outputs.flatMap((output) =>
     output.stagingRootPath
       ? [
           {
             rootPath: output.stagingRootPath,
             workspacePath: output.workspacePath,
-            preservePaths: preservePaths.filter((preservePath) => isWithin(preservePath, output.stagingRootPath ?? '')),
           },
         ]
       : [],
@@ -412,11 +416,6 @@ async function readFileIdentity(filePath: string): Promise<FileIdentity> {
 
 function sameFileIdentity(first: FileIdentity, second: FileIdentity): boolean {
   return first.dev === second.dev && first.ino === second.ino;
-}
-
-function isWithin(targetPath: string, parentPath: string): boolean {
-  const relativePath = path.relative(path.resolve(parentPath), path.resolve(targetPath));
-  return relativePath === '' || (!path.isAbsolute(relativePath) && !relativePath.startsWith(`..${path.sep}`));
 }
 
 function asError(error: unknown): Error {

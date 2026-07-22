@@ -35,14 +35,25 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
   }
 
   options.signal?.throwIfAborted();
-  await assertPreflightPassed(sourcePaths.map((s) => ({ sourcePath: s })));
-  options.signal?.throwIfAborted();
+
+  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
+  const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', runId);
+  const stagedOutputPath = path.join(stagingRootPath, 'result.pdf');
 
   await Promise.all([
     ...sourcePaths.map((sourcePath) => assertExistingPathInWorkspace(sourcePath, workspacePath)),
     assertWritablePathInWorkspace(outputPath, workspacePath),
     assertWritablePathInWorkspace(path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf'), workspacePath),
+    assertWritablePathInWorkspace(stagingRootPath, workspacePath),
+    assertWritablePathInWorkspace(stagedOutputPath, workspacePath),
   ]);
+  options.signal?.throwIfAborted();
+
+  await assertPreflightPassed(
+    sourcePaths.map((s) => ({ sourcePath: s })),
+    undefined,
+    options.signal,
+  );
   options.signal?.throwIfAborted();
 
   const mergedDocument = await PDFDocument.create();
@@ -60,10 +71,6 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
   }
 
   options.signal?.throwIfAborted();
-  const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'merge-pdf', runId);
-  const stagedOutputPath = path.join(stagingRootPath, 'result.pdf');
-
   const artifacts: ConversionArtifactRoot[] = [{ rootPath: stagingRootPath, workspacePath }];
 
   try {
@@ -82,7 +89,7 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
       ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
     });
   } catch (error) {
-    await cleanupConversionArtifacts(artifacts, options.outputChannel);
+    await cleanupConversionArtifacts(artifacts, options.outputChannel, error);
     throw error;
   }
 }

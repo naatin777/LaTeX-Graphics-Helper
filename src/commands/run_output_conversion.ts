@@ -17,7 +17,7 @@ export interface ConversionCommandMessages {
   failedMessage: (reason: string) => string;
 }
 
-export type OutputConversionFormat = 'PNG' | 'JPEG' | 'WebP' | 'AVIF' | 'SVG';
+export type OutputConversionFormat = 'PDF' | 'PNG' | 'JPEG' | 'WebP' | 'AVIF' | 'SVG';
 
 export function createOutputConversionMessages(
   format: OutputConversionFormat,
@@ -53,6 +53,9 @@ export async function runOutputConversion(options: {
           progress.report({ message: options.messages.prepareMessage });
           return options.run({
             signal,
+            reportProgress: (completed, total) => {
+              progress.report({ message: userMessage('message.progress.completedCount', completed, total) });
+            },
             ...(options.outputChannel !== undefined && { outputChannel: options.outputChannel }),
             ...(options.resolveConflicts !== undefined && {
               resolveConflicts: options.resolveConflicts,

@@ -123,4 +123,67 @@ suite('staged conversion batch', () => {
       await rm(workspacePath, { recursive: true, force: true });
     }
   });
+
+  test('caller cancellationでも実行中のstageがsettleするまでcleanupせず、queueを開始しない', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-staged-batch-'));
+    const stagingRootPath = path.join(workspacePath, '.latex-graphics-helper', 'fixture-raster', 'caller-abort-run');
+    const abortController = new AbortController();
+    let startedStages = 0;
+    let queuedStageStarted = false;
+    let resolveBothStarted!: () => void;
+    const bothStarted = new Promise<void>((resolve) => {
+      resolveBothStarted = resolve;
+    });
+    let releaseStages!: () => void;
+    const stagesReleased = new Promise<void>((resolve) => {
+      releaseStages = resolve;
+    });
+    let batch: Promise<unknown> | undefined;
+
+    try {
+      batch = runStagedConversionBatch({
+        jobs: [{ workspacePath }, { workspacePath }, { workspacePath }],
+        operationName: 'fixture-raster',
+        runId: 'caller-abort-run',
+        runtime: { signal: abortController.signal },
+        stage: async (_job, index, _runId, runtime) => {
+          if (index >= 2) {
+            queuedStageStarted = true;
+            throw new Error('queued stage should not start');
+          }
+
+          await mkdir(stagingRootPath, { recursive: true });
+          await writeFile(path.join(stagingRootPath, `job-${index}`), 'in progress');
+          startedStages++;
+          if (startedStages === 2) {
+            resolveBothStarted();
+          }
+
+          await stagesReleased;
+          runtime.signal?.throwIfAborted();
+          throw new Error('delayed sibling stage should stop');
+        },
+      });
+
+      await Promise.race([
+        bothStarted,
+        new Promise<never>((_resolve, reject) =>
+          setTimeout(() => reject(new Error('both stages did not start')), 1000),
+        ),
+      ]);
+      abortController.abort();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+
+      assert.strictEqual(queuedStageStarted, false);
+      await assert.doesNotReject(access(path.join(stagingRootPath, 'job-1')));
+
+      releaseStages();
+      await assert.rejects(batch, { name: 'AbortError' });
+      await assert.rejects(access(stagingRootPath));
+    } finally {
+      releaseStages();
+      await batch?.catch(() => undefined);
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
 });

@@ -176,6 +176,7 @@
   "message.progress.splitPdf.title": "{0}個のPDFファイルを分割しています",
   "message.progress.mergePdf.title": "{0}個のPDFファイルを結合しています",
   "message.progress.prepareConversion": "{0}変換を準備しています...",
+  "message.progress.completedCount": "{1}件中{0}件を処理しました",
   "message.progress.preparePdfSplit": "PDF分割を準備しています...",
   "message.progress.convertDrawioToPdf.title": "{0}個のDraw.ioファイルをページごとのPDFに変換しています",
   "message.progress.convertDrawioToPdfDirectly.title": "{0}個のDraw.ioファイルをそれぞれ1つのPDFに変換しています",

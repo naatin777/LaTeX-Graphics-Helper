@@ -210,7 +210,7 @@ export function outputTemplateForSource(
   }
 }
 
-function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
+export function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
   const executablePath = readPuppeteerExecutablePath(configuration, 'convertToPdf.svg.puppeteer.executablePath');
 
   return {

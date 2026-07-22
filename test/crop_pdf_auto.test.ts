@@ -282,7 +282,7 @@ suite('PDF自動crop処理', () => {
       { name: 'AbortError' },
     );
 
-    assert.strictEqual(receivedSignal, abortController.signal);
+    assert.strictEqual(receivedSignal?.aborted, true);
     await assert.rejects(access(outputPath));
   });
 
