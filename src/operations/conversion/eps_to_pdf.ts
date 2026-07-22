@@ -31,7 +31,6 @@ export interface EpsToPdfOptions {
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
   timeout?: number;
-  maxOutputSize?: number;
   runGhostscript?: RunGhostscript;
 }
 
@@ -51,7 +50,6 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
   const platform = options.platform ?? process.platform;
   const pixbuf = options.timeout ?? 30_000;
-  const maxOutputSize = options.maxOutputSize ?? 100 * 1024 * 1024;
   const runGhostscript = options.runGhostscript ?? executeGhostscript;
 
   await mkdir(options.stagingDirectory, { recursive: true });
@@ -107,11 +105,11 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
 
       options.signal?.throwIfAborted();
       await validateAsciiScratchOutput(scratch);
-      await validateGeneratedPdf(ghostscriptOutputPath, maxOutputSize);
+      await validateGeneratedPdf(ghostscriptOutputPath);
       options.signal?.throwIfAborted();
       await copyFile(ghostscriptOutputPath, pdfPath);
       options.signal?.throwIfAborted();
-      await validateGeneratedPdf(pdfPath, maxOutputSize);
+      await validateGeneratedPdf(pdfPath);
       options.signal?.throwIfAborted();
       options.outputChannel?.appendLine(`[scratch] staged output: ${pdfPath}`);
       scratchSucceeded = true;
@@ -142,12 +140,12 @@ export async function convertEpsToPdf(options: EpsToPdfOptions): Promise<EpsToPd
   );
 
   options.signal?.throwIfAborted();
-  await validateGeneratedPdf(pdfPath, maxOutputSize);
+  await validateGeneratedPdf(pdfPath);
 
   return { pdfPath, stagingDirectory: options.stagingDirectory };
 }
 
-async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<void> {
+async function validateGeneratedPdf(pdfPath: string): Promise<void> {
   const fileStat = await stat(pdfPath);
 
   if (!fileStat.isFile()) {
@@ -156,12 +154,6 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
 
   if (fileStat.size === 0) {
     throw new Error(`EPS conversion produced empty PDF: ${pdfPath}`);
-  }
-
-  if (fileStat.size > maxSize) {
-    throw new Error(
-      `EPS conversion output exceeds size limit (${(fileStat.size / 1024 / 1024).toFixed(1)} MB > ${(maxSize / 1024 / 1024).toFixed(0)} MB)`,
-    );
   }
 
   const pdfBytes = await readFile(pdfPath);
@@ -264,10 +256,6 @@ export async function validateEpsInput(epsPath: string): Promise<void> {
     lly >= ury
   ) {
     throw new Error(`Invalid BoundingBox in EPS (llx=${llx}, lly=${lly}, urx=${urx}, ury=${ury}): ${epsPath}`);
-  }
-
-  if (urx - llx > 100_000 || ury - lly > 100_000) {
-    throw new Error(`EPS BoundingBox dimensions exceed limits (${urx - llx}x${ury - lly}): ${epsPath}`);
   }
 }
 
