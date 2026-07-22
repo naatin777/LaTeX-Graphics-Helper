@@ -8,7 +8,6 @@ import {
   isEditableDrawioImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
-import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
@@ -20,7 +19,6 @@ import {
   convertToAvifFiles,
   type AvifOutputOptions,
   type ConvertToAvifJob,
-  type DrawioToAvifOptions,
 } from '../../operations/conversion/convert_to_avif.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
@@ -28,6 +26,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
+import { assertFileScheme, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
 
@@ -55,7 +54,7 @@ export async function convertToAvifCommand(
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioToAvifOptions(configuration);
+    const drawio = readDrawioOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
     const pdftocairoPath = readPdftocairoExecutablePath(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
@@ -92,12 +91,8 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToAvifJob[]> {
-  if (sourceUri.scheme !== 'file') {
-    throw new Error(`Only local files are supported: ${sourceUri.toString()}`);
-  }
-
+  assertFileScheme(sourceUri);
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
-
   if (!workspace) {
     throw new Error(`The file must be inside an open workspace: ${sourceUri.fsPath}`);
   }
@@ -204,12 +199,6 @@ function outputTemplateForSource(
   }
 }
 
-function readDrawioToAvifOptions(configuration: vscode.WorkspaceConfiguration): DrawioToAvifOptions {
-  return {
-    drawioPath: readDrawioExecutablePath(configuration),
-  };
-}
-
 function readAvifOutputOptions(configuration: vscode.WorkspaceConfiguration): AvifOutputOptions {
   const effort = configuration.get<number>('convertToAvif.effort', DEFAULT_AVIF_EFFORT);
 
@@ -218,15 +207,4 @@ function readAvifOutputOptions(configuration: vscode.WorkspaceConfiguration): Av
   }
 
   return { effort };
-}
-
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
-
-  return [...uniqueUris.values()];
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }

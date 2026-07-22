@@ -2,6 +2,8 @@ import { lstat, mkdtemp, realpath, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { errorMessage, isAbortError } from '../../commands/shared/command_utils.js';
+
 export interface LineOutputChannel {
   appendLine: (message: string) => void;
 }
@@ -196,12 +198,4 @@ function assertContained(targetPath: string, parentPath: string): void {
   if (!isInside) {
     throw new Error('Scratch path is outside the selected temporary directory.');
   }
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

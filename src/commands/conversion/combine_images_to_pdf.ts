@@ -15,6 +15,7 @@ import { readSvgToPdfOptions } from './convert_to_pdf.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
+import { selectedUris } from '../shared/command_utils.js';
 
 export const COMBINE_IMAGES_TO_PDF_COMMAND = 'latex-graphics-helper.convertImagesToSinglePdf';
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
@@ -112,11 +113,6 @@ async function resolveCombineOutputPath(
 
   assertOutputInsideWorkspace(saveUri, workspaceFolder);
   return saveUri.fsPath;
-}
-
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  return [...new Map(candidates.map((candidate) => [candidate.toString(), candidate])).values()];
 }
 
 function requireSingleWorkspace(sourceUris: vscode.Uri[]): vscode.WorkspaceFolder {

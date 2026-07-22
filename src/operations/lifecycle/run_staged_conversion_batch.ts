@@ -8,6 +8,7 @@ import {
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
 import type { ConversionRuntime } from './conversion_runtime.js';
+import { isAbortError } from '../../commands/shared/command_utils.js';
 
 const CONVERSION_CONCURRENCY = 2;
 
@@ -92,8 +93,4 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
   } finally {
     options.runtime?.signal?.removeEventListener('abort', abortFromCaller);
   }
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }

@@ -21,6 +21,7 @@ import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError, selectedUris } from '../shared/command_utils.js';
 
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.pdf';
 export const SPLIT_PDF_ALL_PAGES_COMMAND = 'latex-graphics-helper.splitPdf.allPages';
@@ -89,13 +90,6 @@ export async function splitPdfAllPagesCommand(
   }
 }
 
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
-
-  return [...uniqueUris.values()];
-}
-
 function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
   if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local PDF files are supported: ${sourceUri.toString()}`);
@@ -124,10 +118,6 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): SplitPdfJob {
         page: page.toString(),
       }),
   };
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
 
 export async function splitPdfConfigureCommand(

@@ -13,6 +13,7 @@ import {
   type SupportedBrowser,
 } from 'puppeteer-core';
 import sharp from 'sharp';
+import { errorMessage, isAbortError } from '../../commands/shared/command_utils.js';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../../application/policy/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
@@ -537,18 +538,6 @@ function puppeteerLaunchEnv(): NodeJS.ProcessEnv {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   return env;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
 }
 
 function svgPageHtml(svg: string, size: { width: number; height: number }): string {

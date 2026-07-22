@@ -12,6 +12,7 @@ import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError, selectedUris } from '../shared/command_utils.js';
 
 const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-crop.pdf';
@@ -88,17 +89,6 @@ export async function cropPdfAutoCommand(
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage('message.cropPdf.failed', message));
   }
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
-}
-
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
-
-  return [...uniqueUris.values()];
 }
 
 function createJob(sourceUri: vscode.Uri, outputTemplate: string): CropPdfJob {
