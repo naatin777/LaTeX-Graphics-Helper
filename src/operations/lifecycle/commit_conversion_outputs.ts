@@ -318,6 +318,10 @@ async function rollbackCommittedOutputs(
           throw new Error('Output was replaced by another process; it was not removed.');
         }
 
+        if (output.copyCompleted && !(await filesHaveEqualContents(output.outputPath, output.stagedOutputPath))) {
+          throw new Error('New output changed after commit; it was not removed.');
+        }
+
         await rmImpl(output.outputPath, { force: true });
       }
     } catch (error) {
