@@ -1,9 +1,15 @@
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert/strict';
+import { mkdir, mkdtemp, open, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { setImmediate } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
-import { runPreflightBatch, type PreflightReport } from '../../src/operations/input/input_preflight.js';
+import {
+  assertPreflightPassed,
+  runPreflightBatch,
+  type PreflightReport,
+} from '../../src/operations/input/input_preflight.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'preflight');
@@ -80,6 +86,37 @@ suite('Preflight — 共通検査', () => {
     assertError(result.errors[0]!, 'Unsupported format');
   });
 
+  test('対応拡張子を持つdirectoryを入力fileとして扱わない', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-directory-'));
+    const disguisedDirectory = path.join(testRoot, 'diagram.drawio.png');
+
+    try {
+      await mkdir(disguisedDirectory);
+      const result = await runPreflightBatch([disguisedDirectory]);
+      strictEqual(result.canProceed, false);
+      assertError(result.errors[0]!, 'not a regular file');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('固定file-size上限を理由に入力を拒否しない', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-large-file-'));
+    const sourcePath = path.join(testRoot, 'large.pdf');
+    const handle = await open(sourcePath, 'w+');
+
+    try {
+      await handle.writeFile('%PDF-');
+      await handle.truncate(501 * 1024 * 1024);
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, true);
+      assertOk(result.reports[0]!);
+    } finally {
+      await handle.close();
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
   test('複数ファイルを同時に検査する', async () => {
     const result = await runPreflightBatch([
       path.join(FIXTURES, 'valid.pdf'),
@@ -89,8 +126,7 @@ suite('Preflight — 共通検査', () => {
     strictEqual(result.canProceed, false);
     strictEqual(result.errors.length, 1);
     strictEqual(result.errors[0]!.result, 'error');
-    // valid files should have passed
-    const oks = result.reports.filter((r) => r.result === 'ok');
+    const oks = result.reports.filter((report) => report.result === 'ok');
     strictEqual(oks.length, 2);
   });
 
@@ -98,6 +134,13 @@ suite('Preflight — 共通検査', () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.pdf'), path.join(FIXTURES, 'valid.png')]);
     strictEqual(result.canProceed, true);
     strictEqual(result.errors.length, 0);
+  });
+
+  test('失敗理由に入力pathを含める', async () => {
+    const missingPath = path.join(FIXTURES, 'missing.pdf');
+    await rejects(assertPreflightPassed([{ sourcePath: missingPath }]), (error: unknown) => {
+      return error instanceof Error && error.message.includes(missingPath) && error.message.includes('File not readable');
+    });
   });
 });
 
@@ -219,6 +262,24 @@ suite('Preflight — Raster', () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'corrupted.png')]);
     strictEqual(result.canProceed, false);
     assertError(result.errors[0]!, 'Image validation failed');
+  });
+
+  test('固定pixel-count上限を理由にwarningにしない', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-large-image-'));
+    const sourcePath = path.join(testRoot, 'large.png');
+
+    try {
+      await writeFile(
+        sourcePath,
+        '<svg xmlns="http://www.w3.org/2000/svg" width="20000" height="10000"></svg>',
+      );
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, true);
+      strictEqual(result.warnings.length, 0);
+      assertOk(result.reports[0]!);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
   });
 });
 
