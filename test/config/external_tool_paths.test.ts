@@ -30,7 +30,15 @@ suite('外部tool実行ファイルの既定値', () => {
     };
 
     assert.strictEqual(readGhostscriptExecutablePath(configuration), '/custom/gs');
-    assert.strictEqual(readDrawioExecutablePath(configuration), 'drawio');
+    assert.strictEqual(readDrawioExecutablePath(configuration), process.platform === 'win32' ? 'drawio.exe' : 'drawio');
+    assert.strictEqual(
+      readGhostscriptExecutablePath({
+        get<T>(_key: string, defaultValue: T): T {
+          return defaultValue;
+        },
+      }),
+      process.platform === 'win32' ? 'gswin64c.exe' : 'gs',
+    );
     assert.strictEqual(readPdftocairoExecutablePath(configuration), 'pdftocairo');
     assert.strictEqual(readRsvgConvertExecutablePath(configuration), 'rsvg-convert');
   });
