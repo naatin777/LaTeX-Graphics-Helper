@@ -91,7 +91,14 @@ export async function undoConversionOutputs(
     throw error instanceof Error ? error : new Error(String(error));
   } finally {
     await Promise.all(
-      rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
+      rollbackCopies.map(({ rollbackRootPath }) =>
+        rm(rollbackRootPath, {
+          recursive: true,
+          force: true,
+          maxRetries: 20,
+          retryDelay: 200,
+        }),
+      ),
     );
   }
 
@@ -117,7 +124,14 @@ async function createRollbackCopies(
     return rollbackCopies;
   } catch (error) {
     await Promise.all(
-      rollbackCopies.map(({ rollbackRootPath }) => rm(rollbackRootPath, { recursive: true, force: true })),
+      rollbackCopies.map(({ rollbackRootPath }) =>
+        rm(rollbackRootPath, {
+          recursive: true,
+          force: true,
+          maxRetries: 20,
+          retryDelay: 200,
+        }),
+      ),
     );
     throw error instanceof Error ? error : new Error(String(error));
   }

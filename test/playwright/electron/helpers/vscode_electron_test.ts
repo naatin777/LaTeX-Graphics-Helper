@@ -123,41 +123,41 @@ export async function disposeElectronTest(
   electronApp: ElectronApplication | undefined,
   temporaryRoot: string,
 ): Promise<void> {
-  await Promise.resolve()
-    .then(async () => {
-      if (!electronApp) {
-        return;
-      }
+  const isWindows = process.platform === 'win32';
 
-      const electronProcess = electronApp.process();
+  try {
+    if (!electronApp) {
+      return;
+    }
 
-      if (process.platform === 'win32') {
-        // Kill the entire process tree while the parent PID still exists.
-        // A graceful close can exit the parent before renderer/extension-host
-        // children, leaving them alive and locking the VS Code test directory.
-        await terminateElectronProcess(electronProcess);
-        await Promise.race([
-          electronApp.close().then(
-            () => undefined,
-            () => undefined,
-          ),
-          timeout(1_000),
-        ]);
-        return;
-      }
+    const electronProcess = electronApp.process();
 
-      const closePromise = electronApp.close().then(
-        () => undefined,
-        () => undefined,
-      );
-      await Promise.race([closePromise, timeout(5_000)]);
+    if (isWindows) {
+      // Kill the entire process tree while the parent PID still exists.
+      // A graceful close can exit the parent before renderer/extension-host
+      // children, leaving them alive and locking the VS Code test directory.
       await terminateElectronProcess(electronProcess);
-    })
-    .finally(() => {
-      void removeTemporaryRoot(temporaryRoot);
-    });
+      await Promise.race([
+        electronApp.close().then(
+          () => undefined,
+          () => undefined,
+        ),
+        timeout(1_000),
+      ]);
+      return;
+    }
 
-  if (process.platform !== 'win32' && (await pathExists(temporaryRoot))) {
+    const closePromise = electronApp.close().then(
+      () => undefined,
+      () => undefined,
+    );
+    await Promise.race([closePromise, timeout(5_000)]);
+    await terminateElectronProcess(electronProcess);
+  } finally {
+    await removeTemporaryRoot(temporaryRoot);
+  }
+
+  if (!isWindows && (await pathExists(temporaryRoot))) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
   }
 }
