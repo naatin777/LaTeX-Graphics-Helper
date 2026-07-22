@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import { ok, strictEqual } from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,9 +21,9 @@ suite('EPS preflight validation', () => {
       validateEpsInput(epsPath);
     } catch (error) {
       strictEqual(
-        (error as unknown as Error).message.includes('PostScript header'),
+        (error as Error).message.includes('PostScript header'),
         true,
-        `Unexpected error message: ${(error as unknown as Error).message}`,
+        `Unexpected error message: ${(error as Error).message}`,
       );
       return;
     }
@@ -38,9 +36,9 @@ suite('EPS preflight validation', () => {
       validateEpsInput(epsPath);
     } catch (error) {
       strictEqual(
-        (error as unknown as Error).message.includes('Invalid BoundingBox'),
+        (error as Error).message.includes('Invalid BoundingBox'),
         true,
-        `Unexpected error message: ${(error as unknown as Error).message}`,
+        `Unexpected error message: ${(error as Error).message}`,
       );
       return;
     }

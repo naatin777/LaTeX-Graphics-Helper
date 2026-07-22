@@ -237,7 +237,7 @@ suite('Windows pdftocairo ASCII scratch', () => {
 
     try {
       await assert.rejects(
-        routes[0]!.convert(paths, async (sourcePath, outputPath) => {
+        routes[0].convert(paths, async (sourcePath, outputPath) => {
           assert.strictEqual(path.extname(sourcePath), '.pdf');
           unexpectedOutputPath = path.join(path.dirname(outputPath), 'output-garbled.png');
           await copyFile(pngFixturePath, unexpectedOutputPath);
@@ -259,7 +259,7 @@ suite('Windows pdftocairo ASCII scratch', () => {
 
     try {
       await assert.rejects(
-        routes[0]!.convert(paths, async (sourcePath, outputPath) => {
+        routes[0].convert(paths, async (sourcePath, outputPath) => {
           toolOutputPath = outputPath;
           assert.strictEqual(path.extname(sourcePath), '.pdf');
           await writeFile(outputPath, Buffer.alloc(0));

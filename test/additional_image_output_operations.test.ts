@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
@@ -123,8 +121,8 @@ async function assertFirstFrameOutput(outputFormat: (typeof outputFormats)[numbe
   assert.strictEqual(info.format, 'raw');
 
   for (let index = 0; index < data.length; index += 4) {
-    assert.ok(data[index]! > 220);
-    assert.ok(data[index + 1]! < 30);
-    assert.ok(data[index + 2]! < 30);
+    assert.ok(data[index] > 220);
+    assert.ok(data[index + 1] < 30);
+    assert.ok(data[index + 2] < 30);
   }
 }

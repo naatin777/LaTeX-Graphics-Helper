@@ -569,7 +569,7 @@ suite('package.jsonの変換メニュー定義', () => {
 
 async function readJson<T>(relativePath: string): Promise<T> {
   const content = await readFile(path.join(repositoryRoot, relativePath), 'utf8');
-  return JSON.parse(content) as unknown as T;
+  return JSON.parse(content) as T;
 }
 
 function sortedKeys(record: Record<string, string>): string[] {

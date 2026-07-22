@@ -49,7 +49,7 @@ suite('WebPに変換する処理', () => {
             drawioCalls.push(args);
             const outputIndex = args.indexOf('-o') + 1;
             assert.ok(outputIndex > 0);
-            await writeFile(args[outputIndex]!, '%PDF-1.7\n');
+            await writeFile(args[outputIndex], '%PDF-1.7\n');
           },
         },
         webp: {
@@ -73,7 +73,7 @@ suite('WebPに変換する処理', () => {
       });
 
       assert.strictEqual(drawioCalls.length, 1);
-      const drawioArgs = drawioCalls[0]!;
+      const drawioArgs = drawioCalls[0];
       const expectedPdfPath = path.join(
         workspacePath,
         '.latex-graphics-helper',

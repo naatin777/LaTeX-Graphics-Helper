@@ -1,31 +1,92 @@
 import { defineConfig, type OxlintOverride } from 'oxlint';
 
 const extensionOnly = [
-  { name: 'solid-js', message: 'Solid is Webview frontend-only.' },
-  { name: 'solid-js/web', message: 'Solid DOM rendering is Webview frontend-only.' },
-  { name: 'pdfjs-dist', message: 'PDF.js belongs in Webview frontend.' },
-  { name: 'vite', message: 'Vite belongs in Webview build config.' },
-  { name: 'vite-plugin-solid', message: 'vite-plugin-solid belongs in Webview build config.' },
+  {
+    name: 'solid-js',
+    message: 'Solid is Webview frontend-only.',
+  },
+  {
+    name: 'solid-js/web',
+    message: 'Solid DOM rendering is Webview frontend-only.',
+  },
+  {
+    name: 'pdfjs-dist',
+    message: 'PDF.js belongs in Webview frontend.',
+  },
+  {
+    name: 'vite',
+    message: 'Vite belongs in Webview build config.',
+  },
+  {
+    name: 'vite-plugin-solid',
+    message: 'vite-plugin-solid belongs in Webview build config.',
+  },
 ];
 
 const browserOnly = [
-  { name: 'vscode', message: 'Webview frontend must use the acquireVsCodeApi wrapper.' },
-  { name: 'fs', message: 'Webview frontend must not import Node fs.' },
-  { name: 'node:fs', message: 'Webview frontend must not import Node fs.' },
-  { name: 'path', message: 'Webview frontend must not import Node path.' },
-  { name: 'node:path', message: 'Webview frontend must not import Node path.' },
-  { name: 'child_process', message: 'Webview frontend must not execute external processes.' },
-  { name: 'node:child_process', message: 'Webview frontend must not execute external processes.' },
-  { name: 'os', message: 'Webview frontend must not import Node os.' },
-  { name: 'node:os', message: 'Webview frontend must not import Node os.' },
-  { name: 'crypto', message: 'Use Web Crypto in Webview frontend.' },
-  { name: 'node:crypto', message: 'Use Web Crypto in Webview frontend.' },
+  {
+    name: 'vscode',
+    message: 'Webview frontend must use the acquireVsCodeApi wrapper.',
+  },
+  {
+    name: 'fs',
+    message: 'Webview frontend must not import Node fs.',
+  },
+  {
+    name: 'node:fs',
+    message: 'Webview frontend must not import Node fs.',
+  },
+  {
+    name: 'path',
+    message: 'Webview frontend must not import Node path.',
+  },
+  {
+    name: 'node:path',
+    message: 'Webview frontend must not import Node path.',
+  },
+  {
+    name: 'child_process',
+    message: 'Webview frontend must not execute external processes.',
+  },
+  {
+    name: 'node:child_process',
+    message: 'Webview frontend must not execute external processes.',
+  },
+  {
+    name: 'os',
+    message: 'Webview frontend must not import Node os.',
+  },
+  {
+    name: 'node:os',
+    message: 'Webview frontend must not import Node os.',
+  },
+  {
+    name: 'crypto',
+    message: 'Use Web Crypto in Webview frontend.',
+  },
+  {
+    name: 'node:crypto',
+    message: 'Use Web Crypto in Webview frontend.',
+  },
 ];
 
-const corePaths = [{ name: 'vscode', message: 'Core code must not import the VS Code API.' }, ...extensionOnly];
+const corePaths = [
+  {
+    name: 'vscode',
+    message: 'Core code must not import the VS Code API.',
+  },
+  ...extensionOnly,
+];
+
 const corePatterns = [
-  { group: ['../commands/*', '../../commands/*'], message: 'Core code must not import command/UI code.' },
-  { group: ['../webview/*', '../../webview/*'], message: 'Core code must not import Webview presentation code.' },
+  {
+    group: ['../commands/*', '../../commands/*'],
+    message: 'Core code must not import command/UI code.',
+  },
+  {
+    group: ['../webview/*', '../../webview/*'],
+    message: 'Core code must not import Webview presentation code.',
+  },
   {
     group: ['@webview-shared/*', '../../webview/*', '../../../webview/*'],
     message: 'Core code must not import Webview modules.',
@@ -43,7 +104,13 @@ const restrictedImports = (
   paths: { name: string; message: string }[],
   patterns: { group: string[]; message: string }[] = frontendPatterns,
 ): NonNullable<OxlintOverride['rules']> => ({
-  'no-restricted-imports': ['error', { paths, patterns }],
+  'no-restricted-imports': [
+    'error',
+    {
+      paths,
+      patterns,
+    },
+  ],
 });
 
 const appOverrides: OxlintOverride[] = [
@@ -51,7 +118,10 @@ const appOverrides: OxlintOverride[] = [
     files: ['webview/apps/pdf-workbench/**/*.ts', 'webview/apps/pdf-workbench/**/*.tsx'],
     rules: restrictedImports(browserOnly, [
       ...frontendPatterns,
-      { group: ['../pdf-arranger/*', '../../pdf-arranger/*'], message: 'pdf-workbench must not import pdf-arranger.' },
+      {
+        group: ['../pdf-arranger/*', '../../pdf-arranger/*'],
+        message: 'pdf-workbench must not import pdf-arranger.',
+      },
     ]),
   },
   {
@@ -68,13 +138,19 @@ const appOverrides: OxlintOverride[] = [
     files: ['webview/apps/*/src/**/*.ts', 'webview/apps/*/src/**/*.tsx'],
     rules: restrictedImports(browserOnly, [
       ...frontendPatterns,
-      { group: ['../*/src/*', '../../*/src/*'], message: 'Webview frontend must not import another app.' },
+      {
+        group: ['../*/src/*', '../../*/src/*'],
+        message: 'Webview frontend must not import another app.',
+      },
     ]),
   },
   {
     files: ['webview/shared/**/*.ts'],
     rules: restrictedImports(browserOnly, [
-      { group: ['../apps/*', '../../apps/*'], message: 'webview/shared must not import app-specific modules.' },
+      {
+        group: ['../apps/*', '../../apps/*'],
+        message: 'webview/shared must not import app-specific modules.',
+      },
       {
         group: ['../src/*', '../../src/*', '../../../src/*'],
         message: 'webview/shared must not import extension runtime.',
@@ -84,9 +160,19 @@ const appOverrides: OxlintOverride[] = [
 ];
 
 export default defineConfig({
-  plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'node', 'promise', 'vitest'],
-  categories: { correctness: 'error', suspicious: 'warn', perf: 'warn' },
-  options: { reportUnusedDisableDirectives: 'warn', typeAware: true },
+  plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'import', 'node', 'promise'],
+
+  categories: {
+    correctness: 'error',
+    suspicious: 'warn',
+    perf: 'warn',
+  },
+
+  options: {
+    reportUnusedDisableDirectives: 'warn',
+    typeAware: true,
+  },
+
   ignorePatterns: [
     'out/**',
     'dist/**',
@@ -96,29 +182,38 @@ export default defineConfig({
     '.vscode-test/**',
     '.playwright/**',
   ],
+
   jsPlugins: [
     {
       name: 'project',
       specifier: './scripts/oxlint-project-plugin.mjs',
     },
   ],
+
   rules: {
-    curly: 'warn',
+    /*
+     * Basic safety and readability
+     */
+    curly: ['error', 'all'],
     eqeqeq: 'warn',
-    'no-throw-literal': 'error',
     'no-console': 'warn',
     'no-await-in-loop': 'off',
+
+    /*
+     * TypeScript
+     */
     'no-unused-vars': 'off',
     'typescript/no-unused-vars': 'error',
     'typescript/consistent-type-imports': 'warn',
     'typescript/no-explicit-any': 'error',
     'typescript/no-require-imports': 'error',
-    'unicorn/prefer-node-protocol': 'error',
-    'import/no-nodejs-modules': 'off',
-    'node/no-process-env': 'off',
-    'promise/always-return': 'off',
-    'promise/catch-or-return': 'off',
-    'project/max-conditional-spreads-per-object': 'error',
+
+    /*
+     * Error handling
+     *
+     * no-throw-literal is deprecated in favor of the type-aware rule.
+     */
+    'no-throw-literal': 'off',
     'typescript/only-throw-error': [
       'error',
       {
@@ -127,7 +222,62 @@ export default defineConfig({
         allowThrowingUnknown: false,
       },
     ],
+    'typescript/prefer-promise-reject-errors': [
+      'error',
+      {
+        allowEmptyReject: false,
+        allowThrowingAny: false,
+        allowThrowingUnknown: false,
+      },
+    ],
+
+    /*
+     * Promise correctness
+     */
+    'typescript/no-misused-promises': 'error',
+
+    /*
+     * Exhaustiveness and redundant checks
+     */
+    'typescript/switch-exhaustiveness-check': [
+      'error',
+      {
+        allowDefaultCaseForExhaustiveSwitch: true,
+        considerDefaultExhaustiveForUnions: false,
+        requireDefaultForNonUnion: false,
+      },
+    ],
+    'typescript/no-unnecessary-condition': 'warn',
+
+    /*
+     * Detect any values entering otherwise typed code.
+     * Keep these as warnings first because external APIs may produce noise.
+     */
+    'typescript/no-unsafe-argument': 'warn',
+    'typescript/no-unsafe-assignment': 'warn',
+    'typescript/no-unsafe-call': 'warn',
+    'typescript/no-unsafe-member-access': 'warn',
+    'typescript/no-unsafe-return': 'warn',
+
+    /*
+     * Imports and runtime conventions
+     */
+    'unicorn/prefer-node-protocol': 'error',
+    'import/no-nodejs-modules': 'off',
+    'node/no-process-env': 'off',
+
+    /*
+     * Promise plugin rules superseded or intentionally disabled
+     */
+    'promise/always-return': 'off',
+    'promise/catch-or-return': 'off',
+
+    /*
+     * Project-specific rules
+     */
+    'project/max-conditional-spreads-per-object': 'error',
   },
+
   overrides: [
     {
       files: ['src/application/**/*.ts', 'src/operations/**/*.ts', 'src/latex/**/*.ts', 'src/config/**/*.ts'],
@@ -142,10 +292,14 @@ export default defineConfig({
         },
       ]),
     },
+
     ...appOverrides,
+
     {
       files: ['webview/apps/crop_pdf/src/**/*.ts', 'webview/apps/crop_pdf/src/**/*.tsx'],
-      rules: { 'unicorn/require-post-message-target-origin': 'off' },
+      rules: {
+        'unicorn/require-post-message-target-origin': 'off',
+      },
     },
     {
       files: [
@@ -155,7 +309,10 @@ export default defineConfig({
         'webview/apps/*/vitest.config.ts',
         'scripts/**/*.mjs',
       ],
-      rules: { 'no-console': 'off', 'no-restricted-imports': 'off' },
+      rules: {
+        'no-console': 'off',
+        'no-restricted-imports': 'off',
+      },
     },
     {
       files: ['test/**/*.ts', 'src/**/*.test.ts', 'webview/**/*.test.ts', 'webview/**/*.test.tsx'],

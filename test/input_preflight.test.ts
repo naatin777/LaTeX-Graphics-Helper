@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 import { deepStrictEqual, ok, rejects, strictEqual } from 'node:assert/strict';
 import path from 'node:path';
 import { setImmediate } from 'node:timers/promises';
@@ -66,13 +64,13 @@ suite('Preflight — 共通検査', () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'empty.pdf')]);
     strictEqual(result.canProceed, false);
     strictEqual(result.errors.length, 1);
-    assertError(result.errors[0]!, 'Empty file');
+    assertError(result.errors[0], 'Empty file');
   });
 
   test('未対応の拡張子をerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.pdf') + '.unknown']);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'Unsupported format');
+    assertError(result.errors[0], 'Unsupported format');
   });
 
   test('複数ファイルを同時に検査する', async () => {
@@ -83,7 +81,7 @@ suite('Preflight — 共通検査', () => {
     ]);
     strictEqual(result.canProceed, false);
     strictEqual(result.errors.length, 1);
-    strictEqual(result.errors[0]!.result, 'error');
+    strictEqual(result.errors[0].result, 'error');
     // valid files should have passed
     const oks = result.reports.filter((r) => r.result === 'ok');
     strictEqual(oks.length, 2);
@@ -193,13 +191,13 @@ suite('Preflight — PDF', () => {
   test('有効なPDFをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.pdf')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('%PDF-headerがないファイルをerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'invalid-header.pdf')]);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'Not a valid PDF');
+    assertError(result.errors[0], 'Not a valid PDF');
   });
 });
 
@@ -207,13 +205,13 @@ suite('Preflight — Raster', () => {
   test('有効なPNGをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.png')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('破損したPNGをerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'corrupted.png')]);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'Image validation failed');
+    assertError(result.errors[0], 'Image validation failed');
   });
 });
 
@@ -221,19 +219,19 @@ suite('Preflight — SVG', () => {
   test('有効なSVGをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.svg')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('rootがsvgでないファイルをwarningとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'no-root.svg')]);
     strictEqual(result.canProceed, true);
-    assertWarning(result.warnings[0]!);
+    assertWarning(result.warnings[0]);
   });
 
   test('viewBoxもwidth/heightもないSVGをwarningとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'no-dimensions.svg')]);
     strictEqual(result.canProceed, true);
-    assertWarning(result.warnings[0]!);
+    assertWarning(result.warnings[0]);
   });
 });
 
@@ -241,13 +239,13 @@ suite('Preflight — Mermaid', () => {
   test('有効なMermaidファイルをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.mmd')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('空のMermaidファイルをerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'empty.mmd')]);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'Empty file');
+    assertError(result.errors[0], 'Empty file');
   });
 });
 
@@ -255,13 +253,13 @@ suite('Preflight — Draw.io', () => {
   test('有効なDraw.io XMLをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.drawio')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('XML構造でないDraw.ioファイルをwarningとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'non-xml.drawio')]);
     strictEqual(result.canProceed, true);
-    assertWarning(result.warnings[0]!);
+    assertWarning(result.warnings[0]);
   });
 });
 
@@ -269,25 +267,25 @@ suite('Preflight — EPS', () => {
   test('有効なEPSをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'minimal.eps')]);
     strictEqual(result.canProceed, true);
-    assertOk(result.reports[0]!);
+    assertOk(result.reports[0]);
   });
 
   test('headerがないEPSをerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'no-header.eps')]);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'PostScript header');
+    assertError(result.errors[0], 'PostScript header');
   });
 
   test('BoundingBoxが不正なEPSをerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'invalid-bbox.eps')]);
     strictEqual(result.canProceed, false);
-    assertError(result.errors[0]!, 'Invalid BoundingBox');
+    assertError(result.errors[0], 'Invalid BoundingBox');
   });
 
   test('BoundingBoxがatendのEPSをwarningとして検出する', async () => {
     const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'atend.eps')]);
     strictEqual(result.canProceed, true);
-    assertWarning(result.warnings[0]!);
+    assertWarning(result.warnings[0]);
   });
 });
 

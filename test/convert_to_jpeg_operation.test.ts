@@ -69,7 +69,7 @@ suite('JPEGに変換する処理', () => {
       });
 
       assert.strictEqual(drawioCalls.length, 1);
-      const args = drawioCalls[0]!;
+      const args = drawioCalls[0];
       assert.strictEqual(args[0], '-x');
       assert.strictEqual(args[1], '-f');
       assert.strictEqual(args[2], 'pdf');

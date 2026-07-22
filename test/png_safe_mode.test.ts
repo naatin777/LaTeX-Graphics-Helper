@@ -53,8 +53,8 @@ suite('PNG変換のSafe Mode', () => {
 
   test('バッチ全体で1回だけ競合判断を行い、両方残す', async () => {
     const { workspacePath, jobs } = await createJobs(['first', 'second']);
-    await writeFile(jobs[0]!.outputPath, 'old-first');
-    await writeFile(jobs[1]!.outputPath, 'old-second');
+    await writeFile(jobs[0].outputPath, 'old-first');
+    await writeFile(jobs[1].outputPath, 'old-second');
     await writeFile(path.join(workspacePath, 'first-1.pdf'), 'reserved');
     const decisions: string[][] = [];
 
@@ -72,13 +72,13 @@ suite('PNG変換のSafe Mode', () => {
       new Set(outputs.map((output) => output.outputPath)),
       new Set([path.join(workspacePath, 'first-2.pdf'), path.join(workspacePath, 'second-1.pdf')]),
     );
-    assert.strictEqual(await readFile(jobs[0]!.outputPath, 'utf8'), 'old-first');
-    assert.strictEqual(await readFile(jobs[1]!.outputPath, 'utf8'), 'old-second');
+    assert.strictEqual(await readFile(jobs[0].outputPath, 'utf8'), 'old-first');
+    assert.strictEqual(await readFile(jobs[1].outputPath, 'utf8'), 'old-second');
   });
 
   test('上書きしない判断の場合はどの出力も反映しない', async () => {
     const { jobs } = await createJobs(['first', 'second']);
-    await writeFile(jobs[0]!.outputPath, 'old-first');
+    await writeFile(jobs[0].outputPath, 'old-first');
 
     await assert.rejects(
       convertPngToPdfFiles({
@@ -88,8 +88,8 @@ suite('PNG変換のSafe Mode', () => {
       /cancelled/,
     );
 
-    assert.strictEqual(await readFile(jobs[0]!.outputPath, 'utf8'), 'old-first');
-    await assert.rejects(access(jobs[1]!.outputPath));
+    assert.strictEqual(await readFile(jobs[0].outputPath, 'utf8'), 'old-first');
+    await assert.rejects(access(jobs[1].outputPath));
   });
 
   test('後続のPNG変換が失敗した場合は先行ジョブの出力も反映しない', async () => {
@@ -97,7 +97,7 @@ suite('PNG変換のSafe Mode', () => {
     const invalidSourcePath = path.join(workspacePath, 'invalid.png');
     await writeFile(invalidSourcePath, 'not a PNG');
     jobs[1] = {
-      ...jobs[1]!,
+      ...jobs[1],
       sourcePath: invalidSourcePath,
     };
 
@@ -113,8 +113,8 @@ suite('PNG変換のSafe Mode', () => {
 
   test('上書きファイルをバックアップし、undo操作で復元する', async () => {
     const { jobs } = await createJobs(['first', 'second']);
-    await writeFile(jobs[0]!.outputPath, 'old-first');
-    await writeFile(jobs[1]!.outputPath, 'old-second');
+    await writeFile(jobs[0].outputPath, 'old-first');
+    await writeFile(jobs[1].outputPath, 'old-second');
 
     const outputs = await convertPngToPdfFiles({
       jobs,
@@ -125,8 +125,8 @@ suite('PNG変換のSafe Mode', () => {
     assert.ok(outputs.every((output) => output.previousFilePath));
     await undoConversionOutputs(undoRecord);
 
-    assert.strictEqual(await readFile(jobs[0]!.outputPath, 'utf8'), 'old-first');
-    assert.strictEqual(await readFile(jobs[1]!.outputPath, 'utf8'), 'old-second');
+    assert.strictEqual(await readFile(jobs[0].outputPath, 'utf8'), 'old-first');
+    assert.strictEqual(await readFile(jobs[1].outputPath, 'utf8'), 'old-second');
   });
 
   test('既にキャンセル済みの場合は出力へ反映しない', async () => {
@@ -174,7 +174,7 @@ suite('PNG変換のSafe Mode', () => {
 
   test('編集可能なDraw.io画像の出力競合では両方残す', async () => {
     const { jobs, workspacePath } = await createEditableDrawioJobs([['source.drawio.png', 'source.pdf']]);
-    const originalOutputPath = jobs[0]!.outputPath;
+    const originalOutputPath = jobs[0].outputPath;
     const keptOutputPath = path.join(workspacePath, 'source-1.pdf');
     await writeFile(originalOutputPath, 'old output');
 
@@ -199,7 +199,7 @@ suite('PNG変換のSafe Mode', () => {
 
   test('編集可能なDraw.io画像の上書き出力をバックアップしundoで復元する', async () => {
     const { jobs } = await createEditableDrawioJobs([['source.drawio.png', 'source.pdf']]);
-    await writeFile(jobs[0]!.outputPath, 'old output');
+    await writeFile(jobs[0].outputPath, 'old output');
 
     const outputs = await convertPngToPdfFiles({
       jobs,
@@ -214,7 +214,7 @@ suite('PNG変換のSafe Mode', () => {
     const undoRecord = await createConversionUndoRecord(outputs);
     await undoConversionOutputs(undoRecord);
 
-    assert.strictEqual(await readFile(jobs[0]!.outputPath, 'utf8'), 'old output');
+    assert.strictEqual(await readFile(jobs[0].outputPath, 'utf8'), 'old output');
   });
 });
 

@@ -395,7 +395,9 @@ export function App() {
             <button
               class='button button--primary'
               type='button'
-              onClick={applyCrop}
+              onClick={() => {
+                void applyCrop();
+              }}
             >
               {labels().apply}
             </button>

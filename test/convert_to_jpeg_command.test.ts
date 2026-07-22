@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToJpeg commandが登録されること
 // - PNGをJPEGへ変換できること
@@ -74,7 +72,7 @@ suite('JPEGに変換コマンド', () => {
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_JPEG_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
+        vscode.Uri.file(sourcePaths[0]),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);

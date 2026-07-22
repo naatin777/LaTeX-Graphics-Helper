@@ -64,7 +64,7 @@ function parseWorkspaceSettings(settingsText: string | undefined): Record<string
     return {};
   }
 
-  return JSON.parse(settingsText) as unknown as Record<string, unknown>;
+  return JSON.parse(settingsText);
 }
 
 async function writeWorkspaceSettings(settingsPath: string, settings: Record<string, unknown>): Promise<void> {

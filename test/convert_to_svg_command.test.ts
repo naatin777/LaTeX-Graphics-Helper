@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToSvg commandが登録されること
 // - .mmdをSVGに変換できること

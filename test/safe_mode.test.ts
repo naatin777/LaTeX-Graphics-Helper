@@ -35,7 +35,7 @@ class MemoryState {
   readonly #values = new Map<string, unknown>();
 
   get<T>(key: string, defaultValue?: T): T | undefined {
-    return (this.#values.has(key) ? this.#values.get(key) : defaultValue) as unknown as T | undefined;
+    return (this.#values.has(key) ? this.#values.get(key) : defaultValue) as T | undefined;
   }
 
   async update(key: string, value: unknown): Promise<void> {

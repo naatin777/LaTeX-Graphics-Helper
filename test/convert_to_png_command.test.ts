@@ -1,5 +1,3 @@
-/* oxlint-disable vitest/expect-expect */
-
 // Test target:
 // - latex-graphics-helper.convertToPng commandが登録されること
 // - MermaidをPNGに直接変換できること
@@ -95,7 +93,7 @@ suite('PNGに変換コマンド', () => {
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PNG_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
+        vscode.Uri.file(sourcePaths[0]),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
@@ -123,7 +121,7 @@ suite('PNGに変換コマンド', () => {
 
       const commandExecution = vscode.commands.executeCommand(
         CONVERT_TO_PNG_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
+        vscode.Uri.file(sourcePaths[0]),
         sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
       );
       await runCommandAndClearNotificationsUntilDone(commandExecution);
@@ -323,9 +321,9 @@ async function assertFirstFramePng(filePath: string): Promise<void> {
   assert.strictEqual(info.height, 4);
 
   for (let index = 0; index < data.length; index += 4) {
-    assert.ok(data[index]! > 220);
-    assert.ok(data[index + 1]! < 30);
-    assert.ok(data[index + 2]! < 30);
+    assert.ok(data[index] > 220);
+    assert.ok(data[index + 1] < 30);
+    assert.ok(data[index + 2] < 30);
   }
 }
 

@@ -153,7 +153,9 @@ export async function disposeElectronTest(
       await Promise.race([closePromise, timeout(5_000)]);
       await terminateElectronProcess(electronProcess);
     })
-    .finally(() => removeTemporaryRoot(temporaryRoot));
+    .finally(() => {
+      void removeTemporaryRoot(temporaryRoot);
+    });
 
   if (process.platform !== 'win32' && (await pathExists(temporaryRoot))) {
     throw new Error(`Electron test temporary directory was not removed: ${temporaryRoot}`);
