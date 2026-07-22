@@ -384,38 +384,15 @@ suite('Preflight — PDF詳細検査', () => {
   });
 
   test('暗号化されたPDFをerrorとして検出する', async () => {
-    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-encrypted-pdf-'));
-    const sourcePath = path.join(testRoot, 'encrypted.pdf');
-
-    try {
-      const pdfDoc = await PDFDocument.create();
-      pdfDoc.addPage([100, 100]);
-      const pdfBytes = await pdfDoc.save({ userPassword: 'password' } as any);
-      await writeFile(sourcePath, pdfBytes);
-
-      const result = await runPreflightBatch([sourcePath]);
-      strictEqual(result.canProceed, false);
-      assertError(result.errors[0]!, 'encrypted');
-    } finally {
-      await rm(testRoot, { recursive: true, force: true });
-    }
+    const result = await runPreflightBatch([path.join(FIXTURES, 'encrypted.pdf')]);
+    strictEqual(result.canProceed, false);
+    assertError(result.errors[0]!, 'encrypted');
   });
 
   test('0ページのPDFをerrorとして検出する', async () => {
-    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-zero-page-pdf-'));
-    const sourcePath = path.join(testRoot, 'nopage.pdf');
-
-    try {
-      const pdfDoc = await PDFDocument.create();
-      const pdfBytes = await pdfDoc.save();
-      await writeFile(sourcePath, pdfBytes);
-
-      const result = await runPreflightBatch([sourcePath]);
-      strictEqual(result.canProceed, false);
-      assertError(result.errors[0]!, 'no pages');
-    } finally {
-      await rm(testRoot, { recursive: true, force: true });
-    }
+    const result = await runPreflightBatch([path.join(FIXTURES, 'nopage.pdf')]);
+    strictEqual(result.canProceed, false);
+    assertError(result.errors[0]!, 'no pages');
   });
 });
 

@@ -14,6 +14,8 @@ import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
+import { PDFDocument } from 'pdf-lib';
+
 import { convertToSvgFiles } from '../../src/operations/conversion/convert_to_svg.js';
 
 suite('SVGに変換する処理', () => {
@@ -146,7 +148,9 @@ suite('SVGに変換する処理', () => {
     try {
       const sourcePath = path.join(workspacePath, 'source.pdf');
       const outputPath = path.join(workspacePath, 'source.svg');
-      await writeFile(sourcePath, '%PDF-1.7\n');
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage([595, 842]);
+      await writeFile(sourcePath, await pdfDoc.save());
 
       await assert.rejects(
         convertToSvgFiles({
@@ -175,7 +179,9 @@ suite('SVGに変換する処理', () => {
     try {
       const sourcePath = path.join(workspacePath, 'source.pdf');
       const outputPath = path.join(workspacePath, 'source-1.svg');
-      await writeFile(sourcePath, '%PDF-1.7\n');
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage([595, 842]);
+      await writeFile(sourcePath, await pdfDoc.save());
 
       await assert.rejects(
         convertToSvgFiles({

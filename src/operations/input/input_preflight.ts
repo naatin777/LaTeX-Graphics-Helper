@@ -136,9 +136,6 @@ export function preflightOptionsFromRuntime(runtime?: ConversionRuntime): Assert
   if (runtime?.onConfirmWarnings !== undefined) {
     options.onConfirmWarnings = runtime.onConfirmWarnings;
   }
-  if (runtime?.reportProgress !== undefined) {
-    options.onProgress = runtime.reportProgress;
-  }
   return options;
 }
 
@@ -339,8 +336,7 @@ async function validateRasterInput(
         sourcePath,
         format,
         fileSize,
-        result: 'warning',
-        reason: `Image has ${metadata.pages} pages/frames. Only the first page will be converted.`,
+        result: 'ok',
         details: { ...details, pages: metadata.pages },
       };
     }
@@ -366,9 +362,6 @@ async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSi
     const details: Record<string, unknown> = { fileSize };
 
     const xmlResult = await parseSvgXmlStructure(text);
-    if (xmlResult.error !== undefined) {
-      return { sourcePath, format, fileSize, result: 'error', reason: xmlResult.error };
-    }
 
     if (xmlResult.hasSvgRoot === false) {
       return {
