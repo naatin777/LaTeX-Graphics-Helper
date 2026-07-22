@@ -249,12 +249,7 @@ export async function validateEpsInput(epsPath: string): Promise<void> {
   const urx = numericValues[2] ?? Number.NaN;
   const ury = numericValues[3] ?? Number.NaN;
 
-  if (
-    ![llx, lly, urx, ury].every(Number.isInteger) ||
-    [llx, lly, urx, ury].some((value) => value < -(2 ** 31) || value > 2 ** 31 - 1) ||
-    llx >= urx ||
-    lly >= ury
-  ) {
+  if (![llx, lly, urx, ury].every(Number.isSafeInteger) || llx >= urx || lly >= ury) {
     throw new Error(`Invalid BoundingBox in EPS (llx=${llx}, lly=${lly}, urx=${urx}, ury=${ury}): ${epsPath}`);
   }
 }
