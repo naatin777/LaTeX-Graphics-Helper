@@ -8,6 +8,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
+import { selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_DRAWIO_TO_PDF_COMMAND = 'latex-graphics-helper.convertDrawioToPdf';
 export const CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND = 'latex-graphics-helper.convertDrawioToPdfDirectly';
@@ -156,9 +157,4 @@ function createJob(sourceUri: vscode.Uri, outputTemplate: string): DrawioPdfJob 
     workspacePath: workspace.uri.fsPath,
     workspaceName: workspace.name,
   };
-}
-
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  return [...new Map(candidates.map((candidate) => [candidate.toString(), candidate])).values()];
 }

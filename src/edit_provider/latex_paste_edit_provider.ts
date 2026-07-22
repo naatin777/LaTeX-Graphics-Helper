@@ -6,6 +6,7 @@ import { withCancellationSignal } from '../commands/lifecycle/progress_cancellat
 import { resolveOutputConflicts } from '../commands/lifecycle/safe_mode.js';
 import { rememberLastConversion } from '../commands/lifecycle/undo_last_conversion.js';
 import { userMessage } from '../commands/shared/user_messages.js';
+import { isAbortError } from '../commands/shared/command_utils.js';
 import { resolveOutputPath } from '../config/output/resolve_output_path.js';
 import { localeMap } from '../locale_map.js';
 import type { CommittedConversionOutput } from '../operations/lifecycle/commit_conversion_outputs.js';
@@ -251,8 +252,4 @@ function validateOutputBasePath(value: string, workspacePath: string): string | 
   }
 
   return undefined;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }

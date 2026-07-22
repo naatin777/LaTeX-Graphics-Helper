@@ -32,6 +32,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_PNG_TO_PDF_COMMAND = 'latex-graphics-helper.convertPngToPdf';
 export const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
@@ -244,13 +245,6 @@ function readDrawioToPdfOptions(configuration: vscode.WorkspaceConfiguration): D
   };
 }
 
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
-
-  return [...uniqueUris.values()];
-}
-
 function createJob(
   sourceUri: vscode.Uri,
   outputTemplate: string,
@@ -281,8 +275,4 @@ function createJob(
       workspaceName: workspace.name,
     }),
   };
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }

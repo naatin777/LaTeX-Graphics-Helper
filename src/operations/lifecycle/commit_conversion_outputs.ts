@@ -11,7 +11,6 @@ import {
 } from './cleanup_conversion_artifacts.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
 import { filesHaveEqualContents, hashFile } from '../input/file_content_hash.js';
-
 export type OutputConflictDecision = 'keep-both' | 'cancel' | 'overwrite';
 
 export interface PreparedConversionOutput {

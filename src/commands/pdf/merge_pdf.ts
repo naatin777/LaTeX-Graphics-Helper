@@ -17,6 +17,7 @@ import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError } from '../shared/command_utils.js';
 
 export const MERGE_PDF_SELECTED_FILES_COMMAND = 'latex-graphics-helper.mergePdf.selectedFiles';
 export const MERGE_PDF_CONFIGURE_COMMAND = 'latex-graphics-helper.mergePdf.configure';
@@ -302,10 +303,6 @@ function resolveConfiguredSources(sourceById: ReadonlyMap<string, vscode.Uri>, s
 
 function toWebviewDirectoryUri(webview: vscode.Webview, appRoot: vscode.Uri, directoryName: string): string {
   return `${webview.asWebviewUri(vscode.Uri.joinPath(appRoot, directoryName)).toString()}/`;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
 
 function mergePdfLabels() {

@@ -9,6 +9,7 @@ import { isEditableDrawioImagePath, sourceFormatForPath } from '../../applicatio
 import { convertEpsToPdf } from './eps_to_pdf.js';
 import { assertPreflightPassed } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
+import { isAbortError } from '../../commands/shared/command_utils.js';
 
 import {
   type CommittedConversionOutput,
@@ -430,10 +431,6 @@ function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<
     config.channel = options.browserChannel;
   }
   return config;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
 
 function errorMessage(error: unknown): string {

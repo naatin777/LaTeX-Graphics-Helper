@@ -22,6 +22,7 @@ import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError } from '../shared/command_utils.js';
 
 export const CROP_PDF_CONFIGURE_COMMAND = 'latex-graphics-helper.cropPdf.configure';
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-crop.pdf';
@@ -257,10 +258,6 @@ function resolveSinglePdfUri(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri 
   }
 
   return inputUri;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
 
 function cropPdfLabels() {

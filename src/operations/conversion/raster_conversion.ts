@@ -11,6 +11,7 @@ import {
   isSupportedImageInputPath,
 } from '../../application/policy/source_format.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
+import { isAbortError } from '../../commands/shared/command_utils.js';
 
 import {
   type CommittedConversionOutput,
@@ -400,10 +401,6 @@ export function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): 
     config.channel = options.browserChannel;
   }
   return config;
-}
-
-export function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
 
 export function errorMessage(error: unknown): string {

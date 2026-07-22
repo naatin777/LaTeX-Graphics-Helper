@@ -28,6 +28,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
+import { isAbortError, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_AVIF_COMMAND = 'latex-graphics-helper.convertToAvif';
 
@@ -218,15 +219,4 @@ function readAvifOutputOptions(configuration: vscode.WorkspaceConfiguration): Av
   }
 
   return { effort };
-}
-
-function selectedUris(uri?: vscode.Uri, uris?: vscode.Uri[]): vscode.Uri[] {
-  const candidates = uris && uris.length > 0 ? uris : uri ? [uri] : [];
-  const uniqueUris = new Map(candidates.map((candidate) => [candidate.toString(), candidate]));
-
-  return [...uniqueUris.values()];
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'AbortError';
 }
