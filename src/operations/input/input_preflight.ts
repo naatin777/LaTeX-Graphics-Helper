@@ -243,7 +243,11 @@ async function validateRasterInput(
 async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
     const root = createSubstringScanner(['<svg'], true);
-    const scan = await scanTextFile(sourcePath, (chunk) => root.feed(chunk));
+    const dim = createSubstringScanner(['width=', 'height=', 'viewbox='], true);
+    const scan = await scanTextFile(sourcePath, (chunk) => {
+      root.feed(chunk);
+      dim.feed(chunk);
+    });
 
     if (!scan.hasNonWhitespace) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty SVG file' };
@@ -256,6 +260,16 @@ async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSi
         fileSize,
         result: 'warning',
         reason: 'SVG root element not found — may not be a valid SVG',
+      };
+    }
+
+    if (!dim.found()) {
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'warning',
+        reason: 'SVG has no width, height, or viewBox attribute',
       };
     }
 

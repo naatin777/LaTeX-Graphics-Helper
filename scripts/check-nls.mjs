@@ -9,11 +9,15 @@ function placeholders(value) {
 }
 
 export function validateUserMessageSource(sourcePath, source, english) {
+  if (!source.includes("userMessage")) return [];
   const errors = [];
   const scanner = createScanner(true, LanguageVariant.Standard, source, 0, source.length);
   let token = scanner.scan();
+  let tokenCount = 0;
 
   while (token !== SyntaxKind.EndOfFile) {
+    tokenCount++;
+    if (tokenCount > source.length * 2) break;
     if (token === SyntaxKind.Identifier && scanner.getTokenText() === "userMessage") {
       const callStart = scanner.getTokenStart();
       if (scanner.scan() === SyntaxKind.OpenParenToken) {
