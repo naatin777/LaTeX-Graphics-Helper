@@ -22,7 +22,7 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { assertLocalFileInWorkspace, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
+import { assertFileScheme, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_PNG_COMMAND = 'latex-graphics-helper.convertToPng';
 
@@ -84,7 +84,11 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToPngJob[]> {
-  const workspace = assertLocalFileInWorkspace(sourceUri);
+  assertFileScheme(sourceUri);
+  const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
+  if (!workspace) {
+    throw new Error(`The file must be inside an open workspace: ${sourceUri.fsPath}`);
+  }
 
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
