@@ -15,7 +15,6 @@
   "config.puppeteer.browser": "SVG変換でPuppeteerが使用するブラウザ。Firefoxを使う場合はFirefoxの実行ファイルを指定するか、利用可能なFirefoxをインストールしてください。",
   "config.convertToWebp.effort": "WebP出力をエンコードするときのCPU effort。0が最速、6が最も低速です。",
   "config.convertToAvif.effort": "AVIF出力をエンコードするときのCPU effort。0が最速、9が最も低速です。",
-
   "config.outputPath.cropPdf": "PDFをクロップした後の出力ファイル名",
   "config.outputPath.splitPdf": "PDF分割後の各ページの出力ファイル名",
   "config.outputPath.convertToPdf": "PDFに変換するときの出力ファイル名。空または空白のみの場合はlegacyの入力形式と出力形式のペア別fallbackを使います。複数ページ入力では出力パスの衝突を避けるために${page}を含めてください。",
@@ -32,7 +31,6 @@
   "config.subfigure.widthOptions": "minipage snippetの幅オプション候補",
   "config.subfigure.spacingOptions": "minipage snippet間の余白候補",
   "config.cropPdf.marginOptions": "PDFの自動クロップ時に表示する余白の選択肢（単位: PDFポイント）",
-
   "config.outputPath.convertDrawioToPdf": "Draw.ioファイルをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertDrawioToPdfDirectly": "Draw.ioの全ページを1つのPDFへ変換した後の出力ファイル名",
   "config.outputPath.convertDrawioToPng": "Draw.ioファイルをPNGに変換した後の出力ファイル名",
@@ -40,33 +38,27 @@
   "config.outputPath.convertDrawioToWebp": "Draw.ioファイルをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertDrawioToAvif": "Draw.ioファイルをAVIFに変換した後の出力ファイル名",
   "config.outputPath.convertDrawioToSvg": "Draw.ioファイルをSVGに変換した後の出力ファイル名",
-
   "config.outputPath.convertPdfToPng": "PDFをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertPdfToJpeg": "PDFをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertPdfToWebp": "PDFをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertPdfToAvif": "PDFをAVIFに変換した後の出力ファイル名",
   "config.outputPath.convertPdfToSvg": "PDFをSVGに変換した後の出力ファイル名",
-
   "config.outputPath.convertPngToPdf": "PNGをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertPngToJpeg": "PNGをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertPngToWebp": "PNGをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertPngToAvif": "PNGをAVIFに変換した後の出力ファイル名",
-
   "config.outputPath.convertJpegToPdf": "JPEGをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertJpegToPng": "JPEGをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertJpegToWebp": "JPEGをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertJpegToAvif": "JPEGをAVIFに変換した後の出力ファイル名",
-
   "config.outputPath.convertWebpToPdf": "WebPをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertWebpToPng": "WebPをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertWebpToJpeg": "WebPをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertWebpToAvif": "WebPをAVIFに変換した後の出力ファイル名",
-
   "config.outputPath.convertAvifToPdf": "AVIFをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertAvifToPng": "AVIFをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertAvifToJpeg": "AVIFをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertAvifToWebp": "AVIFをWebPに変換した後の出力ファイル名",
-
   "config.outputPath.convertSvgToPdf": "SVGをPDFに変換した後の出力ファイル名",
   "config.outputPath.convertSvgToPng": "SVGをPNGに変換した後の出力ファイル名",
   "config.outputPath.convertSvgToJpeg": "SVGをJPEGに変換した後の出力ファイル名",
@@ -78,7 +70,6 @@
   "config.outputPath.convertMermaidToJpeg": "MermaidファイルをJPEGに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToWebp": "MermaidファイルをWebPに変換した後の出力ファイル名",
   "config.outputPath.convertMermaidToAvif": "MermaidファイルをAVIFに変換した後の出力ファイル名",
-
   "config.contextMenu.enabled": "コンテキストメニューを有効にする",
   "config.contextMenu.cropPdf.enabled": "PDFをクロップするコンテキストメニューを有効にする",
   "config.contextMenu.splitPdf.enabled": "PDFを分割するコンテキストメニューを有効にする",
@@ -91,20 +82,17 @@
   "config.contextMenu.convertAvif.enabled": "AVIFをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertSvg.enabled": "SVGをPDFや画像形式に変換するコンテキストメニューを有効にする",
   "config.contextMenu.convertMermaid.enabled": "Mermaidファイルを変換するコンテキストメニューを有効にする",
-
   "submenu.cropPdf": "PDFをクロップ",
   "command.cropPdf.auto": "自動クロップ",
   "command.undoLastConversion": "直前の変換を取り消す",
   "command.toggleSafeMode": "Safe Modeを切り替える",
   "command.cropPdf.configure": "範囲を指定してクロップ",
-
   "submenu.splitPdf": "PDFを分割",
   "command.splitPdf.allPages": "全ページを分割",
   "command.splitPdf.configure": "範囲を指定して分割",
   "submenu.mergePdf": "PDFを結合",
   "command.mergePdf.selectedFiles": "選択したPDFファイルを結合",
   "command.mergePdf.configure": "順序を指定して結合",
-
   "submenu.convert": "変換",
   "submenu.convertDrawio": "Draw.ioファイルを変換",
   "command.convertDrawioToPdf": "Draw.ioファイルをPDFに変換",
@@ -113,14 +101,12 @@
   "command.convertDrawioToWebp": "Draw.ioファイルをWebPに変換",
   "command.convertDrawioToAvif": "Draw.ioファイルをAVIFに変換",
   "command.convertDrawioToSvg": "Draw.ioファイルをSVGに変換",
-
   "submenu.convertPdf": "PDFを変換",
   "command.convertPdfToPng": "PDFをPNGに変換",
   "command.convertPdfToJpeg": "PDFをJPEGに変換",
   "command.convertPdfToSvg": "PDFをSVGに変換",
   "command.convertPdfToWebp": "PDFをWebPに変換",
   "command.convertPdfToAvif": "PDFをAVIFに変換",
-
   "submenu.convertPng": "PNGを変換",
   "command.convertToPdf": "PDF",
   "command.convertDrawioToPdfDirectly": "Draw.ioの全ページを1つのPDFに変換",
@@ -133,25 +119,21 @@
   "command.convertPngToJpeg": "PNGをJPEGに変換",
   "command.convertPngToWebp": "PNGをWebPに変換",
   "command.convertPngToAvif": "PNGをAVIFに変換",
-
   "submenu.convertJpeg": "JPEGを変換",
   "command.convertJpegToPdf": "JPEGをPDFに変換",
   "command.convertJpegToPng": "JPEGをPNGに変換",
   "command.convertJpegToWebp": "JPEGをWebPに変換",
   "command.convertJpegToAvif": "JPEGをAVIFに変換",
-
   "submenu.convertWebp": "WebPを変換",
   "command.convertWebpToPdf": "WebPをPDFに変換",
   "command.convertWebpToPng": "WebPをPNGに変換",
   "command.convertWebpToJpeg": "WebPをJPEGに変換",
   "command.convertWebpToAvif": "WebPをAVIFに変換",
-
   "submenu.convertAvif": "AVIFを変換",
   "command.convertAvifToPdf": "AVIFをPDFに変換",
   "command.convertAvifToPng": "AVIFをPNGに変換",
   "command.convertAvifToJpeg": "AVIFをJPEGに変換",
   "command.convertAvifToWebp": "AVIFをWebPに変換",
-
   "submenu.convertSvg": "SVGを変換",
   "command.convertSvgToPdf": "SVGをPDFに変換",
   "command.convertSvgToPng": "SVGをPNGに変換",
@@ -271,7 +253,9 @@
   "webview.splitPdf.previewDescription": "選択したページをプレビューします。",
   "webview.splitPdf.previewAriaLabel": "PDFプレビュー",
   "webview.splitPdf.groups": "グループ",
+  "webview.splitPdf.groupLabel": "グループ",
   "webview.splitPdf.pages": "ページ",
+  "webview.splitPdf.pageLabel": "ページ",
   "webview.splitPdf.pagesPlaceholder": "例: 1, 3-6, 10-",
   "webview.splitPdf.outputName": "出力名",
   "webview.splitPdf.outputNamePlaceholder": "group-1",

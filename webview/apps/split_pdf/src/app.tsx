@@ -158,12 +158,12 @@ export function App() {
     const parsedPages = parsePages(row.pages, pageCount());
 
     if (!parsedPages.ok) {
-      setApplyError(`Group ${rowIndex + 1}: ${pageFailureMessage(parsedPages, labels())}`);
+      setApplyError(`${labels().groupLabel} ${rowIndex + 1}: ${pageFailureMessage(parsedPages, labels())}`);
       return;
     }
 
     if (row.outputName.trim().length === 0) {
-      setApplyError(`Group ${rowIndex + 1}: ${labels().outputNameEmpty}`);
+      setApplyError(`${labels().groupLabel} ${rowIndex + 1}: ${labels().outputNameEmpty}`);
       return;
     }
 
@@ -217,21 +217,21 @@ export function App() {
       if (!parsedPages.ok) {
         return {
           rowId: row.id,
-          message: `Group ${index + 1}: ${pageFailureMessage(parsedPages, labels())}`,
+          message: `${labels().groupLabel} ${index + 1}: ${pageFailureMessage(parsedPages, labels())}`,
         };
       }
 
       if (row.outputName.trim().length === 0) {
         return {
           rowId: row.id,
-          message: `Group ${index + 1}: ${labels().outputNameEmpty}`,
+          message: `${labels().groupLabel} ${index + 1}: ${labels().outputNameEmpty}`,
         };
       }
 
       if (row.outputName.includes('\u0000') || /[\\/]/.test(row.outputName) || row.outputName.includes('..')) {
         return {
           rowId: row.id,
-          message: `Group ${index + 1}: ${labels().outputNamePath}`,
+          message: `${labels().groupLabel} ${index + 1}: ${labels().outputNamePath}`,
         };
       }
 
@@ -330,7 +330,7 @@ export function App() {
         ...(payload.standardFontDataUrl ? { standardFontDataUrl: payload.standardFontDataUrl } : {}),
         ...(payload.wasmUrl ? { wasmUrl: payload.wasmUrl } : {}),
         ...(pdfPreview !== undefined ? { root: pdfPreview } : {}),
-        pageLabel: 'Page',
+        pageLabel: labels().pageLabel,
         onRenderError: (error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
           setRenderError(message);
