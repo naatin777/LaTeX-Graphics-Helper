@@ -67,6 +67,13 @@ suite('Preflight — 共通検査', () => {
     assertError(result.errors[0]!, 'Empty file');
   });
 
+  test('読み込めない入力をFile not readable errorとして検出する', async () => {
+    const result = await runPreflightBatch([path.join(FIXTURES, 'missing.pdf')]);
+    strictEqual(result.canProceed, false);
+    strictEqual(result.errors.length, 1);
+    assertError(result.errors[0]!, 'File not readable');
+  });
+
   test('未対応の拡張子をerrorとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.pdf') + '.unknown']);
     strictEqual(result.canProceed, false);

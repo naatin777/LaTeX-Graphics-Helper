@@ -85,7 +85,7 @@ export async function runStagedConversionBatch<Job extends { workspacePath: stri
         if (runtime.outputChannel !== undefined) {
           commitOptions.outputChannel = runtime.outputChannel;
         }
-        return commitConversionOutputs(stagedOutputs.flat(), commitOptions);
+        return commitConversionOutputs(stagedOutputs, commitOptions);
       },
       runtime.outputChannel,
     );

@@ -1,6 +1,5 @@
 import { execFile } from 'node:child_process';
 import { copyFile, mkdir, readFile, stat } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -230,8 +229,8 @@ async function validateGeneratedPdf(pdfPath: string, maxSize: number): Promise<v
 /**
  * Performs a minimal preflight check on an EPS file.
  */
-export function validateEpsInput(epsPath: string): void {
-  const head = readFileSync(epsPath, { encoding: 'utf8' }).slice(0, 1024);
+export async function validateEpsInput(epsPath: string): Promise<void> {
+  const head = (await readFile(epsPath, { encoding: 'utf8' })).slice(0, 1024);
 
   if (!head.startsWith('%!PS-Adobe-') && !head.startsWith('%!PS')) {
     throw new Error(`Not a valid EPS file (missing PostScript header): ${epsPath}`);

@@ -1,5 +1,4 @@
-import { readFileSync, statSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import pLimit from 'p-limit';
@@ -19,7 +18,7 @@ export type PreflightResult = 'ok' | 'warning' | 'error';
 
 export interface PreflightReport {
   sourcePath: string;
-  format: SourceFormat;
+  format: SourceFormat | undefined;
   fileSize: number;
   result: PreflightResult;
   reason?: string;
@@ -107,17 +106,31 @@ export async function assertPreflightPassed(
 
 async function runPreflight(sourcePath: string): Promise<PreflightReport> {
   const format = sourceFormatForPath(sourcePath);
-  const fileSize = safeStatSync(sourcePath).size;
 
   if (format === undefined) {
     return {
       sourcePath,
-      format: 'pdf' as SourceFormat, // placeholder
-      fileSize,
+      format,
+      fileSize: 0,
       result: 'error',
       reason: `Unsupported format: ${path.extname(sourcePath)}`,
     };
   }
+
+  const fileStat = await safeStat(sourcePath);
+
+  if (fileStat.error !== undefined) {
+    return {
+      sourcePath,
+      format,
+      fileSize: 0,
+      result: 'error',
+      reason: 'File not readable',
+      details: { error: fileStat.error },
+    };
+  }
+
+  const fileSize = fileStat.size;
 
   if (fileSize === 0) {
     return { sourcePath, format, fileSize, result: 'error', reason: 'Empty file' };
@@ -164,8 +177,13 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
 // ── PDF ──
 
 async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
+  let handle;
+
   try {
-    const header = readFileSync(sourcePath).slice(0, 5).toString('utf8');
+    handle = await open(sourcePath, 'r');
+    const headerBuffer = Buffer.alloc(5);
+    const { bytesRead } = await handle.read(headerBuffer, 0, headerBuffer.length, 0);
+    const header = headerBuffer.subarray(0, bytesRead).toString('utf8');
 
     if (header !== '%PDF-') {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Not a valid PDF file' };
@@ -179,6 +197,8 @@ async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSi
     const message = error instanceof Error ? error.message : String(error);
 
     return { sourcePath, format, fileSize, result: 'error', reason: `PDF read failed: ${message}` };
+  } finally {
+    await handle?.close();
   }
 }
 
@@ -246,9 +266,9 @@ async function validateRasterInput(
 
 // ── SVG ──
 
-function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): PreflightReport {
+async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
-    const content = readFileSync(sourcePath, 'utf8').trim();
+    const content = (await readFile(sourcePath, 'utf8')).trim();
 
     if (content.length === 0) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty SVG file' };
@@ -287,9 +307,13 @@ function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: nu
 
 // ── Mermaid ──
 
-function validateMermaidInput(sourcePath: string, format: SourceFormat, fileSize: number): PreflightReport {
+async function validateMermaidInput(
+  sourcePath: string,
+  format: SourceFormat,
+  fileSize: number,
+): Promise<PreflightReport> {
   try {
-    const content = readFileSync(sourcePath, 'utf8').trim();
+    const content = (await readFile(sourcePath, 'utf8')).trim();
 
     if (content.length === 0) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty Mermaid file' };
@@ -311,9 +335,13 @@ function validateMermaidInput(sourcePath: string, format: SourceFormat, fileSize
 
 // ── Draw.io ──
 
-function validateDrawioInput(sourcePath: string, format: SourceFormat, fileSize: number): PreflightReport {
+async function validateDrawioInput(
+  sourcePath: string,
+  format: SourceFormat,
+  fileSize: number,
+): Promise<PreflightReport> {
   try {
-    const content = readFileSync(sourcePath, 'utf8').trim();
+    const content = (await readFile(sourcePath, 'utf8')).trim();
 
     if (content.length === 0) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty Draw.io file' };
@@ -324,7 +352,7 @@ function validateDrawioInput(sourcePath: string, format: SourceFormat, fileSize:
       return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
     }
 
-    if (!content.includes('<mxGraphModel') && !content.includes('<mxfile') && !content.includes('mxfile')) {
+    if (!content.includes('<mxGraphModel') && !content.includes('mxfile')) {
       return {
         sourcePath,
         format,
@@ -344,11 +372,15 @@ function validateDrawioInput(sourcePath: string, format: SourceFormat, fileSize:
 
 // ── EPS ──
 
-function validateEpsPreflight(sourcePath: string, format: SourceFormat, fileSize: number): PreflightReport {
+async function validateEpsPreflight(
+  sourcePath: string,
+  format: SourceFormat,
+  fileSize: number,
+): Promise<PreflightReport> {
   try {
-    validateEpsInput(sourcePath);
+    await validateEpsInput(sourcePath);
 
-    const head = readFileSync(sourcePath, 'utf8').slice(0, 64 * 1024);
+    const head = (await readFile(sourcePath, 'utf8')).slice(0, 64 * 1024);
     if (/^%%BoundingBox:\s*\(atend\)\s*$/m.test(head)) {
       return {
         sourcePath,
@@ -370,11 +402,11 @@ function validateEpsPreflight(sourcePath: string, format: SourceFormat, fileSize
 
 // ── Helpers ──
 
-function safeStatSync(filePath: string): { size: number } {
+async function safeStat(filePath: string): Promise<{ size: number; error?: string }> {
   try {
-    return statSync(filePath);
-  } catch {
-    return { size: -1 };
+    return await stat(filePath);
+  } catch (error) {
+    return { size: 0, error: error instanceof Error ? error.message : String(error) };
   }
 }
 
