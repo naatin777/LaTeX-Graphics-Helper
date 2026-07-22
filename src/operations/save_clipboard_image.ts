@@ -12,7 +12,7 @@ import {
   type PreparedConversionOutput,
 } from './commit_conversion_outputs.js';
 import type { ConversionRuntime } from './conversion_runtime.js';
-import { convertPngToPdfFiles, type ConvertPngToPdfFilesOptions } from './convert_png_to_pdf.js';
+import { convertToPdfFiles, type ConvertToPdfFilesOptions } from './convert_to_pdf.js';
 
 export interface ClipboardImageData {
   type: { ext: string };
@@ -125,7 +125,7 @@ async function saveClipboardImageAsPdf(
   runId: string,
   runtime: ConversionRuntime,
 ): Promise<CommittedConversionOutput[]> {
-  const convertOptions: ConvertPngToPdfFilesOptions = {
+  const convertOptions: ConvertToPdfFilesOptions = {
     jobs: [
       {
         sourcePath: stagedImage.stagedOutputPath,
@@ -145,7 +145,7 @@ async function saveClipboardImageAsPdf(
   if (runtime.outputChannel !== undefined) {
     convertOptions.outputChannel = runtime.outputChannel;
   }
-  return convertPngToPdfFiles(convertOptions);
+  return convertToPdfFiles(convertOptions);
 }
 
 function clipboardStagingRoot(workspacePath: string, runId: string): string {

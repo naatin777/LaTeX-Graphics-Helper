@@ -1,7 +1,7 @@
 import { render } from 'solid-js/web';
 
 import type { ExtensionToWebviewMessage, MergePdfLabels } from './messages';
-import { App } from './App';
+import { App } from './app';
 
 const postMessage = vi.hoisted(() => vi.fn<(message: unknown) => void>());
 const renderFirstPdfPage = vi.hoisted(() => vi.fn<(...args: unknown[]) => Promise<unknown>>());

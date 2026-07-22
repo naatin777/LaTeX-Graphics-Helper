@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { isDrawioPath } from '../application/source_format.js';
-import { readDrawioExecutablePath } from '../config/drawio_path.js';
+import { readDrawioExecutablePath } from '../config/external_tool_paths.js';
 import { convertDrawioToPdfFiles, type DrawioPdfJob } from '../operations/convert_drawio_to_pdf.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
@@ -15,13 +15,13 @@ export const CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND = 'latex-graphics-helper.con
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.pdf';
 const DEFAULT_DIRECT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
 
-export async function convertDrawioToPdfCommand(
+export async function convertDrawioToPagePdfsCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,
 ): Promise<void> {
   const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
-    splitByPage: true as const,
+    outputMode: 'page-pdfs' as const,
     outputSetting: 'outputPath.convertDrawioToPdf' as const,
     defaultOutputPath: DEFAULT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf',
@@ -38,13 +38,13 @@ export async function convertDrawioToPdfCommand(
   await runDrawioPdfCommand(commandOptions);
 }
 
-export async function convertDrawioToPdfDirectlyCommand(
+export async function convertDrawioToSinglePdfCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,
 ): Promise<void> {
   const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
-    splitByPage: false as const,
+    outputMode: 'single-pdf' as const,
     outputSetting: 'outputPath.convertDrawioToPdfDirectly' as const,
     defaultOutputPath: DEFAULT_DIRECT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf-directly',
@@ -64,7 +64,7 @@ export async function convertDrawioToPdfDirectlyCommand(
 async function runDrawioPdfCommand(options: {
   uri?: vscode.Uri;
   uris?: vscode.Uri[];
-  splitByPage: boolean;
+  outputMode: 'page-pdfs' | 'single-pdf';
   outputSetting: 'outputPath.convertDrawioToPdf' | 'outputPath.convertDrawioToPdfDirectly';
   defaultOutputPath: string;
   operationName: string;
@@ -88,7 +88,7 @@ async function runDrawioPdfCommand(options: {
       resolveConflicts: resolveOutputConflicts,
       messages: {
         progressTitle: userMessage(
-          options.splitByPage
+          options.outputMode === 'page-pdfs'
             ? 'message.progress.convertDrawioToPdf.title'
             : 'message.progress.convertDrawioToPdfDirectly.title',
           jobs.length,
@@ -96,16 +96,22 @@ async function runDrawioPdfCommand(options: {
         prepareMessage: userMessage('message.progress.prepareConversion', 'Draw.io PDF'),
         successMessage: (count) =>
           userMessage(
-            options.splitByPage ? 'message.convertDrawioToPdf.success' : 'message.convertDrawioToPdfDirectly.success',
+            options.outputMode === 'page-pdfs'
+              ? 'message.convertDrawioToPdf.success'
+              : 'message.convertDrawioToPdfDirectly.success',
             count,
           ),
         undoUnavailableMessage: (success, reason) => userMessage('message.undoUnavailable', success, reason),
         cancelledMessage: userMessage(
-          options.splitByPage ? 'message.convertDrawioToPdf.cancelled' : 'message.convertDrawioToPdfDirectly.cancelled',
+          options.outputMode === 'page-pdfs'
+            ? 'message.convertDrawioToPdf.cancelled'
+            : 'message.convertDrawioToPdfDirectly.cancelled',
         ),
         failedMessage: (reason) =>
           userMessage(
-            options.splitByPage ? 'message.convertDrawioToPdf.failed' : 'message.convertDrawioToPdfDirectly.failed',
+            options.outputMode === 'page-pdfs'
+              ? 'message.convertDrawioToPdf.failed'
+              : 'message.convertDrawioToPdfDirectly.failed',
             reason,
           ),
       },
@@ -113,7 +119,7 @@ async function runDrawioPdfCommand(options: {
         convertDrawioToPdfFiles({
           jobs,
           drawioPath,
-          splitByPage: options.splitByPage,
+          outputMode: options.outputMode,
           runtime,
         }),
     });
@@ -121,7 +127,9 @@ async function runDrawioPdfCommand(options: {
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(
       userMessage(
-        options.splitByPage ? 'message.convertDrawioToPdf.failed' : 'message.convertDrawioToPdfDirectly.failed',
+        options.outputMode === 'page-pdfs'
+          ? 'message.convertDrawioToPdf.failed'
+          : 'message.convertDrawioToPdfDirectly.failed',
         message,
       ),
     );

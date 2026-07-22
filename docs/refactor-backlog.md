@@ -65,10 +65,10 @@
 - Area: conversion operations
 - Type: Duplication
 - Concrete problem: PDF/SVG operationにもstaging・concurrency・commit・cleanupの似た処理が残っている。
-- Evidence: `src/operations/convert_png_to_pdf.ts`と`src/operations/convert_to_svg.ts`はraster batchとは別の形式固有pipelineを持つ。
+- Evidence: `src/operations/convert_to_pdf.ts`と`src/operations/convert_to_svg.ts`はraster batchとは別の形式固有pipelineを持つ。
 - Trigger: PDF/SVGの安全性変更が同じ境界で3回以上必要になったとき。
 - Why not now: PDF/SVGはrasterと異なるtool/encoder差分があり、今回の共通化でgeneric conversion engineへ近づけない。
-- Related files: `src/operations/convert_png_to_pdf.ts`, `src/operations/convert_to_svg.ts`, `src/operations/run_staged_conversion_batch.ts`
+- Related files: `src/operations/convert_to_pdf.ts`, `src/operations/convert_to_svg.ts`, `src/operations/run_staged_conversion_batch.ts`
 - Expected test impact: PDF/SVGの実変換、external tool failure、cleanup、Safe Modeの全suite。
 - Reversibility: 形式固有のまま小さいhelperを導入できる。
 

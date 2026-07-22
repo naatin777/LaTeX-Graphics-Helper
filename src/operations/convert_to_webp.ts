@@ -8,7 +8,7 @@ import {
   type RasterJob,
   type RunPdfToPng,
 } from './raster_conversion.js';
-import type { MermaidPuppeteerOptions } from './convert_png_to_pdf.js';
+import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from './conversion_runtime.js';
 import { type PdfToolScratchOptions } from './run_pdftocairo_with_ascii_scratch.js';
 

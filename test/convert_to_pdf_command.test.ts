@@ -34,7 +34,7 @@ import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { logicalSourcePathForOutputTemplate } from '../src/application/source_format.js';
-import { outputTemplateForSource } from '../src/commands/convert_png_to_pdf.js';
+import { outputTemplateForSource } from '../src/commands/convert_to_pdf.js';
 
 import { runCommandAndClearNotificationsUntilDone } from './helpers/vscode_command.js';
 import { withWorkspaceSettings } from './helpers/workspace_settings.js';

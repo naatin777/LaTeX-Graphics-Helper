@@ -11,7 +11,7 @@ import {
 } from '../application/split_pdf_protocol.js';
 import { resolveOutputPath } from '../config/resolve_output_path.js';
 import { localeMap } from '../locale_map.js';
-import { splitPdfAllPages, splitPdfByPageGroups, type SplitPdfJob } from '../operations/split_pdf_all_pages.js';
+import { splitPdfAllPages, splitPdfByPageGroups, type SplitPdfJob } from '../operations/split_pdf.js';
 import type { LineOutputChannel } from '../operations/external_tool_ascii_scratch.js';
 import { getWebviewHtml } from '../presentation/webview/get_webview_html.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../security/workspace_path.js';

@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
-import { convertPngToPdfFiles, type DrawioToPdfOptions } from '../src/operations/convert_png_to_pdf.js';
+import { convertToPdfFiles, type DrawioToPdfOptions } from '../src/operations/convert_to_pdf.js';
 
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const drawioFixturePath = path.resolve(
@@ -77,7 +77,7 @@ suite('Draw.ioの複雑なpath変換', () => {
         },
       };
 
-      const outputs = await convertPngToPdfFiles({
+      const outputs = await convertToPdfFiles({
         jobs: [
           {
             sourcePath,

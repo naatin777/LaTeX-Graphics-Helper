@@ -1,7 +1,7 @@
 import type { Accessor } from 'solid-js';
 
 import type { MergePdfLabels, MergePdfSource } from './messages';
-import { PreviewThumbnail, type PdfOptions } from './PreviewThumbnail';
+import { PreviewThumbnail, type PdfOptions } from './preview_thumbnail';
 
 export function SourceCard(props: {
   source: MergePdfSource;

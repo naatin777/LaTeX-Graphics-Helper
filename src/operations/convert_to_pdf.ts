@@ -83,13 +83,13 @@ export interface DrawioToPdfOptions {
 
 export type RunDrawio = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 
-export interface ConvertPngToPdfJob {
+export interface ConvertToPdfJob {
   sourcePath: string;
   outputPath: string;
   workspacePath: string;
 }
 
-export interface WriteImageAsPdfOptions {
+export interface WriteSourceAsPdfOptions {
   sourcePath: string;
   outputPath: string;
   workspacePath: string;
@@ -101,8 +101,8 @@ export interface WriteImageAsPdfOptions {
   ghostscriptPath?: string;
 }
 
-export interface ConvertPngToPdfFilesOptions {
-  jobs: ConvertPngToPdfJob[];
+export interface ConvertToPdfFilesOptions {
+  jobs: ConvertToPdfJob[];
   runId?: string;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
@@ -117,7 +117,7 @@ export interface ConvertPngToPdfFilesOptions {
   operationName?: string;
 }
 
-export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
+export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   validateJobs(options.jobs, options.supportedExtensions ?? DEFAULT_SUPPORTED_IMAGE_EXTENSIONS);
   await validateJobPaths(options.jobs);
@@ -154,7 +154,7 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
     runId,
     runtime,
     stage: (job, index, currentRunId, batchRuntime) =>
-      stagePngConversion(
+      stageSourceToPdf(
         job,
         index,
         currentRunId,
@@ -168,8 +168,8 @@ export async function convertPngToPdfFiles(options: ConvertPngToPdfFilesOptions)
   });
 }
 
-async function stagePngConversion(
-  job: ConvertPngToPdfJob,
+async function stageSourceToPdf(
+  job: ConvertToPdfJob,
   index: number,
   runId: string,
   signal?: AbortSignal,
@@ -190,7 +190,7 @@ async function stagePngConversion(
   );
   const stagingRootPath = path.join(job.workspacePath, '.latex-graphics-helper', 'convert-png-to-pdf', runId);
 
-  const writeOptions: WriteImageAsPdfOptions = {
+  const writeOptions: WriteSourceAsPdfOptions = {
     sourcePath: job.sourcePath,
     outputPath: stagedOutputPath,
     workspacePath: job.workspacePath,
@@ -211,7 +211,7 @@ async function stagePngConversion(
   if (ghostscriptPath !== undefined) {
     writeOptions.ghostscriptPath = ghostscriptPath;
   }
-  await writeImageAsPdf(writeOptions);
+  await writeSourceAsPdf(writeOptions);
   signal?.throwIfAborted();
 
   return {
@@ -222,7 +222,7 @@ async function stagePngConversion(
   };
 }
 
-export async function writeImageAsPdf(options: WriteImageAsPdfOptions): Promise<void> {
+export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promise<void> {
   const {
     sourcePath,
     outputPath,
@@ -588,7 +588,7 @@ function setPageSize(page: PDFPage, width: number, height: number): void {
   page.setCropBox(0, 0, width, height);
 }
 
-async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
+async function validateJobPaths(jobs: ConvertToPdfJob[]): Promise<void> {
   await Promise.all(
     jobs.flatMap((job) => [
       assertExistingPathInWorkspace(job.sourcePath, job.workspacePath),
@@ -601,7 +601,7 @@ async function validateJobPaths(jobs: ConvertPngToPdfJob[]): Promise<void> {
   );
 }
 
-function validateJobs(jobs: ConvertPngToPdfJob[], supportedExtensions: readonly string[]): void {
+function validateJobs(jobs: ConvertToPdfJob[], supportedExtensions: readonly string[]): void {
   if (jobs.length === 0) {
     throw new Error('No image files were selected.');
   }

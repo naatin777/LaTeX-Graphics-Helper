@@ -16,7 +16,7 @@ import {
 
 export type { CommittedConversionOutput, OutputConflictDecision, PreparedConversionOutput };
 import type { ConversionRuntime } from './conversion_runtime.js';
-import type { MermaidPuppeteerOptions, RunDrawio } from './convert_png_to_pdf.js';
+import type { MermaidPuppeteerOptions, RunDrawio } from './convert_to_pdf.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
 import { assertPreflightPassed } from './input_preflight.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';

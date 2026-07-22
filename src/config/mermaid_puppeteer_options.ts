@@ -1,4 +1,4 @@
-import type { MermaidPuppeteerOptions } from '../operations/convert_png_to_pdf.js';
+import type { MermaidPuppeteerOptions } from '../operations/convert_to_pdf.js';
 
 export type MermaidLegacySettingsSection = 'convertToPdf' | 'convertToSvg';
 type ConfigurationInspection<T> = {

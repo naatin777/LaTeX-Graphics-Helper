@@ -43,18 +43,16 @@ oxlint.config.ts
 - Vite / Vitest config
 - `scripts/**/*.mjs`
 - tests
-- 旧名の`webview/apps/pdf-workbench`
-- 旧名の`webview/apps/pdf-arranger`
 
 ### Confirmed mismatches
 
-| ID | Config / script | Observation | Effect | Candidate correction |
-|---|---|---|---|---|
-| TOOL-LINT-001 | `scripts/**/*.mjs` override | root lint scriptは`scripts/`を渡さない | package / NLS helper等がCI lint対象外 | `scripts`をlint対象へ追加し、実warning inventoryを先に取る |
-| TOOL-LINT-002 | root JS config | `.vscode-test.mjs`, `playwright.config.mjs`を渡さない | test runner configのsyntax / lint policyが外れる | root configを明示追加するか、safeなrepository root globを検討 |
-| TOOL-LINT-003 | stale app override | `pdf-workbench`, `pdf-arranger`向け専用ruleが残る | 現在存在しないarchitectureを設定が表す | generic app overrideで足りるなら削除。必要なら現行`crop_pdf`等へ根拠付きで置換 |
-| TOOL-LINT-004 | test override | `test/**/*.ts`をNode envとして一括扱い | Browser / Electron specもNodeとbrowser/electron双方を使う | Playwright test用overrideを別にし、globals / restricted importsを実runtimeに合わせる |
-| TOOL-LINT-005 | comments | 「logger導入後」等、未決将来案が設定コメントに残る | ruleの現在理由と将来案が混ざる | 現在の採用理由だけに絞る |
+| ID            | Config / script             | Observation                                                                                               | Effect                                                    | Candidate correction                                                                             |
+| ------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| TOOL-LINT-001 | `scripts/**/*.mjs` override | root lint scriptは`scripts/`を渡さない                                                                    | package / NLS helper等がCI lint対象外                     | `scripts`をlint対象へ追加し、実warning inventoryを先に取る                                       |
+| TOOL-LINT-002 | root JS config              | `.vscode-test.mjs`, `playwright.config.mjs`を渡さない                                                     | test runner configのsyntax / lint policyが外れる          | root configを明示追加するか、safeなrepository root globを検討                                    |
+| TOOL-LINT-003 | stale app override          | `pdf-workbench`, `pdf-arranger`向け専用ruleを削除し、実在する`webview/apps/*/src`のgeneric ruleへ整理した | 現在のapp directoryとOxlint対象が一致する                 | Resolved in this naming audit; add an app-specific override only with a real dependency boundary |
+| TOOL-LINT-004 | test override               | `test/**/*.ts`をNode envとして一括扱い                                                                    | Browser / Electron specもNodeとbrowser/electron双方を使う | Playwright test用overrideを別にし、globals / restricted importsを実runtimeに合わせる             |
+| TOOL-LINT-005 | comments                    | 「logger導入後」等、未決将来案が設定コメントに残る                                                        | ruleの現在理由と将来案が混ざる                            | 現在の採用理由だけに絞る                                                                         |
 
 ### Rule-level observations
 
@@ -69,7 +67,7 @@ oxlint.config.ts
 現行v1では採用しない候補:
 
 - repositoryはTypeScript 6.0.3
--調査時点のOxlint type-aware要件と一致しない
+  -調査時点のOxlint type-aware要件と一致しない
 - 追加dependencyとmigration costがある
 
 再評価trigger:
@@ -95,12 +93,12 @@ oxlint.config.ts
 
 ### Gaps and asymmetry
 
-| ID | Observation | Consequence | Candidate decision |
-|---|---|---|---|
-| TOOL-FMT-001 | README、`docs/**`、workflow YAML、Lefthook YAMLはCI `format`対象外 | pre-commitを通さない変更ではformat policyがenforceされない | docs / YAMLをCIでformatする価値とlarge diff riskを比較 |
-| TOOL-FMT-002 | Lefthook pre-commitはstaged Markdown / CSS / HTML / JSONもformatする | local commitとCIの対象集合が一致しない | 意図的なlocal convenienceか、CI omissionかを明文化 |
-| TOOL-FMT-003 | root `.mjs` configがformat scriptへ含まれない | config style drift | lintと同じcoverage policyへ揃える候補 |
-| TOOL-FMT-004 | Oxfmt configはMarkdown overrideを持つがCIはdocsを渡さない | config capabilityと実行対象がずれる | overrideを残す理由をpre-commit用途としてコメントするか、CI対象へ追加 |
+| ID           | Observation                                                          | Consequence                                                | Candidate decision                                                   |
+| ------------ | -------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| TOOL-FMT-001 | README、`docs/**`、workflow YAML、Lefthook YAMLはCI `format`対象外   | pre-commitを通さない変更ではformat policyがenforceされない | docs / YAMLをCIでformatする価値とlarge diff riskを比較               |
+| TOOL-FMT-002 | Lefthook pre-commitはstaged Markdown / CSS / HTML / JSONもformatする | local commitとCIの対象集合が一致しない                     | 意図的なlocal convenienceか、CI omissionかを明文化                   |
+| TOOL-FMT-003 | root `.mjs` configがformat scriptへ含まれない                        | config style drift                                         | lintと同じcoverage policyへ揃える候補                                |
+| TOOL-FMT-004 | Oxfmt configはMarkdown overrideを持つがCIはdocsを渡さない            | config capabilityと実行対象がずれる                        | overrideを残す理由をpre-commit用途としてコメントするか、CI対象へ追加 |
 
 format対象をrepository全体へ急に広げると大量diffが発生するため、最初はcheck-only inventoryを取り、既存差分を別taskで正規化する。
 
@@ -216,13 +214,13 @@ Selection Gate:
 
 ## 6. Lefthook and CI relationship
 
-| Stage | Current behavior | Alignment issue |
-|---|---|---|
-| pre-commit format | staged TS/JS/JSON/MD/HTML/CSSをwrite | CI format対象より広い |
-| pre-commit lint | staged TS/JSのみ | root lint scriptよりfile選択がdynamicで、root configsもstagedなら対象になる |
-| pre-push | `check:all` + build | runtime testsは実行しない |
-| CI Check | `check:all` | pre-push staticと概ね一致 |
-| CI Test / Playwright | runtime tests | local pre-pushでは未実行 |
+| Stage                | Current behavior                     | Alignment issue                                                             |
+| -------------------- | ------------------------------------ | --------------------------------------------------------------------------- |
+| pre-commit format    | staged TS/JS/JSON/MD/HTML/CSSをwrite | CI format対象より広い                                                       |
+| pre-commit lint      | staged TS/JSのみ                     | root lint scriptよりfile選択がdynamicで、root configsもstagedなら対象になる |
+| pre-push             | `check:all` + build                  | runtime testsは実行しない                                                   |
+| CI Check             | `check:all`                          | pre-push staticと概ね一致                                                   |
+| CI Test / Playwright | runtime tests                        | local pre-pushでは未実行                                                    |
 
 これは必ずしも誤りではない。pre-pushを速く保ち、runtimeをCIへ任せる判断も成立する。
 

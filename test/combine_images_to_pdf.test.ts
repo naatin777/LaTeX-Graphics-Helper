@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 
 import { readGhostscriptExecutablePath } from '../src/config/external_tool_paths.js';
 import { combineImagesToPdf } from '../src/operations/combine_images_to_pdf.js';
-import type { SvgToPdfOptions } from '../src/operations/convert_png_to_pdf.js';
+import type { SvgToPdfOptions } from '../src/operations/convert_to_pdf.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const VALID_PNG = path.join(testDirectory, '..', '..', 'test', 'fixtures', 'test.png');

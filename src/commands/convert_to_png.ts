@@ -5,7 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as vscode from 'vscode';
 
 import { isEditableDrawioImagePath, logicalSourcePathForOutputTemplate } from '../application/source_format.js';
-import { readDrawioExecutablePath } from '../config/drawio_path.js';
+import { readDrawioExecutablePath } from '../config/external_tool_paths.js';
 import { readGhostscriptExecutablePath, readPdftocairoExecutablePath } from '../config/external_tool_paths.js';
 import { readMermaidPuppeteerOptions } from '../config/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../config/output_path_settings.js';

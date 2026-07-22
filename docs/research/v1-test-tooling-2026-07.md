@@ -74,7 +74,7 @@ Browser Playwrightは実VS Code Hostを含まないが、Chromium renderer上で
 確認できたこと:
 
 - `scripts/**/*.mjs`向けoverrideがある一方、現在の`lint` scriptは`scripts/`、`.vscode-test.mjs`、`playwright.config.mjs`を対象に含めていない
-- `webview/apps/pdf-workbench`と`webview/apps/pdf-arranger`向けの専用overrideが残っており、現行app名との同期確認が必要
+- 初期調査時点では`webview/apps/pdf-workbench`と`webview/apps/pdf-arranger`向けの専用overrideが残っていた。2026-07-22の命名auditで削除し、現行`webview/apps/*/src`のgeneric overrideへ整理した。
 - 一般的な`webview/apps/*/src/**` overrideは存在する
 
 Oxlintのtype-aware lintingについて公式資料から確認したこと:

@@ -19,7 +19,7 @@ import { PDFDocument } from 'pdf-lib';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
-import { cropPdfAuto } from '../src/commands/crop_pdf_auto.js';
+import { cropPdfAutoCommand } from '../src/commands/crop_pdf_auto.js';
 
 suite('PDF crop outputPath検証', () => {
   test('NULを含む設定では進捗表示と作業ファイル作成を開始しない', async () => {
@@ -54,7 +54,7 @@ suite('PDF crop outputPath検証', () => {
         .stub(vscode.window, 'createOutputChannel')
         .returns({ dispose() {} } as unknown as vscode.LogOutputChannel);
 
-      await cropPdfAuto(vscode.Uri.file(sourcePath));
+      await cropPdfAutoCommand(vscode.Uri.file(sourcePath));
 
       assert.ok(withProgress.notCalled);
       assert.ok(createOutputChannel.notCalled);

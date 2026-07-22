@@ -7,7 +7,7 @@ import { PDFDocument } from 'pdf-lib';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
-import { rememberLastConversion, undoLastConversion } from '../src/commands/undo_last_conversion.js';
+import { rememberLastConversion, undoLastConversionCommand } from '../src/commands/undo_last_conversion.js';
 import { LatexPasteEditProvider } from '../src/edit_provider/latex_paste_edit_provider.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -199,7 +199,7 @@ suite('LaTeXクリップボード画像挿入', () => {
         assert.deepStrictEqual(await readFile(backupPaths[0] ?? ''), existingPdf);
         await assert.rejects(access(stagedRootFromLines(outputLines)));
 
-        await undoLastConversion();
+        await undoLastConversionCommand();
         assert.deepStrictEqual(await readFile(existingPdfPath), existingPdf);
         await assert.rejects(access(conversionRoot));
 
@@ -223,7 +223,7 @@ suite('LaTeXクリップボード画像挿入', () => {
         assert.ok(keepBothEdits);
         assert.ok(await readFile(path.join(directory, 'pasted-1.pdf')));
         await assert.rejects(access(stagedRootFromLines(outputLines, 'keep-both: ')));
-        await undoLastConversion();
+        await undoLastConversionCommand();
         await assert.rejects(access(path.join(directory, 'pasted-1.pdf')));
         assert.deepStrictEqual(await readFile(existingPdfPath), existingPdf);
       } finally {

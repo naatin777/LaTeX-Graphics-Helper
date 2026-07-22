@@ -12,9 +12,9 @@ import {
   parseSplitPdfPages,
   type SplitPdfLabels,
 } from '../src/application/split_pdf_protocol.js';
-import { splitPdfByPageGroups } from '../src/operations/split_pdf_all_pages.js';
+import { splitPdfByPageGroups } from '../src/operations/split_pdf.js';
 
-suite('Split PDF page groups', () => {
+suite('PDFページグループ分割', () => {
   test('parses page expressions in input order with ranges and duplicates', () => {
     assert.deepEqual(parseSplitPdfPages('10, 3-5, 3, -2, 7-', 10), {
       ok: true,

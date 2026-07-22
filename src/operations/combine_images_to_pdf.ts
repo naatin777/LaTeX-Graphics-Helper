@@ -13,7 +13,7 @@ import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
 } from './commit_conversion_outputs.js';
-import { writeImageAsPdf, type SvgToPdfOptions, type WriteImageAsPdfOptions } from './convert_png_to_pdf.js';
+import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from './conversion_runtime.js';
 import type { LineOutputChannel } from './external_tool_ascii_scratch.js';
 import { assertPreflightPassed } from './input_preflight.js';
@@ -69,7 +69,7 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
       options.signal?.throwIfAborted();
       const job = options.jobs[index]!;
       const pdfPath = path.join(stagingRootPath, `page-${index + 1}.pdf`);
-      const writeOptions: WriteImageAsPdfOptions = {
+      const writeOptions: WriteSourceAsPdfOptions = {
         sourcePath: job.sourcePath,
         outputPath: pdfPath,
         workspacePath: options.workspacePath,
@@ -82,7 +82,7 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
       if (options.ghostscriptPath !== undefined) {
         writeOptions.ghostscriptPath = options.ghostscriptPath;
       }
-      await writeImageAsPdf(writeOptions);
+      await writeSourceAsPdf(writeOptions);
       pdfPaths.push(pdfPath);
       options.reportProgress?.(index + 1, options.jobs.length);
     }

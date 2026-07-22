@@ -2,8 +2,8 @@ import { For, Show, createSignal, onCleanup, onMount } from 'solid-js';
 
 import type { ExtensionToWebviewMessage, MergePdfSource } from './messages';
 import { defaultLabels } from './labels';
-import { SourceCard } from './SourceCard';
-import type { PdfOptions } from './PreviewThumbnail';
+import { SourceCard } from './source_card';
+import type { PdfOptions } from './preview_thumbnail';
 import { vscode } from './vscode';
 
 export function App() {

@@ -3,13 +3,13 @@ import * as vscode from 'vscode';
 import type { CommandDependencies } from './commands/command_dependencies.js';
 import {
   convertToPdfCommand,
-  convertPngToPdfCommand,
+  convertPngToPdfInternalCommand,
   CONVERT_TO_PDF_COMMAND,
   CONVERT_PNG_TO_PDF_COMMAND,
-} from './commands/convert_png_to_pdf.js';
+} from './commands/convert_to_pdf.js';
 import {
-  convertDrawioToPdfCommand,
-  convertDrawioToPdfDirectlyCommand,
+  convertDrawioToPagePdfsCommand,
+  convertDrawioToSinglePdfCommand,
   CONVERT_DRAWIO_TO_PDF_COMMAND,
   CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND,
 } from './commands/convert_drawio_to_pdf.js';
@@ -18,11 +18,8 @@ import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/conver
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/convert_to_png.js';
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/convert_to_svg.js';
 import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/convert_to_webp.js';
-import {
-  convertImagesToSinglePdfCommand,
-  COMBINE_IMAGES_TO_PDF_COMMAND,
-} from './commands/convert_images_to_single_pdf.js';
-import { cropPdfAuto, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
+import { combineImagesToPdfCommand, COMBINE_IMAGES_TO_PDF_COMMAND } from './commands/combine_images_to_pdf.js';
+import { cropPdfAutoCommand, CROP_PDF_AUTO_COMMAND } from './commands/crop_pdf_auto.js';
 import { cropPdfConfigureCommand, CROP_PDF_CONFIGURE_COMMAND } from './commands/crop_pdf_configure.js';
 import {
   mergePdfConfigureCommand,
@@ -36,8 +33,8 @@ import {
   splitPdfConfigureCommand,
   SPLIT_PDF_ALL_PAGES_COMMAND,
   SPLIT_PDF_CONFIGURE_COMMAND,
-} from './commands/split_pdf_all_pages.js';
-import { undoLastConversion, UNDO_LAST_CONVERSION_COMMAND } from './commands/undo_last_conversion.js';
+} from './commands/split_pdf_commands.js';
+import { undoLastConversionCommand, UNDO_LAST_CONVERSION_COMMAND } from './commands/undo_last_conversion.js';
 import { LatexDropEditProvider } from './edit_provider/latex_drop_edit_provider.js';
 import { LatexPasteEditProvider } from './edit_provider/latex_paste_edit_provider.js';
 
@@ -73,7 +70,7 @@ function registerFileCommand(context: vscode.ExtensionContext, id: string, handl
 }
 
 function registerCommands(context: vscode.ExtensionContext, dependencies: CommandDependencies): void {
-  registerFileCommand(context, CROP_PDF_AUTO_COMMAND, (uri, uris) => cropPdfAuto(uri, uris, dependencies));
+  registerFileCommand(context, CROP_PDF_AUTO_COMMAND, (uri, uris) => cropPdfAutoCommand(uri, uris, dependencies));
   registerFileCommand(context, CROP_PDF_CONFIGURE_COMMAND, (uri, uris) =>
     cropPdfConfigureCommand(context, uri, uris, dependencies),
   );
@@ -91,10 +88,10 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
   );
   registerFileCommand(context, CONVERT_TO_PDF_COMMAND, (uri, uris) => convertToPdfCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_DRAWIO_TO_PDF_COMMAND, (uri, uris) =>
-    convertDrawioToPdfCommand(uri, uris, dependencies),
+    convertDrawioToPagePdfsCommand(uri, uris, dependencies),
   );
   registerFileCommand(context, CONVERT_DRAWIO_TO_PDF_DIRECTLY_COMMAND, (uri, uris) =>
-    convertDrawioToPdfDirectlyCommand(uri, uris, dependencies),
+    convertDrawioToSinglePdfCommand(uri, uris, dependencies),
   );
   registerFileCommand(context, CONVERT_TO_PNG_COMMAND, (uri, uris) => convertToPngCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_JPEG_COMMAND, (uri, uris) => convertToJpegCommand(uri, uris, dependencies));
@@ -102,14 +99,14 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
   registerFileCommand(context, CONVERT_TO_AVIF_COMMAND, (uri, uris) => convertToAvifCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_SVG_COMMAND, (uri, uris) => convertToSvgCommand(uri, uris, dependencies));
   registerFileCommand(context, COMBINE_IMAGES_TO_PDF_COMMAND, (uri, uris) =>
-    convertImagesToSinglePdfCommand(uri, uris, dependencies),
+    combineImagesToPdfCommand(uri, uris, dependencies),
   );
   registerFileCommand(context, CONVERT_PNG_TO_PDF_COMMAND, (uri, uris) =>
-    convertPngToPdfCommand(uri, uris, dependencies),
+    convertPngToPdfInternalCommand(uri, uris, dependencies),
   );
   context.subscriptions.push(
     vscode.commands.registerCommand(UNDO_LAST_CONVERSION_COMMAND, (expectedId?: string) =>
-      undoLastConversion(expectedId, dependencies),
+      undoLastConversionCommand(expectedId, dependencies),
     ),
   );
 }

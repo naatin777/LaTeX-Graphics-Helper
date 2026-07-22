@@ -28,7 +28,7 @@ export interface DrawioPdfJob {
 export interface ConvertDrawioToPdfOptions {
   jobs: DrawioPdfJob[];
   drawioPath: string;
-  splitByPage: boolean;
+  outputMode: 'page-pdfs' | 'single-pdf';
   runId?: string;
   runtime?: ConversionRuntime;
   runDrawio?: RunDrawio;
@@ -44,8 +44,8 @@ export type RunDrawio = (
 export async function convertDrawioToPdfFiles(
   options: ConvertDrawioToPdfOptions,
 ): Promise<CommittedConversionOutput[]> {
-  const operationName = options.splitByPage ? 'convert-drawio-to-pdf' : 'convert-drawio-to-pdf-directly';
-  validateJobs(options.jobs, options.splitByPage);
+  const operationName = options.outputMode === 'page-pdfs' ? 'convert-drawio-to-pdf' : 'convert-drawio-to-pdf-directly';
+  validateJobs(options.jobs, options.outputMode);
   await validateJobPaths(options.jobs, operationName);
 
   await assertPreflightPassed(options.jobs, undefined, options.runtime?.signal);
@@ -63,7 +63,7 @@ export async function convertDrawioToPdfFiles(
         index,
         runId: currentRunId,
         operationName,
-        splitByPage: options.splitByPage,
+        outputMode: options.outputMode,
         drawioPath: options.drawioPath,
         ...(options.runDrawio !== undefined && { runDrawio: options.runDrawio }),
         runtime,
@@ -76,12 +76,12 @@ async function stageDrawioJob(options: {
   index: number;
   runId: string;
   operationName: string;
-  splitByPage: boolean;
+  outputMode: 'page-pdfs' | 'single-pdf';
   drawioPath: string;
   runDrawio?: RunDrawio;
   runtime: ConversionRuntime;
 }): Promise<PreparedConversionOutput[]> {
-  const { job, index: jobIndex, runId, operationName, splitByPage, drawioPath, runDrawio, runtime } = options;
+  const { job, index: jobIndex, runId, operationName, outputMode, drawioPath, runDrawio, runtime } = options;
   const stageRootPath = path.join(job.workspacePath, '.latex-graphics-helper', operationName, runId);
   const logicalSourcePath = logicalSourcePathForOutputTemplate(job.sourcePath);
   const stageDirectory = path.join(
@@ -122,7 +122,7 @@ async function stageDrawioJob(options: {
     workspaceName: job.workspaceName,
   };
 
-  if (!splitByPage) {
+  if (outputMode === 'single-pdf') {
     const outputPath = resolveOutputPath(job.outputTemplate, outputContext);
     await assertWritablePathInWorkspace(outputPath, job.workspacePath);
     return [
@@ -249,7 +249,7 @@ async function validateJobPaths(jobs: DrawioPdfJob[], operationName: string): Pr
   );
 }
 
-function validateJobs(jobs: DrawioPdfJob[], splitByPage: boolean): void {
+function validateJobs(jobs: DrawioPdfJob[], outputMode: 'page-pdfs' | 'single-pdf'): void {
   if (jobs.length === 0) {
     throw new Error('No Draw.io files were selected.');
   }
@@ -259,7 +259,7 @@ function validateJobs(jobs: DrawioPdfJob[], splitByPage: boolean): void {
       throw new Error(`Only Draw.io files are supported: ${job.sourcePath}`);
     }
 
-    if (splitByPage && !job.outputTemplate.includes('${page}')) {
+    if (outputMode === 'page-pdfs' && !job.outputTemplate.includes('${page}')) {
       throw new Error('outputPath.convertDrawioToPdf must contain ${page} for split Draw.io conversion.');
     }
   }

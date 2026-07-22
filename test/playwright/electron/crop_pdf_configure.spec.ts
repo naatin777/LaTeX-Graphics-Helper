@@ -10,7 +10,7 @@ import { PDFDocument } from 'pdf-lib';
 
 import { cropConfigureFixture } from '../../helpers/crop_configure_fixture.js';
 import type { MergePdfOptions } from '../../../src/operations/merge_pdf.js';
-import type { SplitPdfOptions, SplitPdfOutput } from '../../../src/operations/split_pdf_all_pages.js';
+import type { SplitPdfOptions, SplitPdfOutput } from '../../../src/operations/split_pdf.js';
 
 import { captureCropPdfScreenshot } from './helpers/crop_pdf_screenshot.js';
 import {
@@ -300,7 +300,7 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
 
     const splitModule = await loadPackagedOperation<PackagedSplitPdfModule>(
       installedExtension.extensionPath,
-      'out/operations/split_pdf_all_pages.js',
+      'out/operations/split_pdf.js',
     );
     const splitOutputs = await splitModule.splitPdfAllPages({
       jobs: [

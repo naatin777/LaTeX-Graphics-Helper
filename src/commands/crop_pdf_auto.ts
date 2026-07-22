@@ -17,7 +17,7 @@ const DEFAULT_MARGIN_OPTIONS = [0, 5, 10, 20];
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-crop.pdf';
 export const CROP_PDF_AUTO_COMMAND = 'latex-graphics-helper.cropPdf.auto';
 
-export async function cropPdfAuto(
+export async function cropPdfAutoCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,

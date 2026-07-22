@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
-import { COMBINE_IMAGES_TO_PDF_COMMAND } from '../src/commands/convert_images_to_single_pdf.js';
+import { COMBINE_IMAGES_TO_PDF_COMMAND } from '../src/commands/combine_images_to_pdf.js';
 import { userMessage } from '../src/commands/user_messages.js';
 
 import { runCommandAndClearNotificationsUntilDone } from './helpers/vscode_command.js';

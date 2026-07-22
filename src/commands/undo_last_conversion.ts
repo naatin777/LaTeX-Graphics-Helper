@@ -38,7 +38,10 @@ export async function rememberLastConversion(
   return record.id;
 }
 
-export async function undoLastConversion(expectedId?: string, dependencies?: CommandDependencies): Promise<void> {
+export async function undoLastConversionCommand(
+  expectedId?: string,
+  dependencies?: CommandDependencies,
+): Promise<void> {
   const outputChannel = dependencies?.outputChannel;
   try {
     if (!lastConversion) {

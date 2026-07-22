@@ -115,26 +115,6 @@ const restrictedImports = (
 
 const appOverrides: OxlintOverride[] = [
   {
-    files: ['webview/apps/pdf-workbench/**/*.ts', 'webview/apps/pdf-workbench/**/*.tsx'],
-    rules: restrictedImports(browserOnly, [
-      ...frontendPatterns,
-      {
-        group: ['../pdf-arranger/*', '../../pdf-arranger/*'],
-        message: 'pdf-workbench must not import pdf-arranger.',
-      },
-    ]),
-  },
-  {
-    files: ['webview/apps/pdf-arranger/**/*.ts', 'webview/apps/pdf-arranger/**/*.tsx'],
-    rules: restrictedImports(browserOnly, [
-      ...frontendPatterns,
-      {
-        group: ['../pdf-workbench/*', '../../pdf-workbench/*'],
-        message: 'pdf-arranger must not import pdf-workbench.',
-      },
-    ]),
-  },
-  {
     files: ['webview/apps/*/src/**/*.ts', 'webview/apps/*/src/**/*.tsx'],
     rules: restrictedImports(browserOnly, [
       ...frontendPatterns,

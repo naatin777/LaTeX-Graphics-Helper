@@ -9,7 +9,7 @@ import sharp from 'sharp';
 import * as vscode from 'vscode';
 
 import { readGhostscriptExecutablePath, readPdftocairoExecutablePath } from '../src/config/external_tool_paths.js';
-import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
+import { convertToPdfFiles } from '../src/operations/convert_to_pdf.js';
 import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
 import { convertToJpegFiles } from '../src/operations/convert_to_jpeg.js';
 import { convertToPngFiles } from '../src/operations/convert_to_png.js';
@@ -30,7 +30,7 @@ suite('EPSの出力経路', () => {
       const outputPath = path.join(workspacePath, 'output.pdf');
       await writeFile(sourcePath, await readFile(EPS_FIXTURE));
 
-      await convertPngToPdfFiles({
+      await convertToPdfFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
         supportedExtensions: ['.eps'],
         ghostscriptPath: GHOSTSCRIPT_PATH,
@@ -176,7 +176,7 @@ suite('EPSの出力経路', () => {
       await writeFile(sourcePath, 'NOT AN EPS FILE');
 
       await assert.rejects(
-        convertPngToPdfFiles({
+        convertToPdfFiles({
           jobs: [{ sourcePath, outputPath, workspacePath }],
           supportedExtensions: ['.eps'],
           ghostscriptPath: GHOSTSCRIPT_PATH,

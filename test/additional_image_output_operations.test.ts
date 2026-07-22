@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 
-import { convertPngToPdfFiles } from '../src/operations/convert_png_to_pdf.js';
+import { convertToPdfFiles } from '../src/operations/convert_to_pdf.js';
 import { convertToAvifFiles } from '../src/operations/convert_to_avif.js';
 import { convertToJpegFiles } from '../src/operations/convert_to_jpeg.js';
 import { convertToPngFiles } from '../src/operations/convert_to_png.js';
@@ -47,7 +47,7 @@ async function convertImage(
   const runtime = { resolveConflicts: async (): Promise<'overwrite'> => 'overwrite' };
 
   if (outputFormat === 'pdf') {
-    await convertPngToPdfFiles({
+    await convertToPdfFiles({
       jobs: [job],
       supportedExtensions: [`.${inputFormat}`],
       operationName: 'convert-additional-image-to-pdf',

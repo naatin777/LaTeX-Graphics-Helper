@@ -8,7 +8,7 @@ import { combineImagesToPdf, type CombineImagesToPdfOptions } from '../operation
 import { assertWritablePathInWorkspace } from '../security/workspace_path.js';
 
 import type { CommandDependencies } from './command_dependencies.js';
-import { readSvgToPdfOptions } from './convert_png_to_pdf.js';
+import { readSvgToPdfOptions } from './convert_to_pdf.js';
 import { createOutputConversionMessages, runOutputConversion } from './run_output_conversion.js';
 import { resolveOutputConflicts } from './safe_mode.js';
 import { userMessage } from './user_messages.js';
@@ -17,7 +17,7 @@ export const COMBINE_IMAGES_TO_PDF_COMMAND = 'latex-graphics-helper.convertImage
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
 const OUTPUT_PATH_SETTING = 'outputPath.convertImagesToSinglePdf';
 
-export async function convertImagesToSinglePdfCommand(
+export async function combineImagesToPdfCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,

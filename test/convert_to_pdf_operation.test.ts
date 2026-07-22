@@ -15,15 +15,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  convertPngToPdfFiles,
+  convertToPdfFiles,
   createSvgPuppeteerLaunchOptions,
   validateSvgToPdfOptions,
-} from '../src/operations/convert_png_to_pdf.js';
+} from '../src/operations/convert_to_pdf.js';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-suite('PNGからPDFへの変換処理', () => {
+suite('PDF変換operation（PNG入力）', () => {
   test('PNGをPDFへ変換する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-png-test-'));
     const sourcePath = path.join(workspacePath, 'source.png');
@@ -32,7 +32,7 @@ suite('PNGからPDFへの変換処理', () => {
     // Copy fixture PNG file
     await copyFile(path.join(dirname, '..', '..', 'test', 'fixtures', 'test.png'), sourcePath);
 
-    await convertPngToPdfFiles({
+    await convertToPdfFiles({
       jobs: [{ sourcePath, outputPath, workspacePath }],
       supportedExtensions: ['.png'],
       operationName: 'convert-png-to-pdf',

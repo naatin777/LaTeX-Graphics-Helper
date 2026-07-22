@@ -21,10 +21,10 @@ import { fileURLToPath } from 'node:url';
 import { PDFDocument } from 'pdf-lib';
 
 import {
-  convertPngToPdfFiles,
-  type ConvertPngToPdfFilesOptions,
+  convertToPdfFiles,
+  type ConvertToPdfFilesOptions,
   type SvgToPdfOptions,
-} from '../src/operations/convert_png_to_pdf.js';
+} from '../src/operations/convert_to_pdf.js';
 
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const svgFixturePath = path.resolve(
@@ -61,15 +61,15 @@ interface RsvgToPdfOptions extends SvgToPdfOptions {
   runRsvgConvert: RunRsvgConvert;
 }
 
-type ConvertPngToPdfFilesWithScratch = (
-  options: ConvertPngToPdfFilesOptions &
+type ConvertToPdfFilesWithScratch = (
+  options: ConvertToPdfFilesOptions &
     WindowsScratchOptions & {
       svgToPdf: RsvgToPdfOptions;
     },
-) => ReturnType<typeof convertPngToPdfFiles>;
+) => ReturnType<typeof convertToPdfFiles>;
 
 // Implementation Phaseで追加するplatform・scratch・runnerの注入契約を、失敗テストでも型安全に呼ぶ。
-const convertPngToPdfFilesWithScratch = convertPngToPdfFiles as ConvertPngToPdfFilesWithScratch;
+const convertToPdfFilesWithScratch = convertToPdfFiles as ConvertToPdfFilesWithScratch;
 
 interface FixedFixtureWorkspace {
   testRootPath: string;
@@ -89,7 +89,7 @@ suite('Windows rsvg-convert ASCII scratch', () => {
       const sourceBytes = await readFile(paths.sourcePath);
       const pdfBytes = await readFile(pdfFixturePath);
 
-      await convertPngToPdfFilesWithScratch({
+      await convertToPdfFilesWithScratch({
         jobs: [createJob(paths)],
         supportedExtensions: ['.svg'],
         svgToPdf: createSvgToPdfOptions(async (executable, args) => {
@@ -120,7 +120,7 @@ suite('Windows rsvg-convert ASCII scratch', () => {
 
     try {
       await assert.rejects(
-        convertPngToPdfFilesWithScratch({
+        convertToPdfFilesWithScratch({
           jobs: [createJob(paths)],
           supportedExtensions: ['.svg'],
           svgToPdf: createSvgToPdfOptions(async (_executable, args) => {
@@ -149,7 +149,7 @@ suite('Windows rsvg-convert ASCII scratch', () => {
 
     try {
       await assert.rejects(
-        convertPngToPdfFilesWithScratch({
+        convertToPdfFilesWithScratch({
           jobs: [createJob(paths)],
           supportedExtensions: ['.svg'],
           svgToPdf: createSvgToPdfOptions(async (_executable, args) => {

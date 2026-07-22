@@ -1,6 +1,6 @@
 import type { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 
-import type { MermaidPuppeteerOptions } from './convert_png_to_pdf.js';
+import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 
 type MermaidCliRunOptions = NonNullable<Parameters<typeof runMermaidCli>[2]>;
 type MermaidCliParseMmdOptions = NonNullable<MermaidCliRunOptions['parseMMDOptions']>;

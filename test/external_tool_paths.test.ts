@@ -1,13 +1,21 @@
 import assert from 'node:assert/strict';
 
 import {
+  defaultDrawioPath,
   defaultGhostscriptPath,
+  readDrawioExecutablePath,
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
   readRsvgConvertExecutablePath,
 } from '../src/config/external_tool_paths.js';
 
 suite('外部tool実行ファイルの既定値', () => {
+  test('Draw.ioのOSごとの既定値を揃える', () => {
+    assert.strictEqual(defaultDrawioPath('win32'), 'drawio.exe');
+    assert.strictEqual(defaultDrawioPath('darwin'), 'drawio');
+    assert.strictEqual(defaultDrawioPath('linux'), 'drawio');
+  });
+
   test('GhostscriptのOSごとの既定値を揃える', () => {
     assert.strictEqual(defaultGhostscriptPath('win32'), 'gswin64c.exe');
     assert.strictEqual(defaultGhostscriptPath('darwin'), 'gs');
@@ -22,7 +30,19 @@ suite('外部tool実行ファイルの既定値', () => {
     };
 
     assert.strictEqual(readGhostscriptExecutablePath(configuration), '/custom/gs');
+    assert.strictEqual(readDrawioExecutablePath(configuration), 'drawio');
     assert.strictEqual(readPdftocairoExecutablePath(configuration), 'pdftocairo');
     assert.strictEqual(readRsvgConvertExecutablePath(configuration), 'rsvg-convert');
+  });
+
+  test('Draw.ioの設定値をtrimして優先する', () => {
+    assert.strictEqual(
+      readDrawioExecutablePath({
+        get<T>(_key: string, _defaultValue: T): T {
+          return ' /custom/drawio ' as unknown as T;
+        },
+      }),
+      '/custom/drawio',
+    );
   });
 });

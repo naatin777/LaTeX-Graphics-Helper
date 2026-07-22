@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
-import { convertPngToPdfFiles, type ConvertPngToPdfJob, type RunDrawio } from '../src/operations/convert_png_to_pdf.js';
+import { convertToPdfFiles, type ConvertToPdfJob, type RunDrawio } from '../src/operations/convert_to_pdf.js';
 import { createConversionUndoRecord, undoConversionOutputs } from '../src/operations/undo_last_conversion.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -32,7 +32,7 @@ suite('PNG変換のSafe Mode', () => {
   test('すべての変換を作業領域に作成してから出力へ反映する', async () => {
     const { workspacePath, jobs } = await createJobs(['first', 'second']);
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       runId: 'batch-success',
       resolveOutputConflicts: async () => 'overwrite',
@@ -58,7 +58,7 @@ suite('PNG変換のSafe Mode', () => {
     await writeFile(path.join(workspacePath, 'first-1.pdf'), 'reserved');
     const decisions: string[][] = [];
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       resolveOutputConflicts: async (conflicts) => {
         decisions.push(conflicts);
@@ -81,7 +81,7 @@ suite('PNG変換のSafe Mode', () => {
     await writeFile(jobs[0]!.outputPath, 'old-first');
 
     await assert.rejects(
-      convertPngToPdfFiles({
+      convertToPdfFiles({
         jobs,
         resolveOutputConflicts: async () => 'cancel',
       }),
@@ -102,7 +102,7 @@ suite('PNG変換のSafe Mode', () => {
     };
 
     await assert.rejects(
-      convertPngToPdfFiles({
+      convertToPdfFiles({
         jobs,
         resolveOutputConflicts: async () => 'overwrite',
       }),
@@ -116,7 +116,7 @@ suite('PNG変換のSafe Mode', () => {
     await writeFile(jobs[0]!.outputPath, 'old-first');
     await writeFile(jobs[1]!.outputPath, 'old-second');
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       resolveOutputConflicts: async () => 'overwrite',
     });
@@ -135,7 +135,7 @@ suite('PNG変換のSafe Mode', () => {
     abortController.abort();
 
     await assert.rejects(
-      convertPngToPdfFiles({
+      convertToPdfFiles({
         jobs,
         signal: abortController.signal,
         resolveOutputConflicts: async () => 'overwrite',
@@ -153,7 +153,7 @@ suite('PNG変換のSafe Mode', () => {
     ]);
     const calls: string[][] = [];
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
       drawio: {
@@ -178,7 +178,7 @@ suite('PNG変換のSafe Mode', () => {
     const keptOutputPath = path.join(workspacePath, 'source-1.pdf');
     await writeFile(originalOutputPath, 'old output');
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
       drawio: {
@@ -201,7 +201,7 @@ suite('PNG変換のSafe Mode', () => {
     const { jobs } = await createEditableDrawioJobs([['source.drawio.png', 'source.pdf']]);
     await writeFile(jobs[0]!.outputPath, 'old output');
 
-    const outputs = await convertPngToPdfFiles({
+    const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
       drawio: {
@@ -220,7 +220,7 @@ suite('PNG変換のSafe Mode', () => {
 
 async function createJobs(names: string[]): Promise<{
   workspacePath: string;
-  jobs: ConvertPngToPdfJob[];
+  jobs: ConvertToPdfJob[];
 }> {
   const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-png-safe-test-'));
   const jobs = await Promise.all(
@@ -241,7 +241,7 @@ async function createJobs(names: string[]): Promise<{
 
 async function createEditableDrawioJobs(entries: [sourceName: string, outputName: string][]): Promise<{
   workspacePath: string;
-  jobs: ConvertPngToPdfJob[];
+  jobs: ConvertToPdfJob[];
 }> {
   const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-drawio-safe-test-'));
   const jobs = await Promise.all(

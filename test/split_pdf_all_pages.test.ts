@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
-import { splitPdfAllPages } from '../src/operations/split_pdf_all_pages.js';
+import { splitPdfAllPages } from '../src/operations/split_pdf.js';
 
 import { assertRenderedPdfPagesSimilar } from './helpers/pdf_visual_assertions.js';
 

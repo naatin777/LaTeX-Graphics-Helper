@@ -1,7 +1,7 @@
 import { render } from 'solid-js/web';
 
 import type { CropPdfLabels, ExtensionToWebviewMessage } from './messages';
-import { App } from './App';
+import { App } from './app';
 
 const postMessage = vi.hoisted(() => vi.fn<(message: unknown) => void>());
 const renderPdfPages = vi.hoisted(() => vi.fn<(...args: unknown[]) => Promise<unknown>>());

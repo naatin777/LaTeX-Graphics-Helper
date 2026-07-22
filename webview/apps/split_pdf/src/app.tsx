@@ -4,13 +4,13 @@ import { renderPdfPages, type PdfRenderController } from '@webview-shared/pdf/re
 
 import type { SplitPdfPageGroupRow } from '@lgh-split-pdf-protocol';
 
-import { GroupRow } from './GroupRow';
+import { GroupRow } from './group_row';
 import { formatLabel, pageFailureMessage } from './helpers';
 import { defaultLabels } from './labels';
 import { parsePages } from './pages';
 import type { ExtensionToWebviewMessage, WebviewToExtensionMessage } from './messages';
 import { applyPreviewZoom, capturePreviewZoomAnchor, restorePreviewZoomAnchor } from './preview_zoom';
-import { PreviewToolbar } from './PreviewToolbar';
+import { PreviewToolbar } from './preview_toolbar';
 import type { InputKind, PreviewMode, Row } from './types';
 import { vscode } from './vscode';
 type RowRefs = Partial<Record<InputKind, HTMLInputElement>>;

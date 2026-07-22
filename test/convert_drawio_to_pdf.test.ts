@@ -32,7 +32,7 @@ suite('Draw.io PDF変換', () => {
           },
         ],
         drawioPath: 'drawio',
-        splitByPage: true,
+        outputMode: 'page-pdfs',
         runId: 'split-test',
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
@@ -103,7 +103,7 @@ suite('Draw.io PDF変換', () => {
           },
         ],
         drawioPath: 'drawio',
-        splitByPage: false,
+        outputMode: 'single-pdf',
         runId: 'direct-test',
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
@@ -138,7 +138,7 @@ suite('Draw.io PDF変換', () => {
           },
         ],
         drawioPath: 'drawio',
-        splitByPage: true,
+        outputMode: 'page-pdfs',
         runId: 'names-test',
         runtime: { resolveConflicts: async () => 'overwrite' },
         runDrawio: async (_executable, args) => {
