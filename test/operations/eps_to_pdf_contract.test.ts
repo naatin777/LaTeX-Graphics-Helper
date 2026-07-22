@@ -17,8 +17,8 @@ suite('EPS conversion contract', () => {
       await writeFile(missingPath, '%!PS-Adobe-3.0 EPSF-3.0\n%%EndComments\n');
       await writeFile(atendPath, '%!PS-Adobe-3.0 EPSF-3.0\n%%BoundingBox: (atend)\n%%EndComments\n');
 
-      assert.throws(() => validateEpsInput(missingPath), /Missing BoundingBox/u);
-      assert.doesNotThrow(() => validateEpsInput(atendPath));
+      await assert.rejects(validateEpsInput(missingPath), /Missing BoundingBox/u);
+      await assert.doesNotReject(validateEpsInput(atendPath));
     } finally {
       await rm(testRootPath, { recursive: true, force: true });
     }

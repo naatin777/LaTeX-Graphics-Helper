@@ -5,6 +5,7 @@ on:
     push:
         branches:
             - main
+            - next/**
 
 concurrency:
     group: check-${{ github.ref }}
@@ -30,5 +31,5 @@ jobs:
             - run: npm ci
               shell: bash
 
-            - run: npm run check
+            - run: npm run check:all
               shell: bash
