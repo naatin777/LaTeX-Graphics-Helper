@@ -42,6 +42,7 @@ interface ResolvedOutput extends PreparedConversionOutput {
   existedBeforeCommit: boolean;
   contentHashBeforeConflict?: string;
   createdOutputIdentity?: FileIdentity;
+  copyCompleted?: boolean;
 }
 
 interface ExistingOutputSnapshot {
@@ -225,6 +226,7 @@ async function commitResolvedOutputs(
 
       rollbackCandidates.push(output);
       await copyFileImpl(output.stagedOutputPath, output.outputPath);
+      output.copyCompleted = true;
       committed.push(output);
       options.signal?.throwIfAborted();
     }
@@ -303,6 +305,11 @@ async function rollbackCommittedOutputs(
 
       if (output.previousFilePath) {
         await assertExistingPathInWorkspace(output.previousFilePath, output.workspacePath);
+
+        if (output.copyCompleted && !(await filesHaveEqualContents(output.outputPath, output.stagedOutputPath))) {
+          throw new Error('Output changed after commit; the recovery backup was preserved.');
+        }
+
         await copyFileImpl(output.previousFilePath, output.outputPath);
       } else if (output.createdOutputIdentity !== undefined) {
         const currentIdentity = await readFileIdentity(output.outputPath);
