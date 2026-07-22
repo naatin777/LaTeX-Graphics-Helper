@@ -16,7 +16,7 @@ import {
 import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
@@ -33,6 +33,7 @@ export interface CombineImagesToPdfOptions {
   runId?: string;
   signal?: AbortSignal;
   reportProgress?: ConversionRuntime['reportProgress'];
+  onConfirmWarnings?: ConfirmWarningsHandler;
   svgToPdf?: SvgToPdfOptions;
   rsvgConvertPath?: string;
   runRsvgConvert?: RunRsvgConvert;
@@ -57,7 +58,13 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
   ]);
   options.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    options.reportProgress,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

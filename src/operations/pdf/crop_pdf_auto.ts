@@ -21,7 +21,7 @@ import {
   type AsciiScratch,
   type LineOutputChannel,
 } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 const execFileAsync = promisify(execFile);
@@ -50,6 +50,7 @@ export interface CropPdfOptions {
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   platform?: NodeJS.Platform;
   scratchBaseCandidates?: readonly string[];
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 interface Box {
@@ -65,7 +66,13 @@ export async function cropPdfFiles(options: CropPdfOptions): Promise<CommittedCo
   validateMargin(options.margin);
   await validateJobPaths(options.jobs);
 
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   if (!options.resolveOutputConflicts) {

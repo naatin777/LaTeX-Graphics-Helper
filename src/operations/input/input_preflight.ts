@@ -4,7 +4,9 @@ import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import pLimit from 'p-limit';
+import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
+import { Parser } from 'xml2js';
 
 import {
   isDrawioPath,
@@ -35,6 +37,8 @@ export interface BatchPreflightResult {
   canProceed: boolean;
 }
 
+export type ConfirmWarningsHandler = (warnings: PreflightReport[]) => Promise<boolean>;
+
 const PREFLIGHT_CONCURRENCY = 2;
 const EPS_INSPECTION_BYTES = 64 * 1024;
 
@@ -43,6 +47,7 @@ export type PreflightValidator = (sourcePath: string) => Promise<PreflightReport
 export interface PreflightBatchOptions {
   signal?: AbortSignal;
   validate?: PreflightValidator;
+  onProgress?: (completed: number, total: number) => void;
 }
 
 export async function runPreflightBatch(
@@ -50,6 +55,8 @@ export async function runPreflightBatch(
   options: PreflightBatchOptions = {},
 ): Promise<BatchPreflightResult> {
   const validate = options.validate ?? runPreflight;
+  const total = sourcePaths.length;
+  let completed = 0;
   options.signal?.throwIfAborted();
 
   const reports: PreflightReport[] = [];
@@ -65,6 +72,8 @@ export async function runPreflightBatch(
           const report = await validate(sourcePath);
           options.signal?.throwIfAborted();
           reports[index] = report;
+          completed += 1;
+          options.onProgress?.(completed, total);
         } catch (error) {
           if (options.signal?.aborted) {
             options.signal.throwIfAborted();
@@ -82,22 +91,59 @@ export async function runPreflightBatch(
   return { reports, errors, warnings, canProceed: errors.length === 0 };
 }
 
+function formatPreflightReport(report: PreflightReport): string {
+  let line = `[preflight] ${report.sourcePath}: ${report.result}`;
+  if (report.reason) {
+    line += ` — ${report.reason}`;
+  }
+  if (report.details) {
+    const detailParts: string[] = [];
+    for (const [key, value] of Object.entries(report.details)) {
+      if (key !== 'fileSize' && value !== undefined) {
+        detailParts.push(key + '=' + JSON.stringify(value));
+      }
+    }
+    if (detailParts.length > 0) {
+      line += ` [${detailParts.join(', ')}]`;
+    }
+  }
+  return line;
+}
+
 /**
  * Runs preflight on all source files and throws if any error is found.
  * Warning-only results are logged to outputChannel but do not block.
+ * When onConfirmWarnings is provided and warnings exist, the handler is
+ * called to decide whether to proceed. If it returns false, the operation
+ * is cancelled via AbortError.
  */
 export async function assertPreflightPassed(
   jobs: { sourcePath: string }[],
   outputChannel?: LineOutputChannel,
   signal?: AbortSignal,
+  onProgress?: (completed: number, total: number) => void,
+  onConfirmWarnings?: ConfirmWarningsHandler,
 ): Promise<void> {
   const sourcePaths = jobs.map((job) => job.sourcePath);
-  const result = await runPreflightBatch(sourcePaths, signal !== undefined ? { signal } : {});
+  const batchOptions: PreflightBatchOptions = {};
+  if (signal !== undefined) {
+    batchOptions.signal = signal;
+  }
+  if (onProgress !== undefined) {
+    batchOptions.onProgress = onProgress;
+  }
+  const result = await runPreflightBatch(sourcePaths, batchOptions);
 
   for (const report of result.reports) {
-    outputChannel?.appendLine(
-      `[preflight] ${report.sourcePath}: ${report.result}${report.reason ? ' — ' + report.reason : ''}`,
-    );
+    outputChannel?.appendLine(formatPreflightReport(report));
+  }
+
+  if (result.warnings.length > 0 && onConfirmWarnings !== undefined) {
+    const proceed = await onConfirmWarnings(result.warnings);
+    if (!proceed) {
+      const error = new DOMException('Cancelled by user after preflight warnings', 'AbortError');
+      throw error;
+    }
   }
 
   if (!result.canProceed) {
@@ -183,10 +229,56 @@ async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSi
       return { sourcePath, format, fileSize, result: 'error', reason: 'Not a valid PDF file' };
     }
 
-    // Lightweight check only. Deeper validation (pages, encryption, MediaBox)
-    // is done by the conversion operation when it processes the PDF.
-    return { sourcePath, format, fileSize, result: 'ok', details: { fileSize } };
+    const inputBuffer = await readFile(sourcePath);
+    const pdfDoc = await PDFDocument.load(inputBuffer, { ignoreEncryption: true });
+    const pageCount = pdfDoc.getPageCount();
+    const details: Record<string, unknown> = { fileSize, pageCount };
+
+    if (pageCount === 0) {
+      return { sourcePath, format, fileSize, result: 'error', reason: 'PDF has no pages', details };
+    }
+
+    if (pdfDoc.isEncrypted) {
+      details.encrypted = true;
+      return { sourcePath, format, fileSize, result: 'error', reason: 'PDF is encrypted', details };
+    }
+
+    try {
+      const pages = pdfDoc.getPages();
+      const invalidBoxes: number[] = [];
+      for (let i = 0; i < pages.length; i += 1) {
+        const box = pages[i]!.getMediaBox();
+        if (!isFinite(box.width) || !isFinite(box.height) || box.width <= 0 || box.height <= 0) {
+          invalidBoxes.push(i + 1);
+        }
+      }
+      if (invalidBoxes.length > 0) {
+        details.invalidPageBoxes = invalidBoxes;
+        return {
+          sourcePath,
+          format,
+          fileSize,
+          result: 'warning',
+          reason: `PDF page(s) ${invalidBoxes.join(', ')} have invalid MediaBox`,
+          details,
+        };
+      }
+    } catch {
+      return { sourcePath, format, fileSize, result: 'warning', reason: 'Could not verify PDF page boxes', details };
+    }
+
+    return { sourcePath, format, fileSize, result: 'ok', details };
   } catch (error) {
+    if (error instanceof Error && error.message.includes('encrypted')) {
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'error',
+        reason: 'PDF is encrypted and cannot be processed',
+        details: { fileSize, encrypted: true },
+      };
+    }
     const message = error instanceof Error ? error.message : String(error);
     return { sourcePath, format, fileSize, result: 'error', reason: `PDF read failed: ${message}` };
   }
@@ -242,72 +334,95 @@ async function validateRasterInput(
 
 async function validateSvgInput(sourcePath: string, format: SourceFormat, fileSize: number): Promise<PreflightReport> {
   try {
-    const root = createSubstringScanner(['<svg'], true);
-    const dim = createSubstringScanner(['width=', 'height=', 'viewbox='], true);
-    const scan = await scanTextFile(sourcePath, (chunk) => {
-      root.feed(chunk);
-      dim.feed(chunk);
-    });
+    const inputBuffer = await readFile(sourcePath);
+    const text = inputBuffer.toString('utf8');
 
-    if (!scan.hasNonWhitespace) {
+    if (!/\S/u.test(text)) {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Empty SVG file' };
     }
 
-    if (!root.found()) {
+    const details: Record<string, unknown> = { fileSize };
+
+    const xmlResult = await parseSvgXmlStructure(text);
+    if (xmlResult.error !== undefined) {
+      return { sourcePath, format, fileSize, result: 'error', reason: xmlResult.error };
+    }
+
+    if (xmlResult.hasSvgRoot === false) {
       return {
         sourcePath,
         format,
         fileSize,
         result: 'warning',
         reason: 'SVG root element not found — may not be a valid SVG',
+        details,
       };
     }
 
-    if (!dim.found()) {
+    const hasDim = xmlResult.width !== undefined || xmlResult.height !== undefined || xmlResult.viewBox !== undefined;
+    if (!hasDim) {
       return {
         sourcePath,
         format,
         fileSize,
         result: 'warning',
         reason: 'SVG has no width, height, or viewBox attribute',
+        details,
       };
     }
 
-    const inputBuffer = await readFile(sourcePath);
-    const image = sharp(inputBuffer, { limitInputPixels: false });
-    try {
-      const metadata = await image.metadata();
-      if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
-        return {
-          sourcePath,
-          format,
-          fileSize,
-          result: 'warning',
-          reason: 'SVG has no usable width/height or viewBox',
-        };
-      }
-
-      return {
-        sourcePath,
-        format,
-        fileSize,
-        result: 'ok',
-        details: { fileSize, width: metadata.width, height: metadata.height },
-      };
-    } catch {
-      return {
-        sourcePath,
-        format,
-        fileSize,
-        result: 'warning',
-        reason: 'SVG dimensions could not be determined',
-      };
-    } finally {
-      await destroySharpInput(image);
+    if (xmlResult.width !== undefined) {
+      details.width = xmlResult.width;
     }
+    if (xmlResult.height !== undefined) {
+      details.height = xmlResult.height;
+    }
+    if (xmlResult.viewBox !== undefined) {
+      details.viewBox = xmlResult.viewBox;
+    }
+
+    return { sourcePath, format, fileSize, result: 'ok', details };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { sourcePath, format, fileSize, result: 'error', reason: `SVG read failed: ${message}` };
+  }
+}
+
+interface SvgXmlParseResult {
+  hasSvgRoot: boolean;
+  width?: string;
+  height?: string;
+  viewBox?: string;
+  error?: string;
+}
+
+async function parseSvgXmlStructure(text: string): Promise<SvgXmlParseResult> {
+  try {
+    const parser = new Parser({
+      explicitChildren: false,
+      explicitArray: true,
+      ignoreAttrs: false,
+      mergeAttrs: false,
+    });
+    const result = await parser.parseStringPromise(text);
+
+    if (!result?.svg) {
+      return { hasSvgRoot: false };
+    }
+
+    const attrs = result.svg.$ ?? {};
+    return {
+      hasSvgRoot: true,
+      width: attrs.width,
+      height: attrs.height,
+      viewBox: attrs.viewBox,
+    };
+  } catch {
+    const fallbackSvg = /<\s*svg[\s>]/iu.test(text);
+    if (!fallbackSvg) {
+      return { hasSvgRoot: false };
+    }
+    return { hasSvgRoot: true, error: 'SVG XML parse failed — structural validation incomplete' };
   }
 }
 

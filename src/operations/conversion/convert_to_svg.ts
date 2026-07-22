@@ -7,7 +7,7 @@ import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../../application/policy/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { errorMessage } from './raster_conversion.js';
 import { isAbortError } from '../../commands/shared/command_utils.js';
@@ -57,6 +57,7 @@ export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   signal?: AbortSignal;
   outputChannel?: LineOutputChannel;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -65,7 +66,13 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

@@ -20,6 +20,7 @@ import { assertExistingPathInWorkspace } from '../../security/workspace_path.js'
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { withCancellationSignal } from '../lifecycle/progress_cancellation.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
+import { createPreflightWarningConfirmation } from '../lifecycle/preflight_warning_confirmation.js';
 import { rememberLastConversion, UNDO_LAST_CONVERSION_COMMAND } from '../lifecycle/undo_last_conversion.js';
 import { userMessage } from '../shared/user_messages.js';
 import { isAbortError } from '../shared/command_utils.js';
@@ -201,6 +202,7 @@ async function applyConfiguredCrop(params: {
             signal,
             resolveOutputConflicts,
             ...(outputChannel !== undefined && { outputChannel }),
+            onConfirmWarnings: createPreflightWarningConfirmation('crop-pdf-configure'),
           });
         }),
     );

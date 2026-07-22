@@ -5,6 +5,8 @@ import path from 'node:path';
 import { setImmediate } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
+import { PDFDocument } from 'pdf-lib';
+
 import {
   assertPreflightPassed,
   runPreflightBatch,
@@ -103,10 +105,13 @@ suite('Preflight — 共通検査', () => {
   test('固定file-size上限を理由に入力を拒否しない', async () => {
     const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-large-file-'));
     const sourcePath = path.join(testRoot, 'large.pdf');
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.addPage([100, 100]);
+    const pdfBytes = await pdfDoc.save();
     const handle = await open(sourcePath, 'w+');
 
     try {
-      await handle.writeFile('%PDF-');
+      await handle.writeFile(pdfBytes);
       await handle.truncate(501 * 1024 * 1024);
       const result = await runPreflightBatch([sourcePath]);
       strictEqual(result.canProceed, true);
@@ -353,6 +358,153 @@ suite('Preflight — EPS', () => {
     const result = await runPreflightBatch([path.join(EPS_FIXTURES, 'atend.eps')]);
     strictEqual(result.canProceed, true);
     assertWarning(result.warnings[0]!);
+  });
+});
+
+suite('Preflight — PDF詳細検査', () => {
+  test('複数ページPDFのpageCountを詳細に含む', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-multipage-pdf-'));
+    const sourcePath = path.join(testRoot, 'multi.pdf');
+
+    try {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage([100, 100]);
+      pdfDoc.addPage([200, 200]);
+      pdfDoc.addPage([300, 300]);
+      const pdfBytes = await pdfDoc.save();
+      await writeFile(sourcePath, pdfBytes);
+
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, true);
+      assertOk(result.reports[0]!);
+      ok(result.reports[0]!.details?.pageCount === 3, 'pageCount should be 3');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('暗号化されたPDFをerrorとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-encrypted-pdf-'));
+    const sourcePath = path.join(testRoot, 'encrypted.pdf');
+
+    try {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage([100, 100]);
+      const pdfBytes = await pdfDoc.save({ userPassword: 'password' } as any);
+      await writeFile(sourcePath, pdfBytes);
+
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, false);
+      assertError(result.errors[0]!, 'encrypted');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('0ページのPDFをerrorとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-zero-page-pdf-'));
+    const sourcePath = path.join(testRoot, 'nopage.pdf');
+
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const pdfBytes = await pdfDoc.save();
+      await writeFile(sourcePath, pdfBytes);
+
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, false);
+      assertError(result.errors[0]!, 'no pages');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+suite('Preflight — SVG XML構造検査', () => {
+  test('viewBoxを持つ有効なSVGをokとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-svg-xml-'));
+    const sourcePath = path.join(testRoot, 'valid-viewbox.svg');
+
+    try {
+      await writeFile(
+        sourcePath,
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="50" height="50"/></svg>',
+      );
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, true);
+      assertOk(result.reports[0]!);
+      strictEqual(result.reports[0]!.details?.viewBox, '0 0 100 100');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('XML構造が不正なSVGをwarningとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-svg-broken-xml-'));
+    const sourcePath = path.join(testRoot, 'broken.svg');
+
+    try {
+      await writeFile(sourcePath, 'not xml content <svg>');
+      const result = await runPreflightBatch([sourcePath]);
+      strictEqual(result.canProceed, true);
+      assertWarning(result.warnings[0]!);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+});
+
+suite('Preflight — 進捗報告', () => {
+  test('onProgress callbackが各ファイル完了後に呼ばれる', async () => {
+    const calls: { completed: number; total: number }[] = [];
+    const result = await runPreflightBatch(
+      [path.join(FIXTURES, 'valid.pdf'), path.join(FIXTURES, 'valid.png'), path.join(FIXTURES, 'valid.svg')],
+      {
+        onProgress: (completed, total) => {
+          calls.push({ completed, total });
+        },
+      },
+    );
+    strictEqual(result.canProceed, true);
+    strictEqual(result.reports.length, 3);
+    strictEqual(calls.length, 3);
+    deepStrictEqual(calls[0]!, { completed: 1, total: 3 });
+    deepStrictEqual(calls[2]!, { completed: 3, total: 3 });
+  });
+});
+
+suite('Preflight — warning確認', () => {
+  test('warning確認ハンドラがwarning一覧を受け取る', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-warning-'));
+    const sourcePath = path.join(testRoot, 'no-dim.svg');
+
+    try {
+      await writeFile(sourcePath, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+      let receivedWarnings: PreflightReport[] | undefined;
+      await rejects(
+        assertPreflightPassed([{ sourcePath }], undefined, undefined, undefined, async (warnings) => {
+          receivedWarnings = warnings;
+          return false;
+        }),
+        (error: unknown) => error instanceof Error && error.name === 'AbortError',
+      );
+      ok(receivedWarnings !== undefined, 'onConfirmWarnings should have been called');
+      strictEqual(receivedWarnings.length, 1);
+      strictEqual(receivedWarnings[0]!.result, 'warning');
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('warning確認でtrueを返すとエラーにならない', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-warning-proceed-'));
+    const sourcePath = path.join(testRoot, 'no-dim.svg');
+
+    try {
+      await writeFile(sourcePath, '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+      await assertPreflightPassed([{ sourcePath }], undefined, undefined, undefined, async () => true);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
   });
 });
 

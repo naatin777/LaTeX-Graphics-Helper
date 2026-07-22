@@ -13,7 +13,7 @@ import {
   type OutputConflictDecision,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 
 export interface MergePdfOptions {
   sourcePaths: string[];
@@ -23,6 +23,7 @@ export interface MergePdfOptions {
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   outputChannel?: LineOutputChannel;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function mergePdf(options: MergePdfOptions): Promise<CommittedConversionOutput[]> {
@@ -54,6 +55,8 @@ export async function mergePdf(options: MergePdfOptions): Promise<CommittedConve
     sourcePaths.map((sourcePath) => ({ sourcePath })),
     options.outputChannel,
     options.signal,
+    undefined,
+    options.onConfirmWarnings,
   );
   options.signal?.throwIfAborted();
 

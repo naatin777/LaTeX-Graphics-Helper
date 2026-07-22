@@ -12,7 +12,7 @@ import {
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 export interface SplitPdfJob {
@@ -34,6 +34,7 @@ export interface SplitPdfOptions {
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   outputChannel?: LineOutputChannel;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export interface SplitPdfByPageGroupsOptions {
@@ -42,6 +43,7 @@ export interface SplitPdfByPageGroupsOptions {
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   outputChannel?: LineOutputChannel;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export type SplitPdfOutput = CommittedConversionOutput;
@@ -50,7 +52,13 @@ export async function splitPdfAllPages(options: SplitPdfOptions): Promise<SplitP
   options.signal?.throwIfAborted();
   validateJobs(options.jobs);
   await validateInputPaths(options.jobs);
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -79,7 +87,13 @@ export async function splitPdfByPageGroups(options: SplitPdfByPageGroupsOptions)
   options.signal?.throwIfAborted();
   validatePageGroupJobs(options.jobs);
   await validatePageGroupInputPaths(options.jobs);
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

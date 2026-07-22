@@ -15,7 +15,7 @@ import {
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 
 export interface CropBox {
   left: number;
@@ -45,13 +45,20 @@ export interface CropPdfConfigureOptions {
   signal?: AbortSignal;
   resolveOutputConflicts?: (conflicts: string[]) => Promise<OutputConflictDecision>;
   outputChannel?: LineOutputChannel;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function cropPdfWithConfiguredBox(options: CropPdfConfigureOptions): Promise<CommittedConversionOutput[]> {
   options.signal?.throwIfAborted();
   await validateJobPaths(options.job);
 
-  await assertPreflightPassed([options.job], options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    [options.job],
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${randomUUID()}`;

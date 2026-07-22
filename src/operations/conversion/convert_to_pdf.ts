@@ -17,7 +17,7 @@ import { errorMessage, isAbortError } from '../../commands/shared/command_utils.
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../../application/policy/source_format.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
-import { assertPreflightPassed } from '../input/input_preflight.js';
+import { assertPreflightPassed, type ConfirmWarningsHandler } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 
 import {
@@ -116,6 +116,7 @@ export interface ConvertToPdfFilesOptions {
   scratchBaseCandidates?: readonly string[];
   outputChannel?: LineOutputChannel;
   operationName?: string;
+  onConfirmWarnings?: ConfirmWarningsHandler;
 }
 
 export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -124,7 +125,13 @@ export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Prom
   await validateJobPaths(options.jobs);
   options.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.outputChannel, options.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.outputChannel,
+    options.signal,
+    undefined,
+    options.onConfirmWarnings,
+  );
   options.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

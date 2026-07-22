@@ -106,7 +106,13 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
   options.runtime.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, options.runtime.outputChannel, options.runtime.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.runtime.outputChannel,
+    options.runtime.signal,
+    options.runtime.reportProgress,
+    options.runtime.onConfirmWarnings,
+  );
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

@@ -48,7 +48,13 @@ export async function convertDrawioToPdfFiles(
   validateJobs(options.jobs, options.outputMode);
   await validateJobPaths(options.jobs, operationName);
 
-  await assertPreflightPassed(options.jobs, options.runtime?.outputChannel, options.runtime?.signal);
+  await assertPreflightPassed(
+    options.jobs,
+    options.runtime?.outputChannel,
+    options.runtime?.signal,
+    options.runtime?.reportProgress,
+    options.runtime?.onConfirmWarnings,
+  );
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
 
