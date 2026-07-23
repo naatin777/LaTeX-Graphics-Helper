@@ -260,6 +260,41 @@ suite('Preflight — PDF', () => {
 });
 
 suite('Preflight — Raster', () => {
+  test('Rawは必須sidecarと一致するbyte長があればokになる', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-raw-'));
+    const sourcePath = path.join(testRoot, 'pixels.raw');
+    try {
+      await writeFile(sourcePath, Buffer.from([255, 0, 0, 0, 255, 0]));
+      await writeFile(`${sourcePath}.json`, JSON.stringify({ width: 2, height: 1, channels: 3 }));
+      const result = await runPreflightBatch([sourcePath]);
+      assertOk(result.reports[0]!);
+      strictEqual(result.reports[0]!.details?.width, 2);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('Rawのsidecar不足・無効・byte長不一致を変換前errorにする', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-raw-invalid-'));
+    try {
+      const missingPath = path.join(testRoot, 'missing.raw');
+      await writeFile(missingPath, Buffer.from([0]));
+      const invalidPath = path.join(testRoot, 'invalid.raw');
+      await writeFile(invalidPath, Buffer.from([0]));
+      await writeFile(`${invalidPath}.json`, JSON.stringify({ width: 1, height: 1, channels: 5 }));
+      const mismatchPath = path.join(testRoot, 'mismatch.raw');
+      await writeFile(mismatchPath, Buffer.from([0]));
+      await writeFile(`${mismatchPath}.json`, JSON.stringify({ width: 2, height: 1, channels: 1 }));
+
+      const result = await runPreflightBatch([missingPath, invalidPath, mismatchPath]);
+      strictEqual(result.errors.length, 3);
+      ok(result.errors.some((report) => report.reason?.includes('Invalid Raw sidecar')));
+      ok(result.errors.some((report) => report.reason?.includes('byte length mismatch')));
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
   test('有効なPNGをokとして検出する', async () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.png')]);
     strictEqual(result.canProceed, true);

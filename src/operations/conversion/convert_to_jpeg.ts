@@ -32,8 +32,8 @@ const jpegDefinition: RasterConversionDefinition = {
   operationName: 'convert-to-jpeg',
   stagingDirectoryName: 'convert-to-jpeg',
   resultExtension: 'jpeg',
-  encoder: async (sourcePath, outputPath, maxInputPixels) => {
-    await openRasterInput(sourcePath, maxInputPixels).jpeg().toFile(outputPath);
+  encoder: async (sourcePath, outputPath, maxInputPixels, page) => {
+    await openRasterInput(sourcePath, maxInputPixels, page).jpeg().toFile(outputPath);
   },
   unsupportedInputMessage: (sourcePath) => `Unsupported input for JPEG conversion: ${sourcePath}`,
 };

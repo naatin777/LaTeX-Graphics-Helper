@@ -17,6 +17,69 @@ import sharp from 'sharp';
 import { convertToWebpFiles } from '../../src/operations/conversion/convert_to_webp.js';
 
 suite('WebPに変換する処理', () => {
+  test('アニメーションメタデータを保持して1つのWebPへ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-webp-animation-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'source.gif');
+      const outputPath = path.join(workspacePath, 'source.webp');
+      await writeAnimatedGifFixture(sourcePath);
+
+      await convertToWebpFiles({
+        jobs: [
+          {
+            sourcePath,
+            outputPath,
+            workspacePath,
+            animation: { pages: 2, pageHeight: 8, delay: [100, 250], loop: 3 },
+          },
+        ],
+        pdftocairoPath: 'pdftocairo',
+        ghostscriptPath: 'gs',
+        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawio: { drawioPath: 'drawio' },
+        webp: { effort: 0 },
+        runtime: {},
+        runId: 'animation-test',
+      });
+
+      const metadata = await sharp(outputPath).metadata();
+      assert.strictEqual(metadata.pages, 2);
+      assert.strictEqual(metadata.pageHeight ?? metadata.height, 8);
+      assert.deepStrictEqual(metadata.delay, [100, 250]);
+      assert.strictEqual(metadata.loop, 3);
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('アニメーション維持の失敗時にフレーム分割へfallbackせずstagingを掃除する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-webp-animation-failure-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'broken.gif');
+      const outputPath = path.join(workspacePath, 'broken.webp');
+      await writeFile(sourcePath, 'not an image');
+
+      await assert.rejects(
+        convertToWebpFiles({
+          jobs: [{ sourcePath, outputPath, workspacePath, animation: { pages: 2, pageHeight: 8 } }],
+          pdftocairoPath: 'pdftocairo',
+          ghostscriptPath: 'gs',
+          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawio: { drawioPath: 'drawio' },
+          webp: { effort: 0 },
+          runtime: {},
+          runId: 'animation-failure-test',
+        }),
+      );
+      await assert.rejects(readFile(outputPath));
+      await assert.rejects(readFile(path.join(workspacePath, '.latex-graphics-helper', 'convert-to-webp')));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('編集可能なDraw.io画像はPDFとPNGを経由してWebPへ変換する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-webp-operation-'));
 
@@ -110,3 +173,17 @@ suite('WebPに変換する処理', () => {
     }
   });
 });
+
+async function writeAnimatedGifFixture(filePath: string): Promise<void> {
+  const frames = await Promise.all([
+    sharp({ create: { width: 12, height: 8, channels: 4, background: '#285078' } })
+      .png()
+      .toBuffer(),
+    sharp({ create: { width: 12, height: 8, channels: 4, background: '#782850' } })
+      .png()
+      .toBuffer(),
+  ]);
+  await sharp(frames, { join: { animated: true } })
+    .gif({ delay: [100, 250], loop: 3 })
+    .toFile(filePath);
+}

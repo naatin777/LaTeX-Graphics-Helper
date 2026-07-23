@@ -38,8 +38,17 @@ export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Pr
     operationName: 'convert-to-webp',
     stagingDirectoryName: 'convert-to-webp',
     resultExtension: 'webp',
-    encoder: async (sourcePath, outputPath, maxInputPixels) => {
-      await openRasterInput(sourcePath, maxInputPixels).webp({ effort: options.webp.effort }).toFile(outputPath);
+    encoder: async (sourcePath, outputPath, maxInputPixels, page, animation) => {
+      const outputOptions: WebpOutputOptions & { delay?: number[]; loop?: number } = { effort: options.webp.effort };
+      if (animation?.delay !== undefined) {
+        outputOptions.delay = animation.delay;
+      }
+      if (animation?.loop !== undefined) {
+        outputOptions.loop = animation.loop;
+      }
+      await openRasterInput(sourcePath, maxInputPixels, page, animation !== undefined)
+        .webp(outputOptions)
+        .toFile(outputPath);
     },
     unsupportedInputMessage: (sourcePath) => `Unsupported input for WebP conversion: ${sourcePath}`,
   };

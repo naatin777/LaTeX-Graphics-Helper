@@ -123,7 +123,7 @@ async function stageDrawioJob(options: {
   };
 
   if (outputMode === 'single-pdf') {
-    const outputPath = resolveOutputPath(job.outputTemplate, outputContext);
+    const outputPath = resolveOutputPath(job.outputTemplate, outputContext, { allowedExtensions: ['.pdf'] });
     await assertWritablePathInWorkspace(outputPath, job.workspacePath);
     return [
       {
@@ -161,10 +161,14 @@ async function stageDrawioJob(options: {
     await assertWritablePathInWorkspace(stagedOutputPath, job.workspacePath);
     await writeFile(stagedOutputPath, await pageDocument.save());
 
-    const outputPath = resolveOutputPath(job.outputTemplate, {
-      ...outputContext,
-      page: uniquePageName(safePageName(pageNames[index], index + 1), usedPageNames),
-    });
+    const outputPath = resolveOutputPath(
+      job.outputTemplate,
+      {
+        ...outputContext,
+        page: uniquePageName(safePageName(pageNames[index], index + 1), usedPageNames),
+      },
+      { allowedExtensions: ['.pdf'] },
+    );
     await assertWritablePathInWorkspace(outputPath, job.workspacePath);
     outputs.push({
       stagedOutputPath,

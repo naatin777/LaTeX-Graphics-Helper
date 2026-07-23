@@ -14,6 +14,7 @@ import { createOutputConversionMessages, runOutputConversion } from '../lifecycl
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
 import { selectedUris } from '../shared/command_utils.js';
+import { localeMap } from '../../locale_map.js';
 
 export const COMBINE_IMAGES_TO_PDF_COMMAND = 'latex-graphics-helper.convertImagesToSinglePdf';
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.pdf';
@@ -33,11 +34,16 @@ export async function combineImagesToPdfCommand(
       throw new Error('No files were selected.');
     }
 
-    const workspaceFolder = requireSingleWorkspace(sourceUris);
+    const previewedUris = sourceUris.length > 1 ? await previewCombineInputs(sourceUris) : sourceUris;
+    if (previewedUris === undefined) {
+      return;
+    }
+
+    const workspaceFolder = requireSingleWorkspace(previewedUris);
     const workspacePath = workspaceFolder.uri.fsPath;
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const outputTemplate = readOutputFormatOutputTemplate(configuration, OUTPUT_PATH_SETTING);
-    const outputPath = await resolveCombineOutputPath(sourceUris, workspaceFolder, outputTemplate);
+    const outputPath = await resolveCombineOutputPath(previewedUris, workspaceFolder, outputTemplate);
 
     if (outputPath === undefined) {
       return;
@@ -47,7 +53,7 @@ export async function combineImagesToPdfCommand(
 
     const svgToPdf = readSvgToPdfOptions(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
-    const jobs = sourceUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
+    const jobs = previewedUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
 
     await runOutputConversion({
       operationName: 'combine-images-to-pdf',
@@ -70,6 +76,77 @@ export async function combineImagesToPdfCommand(
     const message = error instanceof Error ? error.message : String(error);
     await vscode.window.showErrorMessage(userMessage('message.convertToOutput.failed', 'PDF', message));
   }
+}
+
+interface CombinePreviewItem extends vscode.QuickPickItem {
+  sourceUri: vscode.Uri;
+  removeButton: vscode.QuickInputButton;
+  moveUpButton: vscode.QuickInputButton;
+  moveDownButton: vscode.QuickInputButton;
+}
+
+export function previewCombineInputs(sourceUris: vscode.Uri[]): Promise<vscode.Uri[] | undefined> {
+  const quickPick = vscode.window.createQuickPick<CombinePreviewItem>();
+  const removeButton = { iconPath: new vscode.ThemeIcon('close'), tooltip: localeMap('quickPick.combine.remove') };
+  const moveUpButton = { iconPath: new vscode.ThemeIcon('arrow-up'), tooltip: localeMap('quickPick.combine.moveUp') };
+  const moveDownButton = {
+    iconPath: new vscode.ThemeIcon('arrow-down'),
+    tooltip: localeMap('quickPick.combine.moveDown'),
+  };
+  let items = sourceUris.map((sourceUri) => ({
+    label: pathLabel(sourceUri),
+    sourceUri,
+    removeButton,
+    moveUpButton,
+    moveDownButton,
+  }));
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result: vscode.Uri[] | undefined) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      quickPick.hide();
+      quickPick.dispose();
+      resolve(result);
+    };
+
+    const refresh = () => {
+      quickPick.items = items.map((item, index) => ({
+        ...item,
+        label: `${index + 1}. ${pathLabel(item.sourceUri)}`,
+        buttons: [item.moveUpButton, item.moveDownButton, item.removeButton],
+      }));
+    };
+
+    quickPick.title = localeMap('quickPick.combine.title');
+    quickPick.placeholder = localeMap('quickPick.combine.placeholder');
+    quickPick.ignoreFocusOut = true;
+    quickPick.onDidTriggerItemButton(({ item, button }) => {
+      const index = items.findIndex((candidate) => candidate.sourceUri.toString() === item.sourceUri.toString());
+      if (index < 0) {
+        return;
+      }
+      if (button === item.removeButton) {
+        items.splice(index, 1);
+      } else if (button === item.moveUpButton && index > 0) {
+        [items[index - 1], items[index]] = [items[index]!, items[index - 1]!];
+      } else if (button === item.moveDownButton && index < items.length - 1) {
+        [items[index], items[index + 1]] = [items[index + 1]!, items[index]!];
+      }
+      refresh();
+    });
+    quickPick.onDidAccept(() => finish(items.length > 0 ? items.map((item) => item.sourceUri) : undefined));
+    quickPick.onDidHide(() => finish(undefined));
+    refresh();
+    quickPick.show();
+  });
+}
+
+function pathLabel(uri: vscode.Uri): string {
+  return uri.fsPath.split(/[\\/]/u).at(-1) ?? uri.fsPath;
 }
 
 async function resolveCombineOutputPath(

@@ -23,6 +23,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
+
+import { CONVERT_TO_JPEG_COMMAND } from '../../src/commands/conversion/convert_to_jpeg.js';
 import sharp from 'sharp';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
@@ -31,7 +33,6 @@ import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_comm
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
-const CONVERT_TO_JPEG_COMMAND = 'latex-graphics-helper.convertToJpeg';
 const generatedSvgWidth = 31;
 const generatedSvgHeight = 19;
 

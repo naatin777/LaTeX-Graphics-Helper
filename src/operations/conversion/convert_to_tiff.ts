@@ -12,36 +12,36 @@ import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { type PdfToolScratchOptions } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
 
-export type ConvertToPngJob = RasterJob;
-export type DrawioToPngOptions = DrawioOptions;
+export type ConvertToTiffJob = RasterJob;
+export type DrawioToTiffOptions = DrawioOptions;
 export type { RunPdfToPng };
 
-export interface ConvertToPngFilesOptions extends PdfToolScratchOptions {
-  jobs: ConvertToPngJob[];
+export interface ConvertToTiffFilesOptions extends PdfToolScratchOptions {
+  jobs: ConvertToTiffJob[];
   runtime: ConversionRuntime;
   pdftocairoPath: string;
   ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioToPngOptions;
+  drawio: DrawioToTiffOptions;
   runPdfToPng?: RunPdfToPng | undefined;
   runId?: string | undefined;
   maxInputPixels?: number;
 }
 
-const pngDefinition: RasterConversionDefinition = {
-  operationName: 'convert-to-png',
-  stagingDirectoryName: 'convert-to-png',
-  resultExtension: 'png',
+const tiffDefinition: RasterConversionDefinition = {
+  operationName: 'convert-to-tiff',
+  stagingDirectoryName: 'convert-to-tiff',
+  resultExtension: 'tiff',
   encoder: async (sourcePath, outputPath, maxInputPixels, page) => {
-    await openRasterInput(sourcePath, maxInputPixels, page).png().toFile(outputPath);
+    await openRasterInput(sourcePath, maxInputPixels, page).tiff().toFile(outputPath);
   },
-  unsupportedInputMessage: (sourcePath) => `Unsupported input for PNG conversion: ${sourcePath}`,
+  unsupportedInputMessage: (sourcePath) => `Unsupported input for TIFF conversion: ${sourcePath}`,
 };
 
-export async function convertToPngFiles(options: ConvertToPngFilesOptions): Promise<CommittedConversionOutput[]> {
+export async function convertToTiffFiles(options: ConvertToTiffFilesOptions): Promise<CommittedConversionOutput[]> {
   return convertRasterFiles({
     ...options,
     maxInputPixels: options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS,
-    definition: pngDefinition,
+    definition: tiffDefinition,
   });
 }

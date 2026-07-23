@@ -13,7 +13,8 @@ export type SourceFormat =
   | 'mermaid'
   | 'drawio'
   | 'editable-drawio-png'
-  | 'editable-drawio-svg';
+  | 'editable-drawio-svg'
+  | 'raw';
 
 export function sourceFormatForPath(sourcePath: string): SourceFormat | undefined {
   const lowerSourcePath = sourcePath.toLowerCase();
@@ -46,6 +47,8 @@ export function sourceFormatForPath(sourcePath: string): SourceFormat | undefine
       return 'tiff';
     case '.eps':
       return 'eps';
+    case '.raw':
+      return 'raw';
     case '.svg':
       return 'svg';
     case '.mmd':
@@ -64,7 +67,8 @@ export function isRasterImagePath(sourcePath: string): boolean {
     format === 'webp' ||
     format === 'avif' ||
     format === 'gif' ||
-    format === 'tiff'
+    format === 'tiff' ||
+    format === 'raw'
   );
 }
 

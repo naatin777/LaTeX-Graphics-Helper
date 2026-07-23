@@ -9,12 +9,11 @@ import { createSandbox, match } from 'sinon';
 import * as vscode from 'vscode';
 
 import { localeMap } from '../../src/locale_map.js';
-import { mergePdfConfigureCommand } from '../../src/commands/pdf/merge_pdf.js';
+import { mergePdfConfigureCommand, MERGE_PDF_SELECTED_FILES_COMMAND } from '../../src/commands/pdf/merge_pdf.js';
 
 import { assertRenderedPdfPagesSimilar } from '../helpers/pdf_visual_assertions.js';
 import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_command.js';
 
-const MERGE_PDF_SELECTED_FILES_COMMAND = 'latex-graphics-helper.mergePdf.selectedFiles';
 const compiledTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDirectory = path.resolve(
   compiledTestDirectory,

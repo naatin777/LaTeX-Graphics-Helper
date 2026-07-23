@@ -2,7 +2,7 @@
 // - latex-graphics-helper.convertToPng commandが登録されること
 // - MermaidをPNGに直接変換できること
 // - JPEG、WebP、AVIFをPNGに変換できること
-// - GIF、TIFFを先頭frame/pageだけPNGに変換できること
+// - GIF、TIFFを全frame/pageへPNGに分割できること
 // - SVGをPNGに変換できること
 // - PDFをページごとのPNGに変換できること
 // - PNGからPNGへは変換しないこと
@@ -28,12 +28,13 @@ import sharp from 'sharp';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
+import { CONVERT_TO_PNG_COMMAND } from '../../src/commands/conversion/convert_to_png.js';
+
 import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_command.js';
 import { withWorkspaceSettings } from '../helpers/workspace_settings.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
-const CONVERT_TO_PNG_COMMAND = 'latex-graphics-helper.convertToPng';
 const generatedSvgWidth = 31;
 const generatedSvgHeight = 19;
 
@@ -106,7 +107,7 @@ suite('PNGに変換コマンド', () => {
     }
   });
 
-  test('GIFとTIFFを先頭pageからPNGへ変換する', async () => {
+  test('GIFとTIFFを全pageからPNGへ分割する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -119,14 +120,21 @@ suite('PNGに変換コマンド', () => {
         }),
       );
 
-      const commandExecution = vscode.commands.executeCommand(
-        CONVERT_TO_PNG_COMMAND,
-        vscode.Uri.file(sourcePaths[0]!),
-        sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+      await withWorkspaceSettings(
+        { 'latex-graphics-helper.outputPath.convertToPng': '${fileDirname}/${fileBasenameNoExtension}-${page}.png' },
+        async () => {
+          const commandExecution = vscode.commands.executeCommand(
+            CONVERT_TO_PNG_COMMAND,
+            vscode.Uri.file(sourcePaths[0]!),
+            sourcePaths.map((sourcePath) => vscode.Uri.file(sourcePath)),
+          );
+          await runCommandAndClearNotificationsUntilDone(commandExecution);
+        },
       );
-      await runCommandAndClearNotificationsUntilDone(commandExecution);
 
-      await Promise.all(sourcePaths.map((sourcePath) => assertFirstFramePng(replaceExtension(sourcePath, '.png'))));
+      await Promise.all(
+        sourcePaths.flatMap((sourcePath) => [1, 2].map((page) => assertReadablePng(framePath(sourcePath, page)))),
+      );
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
@@ -314,21 +322,15 @@ async function assertReadablePng(filePath: string): Promise<void> {
   assert.ok(metadata.height > 0);
 }
 
-async function assertFirstFramePng(filePath: string): Promise<void> {
-  const buffer = await readFile(filePath);
-  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  assert.strictEqual(info.width, 4);
-  assert.strictEqual(info.height, 4);
-
-  for (let index = 0; index < data.length; index += 4) {
-    assert.ok(data[index]! > 220);
-    assert.ok(data[index + 1]! < 30);
-    assert.ok(data[index + 2]! < 30);
-  }
-}
-
 function replaceExtension(filePath: string, extension: string): string {
   return path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}${extension}`);
+}
+
+function framePath(filePath: string, page: number): string {
+  return path.join(
+    path.dirname(filePath),
+    `${path.basename(filePath, path.extname(filePath))}-${String(page).padStart(1, '0')}.png`,
+  );
 }
 
 async function assertFileDoesNotExist(filePath: string): Promise<void> {

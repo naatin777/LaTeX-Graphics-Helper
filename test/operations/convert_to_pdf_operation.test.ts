@@ -10,12 +10,13 @@
 // - 他の画像フォーマット（JPEG、WebP、Avif、SVG）の実変換
 
 import assert from 'node:assert/strict';
-import { access, copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import sharp from 'sharp';
+import { PDFDocument } from 'pdf-lib';
 
 import {
   convertToPdfFiles,
@@ -27,6 +28,36 @@ const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 suite('PDF変換operation（PNG入力）', () => {
+  test('複数フレームのGIF jobは1フレーム1ページPDFとして変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-gif-to-pdf-'));
+
+    try {
+      const sourcePath = path.join(workspacePath, 'source.gif');
+      const outputPaths = [1, 2].map((page) => path.join(workspacePath, `frame-${page}.pdf`));
+      await writeAnimatedGif(sourcePath);
+
+      await convertToPdfFiles({
+        jobs: outputPaths.map((outputPath, index) => ({
+          sourcePath,
+          outputPath,
+          workspacePath,
+          page: index + 1,
+        })),
+        supportedExtensions: ['.gif'],
+        operationName: 'convert-gif-to-pdf',
+      });
+
+      await Promise.all(
+        outputPaths.map(async (outputPath) => {
+          const document = await PDFDocument.load(await readFile(outputPath));
+          assert.strictEqual(document.getPageCount(), 1);
+        }),
+      );
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('PNGをPDFへ変換する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-png-test-'));
     const sourcePath = path.join(workspacePath, 'source.png');
@@ -142,3 +173,15 @@ suite('PDF変換operation（PNG入力）', () => {
     assert.strictEqual('channel' in options, false);
   });
 });
+
+async function writeAnimatedGif(filePath: string): Promise<void> {
+  const red = await sharp({ create: { width: 4, height: 4, channels: 4, background: '#ff0000' } })
+    .png()
+    .toBuffer();
+  const blue = await sharp({ create: { width: 4, height: 4, channels: 4, background: '#0000ff' } })
+    .png()
+    .toBuffer();
+  await sharp([red, blue], { join: { animated: true } })
+    .gif()
+    .toFile(filePath);
+}

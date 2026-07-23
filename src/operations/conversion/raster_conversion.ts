@@ -13,7 +13,11 @@ import {
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { isAbortError } from '../../commands/shared/command_utils.js';
 
-import { isRasterInputPixelLimitError, rasterInputPixelLimitMessage } from './raster_input.js';
+import {
+  isRasterInputPixelLimitError,
+  rasterInputPixelLimitMessage,
+  type RasterAnimationMetadata,
+} from './raster_input.js';
 import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
@@ -35,7 +39,13 @@ import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_bat
 
 const execFileAsync = promisify(execFile);
 
-export type RasterEncoder = (sourcePath: string, outputPath: string, maxInputPixels: number) => Promise<void>;
+export type RasterEncoder = (
+  sourcePath: string,
+  outputPath: string,
+  maxInputPixels: number,
+  page?: number,
+  animation?: RasterAnimationMetadata,
+) => Promise<void>;
 
 export interface DrawioOptions {
   drawioPath: string;
@@ -55,6 +65,7 @@ export interface RasterJob {
   outputPath: string;
   workspacePath: string;
   page?: number;
+  animation?: RasterAnimationMetadata;
 }
 
 export type RunPdfToPng = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
@@ -101,6 +112,7 @@ interface RasterRenderRequest {
   workspacePath: string;
   stageDirectory?: string;
   page?: number;
+  animation?: RasterAnimationMetadata;
 }
 
 export async function convertRasterFiles(options: ConvertToRasterFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -184,8 +196,13 @@ async function writeSourceAsRaster(
     outputPath: paths.stagedOutputPath,
     workspacePath: job.workspacePath,
     stageDirectory: paths.stageDirectory,
-    ...(job.page !== undefined && { page: job.page }),
   };
+  if (job.page !== undefined) {
+    request.page = job.page;
+  }
+  if (job.animation !== undefined) {
+    request.animation = job.animation;
+  }
 
   if (extension === '.pdf') {
     await writePdfPageAsRaster(request, context);
@@ -343,7 +360,13 @@ async function writeImageAsRaster(request: RasterRenderRequest, context: RasterS
   context.runtime.signal?.throwIfAborted();
 
   try {
-    await context.definition.encoder(request.sourcePath, request.outputPath, context.maxInputPixels);
+    await context.definition.encoder(
+      request.sourcePath,
+      request.outputPath,
+      context.maxInputPixels,
+      request.page,
+      request.animation,
+    );
   } catch (error) {
     if (isRasterInputPixelLimitError(error)) {
       throw new Error(rasterInputPixelLimitMessage(context.maxInputPixels), { cause: error });
@@ -396,6 +419,7 @@ function isSupportedSourcePath(sourcePath: string): boolean {
     extension === '.svg' ||
     isMermaidPath(sourcePath) ||
     isSupportedImageInputPath(sourcePath) ||
+    extension === '.raw' ||
     isEditableDrawioImagePath(sourcePath)
   );
 }

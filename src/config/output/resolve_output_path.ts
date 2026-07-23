@@ -12,6 +12,7 @@ export type OutputPathPlatform = 'win32' | 'posix';
 
 export interface ResolveOutputPathOptions {
   platform?: OutputPathPlatform;
+  allowedExtensions?: readonly string[];
 }
 
 export function resolveOutputPath(
@@ -36,7 +37,21 @@ export function resolveOutputPath(
     : pathApi.resolve(context.workspacePath, expandedPath);
 
   validateOutputPath(outputPath, platform, pathApi);
+  validateOutputExtension(outputPath, options.allowedExtensions);
   return outputPath;
+}
+
+export function validateOutputExtension(outputPath: string, allowedExtensions: readonly string[] | undefined): void {
+  if (allowedExtensions === undefined) {
+    return;
+  }
+
+  const lowerOutputPath = outputPath.toLowerCase();
+  if (!allowedExtensions.some((allowed) => lowerOutputPath.endsWith(allowed.toLowerCase()))) {
+    throw new Error(
+      `Invalid output extension: ${path.posix.extname(outputPath) || '(none)'}. Expected ${allowedExtensions.join(', ')}.`,
+    );
+  }
 }
 
 function createTemplateValues(context: OutputPathContext, pathApi: typeof path.posix): Record<string, string> {

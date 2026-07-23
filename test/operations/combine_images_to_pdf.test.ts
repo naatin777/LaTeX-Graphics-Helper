@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -122,6 +122,30 @@ suite('画像→1PDF結合', () => {
     }
   });
 
+  test('変換前にキャンセルされた場合はstagingと出力を作成しない', async () => {
+    const workspacePath = await setupWorkspace();
+    const sourcePath = await copyFixtureTo(workspacePath, 'input.png');
+    const outputPath = path.join(workspacePath, 'result.pdf');
+    const controller = new AbortController();
+    controller.abort();
+
+    try {
+      await assert.rejects(
+        combineImagesToPdf({
+          jobs: [{ sourcePath }],
+          outputPath,
+          workspacePath,
+          runtime: { signal: controller.signal },
+        }),
+        /aborted|cancelled/i,
+      );
+      await assert.rejects(access(outputPath));
+      await assert.rejects(access(path.join(workspacePath, '.latex-graphics-helper', 'combine-images')));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('生成されたPDFの各ページに正のサイズがある', async () => {
     const workspacePath = await setupWorkspace();
 
@@ -195,7 +219,7 @@ suite('画像→1PDF結合', () => {
     }
   });
 
-  test('対応する全入力形式がそれぞれ1ページを寄与する', async () => {
+  test('対応する全入力形式がPDFへ寄与する', async () => {
     const workspacePath = await setupWorkspace();
 
     try {
@@ -213,7 +237,7 @@ suite('画像→1PDF結合', () => {
           platform: process.platform,
         });
 
-        await assertPdfPageSizes(outputPath, [fixture]);
+        await assertPdfPageSizes(outputPath, expectedPdfFixtures([fixture]));
       }
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
@@ -236,7 +260,7 @@ suite('画像→1PDF結合', () => {
         platform: process.platform,
       });
 
-      await assertPdfPageSizes(outputPath, fixtures);
+      await assertPdfPageSizes(outputPath, expectedPdfFixtures(fixtures));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }
@@ -433,4 +457,10 @@ async function assertPdfPageSizes(pdfPath: string, fixtures: InputFixture[]): Pr
     const page = document.getPage(index);
     assert.deepStrictEqual(page.getSize(), { width: fixture.width, height: fixture.height });
   }
+}
+
+function expectedPdfFixtures(fixtures: InputFixture[]): InputFixture[] {
+  return fixtures.flatMap((fixture) =>
+    fixture.format === 'gif' || fixture.format === 'tiff' ? [fixture, fixture] : [fixture],
+  );
 }
