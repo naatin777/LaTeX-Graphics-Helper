@@ -102,4 +102,66 @@ suite('拡張機能の基本動作', () => {
       await rm(temporaryDirectory, { recursive: true, force: true });
     }
   });
+
+  test('cropPdf.autoコマンドがworkspace内のPDFを受け付けてエラーにできる', async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const temporaryDirectory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, 'lgh-crop-auto-'));
+
+    try {
+      sandbox.stub(vscode.window, 'showQuickPick').resolves({ label: '0 pt', description: '', margin: 0 } as any);
+      sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+      sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+
+      const sourcePath = path.join(temporaryDirectory, 'document.pdf');
+      await copyFile(
+        path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'pdf-operations', 'user-files', 'q a.pdf'),
+        sourcePath,
+      );
+
+      await vscode.commands.executeCommand('latex-graphics-helper.cropPdf.auto', vscode.Uri.file(sourcePath));
+
+      const croppedPath = path.join(temporaryDirectory, 'document-crop.pdf');
+      const { PDFDocument } = await import('pdf-lib');
+      const pdf = await PDFDocument.load(await readFile(croppedPath));
+      assert.strictEqual(pdf.getPageCount(), 2);
+    } finally {
+      sandbox.restore();
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
+
+  test('splitPdf.allPagesコマンドがworkspace内のPDFをページごとに分割できる', async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    assert.ok(workspaceFolder);
+
+    const sandbox = createSandbox();
+    const temporaryDirectory = await mkdtemp(path.join(workspaceFolder.uri.fsPath, 'lgh-split-all-'));
+
+    try {
+      sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+      sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+
+      const sourcePath = path.join(temporaryDirectory, 'split-test.pdf');
+      await copyFile(
+        path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'pdf-operations', 'user-files', 'q a.pdf'),
+        sourcePath,
+      );
+
+      await vscode.commands.executeCommand('latex-graphics-helper.splitPdf.allPages', vscode.Uri.file(sourcePath));
+
+      const { PDFDocument } = await import('pdf-lib');
+      const splitOutputDir = path.join(temporaryDirectory, 'split-test');
+      for (const page of [1, 2]) {
+        const pagePath = path.join(splitOutputDir, `${page}.pdf`);
+        const pdf = await PDFDocument.load(await readFile(pagePath));
+        assert.strictEqual(pdf.getPageCount(), 1);
+      }
+    } finally {
+      sandbox.restore();
+      await rm(temporaryDirectory, { recursive: true, force: true });
+    }
+  });
 });

@@ -1,6 +1,7 @@
 # v1 test runtime inventory
 
 - 状態: 監査用draft
+- **注意**: この文書は古いcommit (`75ca52a`) をbaselineにした監査スナップショットです。現在のテスト構成は`docs/test-matrix.md`を正本としてください。
 - 対象: `origin/next/v1` at `75ca52a`のlocal Git tree、test、runner config、package script、workflow
 - 方法: `git ls-files`、test構文抽出、relative import graph、helper / fixture / snapshot列挙でrepository内を再確認した。
 - 訂正: 以前の「GitHub connectorではdirectory treeを直接列挙できない」という注意書きは、この監査でlocal treeを正本に完全列挙したため無効である。

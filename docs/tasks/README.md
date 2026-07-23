@@ -2,7 +2,7 @@
 
 ## Current Task
 
-現在進行中のtaskはありません。未着手・実装途中・条件付きのtaskはBacklogを参照してください。
+- [0205: Organize test contracts](0205-organize-test-contracts.md) — v1の公開機能と安全性contractに対して、意味のあるテストEvidenceを不足・重複・誤認のない構成へ整理する
 
 ## Task boundaries
 
