@@ -15,6 +15,9 @@ import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:f
 import os from 'node:os';
 import path from 'node:path';
 
+import { createSandbox, type SinonSandbox } from 'sinon';
+import * as vscode from 'vscode';
+
 import {
   rememberLastConversion,
   undoLastConversionCommand,
@@ -25,6 +28,19 @@ import {
 } from '../../src/operations/lifecycle/undo_last_conversion.js';
 
 suite('直前変換の取り消し処理', () => {
+  let sandbox: SinonSandbox;
+
+  setup(() => {
+    sandbox = createSandbox();
+    sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+    sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+    sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
   test('複数のUndo recordを保持し、直近recordのbackupを保持する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-undo-workspace-'));
     const firstOutputPath = path.join(workspacePath, 'first.pdf');
