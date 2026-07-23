@@ -3,6 +3,7 @@
   "config.execPath.ghostscript": "ghostscriptの実行ファイルのパス。未指定の場合はOSごとの既定コマンドを使用します。(macOS/Linuxの場合はgs, Windowsの場合はgswin64c.exe)",
   "config.execPath.pdftocairo": "pdftocairoの実行ファイルのパス。未指定の場合はpdftocairo",
   "config.execPath.rsvgConvert": "rsvg-convertの実行ファイルのパス。未指定の場合はrsvg-convert",
+  "config.raster.maxInputPixels": "ラスター画像の入力に許可する最大ピクセル数です。大きな画像は多くのメモリを消費する可能性があるため、必要な場合のみ値を増やしてください。",
   "config.convertToPdf.svg.engine": "SVGをPDFに変換するときに使用する変換方式",
   "config.convertToPdf.svg.puppeteer.browserChannel": "SVGをPDFに変換するときにpuppeteer-coreが使用するChromeのブラウザチャンネル。実行ファイルパスが指定されている場合は無視されます。",
   "config.convertToPdf.svg.puppeteer.executablePath": "共通Puppeteer実行ファイルのパスが未指定の場合に、SVGをPDFに変換するときにpuppeteer-coreが使用する従来のブラウザ実行ファイルのパス。",

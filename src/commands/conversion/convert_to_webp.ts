@@ -12,6 +12,7 @@ import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
 } from '../../config/external_tools/external_tool_paths.js';
+import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
@@ -53,6 +54,7 @@ export async function convertToWebpCommand(
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
+    const maxInputPixels = getMaxInputPixels(configuration);
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
@@ -66,6 +68,7 @@ export async function convertToWebpCommand(
       run: (runtime) =>
         convertToWebpFiles({
           jobs,
+          maxInputPixels,
           pdftocairoPath,
           ghostscriptPath,
           mermaid,

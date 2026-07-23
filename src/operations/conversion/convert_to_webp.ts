@@ -1,5 +1,3 @@
-import sharp from 'sharp';
-
 import {
   type CommittedConversionOutput,
   convertRasterFiles,
@@ -8,6 +6,8 @@ import {
   type RasterJob,
   type RunPdfToPng,
 } from './raster_conversion.js';
+import { openRasterInput } from './raster_input.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { type PdfToolScratchOptions } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
@@ -30,6 +30,7 @@ export interface ConvertToWebpFilesOptions extends PdfToolScratchOptions {
   webp: WebpOutputOptions;
   runPdfToPng?: RunPdfToPng | undefined;
   runId?: string | undefined;
+  maxInputPixels?: number;
 }
 
 export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -37,11 +38,14 @@ export async function convertToWebpFiles(options: ConvertToWebpFilesOptions): Pr
     operationName: 'convert-to-webp',
     stagingDirectoryName: 'convert-to-webp',
     resultExtension: 'webp',
-    encoder: async (sourceBuffer, outputPath) => {
-      await sharp(sourceBuffer).webp({ effort: options.webp.effort }).toFile(outputPath);
+    encoder: async (sourcePath, outputPath, maxInputPixels) => {
+      await openRasterInput(sourcePath, maxInputPixels).webp({ effort: options.webp.effort }).toFile(outputPath);
     },
     unsupportedInputMessage: (sourcePath) => `Unsupported input for WebP conversion: ${sourcePath}`,
   };
-
-  return convertRasterFiles({ ...options, definition });
+  return convertRasterFiles({
+    ...options,
+    maxInputPixels: options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS,
+    definition,
+  });
 }

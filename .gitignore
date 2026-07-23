@@ -9,4 +9,5 @@ test-results/
 media/
 .latex-graphics-helper/
 .codex/rules/
+.serena/
 *.vsix

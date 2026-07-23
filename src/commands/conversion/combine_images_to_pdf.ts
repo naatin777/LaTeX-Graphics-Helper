@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { logicalSourcePathForOutputTemplate } from '../../application/policy/source_format.js';
 import { readGhostscriptExecutablePath } from '../../config/external_tools/external_tool_paths.js';
+import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { combineImagesToPdf } from '../../operations/conversion/combine_images_to_pdf.js';
@@ -59,6 +60,7 @@ export async function combineImagesToPdfCommand(
           outputPath,
           workspacePath,
           runtime,
+          maxInputPixels: getMaxInputPixels(configuration),
           svgToPdf,
           ghostscriptPath,
           platform: process.platform,

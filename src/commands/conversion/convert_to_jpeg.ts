@@ -12,6 +12,7 @@ import {
   readGhostscriptExecutablePath,
   readPdftocairoExecutablePath,
 } from '../../config/external_tools/external_tool_paths.js';
+import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
@@ -45,6 +46,7 @@ export async function convertToJpegCommand(
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToJpeg');
+    const maxInputPixels = getMaxInputPixels(configuration);
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
@@ -60,6 +62,7 @@ export async function convertToJpegCommand(
       run: (runtime) =>
         convertToJpegFiles({
           jobs,
+          maxInputPixels,
           pdftocairoPath,
           ghostscriptPath,
           mermaid,

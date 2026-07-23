@@ -13,6 +13,7 @@ import {
   type CommittedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import {
@@ -29,6 +30,7 @@ export interface CombineImagesToPdfOptions {
   outputPath: string;
   workspacePath: string;
   runtime?: ConversionRuntime;
+  maxInputPixels?: number;
   runId?: string;
   svgToPdf?: SvgToPdfOptions;
   rsvgConvertPath?: string;
@@ -40,6 +42,7 @@ export interface CombineImagesToPdfOptions {
 
 export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Promise<CommittedConversionOutput[]> {
   const { runtime } = options;
+  const configuredMaxInputPixels = options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS;
   runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs);
 
@@ -53,7 +56,10 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
   ]);
   runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  await assertPreflightPassed(options.jobs, {
+    ...preflightOptionsFromRuntime(runtime),
+    maxInputPixels: configuredMaxInputPixels,
+  });
   runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -72,6 +78,7 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
         sourcePath: job.sourcePath,
         outputPath: pdfPath,
         workspacePath: options.workspacePath,
+        maxInputPixels: configuredMaxInputPixels,
         svgToPdf: svgToPdfOptions(options),
         scratchOptions: scratchOptions(options),
       };

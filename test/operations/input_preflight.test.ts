@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
+import sharp from 'sharp';
 import {
   assertPreflightPassed,
   runPreflightBatch,
@@ -263,6 +264,55 @@ suite('Preflight — Raster', () => {
     const result = await runPreflightBatch([path.join(FIXTURES, 'valid.png')]);
     strictEqual(result.canProceed, true);
     assertOk(result.reports[0]!);
+  });
+
+  test('設定pixel上限を超える画像をerrorとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-pixel-limit-'));
+    const sourcePath = path.join(testRoot, 'ten-by-ten.png');
+
+    try {
+      await sharp({
+        create: {
+          width: 10,
+          height: 10,
+          channels: 4,
+          background: { r: 32, g: 64, b: 96, alpha: 1 },
+        },
+      })
+        .png()
+        .toFile(sourcePath);
+
+      const result = await runPreflightBatch([sourcePath], { maxInputPixels: 99 });
+      assertError(result.errors[0]!, 'Configured limit: 99 pixels');
+      ok(result.errors[0]!.reason?.includes('latex-graphics-helper.raster.maxInputPixels'));
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('設定pixel上限以内の画像をokとして検出する', async () => {
+    const testRoot = await mkdtemp(path.join(os.tmpdir(), 'lgh-preflight-pixel-limit-'));
+    const sourcePath = path.join(testRoot, 'ten-by-ten.png');
+
+    try {
+      await sharp({
+        create: {
+          width: 10,
+          height: 10,
+          channels: 4,
+          background: { r: 32, g: 64, b: 96, alpha: 1 },
+        },
+      })
+        .png()
+        .toFile(sourcePath);
+
+      const result = await runPreflightBatch([sourcePath], { maxInputPixels: 100 });
+      assertOk(result.reports[0]!);
+      strictEqual(result.reports[0]!.details?.width, 10);
+      strictEqual(result.reports[0]!.details?.height, 10);
+    } finally {
+      await rm(testRoot, { recursive: true, force: true });
+    }
   });
 
   test('破損したPNGをerrorとして検出する', async () => {

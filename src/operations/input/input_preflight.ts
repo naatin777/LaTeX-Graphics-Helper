@@ -1,11 +1,9 @@
-import { once } from 'node:events';
 import { createReadStream } from 'node:fs';
 import { open, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import pLimit from 'p-limit';
 import { PDFDocument } from 'pdf-lib';
-import sharp from 'sharp';
 import { Parser } from 'xml2js';
 
 import {
@@ -16,8 +14,15 @@ import {
   sourceFormatForPath,
   type SourceFormat,
 } from '../../application/policy/source_format.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import { validateEpsInput } from '../conversion/eps_to_pdf.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
+import {
+  destroyRasterInput,
+  isRasterInputPixelLimitError,
+  openRasterInput,
+  rasterInputPixelLimitMessage,
+} from '../conversion/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 
 export type PreflightResult = 'ok' | 'warning' | 'error';
@@ -43,6 +48,7 @@ export type ConfirmWarningsHandler = (warnings: PreflightReport[]) => Promise<bo
 export interface AssertPreflightPassedOptions {
   outputChannel?: LineOutputChannel;
   signal?: AbortSignal;
+  maxInputPixels?: number;
   onProgress?: (completed: number, total: number) => void;
   onConfirmWarnings?: ConfirmWarningsHandler;
 }
@@ -54,6 +60,7 @@ export type PreflightValidator = (sourcePath: string) => Promise<PreflightReport
 
 export interface PreflightBatchOptions {
   signal?: AbortSignal;
+  maxInputPixels?: number;
   validate?: PreflightValidator;
   onProgress?: (completed: number, total: number) => void;
 }
@@ -62,7 +69,7 @@ export async function runPreflightBatch(
   sourcePaths: string[],
   options: PreflightBatchOptions = {},
 ): Promise<BatchPreflightResult> {
-  const validate = options.validate ?? runPreflight;
+  const maxInputPixels = options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS;
   const total = sourcePaths.length;
   let completed = 0;
   options.signal?.throwIfAborted();
@@ -77,7 +84,10 @@ export async function runPreflightBatch(
         options.signal?.throwIfAborted();
 
         try {
-          const report = await validate(sourcePath);
+          const report =
+            options.validate === undefined
+              ? await runPreflight(sourcePath, maxInputPixels, options.signal)
+              : await options.validate(sourcePath);
           options.signal?.throwIfAborted();
           reports[index] = report;
           completed += 1;
@@ -148,6 +158,9 @@ export async function assertPreflightPassed(
   if (options?.signal !== undefined) {
     batchOptions.signal = options.signal;
   }
+  if (options?.maxInputPixels !== undefined) {
+    batchOptions.maxInputPixels = options.maxInputPixels;
+  }
   if (options?.onProgress !== undefined) {
     batchOptions.onProgress = options.onProgress;
   }
@@ -171,7 +184,12 @@ export async function assertPreflightPassed(
   }
 }
 
-async function runPreflight(sourcePath: string): Promise<PreflightReport> {
+async function runPreflight(
+  sourcePath: string,
+  maxInputPixels: number,
+  signal?: AbortSignal,
+): Promise<PreflightReport> {
+  signal?.throwIfAborted();
   const format = sourceFormatForPath(sourcePath);
 
   if (format === undefined) {
@@ -212,13 +230,12 @@ async function runPreflight(sourcePath: string): Promise<PreflightReport> {
   if (fileSize === 0) {
     return { sourcePath, format, fileSize, result: 'error', reason: 'Empty file' };
   }
-
   if (format === 'pdf') {
     return validatePdfInput(sourcePath, format, fileSize);
   }
 
   if (isRasterImagePath(sourcePath)) {
-    return validateRasterInput(sourcePath, format, fileSize);
+    return validateRasterInput(sourcePath, format, fileSize, maxInputPixels, signal);
   }
 
   if (format === 'svg') {
@@ -307,12 +324,17 @@ async function validateRasterInput(
   sourcePath: string,
   format: SourceFormat,
   fileSize: number,
+  maxInputPixels: number,
+  signal?: AbortSignal,
 ): Promise<PreflightReport> {
-  const inputBuffer = await readFile(sourcePath);
-  const image = sharp(inputBuffer, { limitInputPixels: false });
+  signal?.throwIfAborted();
+  const image = openRasterInput(sourcePath, maxInputPixels);
+  let dimensions: { width: number; height: number } | undefined;
 
   try {
+    signal?.throwIfAborted();
     const metadata = await image.metadata();
+    signal?.throwIfAborted();
 
     if (!metadata.width || !metadata.height || metadata.width <= 0 || metadata.height <= 0) {
       return {
@@ -324,6 +346,7 @@ async function validateRasterInput(
       };
     }
 
+    dimensions = { width: metadata.width, height: metadata.height };
     const details: Record<string, unknown> = {
       fileSize,
       width: metadata.width,
@@ -343,10 +366,15 @@ async function validateRasterInput(
 
     return { sourcePath, format, fileSize, result: 'ok', details };
   } catch (error) {
+    signal?.throwIfAborted();
     const message = error instanceof Error ? error.message : String(error);
-    return { sourcePath, format, fileSize, result: 'error', reason: `Image validation failed: ${message}` };
+    const reason = isRasterInputPixelLimitError(error)
+      ? rasterInputPixelLimitMessage(maxInputPixels, dimensions)
+      : `Image validation failed: ${message}`;
+    return { sourcePath, format, fileSize, result: 'error', reason };
   } finally {
-    await destroySharpInput(image);
+    await destroyRasterInput(image);
+    signal?.throwIfAborted();
   }
 }
 
@@ -586,16 +614,6 @@ async function readFilePrefix(filePath: string, maxBytes: number): Promise<Buffe
   } finally {
     await handle.close();
   }
-}
-
-async function destroySharpInput(image: ReturnType<typeof sharp>): Promise<void> {
-  if (image.destroyed) {
-    return;
-  }
-
-  const closed = once(image, 'close');
-  image.destroy();
-  await closed;
 }
 
 async function safeStat(filePath: string): Promise<{ size: number; isFile: boolean; error?: string }> {

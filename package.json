@@ -358,6 +358,13 @@
           "default": "rsvg-convert",
           "description": "%config.execPath.rsvgConvert%"
         },
+        "latex-graphics-helper.raster.maxInputPixels": {
+          "type": "integer",
+          "default": 268402689,
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "%config.raster.maxInputPixels%"
+        },
         "latex-graphics-helper.convertToPdf.svg.engine": {
           "type": "string",
           "enum": [
