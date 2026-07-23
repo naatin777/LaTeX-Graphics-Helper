@@ -1,6 +1,7 @@
 # v1 evidence gaps and test-architecture findings
 
 - 対象: `origin/next/v1` at `75ca52a`, local worktree `audit/v1-test-evidence-inventory`
+- **注意**: この文書は古いcommit (`75ca52a`) をbaselineにした監査スナップショットです。現在のテスト構成は`docs/test-matrix.md`を正本としてください。
 - 状態: 監査用baseline。正式spec、test policy、CI gate、runner採用の代替ではない
 - 監査日: 2026-07-16
 

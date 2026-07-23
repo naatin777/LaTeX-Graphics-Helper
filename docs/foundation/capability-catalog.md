@@ -1,6 +1,7 @@
 # v1 capability catalog
 
 - 対象baseline: `next/v1` at `75ca52a53df947dfbd4b07709ef538b6e056fdc8`
+- **注意**: この文書は古いcommit (`75ca52a`) をbaselineにした監査スナップショットです。現在のテスト構成は`docs/test-matrix.md`を正本としてください。
 - 監査branch: `audit/v1-test-evidence-inventory`
 - 状態: 監査用draft
 - 正本: この文書は正式仕様ではない。利用者向けcontractは`docs/specs/`、採用判断は`docs/adr/`へ移す。

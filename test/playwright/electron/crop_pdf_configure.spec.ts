@@ -1,11 +1,7 @@
-import { cp, mkdir, mkdtemp, readFile, stat } from 'node:fs/promises';
-import { statSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { isAbsolute, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
-import { downloadAndUnzipVSCode } from '@vscode/test-electron';
+import { expect, test } from '@playwright/test';
 import { PDFDocument } from 'pdf-lib';
 
 import { cropConfigureFixture } from '../../helpers/crop_configure_fixture.js';
@@ -21,27 +17,19 @@ import {
   openCropPdfConfigure,
   waitForWebviewTheme,
 } from './helpers/crop_pdf_webview.js';
-import { installPackagedVsix } from './helpers/packaged_vsix.js';
 import {
   attachElectronDiagnostics,
   disposeElectronTest,
   writeVscodeUserSettings,
 } from './helpers/vscode_electron_test.js';
+import {
+  loadPackagedOperation,
+  resolvePackagedVsixPath,
+  setupElectronTest,
+  type ElectronTestEnv,
+} from './helpers/electron_test_env.js';
 
-const projectRoot = process.cwd();
-const vscodeVersion = '1.128.0';
 const packagedVsixPath = resolvePackagedVsixPath(process.env.LGH_VSIX_PATH);
-const temporaryBase = process.platform === 'win32' ? tmpdir() : '/tmp';
-const sourceFixture = join(
-  projectRoot,
-  'test',
-  'fixtures',
-  'pdf-operations',
-  'user-files',
-  cropConfigureFixture.fileName,
-);
-const rasterSourceFixture = join(projectRoot, 'test', 'fixtures', 'test.png');
-const initialTheme = 'Default Dark Modern';
 const alternateTheme = 'Default Light Modern';
 const expectedCropBox = {
   x: cropConfigureFixture.cropBox.left,
@@ -49,6 +37,7 @@ const expectedCropBox = {
   width: cropConfigureFixture.cropBox.right - cropConfigureFixture.cropBox.left,
   height: cropConfigureFixture.cropBox.top - cropConfigureFixture.cropBox.bottom,
 };
+
 type PackagedMergePdfModule = {
   mergePdf(options: MergePdfOptions): Promise<unknown>;
 };
@@ -56,116 +45,52 @@ type PackagedSplitPdfModule = {
   splitPdfAllPages(options: SplitPdfOptions): Promise<SplitPdfOutput[]>;
 };
 
-function resolvePackagedVsixPath(value: string | undefined): string {
-  if (!value) {
-    throw new Error(
-      'LGH_VSIX_PATH is required. Package a VSIX and pass its absolute path before running Electron Playwright.',
-    );
-  }
-
-  if (!isAbsolute(value)) {
-    throw new Error(`LGH_VSIX_PATH must be an absolute path: ${value}`);
-  }
-
-  if (!value.toLowerCase().endsWith('.vsix')) {
-    throw new Error(`LGH_VSIX_PATH must point to a .vsix file: ${value}`);
-  }
-
-  let fileStats;
-
-  try {
-    fileStats = statSync(value);
-  } catch {
-    throw new Error(`LGH_VSIX_PATH does not exist: ${value}`);
-  }
-
-  if (!fileStats.isFile()) {
-    throw new Error(`LGH_VSIX_PATH must point to a regular file: ${value}`);
-  }
-
-  return value;
-}
-
-test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認する', async ({ playwright }, testInfo) => {
+test('VSIXをinstallしてextensionをactivateできる', async ({ playwright }, testInfo) => {
   testInfo.setTimeout(240_000);
-
-  // Playwright exposes its Electron launcher under the experimental `_electron` API.
-  const electron = playwright._electron;
-  const temporaryRoot = await mkdtemp(join(temporaryBase, 'lgh-electron-'));
-  const workspacePath = join(temporaryRoot, 'workspace');
-  const userDataDir = join(temporaryRoot, 'user-data');
-  const userSettingsDir = join(userDataDir, 'User');
-  const userSettingsPath = join(userSettingsDir, 'settings.json');
-  const sharedDataDir = join(temporaryRoot, 'shared-data');
-  const extensionsDir = join(temporaryRoot, 'extensions');
-  const inputPath = join(workspacePath, cropConfigureFixture.fileName);
-  const outputPath = join(workspacePath, 'q a-crop.pdf');
-  const rasterInputPath = join(workspacePath, 'packaged-raster-input.png');
-  const rasterOutputPath = join(workspacePath, 'packaged-raster-input.jpeg');
-  const failedPdfJpegOutputPaths = [1, 2].map((page) => join(workspacePath, `q a-${page}.jpeg`));
-  const splitOutputDirectory = join(workspacePath, 'packaged-split');
-  const mergedOutputPath = join(workspacePath, 'packaged-merged.pdf');
-  let electronApp: Awaited<ReturnType<typeof electron.launch>> | undefined;
-  let window: Page | undefined;
-  const consoleMessages: string[] = [];
-  const sourceFixtureBytes = await readFile(sourceFixture);
-  const missingPdftocairoPath =
-    process.platform === 'win32' ? 'C:\\lgh-missing\\pdftocairo.exe' : '/lgh-missing/pdftocairo';
+  let env: ElectronTestEnv | undefined;
 
   try {
-    await Promise.all([
-      mkdir(workspacePath),
-      mkdir(userSettingsDir, { recursive: true }),
-      mkdir(sharedDataDir),
-      mkdir(extensionsDir),
-    ]);
-    await writeVscodeUserSettings(userSettingsPath, initialTheme, {
-      'latex-graphics-helper.execPath.pdftocairo': missingPdftocairoPath,
-    });
-    await Promise.all([cp(sourceFixture, inputPath), cp(rasterSourceFixture, rasterInputPath)]);
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
 
-    const vscodeExecutablePath = await downloadAndUnzipVSCode({ version: vscodeVersion });
-
-    const installedExtension = await installPackagedVsix({
-      extensionsDir,
-      userDataDir,
-      version: vscodeVersion,
-      vsixPath: packagedVsixPath,
+    await expect(env.window.getByText('Safe Mode: ON', { exact: true })).toBeVisible();
+    await expect(env.window.getByRole('tree', { name: 'Files Explorer' })).toBeVisible();
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages: [],
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
     });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});
 
-    electronApp = await electron.launch({
-      executablePath: vscodeExecutablePath,
-      cwd: projectRoot,
-      args: [
-        workspacePath,
-        `--user-data-dir=${userDataDir}`,
-        `--shared-data-dir=${sharedDataDir}`,
-        `--extensions-dir=${extensionsDir}`,
-        '--disable-updates',
-        '--skip-welcome',
-        '--skip-release-notes',
-        '--disable-workspace-trust',
-        '--no-sandbox',
-        '--disable-gpu-sandbox',
-        '--no-cached-data',
-        '--locale=en',
-        '--host-resolver-rules=MAP * ~NOTFOUND',
-      ],
-    });
-    electronApp.on('console', (message) => {
+test('Crop Configure Webviewを開きPDFを表示しApplyして正しいPDFを出力できる', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
       consoleMessages.push(message.text());
     });
 
-    const vscodeWindow = await electronApp.firstWindow();
-    window = vscodeWindow;
-    await vscodeWindow.setViewportSize({ width: 1280, height: 900 });
     const {
-      body,
       canvases,
       frame: webviewFrame,
       preview,
       settings,
-    } = await openCropPdfConfigure(vscodeWindow, cropConfigureFixture.fileName);
+    } = await openCropPdfConfigure(env.window, cropConfigureFixture.fileName);
 
     await expect(webviewFrame.getByRole('heading', { name: 'Custom Crop', exact: true })).toBeVisible();
     await expect(webviewFrame.getByText(`${cropConfigureFixture.fileName} · 2 pages`, { exact: true })).toBeVisible();
@@ -188,8 +113,6 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
 
     await expectWebviewNetworkBlocked(webviewFrame);
 
-    const darkTheme = await waitForWebviewTheme(body, 'vscode-dark');
-
     await settings
       .getByRole('spinbutton', { name: 'Left', exact: true })
       .fill(cropConfigureFixture.cropBox.left.toString());
@@ -204,7 +127,71 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       .fill(cropConfigureFixture.cropBox.top.toString());
     await expect(settings.getByRole('radio', { name: 'All pages', exact: true })).toBeChecked();
     await expectPdfCanvasesReadable(canvases);
-    const darkScreenshot = await captureCropPdfScreenshot(vscodeWindow, body);
+
+    await settings.getByRole('button', { name: 'Apply', exact: true }).click();
+
+    await expect
+      .poll(async () => {
+        try {
+          const outputDocument = await PDFDocument.load(await readFile(env!.outputPath));
+          return outputDocument.getPageCount();
+        } catch {
+          return 0;
+        }
+      })
+      .toBe(2);
+
+    const outputDocument = await PDFDocument.load(await readFile(env!.outputPath));
+    expect(outputDocument.getPageCount()).toBe(2);
+
+    for (const page of outputDocument.getPages()) {
+      expect(page.getMediaBox()).toEqual(expectedCropBox);
+      expect(page.getCropBox()).toEqual(expectedCropBox);
+    }
+
+    expect(await readFile(env!.inputPath)).toEqual(env!.sourceFixtureBytes);
+
+    const successNotification = env!.window.getByText('Cropped 1 PDF file(s).', {
+      exact: true,
+    });
+    await expect(successNotification).toBeVisible();
+    await env!.window.keyboard.press('Escape');
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
+    });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});
+
+test('dark/light themeへ追従しcanvasが読める', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    const { body, canvases } = await openCropPdfConfigure(env.window, cropConfigureFixture.fileName);
+
+    const darkTheme = await waitForWebviewTheme(body, 'vscode-dark');
+    await expectPdfCanvasesReadable(canvases);
+    const darkScreenshot = await captureCropPdfScreenshot(env.window, body);
     await testInfo.attach('crop-pdf-configure-dark', {
       body: darkScreenshot,
       contentType: 'image/png',
@@ -216,9 +203,12 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       });
     }
 
+    const userSettingsPath = join(env.userDataDir, 'User', 'settings.json');
     await writeVscodeUserSettings(userSettingsPath, alternateTheme, {
-      'latex-graphics-helper.execPath.pdftocairo': missingPdftocairoPath,
+      'latex-graphics-helper.execPath.pdftocairo':
+        process.platform === 'win32' ? 'C:\\lgh-missing\\pdftocairo.exe' : '/lgh-missing/pdftocairo',
     });
+
     const lightTheme = await waitForWebviewTheme(body, 'vscode-light');
     expect(lightTheme.bodyBackground).not.toBe(darkTheme.bodyBackground);
     expect(lightTheme.bodyForeground).not.toBe(darkTheme.bodyForeground);
@@ -226,9 +216,9 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       canvases,
       'PDF canvas rendering became unreadable after switching the VS Code theme.',
     );
-    const lightScreenshot = await captureCropPdfScreenshot(vscodeWindow, body, {
+    const lightScreenshot = await captureCropPdfScreenshot(env.window, body, {
       canvases,
-      snapshotPrefix: join(temporaryRoot, 'crop-pdf-light'),
+      snapshotPrefix: join(env!.temporaryRoot, 'crop-pdf-light'),
     });
     await testInfo.attach('crop-pdf-configure-light', {
       body: lightScreenshot,
@@ -240,73 +230,99 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
         maxDiffPixelRatio: 0.005,
       });
     }
-
-    await settings.getByRole('button', { name: 'Apply', exact: true }).click();
-
-    await expect
-      .poll(async () => {
-        try {
-          const outputDocument = await PDFDocument.load(await readFile(outputPath));
-          return outputDocument.getPageCount();
-        } catch {
-          return 0;
-        }
-      })
-      .toBe(2);
-
-    const outputDocument = await PDFDocument.load(await readFile(outputPath));
-    expect(outputDocument.getPageCount()).toBe(2);
-
-    for (const page of outputDocument.getPages()) {
-      expect(page.getMediaBox()).toEqual(expectedCropBox);
-      expect(page.getCropBox()).toEqual(expectedCropBox);
-    }
-
-    expect(await readFile(sourceFixture)).toEqual(sourceFixtureBytes);
-    expect(await readFile(inputPath)).toEqual(sourceFixtureBytes);
-
-    const successNotification = vscodeWindow.getByText('Cropped 1 PDF file(s).', {
-      exact: true,
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
     });
-    await expect(successNotification).toBeVisible();
-    await vscodeWindow.keyboard.press('Escape');
-
-    await convertPdfToJpeg(vscodeWindow, cropConfigureFixture.fileName);
-    await expect(vscodeWindow.getByRole('alert').filter({ hasText: 'Failed to convert to JPEG:' })).toBeVisible();
-    for (const failedOutputPath of failedPdfJpegOutputPaths) {
-      await expect
-        .poll(async () => {
-          try {
-            await stat(failedOutputPath);
-            return false;
-          } catch {
-            return true;
-          }
-        })
-        .toBe(true);
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
     }
-    await vscodeWindow.keyboard.press('Escape');
+  }
+});
 
-    await convertPngToJpeg(vscodeWindow, 'packaged-raster-input.png');
-    await expect
-      .poll(async () => {
-        try {
-          return (await stat(rasterOutputPath)).size > 0;
-        } catch {
-          return false;
-        }
-      })
-      .toBe(true);
+test('package済みmoduleでMergeが動く', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    const mergedOutputPath = join(env.workspacePath, 'packaged-merged.pdf');
+
+    // Copy input fixture to output path so we have two PDFs to merge
+    await writeFile(env.outputPath, env.sourceFixtureBytes);
+
+    const mergeModule = await loadPackagedOperation<PackagedMergePdfModule>(
+      env.extensionPath,
+      'out/operations/pdf/merge_pdf.js',
+    );
+    await mergeModule.mergePdf({
+      sourcePaths: [env.inputPath, env.outputPath],
+      outputPath: mergedOutputPath,
+      workspacePath: env.workspacePath,
+      runId: 'packaged-merge',
+      runtime: { resolveConflicts: async () => 'overwrite' },
+    });
+
+    const mergedDocument = await PDFDocument.load(await readFile(mergedOutputPath));
+    expect(mergedDocument.getPageCount()).toBe(4);
+    expect(await readFile(env.inputPath)).toEqual(env.sourceFixtureBytes);
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
+    });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});
+
+test('package済みmoduleでSplitが動く', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    const splitOutputDirectory = join(env.workspacePath, 'packaged-split');
 
     const splitModule = await loadPackagedOperation<PackagedSplitPdfModule>(
-      installedExtension.extensionPath,
+      env.extensionPath,
       'out/operations/pdf/split_pdf.js',
     );
     const splitOutputs = await splitModule.splitPdfAllPages({
       jobs: [
         {
-          sourcePath: inputPath,
-          workspacePath,
+          sourcePath: env.inputPath,
+          workspacePath: env.workspacePath,
           outputPathForPage: (page) => join(splitOutputDirectory, `${page}.pdf`),
         },
       ],
@@ -319,40 +335,146 @@ test('パッケージ済みVSIXでCrop・Merge・Split PDFとCLI境界を確認�
       const splitDocument = await PDFDocument.load(await readFile(splitOutput.outputPath));
       expect(splitDocument.getPageCount()).toBe(1);
     }
-
-    const mergeModule = await loadPackagedOperation<PackagedMergePdfModule>(
-      installedExtension.extensionPath,
-      'out/operations/pdf/merge_pdf.js',
-    );
-    await mergeModule.mergePdf({
-      sourcePaths: [inputPath, outputPath],
-      outputPath: mergedOutputPath,
-      workspacePath,
-      runId: 'packaged-merge',
-      runtime: { resolveConflicts: async () => 'overwrite' },
-    });
-
-    const mergedDocument = await PDFDocument.load(await readFile(mergedOutputPath));
-    expect(mergedDocument.getPageCount()).toBe(4);
-    expect(await readFile(inputPath)).toEqual(sourceFixtureBytes);
   } catch (error) {
     await attachElectronDiagnostics({
       consoleMessages,
       error,
-      extensionsDir,
-      sharedDataDir,
-      temporaryRoot,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
       testInfo,
-      userDataDir,
-      window,
-      workspacePath,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
     });
     throw error instanceof Error ? error : new Error(String(error));
   } finally {
-    await disposeElectronTest(electronApp, temporaryRoot);
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
   }
 });
 
-async function loadPackagedOperation<T>(extensionPath: string, relativePath: string): Promise<T> {
-  return (await import(pathToFileURL(join(extensionPath, relativePath)).href)) as T;
-}
+test('native Sharp dependencyをloadしてPNG→JPEG変換できる', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    const rasterOutputPath = join(env.workspacePath, 'packaged-raster-input.jpeg');
+
+    await convertPngToJpeg(env.window, 'packaged-raster-input.png');
+    await expect
+      .poll(async () => {
+        try {
+          return (await readFile(rasterOutputPath)).length > 0;
+        } catch {
+          return false;
+        }
+      })
+      .toBe(true);
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
+    });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});
+
+test('外部networkが遮断されている', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    const { frame: webviewFrame } = await openCropPdfConfigure(env.window, cropConfigureFixture.fileName);
+    await expectWebviewNetworkBlocked(webviewFrame);
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
+    });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});
+
+test('pdftocairo欠損時に期待するfailureになる', async ({ playwright }, testInfo) => {
+  testInfo.setTimeout(240_000);
+  let env: ElectronTestEnv | undefined;
+  const consoleMessages: string[] = [];
+
+  try {
+    env = await setupElectronTest(playwright._electron, packagedVsixPath);
+    env.electronApp.on('console', (message) => {
+      consoleMessages.push(message.text());
+    });
+
+    await convertPdfToJpeg(env.window, cropConfigureFixture.fileName);
+    await expect(env!.window.getByRole('alert').filter({ hasText: 'Failed to convert to JPEG:' })).toBeVisible();
+
+    const failedPdfJpegOutputPaths = [1, 2].map((page) => join(env!.workspacePath, `q a-${page}.jpeg`));
+    for (const failedOutputPath of failedPdfJpegOutputPaths) {
+      await expect
+        .poll(async () => {
+          try {
+            await readFile(failedOutputPath);
+            return false;
+          } catch {
+            return true;
+          }
+        })
+        .toBe(true);
+    }
+    await env!.window.keyboard.press('Escape');
+  } catch (error) {
+    await attachElectronDiagnostics({
+      consoleMessages,
+      error,
+      extensionsDir: env?.extensionsDir ?? '',
+      sharedDataDir: env?.sharedDataDir ?? '',
+      temporaryRoot: env?.temporaryRoot ?? '',
+      testInfo,
+      userDataDir: env?.userDataDir ?? '',
+      window: env?.window,
+      workspacePath: env?.workspacePath ?? '',
+    });
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    if (env) {
+      await disposeElectronTest(env.electronApp, env.temporaryRoot);
+    }
+  }
+});

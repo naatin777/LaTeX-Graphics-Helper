@@ -2,6 +2,7 @@
 
 - 対象: `origin/next/v1` at `75ca52a`, local worktree `audit/v1-test-evidence-inventory`
 - 状態: 監査用baseline。仕様の正本、runner採用、test移行を決定する文書ではない
+- **注意**: この文書は古いcommit (`75ca52a`) をbaselineにした監査スナップショットです。現在のテスト構成は`docs/test-matrix.md`を正本としてください。
 - 監査日: 2026-07-16
 
 ## Inventory method and scope
