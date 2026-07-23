@@ -15,6 +15,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import sharp from 'sharp';
+
 import {
   convertToPdfFiles,
   createSvgPuppeteerLaunchOptions,
@@ -42,6 +44,45 @@ suite('PDF変換operation（PNG入力）', () => {
       const { PDFDocument } = await import('pdf-lib');
       const pdf = await PDFDocument.load(await import('node:fs/promises').then((fs) => fs.readFile(outputPath)));
       assert.strictEqual(pdf.getPageCount(), 1);
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+  test('preflightと実変換で設定pixel上限を共有する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-png-pixel-limit-'));
+    const sourcePath = path.join(workspacePath, 'ten-by-ten.png');
+    const limitedOutputPath = path.join(workspacePath, 'limited-output.pdf');
+    const outputPath = path.join(workspacePath, 'output.pdf');
+
+    try {
+      await sharp({
+        create: {
+          width: 10,
+          height: 10,
+          channels: 4,
+          background: { r: 32, g: 64, b: 96, alpha: 1 },
+        },
+      })
+        .png()
+        .toFile(sourcePath);
+
+      await assert.rejects(
+        convertToPdfFiles({
+          jobs: [{ sourcePath, outputPath: limitedOutputPath, workspacePath }],
+          maxInputPixels: 99,
+          supportedExtensions: ['.png'],
+          operationName: 'convert-png-to-pdf',
+        }),
+        /Configured limit: 99 pixels/,
+      );
+
+      await convertToPdfFiles({
+        jobs: [{ sourcePath, outputPath, workspacePath }],
+        maxInputPixels: 100,
+        supportedExtensions: ['.png'],
+        operationName: 'convert-png-to-pdf',
+      });
+      await access(outputPath);
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

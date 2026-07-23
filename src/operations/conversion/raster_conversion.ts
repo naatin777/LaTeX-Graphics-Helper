@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
@@ -13,6 +13,7 @@ import {
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { isAbortError } from '../../commands/shared/command_utils.js';
 
+import { isRasterInputPixelLimitError, rasterInputPixelLimitMessage } from './raster_input.js';
 import {
   type CommittedConversionOutput,
   type OutputConflictDecision,
@@ -34,7 +35,7 @@ import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_bat
 
 const execFileAsync = promisify(execFile);
 
-export type RasterEncoder = (sourceBuffer: Buffer, outputPath: string) => Promise<void>;
+export type RasterEncoder = (sourcePath: string, outputPath: string, maxInputPixels: number) => Promise<void>;
 
 export interface DrawioOptions {
   drawioPath: string;
@@ -65,6 +66,7 @@ export interface ConvertToRasterFilesOptions extends PdfToolScratchOptions {
   ghostscriptPath: string;
   mermaid: MermaidPuppeteerOptions;
   drawio: DrawioOptions;
+  maxInputPixels: number;
   runPdfToPng?: RunPdfToPng | undefined;
   runId?: string | undefined;
   definition: RasterConversionDefinition;
@@ -84,6 +86,7 @@ interface RasterStageContext {
   tools: RasterStageTools;
   scratch: PdfToolScratchOptions;
   definition: RasterConversionDefinition;
+  maxInputPixels: number;
 }
 
 interface RasterStagePaths {
@@ -106,7 +109,10 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   await validateJobPaths(options.jobs, options.definition.stagingDirectoryName);
   options.runtime.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(options.runtime));
+  await assertPreflightPassed(options.jobs, {
+    ...preflightOptionsFromRuntime(options.runtime),
+    maxInputPixels: options.maxInputPixels,
+  });
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -133,6 +139,7 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
         tools,
         scratch,
         definition: options.definition,
+        maxInputPixels: options.maxInputPixels,
       }),
   });
 }
@@ -333,9 +340,17 @@ async function writeImageAsRaster(request: RasterRenderRequest, context: RasterS
   context.runtime.signal?.throwIfAborted();
   await assertWritablePathInWorkspace(request.outputPath, request.workspacePath);
   await mkdir(path.dirname(request.outputPath), { recursive: true });
-  const sourceBuffer = await readFile(request.sourcePath);
   context.runtime.signal?.throwIfAborted();
-  await context.definition.encoder(sourceBuffer, request.outputPath);
+
+  try {
+    await context.definition.encoder(request.sourcePath, request.outputPath, context.maxInputPixels);
+  } catch (error) {
+    if (isRasterInputPixelLimitError(error)) {
+      throw new Error(rasterInputPixelLimitMessage(context.maxInputPixels), { cause: error });
+    }
+
+    throw error instanceof Error ? error : new Error(String(error));
+  }
 }
 
 async function executeDrawio(executable: string, args: string[], signal?: AbortSignal): Promise<void> {

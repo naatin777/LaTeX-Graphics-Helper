@@ -3,6 +3,7 @@
   "config.execPath.ghostscript": "Path to the Ghostscript executable. If not specified, the default command will be used. (macOS/Linux: gs, Windows: gswin64c.exe)",
   "config.execPath.pdftocairo": "Path to the pdftocairo executable. If not specified, pdftocairo will be used.",
   "config.execPath.rsvgConvert": "Path to the rsvg-convert executable. If not specified, rsvg-convert will be used.",
+  "config.raster.maxInputPixels": "Maximum number of pixels allowed for a raster image input. Increase this value only when processing very large images, as larger images may require significantly more memory.",
   "config.convertToPdf.svg.engine": "Engine used when converting SVG files to PDF.",
   "config.convertToPdf.svg.puppeteer.browserChannel": "Chrome browser channel used by puppeteer-core when converting SVG files to PDF. Ignored when an executable path is set.",
   "config.convertToPdf.svg.puppeteer.executablePath": "Legacy browser executable path used by puppeteer-core when converting SVG files to PDF. It is used only when the common Puppeteer executable path is not configured.",

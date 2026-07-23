@@ -20,7 +20,7 @@
 | --------- | -------------------------------------------------- | ----------------------------------------------------- |
 | `ok`      | 軽量検査で変換不能な問題を確認しなかった           | 変換を開始する                                        |
 | `warning` | 変換できるが一部情報を失う、または内容の確証が弱い | 現行実装では記録して続行。確認UIはTask 0204で実装予定 |
-| `error`   | 読取不能、空、非regular file、破損、未対応など      | batch全体を停止する                                   |
+| `error`   | 読取不能、空、非regular file、破損、未対応など     | batch全体を停止する                                   |
 
 `error`は`warning`より優先する。複数errorは入力path付きで診断できなければならない。
 
@@ -28,13 +28,13 @@
 
 すべての入力で次を確認する。
 
-| ID | 検査                                    | 失敗時 |
-| -- | --------------------------------------- | ------ |
-| C1 | 対応するsource formatとして判定できる   | error  |
-| C2 | fileが存在し、statとreadが可能           | error  |
-| C3 | regular fileである                       | error  |
-| C4 | 0 byteではない                           | error  |
-| C5 | operation側のworkspace境界検査を通過する | error  |
+| ID  | 検査                                     | 失敗時 |
+| --- | ---------------------------------------- | ------ |
+| C1  | 対応するsource formatとして判定できる    | error  |
+| C2  | fileが存在し、statとreadが可能           | error  |
+| C3  | regular fileである                       | error  |
+| C4  | 0 byteではない                           | error  |
+| C5  | operation側のworkspace境界検査を通過する | error  |
 
 C5は各operationの`assertExistingPathInWorkspace`と`assertWritablePathInWorkspace`が担当する。preflight単体でworkspace policyを複製しない。
 
@@ -51,11 +51,13 @@ C5は各operationの`assertExistingPathInWorkspace`と`assertWritablePathInWorks
 対象: PNG、JPEG、WebP、AVIF、GIF、TIFF。
 
 - Sharpでmetadataを取得できること。
+- `latex-graphics-helper.raster.maxInputPixels`をpreflightと実変換へ同じ値で渡す。既定値はSharp既定値と同じ`268_402_689`とする。
+- 設定値は1以上のsafe integerだけを受け入れ、それ以外は既定値へ戻す。設定されたpixel上限を超えた入力は`error`とし、設定変更可能であることをerrorへ含める。
+- 固定値のpixel countだけを理由にwarningまたはerrorへしない。ただし利用者が設定したpixel上限はresource safety contractとして適用する。
 - widthとheightが正であること。
 - multi-page / animated入力で先頭pageだけを処理する場合は`warning`にする。
-- pixel countだけを理由にwarningまたはerrorへしない。
-
-Sharpへpathを渡してheader metadataだけを取得し、処理後にSharp streamを明示的にdestroyする。入力全体をBufferへ読み込まない。Windowsでmetadata取得後にfileをrenameできることをfile-handle testで保護する。
+- Sharpへpathを渡してheader metadataだけを取得し、処理後にSharp inputを明示的にdestroyして`close`を待つ。Sharpのfilesystem cacheは`files: 0`とし、`unlimited`、`limitInputPixels: false`、`limitInputChannels`の直接指定は使用しない。入力全体をBufferへ読み込まない。
+- Windowsでmetadata取得後に入力fileをrenameできることをfile-handle testで保護する。limit付きSharpへBufferまたは`readFile`結果を渡す実装はproject linterでerrorにする。
 
 ### SVG
 

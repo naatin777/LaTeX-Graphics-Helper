@@ -6,6 +6,7 @@ import { promisify } from 'node:util';
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 
 import { isEditableDrawioImagePath, sourceFormatForPath } from '../../application/policy/source_format.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
@@ -54,16 +55,21 @@ export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
   runtime?: ConversionRuntime;
   runPdfToSvg?: RunPdfToSvg;
   runId?: string;
+  maxInputPixels?: number;
 }
 
 export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Promise<CommittedConversionOutput[]> {
   const { runtime } = options;
   runtime?.signal?.throwIfAborted();
+  const maxInputPixels = options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS;
   validateJobs(options.jobs);
   await validateJobPaths(options.jobs);
   runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  await assertPreflightPassed(options.jobs, {
+    ...preflightOptionsFromRuntime(runtime),
+    maxInputPixels,
+  });
   runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;

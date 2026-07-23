@@ -69,6 +69,27 @@ suite('画像→1PDF結合', () => {
     }
   });
 
+  test('設定したRaster入力pixel上限をpreflightと変換に適用する', async () => {
+    const workspacePath = await setupWorkspace();
+
+    try {
+      const sourcePath = await copyFixtureTo(workspacePath, 'input.png');
+      const outputPath = path.join(workspacePath, 'result.pdf');
+
+      await assert.rejects(
+        combineImagesToPdf({
+          jobs: [{ sourcePath }],
+          outputPath,
+          workspacePath,
+          maxInputPixels: 99,
+        }),
+        /configured raster input pixel limit/u,
+      );
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('複数のPNG画像を選択順で複数ページPDFに結合する', async () => {
     const workspacePath = await setupWorkspace();
 

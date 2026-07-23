@@ -16,7 +16,14 @@ import sharp from 'sharp';
 import { errorMessage, isAbortError } from '../../commands/shared/command_utils.js';
 
 import { isEditableDrawioImagePath, isMermaidPath } from '../../application/policy/source_format.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
+import {
+  destroyRasterInput,
+  isRasterInputPixelLimitError,
+  openRasterInput,
+  rasterInputPixelLimitMessage,
+} from './raster_input.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 
@@ -93,6 +100,7 @@ export interface WriteSourceAsPdfOptions {
   outputPath: string;
   workspacePath: string;
   signal?: AbortSignal;
+  maxInputPixels?: number;
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
   drawio?: DrawioToPdfOptions;
@@ -110,18 +118,23 @@ export interface ConvertToPdfFilesOptions {
   drawio?: DrawioToPdfOptions;
   ghostscriptPath?: string;
   platform?: NodeJS.Platform;
+  maxInputPixels?: number;
   scratchBaseCandidates?: readonly string[];
   operationName?: string;
 }
 
 export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Promise<CommittedConversionOutput[]> {
   const { runtime } = options;
+  const maxInputPixels = options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS;
   runtime?.signal?.throwIfAborted();
   validateJobs(options.jobs, options.supportedExtensions ?? DEFAULT_SUPPORTED_IMAGE_EXTENSIONS);
   await validateJobPaths(options.jobs);
   runtime?.signal?.throwIfAborted();
 
-  await assertPreflightPassed(options.jobs, preflightOptionsFromRuntime(runtime));
+  await assertPreflightPassed(options.jobs, {
+    ...preflightOptionsFromRuntime(runtime),
+    maxInputPixels,
+  });
   runtime?.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
@@ -152,6 +165,7 @@ export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Prom
         options.drawio,
         scratchOptions,
         options.ghostscriptPath,
+        maxInputPixels,
       ),
   });
 }
@@ -166,6 +180,7 @@ async function stageSourceToPdf(
   drawio?: DrawioToPdfOptions,
   scratchOptions: RsvgToolScratchOptions = {},
   ghostscriptPath?: string,
+  maxInputPixels?: number,
 ): Promise<PreparedConversionOutput> {
   signal?.throwIfAborted();
   const stagedOutputPath = path.join(
@@ -184,6 +199,9 @@ async function stageSourceToPdf(
     workspacePath: job.workspacePath,
     scratchOptions,
   };
+  if (maxInputPixels !== undefined) {
+    writeOptions.maxInputPixels = maxInputPixels;
+  }
   if (signal !== undefined) {
     writeOptions.signal = signal;
   }
@@ -218,6 +236,7 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
     outputPath,
     workspacePath,
     signal,
+    maxInputPixels,
     svgToPdf,
     mermaid,
     drawio,
@@ -253,7 +272,13 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
     return;
   }
 
-  await writeRasterImageAsPdf(sourcePath, outputPath, workspacePath, signal);
+  await writeRasterImageAsPdf(
+    sourcePath,
+    outputPath,
+    workspacePath,
+    signal,
+    maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS,
+  );
 }
 
 async function writeDrawioAsPdf(
@@ -380,21 +405,55 @@ async function writeRasterImageAsPdf(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  signal?: AbortSignal,
+  signal: AbortSignal | undefined,
+  maxInputPixels: number,
 ): Promise<void> {
   signal?.throwIfAborted();
-  const sourceBuffer = await readFile(sourcePath);
-  signal?.throwIfAborted();
-  const metadata = await sharp(sourceBuffer).metadata();
-  signal?.throwIfAborted();
-  const { width, height } = metadata;
+  const metadataImage = openRasterInput(sourcePath, maxInputPixels);
+  let width: number;
+  let height: number;
 
-  if (!width || !height) {
-    throw new Error(`Could not determine image dimensions: ${sourcePath}`);
+  try {
+    signal?.throwIfAborted();
+    const metadata = await metadataImage.metadata();
+    signal?.throwIfAborted();
+
+    if (!metadata.width || !metadata.height) {
+      throw new Error(`Could not determine image dimensions: ${sourcePath}`);
+    }
+
+    width = metadata.width;
+    height = metadata.height;
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (isRasterInputPixelLimitError(error)) {
+      throw new Error(rasterInputPixelLimitMessage(maxInputPixels), { cause: error });
+    }
+
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    await destroyRasterInput(metadataImage);
+    signal?.throwIfAborted();
   }
 
-  const imageBuffer = await sharp(sourceBuffer).png().toBuffer();
-  signal?.throwIfAborted();
+  const encodingImage = openRasterInput(sourcePath, maxInputPixels);
+  let imageBuffer: Buffer;
+  try {
+    signal?.throwIfAborted();
+    imageBuffer = await encodingImage.png().toBuffer();
+    signal?.throwIfAborted();
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (isRasterInputPixelLimitError(error)) {
+      throw new Error(rasterInputPixelLimitMessage(maxInputPixels, { width, height }), { cause: error });
+    }
+
+    throw error instanceof Error ? error : new Error(String(error));
+  } finally {
+    await destroyRasterInput(encodingImage);
+    signal?.throwIfAborted();
+  }
+
   const pdfDocument = await PDFDocument.create();
   const page = pdfDocument.addPage([width, height]);
   const embeddedImage = await pdfDocument.embedPng(imageBuffer);

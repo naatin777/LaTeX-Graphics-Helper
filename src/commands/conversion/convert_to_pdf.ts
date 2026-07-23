@@ -10,6 +10,7 @@ import {
   readGhostscriptExecutablePath,
   readRsvgConvertExecutablePath,
 } from '../../config/external_tools/external_tool_paths.js';
+import { getMaxInputPixels } from '../../config/raster_input.js';
 import {
   readMermaidPuppeteerOptions,
   readPuppeteerExecutablePath,
@@ -113,6 +114,7 @@ async function convertSelectedSourcesToPdf(
     }
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
+    const maxInputPixels = getMaxInputPixels(configuration);
     const outputTemplate = configuration.get<string>('outputPath.convertPngToPdf', DEFAULT_OUTPUT_PATH);
     const outputFormatOutputTemplate =
       messages.outputFormatOutputPathKey === undefined
@@ -146,6 +148,7 @@ async function convertSelectedSourcesToPdf(
       run: (runtime) =>
         convertToPdfFiles({
           jobs,
+          maxInputPixels,
           supportedExtensions: messages.supportedExtensions,
           svgToPdf,
           mermaid,

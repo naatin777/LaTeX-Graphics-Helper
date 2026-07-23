@@ -8,6 +8,7 @@ import { rememberLastConversion } from '../commands/lifecycle/undo_last_conversi
 import { userMessage } from '../commands/shared/user_messages.js';
 import { isAbortError } from '../commands/shared/command_utils.js';
 import { resolveOutputPath } from '../config/output/resolve_output_path.js';
+import { getMaxInputPixels } from '../config/raster_input.js';
 import { localeMap } from '../locale_map.js';
 import type { CommittedConversionOutput } from '../operations/lifecycle/commit_conversion_outputs.js';
 import type { OutputConflictDecision } from '../operations/lifecycle/commit_conversion_outputs.js';
@@ -128,6 +129,7 @@ export class LatexPasteEditProvider implements vscode.DocumentPasteEditProvider 
             kind: pickedItem.pasteKind,
             outputBasePath: outputPath,
             workspacePath,
+            maxInputPixels: getMaxInputPixels(vscode.workspace.getConfiguration('latex-graphics-helper')),
           },
           {
             signal,
