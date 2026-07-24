@@ -17,9 +17,14 @@ export interface RasterAnimationMetadata {
 }
 
 export interface RawSidecar {
+  version: 1;
   width: number;
   height: number;
   channels: 1 | 2 | 3 | 4;
+  depth: 'uchar' | 'ushort' | 'float' | 'double';
+  colourspace: string;
+  alpha: boolean;
+  layout: 'interleaved';
 }
 
 export function openRasterInput(
@@ -29,10 +34,14 @@ export function openRasterInput(
   animated = false,
 ): RasterInput {
   if (path.extname(sourcePath).toLowerCase() === '.raw') {
+    const sidecar = readRawSidecar(sourcePath);
+    if (sidecar.depth !== 'uchar') {
+      throw new Error(`Raw re-input only supports uchar depth: ${sourcePath} has depth '${sidecar.depth}'.`);
+    }
     return sharp(readFileSync(sourcePath), {
       limitInputPixels: maxInputPixels,
       failOn: 'warning',
-      raw: readRawSidecar(sourcePath),
+      raw: { width: sidecar.width, height: sidecar.height, channels: sidecar.channels },
     });
   }
 
@@ -98,18 +107,36 @@ export function readRawSidecar(sourcePath: string): RawSidecar {
 
   const candidate = value as Record<string, unknown>;
   if (
+    candidate.version !== 1 ||
     !isPositiveInteger(candidate.width) ||
     !isPositiveInteger(candidate.height) ||
-    (candidate.channels !== 1 && candidate.channels !== 2 && candidate.channels !== 3 && candidate.channels !== 4)
+    (candidate.channels !== 1 && candidate.channels !== 2 && candidate.channels !== 3 && candidate.channels !== 4) ||
+    !isRawDepth(candidate.depth) ||
+    typeof candidate.colourspace !== 'string' ||
+    candidate.colourspace.length === 0 ||
+    typeof candidate.alpha !== 'boolean' ||
+    candidate.layout !== 'interleaved'
   ) {
-    throw new Error(`Invalid Raw sidecar: ${sidecarPath}; expected positive width, height, and channels 1-4.`);
+    throw new Error(
+      `Invalid Raw sidecar: ${sidecarPath}; expected version 1, dimensions, depth, colourspace, alpha, and interleaved layout.`,
+    );
   }
 
-  return { width: candidate.width, height: candidate.height, channels: candidate.channels };
+  return {
+    version: 1,
+    width: candidate.width,
+    height: candidate.height,
+    channels: candidate.channels,
+    depth: candidate.depth,
+    colourspace: candidate.colourspace,
+    alpha: candidate.alpha,
+    layout: 'interleaved',
+  };
 }
 
 export function rawByteLength(sidecar: RawSidecar): number {
-  const byteLength = sidecar.width * sidecar.height * sidecar.channels;
+  const bytesPerSample = { uchar: 1, ushort: 2, float: 4, double: 8 }[sidecar.depth];
+  const byteLength = sidecar.width * sidecar.height * sidecar.channels * bytesPerSample;
   if (!Number.isSafeInteger(byteLength)) {
     throw new Error('Raw sidecar dimensions produce an unsafe byte length.');
   }
@@ -118,6 +145,10 @@ export function rawByteLength(sidecar: RawSidecar): number {
 
 function isPositiveInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+}
+
+function isRawDepth(value: unknown): value is RawSidecar['depth'] {
+  return value === 'uchar' || value === 'ushort' || value === 'float' || value === 'double';
 }
 
 export async function destroyRasterInput(image: RasterInput): Promise<void> {

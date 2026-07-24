@@ -13,7 +13,16 @@ suite('Raw pixels conversion', () => {
     try {
       const sourcePath = path.join(workspacePath, 'source.raw');
       const outputPath = path.join(workspacePath, 'output.raw');
-      const sidecar = { width: 2, height: 1, channels: 3 };
+      const sidecar = {
+        version: 1,
+        width: 2,
+        height: 1,
+        channels: 3,
+        depth: 'uchar',
+        colourspace: 'srgb',
+        alpha: false,
+        layout: 'interleaved',
+      };
       await writeFile(sourcePath, Buffer.from([255, 0, 0, 0, 255, 0]));
       await writeFile(`${sourcePath}.json`, `${JSON.stringify(sidecar)}\n`);
 
@@ -70,9 +79,14 @@ suite('Raw pixels conversion', () => {
       });
 
       assert.deepStrictEqual(JSON.parse(await readFile(`${outputPath}.json`, 'utf8')), {
+        version: 1,
         width: 2,
         height: 1,
         channels: 3,
+        depth: 'uchar',
+        colourspace: 'srgb',
+        alpha: false,
+        layout: 'interleaved',
       });
       assert.strictEqual((await readFile(outputPath)).length, 6);
     } finally {

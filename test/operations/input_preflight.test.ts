@@ -265,7 +265,19 @@ suite('Preflight — Raster', () => {
     const sourcePath = path.join(testRoot, 'pixels.raw');
     try {
       await writeFile(sourcePath, Buffer.from([255, 0, 0, 0, 255, 0]));
-      await writeFile(`${sourcePath}.json`, JSON.stringify({ width: 2, height: 1, channels: 3 }));
+      await writeFile(
+        `${sourcePath}.json`,
+        JSON.stringify({
+          version: 1,
+          width: 2,
+          height: 1,
+          channels: 3,
+          depth: 'uchar',
+          colourspace: 'srgb',
+          alpha: false,
+          layout: 'interleaved',
+        }),
+      );
       const result = await runPreflightBatch([sourcePath]);
       assertOk(result.reports[0]!);
       strictEqual(result.reports[0]!.details?.width, 2);
@@ -284,7 +296,19 @@ suite('Preflight — Raster', () => {
       await writeFile(`${invalidPath}.json`, JSON.stringify({ width: 1, height: 1, channels: 5 }));
       const mismatchPath = path.join(testRoot, 'mismatch.raw');
       await writeFile(mismatchPath, Buffer.from([0]));
-      await writeFile(`${mismatchPath}.json`, JSON.stringify({ width: 2, height: 1, channels: 1 }));
+      await writeFile(
+        `${mismatchPath}.json`,
+        JSON.stringify({
+          version: 1,
+          width: 2,
+          height: 1,
+          channels: 1,
+          depth: 'uchar',
+          colourspace: 'b-w',
+          alpha: false,
+          layout: 'interleaved',
+        }),
+      );
 
       const result = await runPreflightBatch([missingPath, invalidPath, mismatchPath]);
       strictEqual(result.errors.length, 3);

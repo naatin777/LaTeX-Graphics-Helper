@@ -5,9 +5,8 @@ import { promisify } from 'node:util';
 
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import { PDFDocument } from 'pdf-lib';
-import sharp from 'sharp';
 
-import { isMermaidPath, sourceFormatForPath } from '../../application/policy/source_format.js';
+import { isMermaidPath } from '../../application/policy/source_format.js';
 import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
@@ -15,7 +14,7 @@ import type { CommittedConversionOutput, PreparedConversionOutput } from '../lif
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
-import { openRasterInput } from './raster_input.js';
+import { destroyRasterInput, openRasterInput, readRasterAnimationMetadata } from './raster_input.js';
 import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
 import type { ChromeReleaseChannel } from 'puppeteer-core';
@@ -148,7 +147,13 @@ async function stageDrawio(
       )(input.sourcePath, svgPath, runtime.signal);
       pages.push(await svgPage(svgPath, input));
     } else {
-      pages.push(await rasterPage(input.sourcePath, input, options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS));
+      const maxInputPixels = options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS;
+      const animation = await readRasterAnimationMetadata(input.sourcePath, maxInputPixels);
+      const pageCount = animation?.pages ?? 1;
+      for (let page = 1; page <= pageCount; page += 1) {
+        runtime.signal?.throwIfAborted();
+        pages.push(await rasterPage(input.sourcePath, input, maxInputPixels, pageCount > 1 ? page : undefined));
+      }
     }
   }
 
@@ -217,27 +222,27 @@ export interface DrawioPage {
   height: number;
 }
 
-async function rasterPage(sourcePath: string, input: DrawioInput, maxInputPixels: number): Promise<DrawioPage> {
-  const isRaw = sourceFormatForPath(sourcePath) === 'raw';
-  const image = isRaw ? openRasterInput(sourcePath, maxInputPixels) : sharp(sourcePath);
+async function rasterPage(
+  sourcePath: string,
+  input: DrawioInput,
+  maxInputPixels: number,
+  page?: number,
+): Promise<DrawioPage> {
+  const image = openRasterInput(sourcePath, maxInputPixels, page);
   try {
     const metadata = await image.metadata();
     if (!metadata.width || !metadata.height) {
       throw new Error(`Could not determine image dimensions: ${sourcePath}`);
     }
-    const dataUri = isRaw
-      ? `data:image/png;base64,${(await image.png().toBuffer()).toString('base64')}`
-      : `data:${mimeFor(sourcePath)};base64,${(await readFile(sourcePath)).toString('base64')}`;
+    const dataUri = `data:image/png;base64,${(await image.png().toBuffer()).toString('base64')}`;
     return {
-      name: input.pageName ?? path.basename(sourcePath),
+      name: input.pageName ?? `${path.basename(sourcePath)}${page === undefined ? '' : `-${page}`}`,
       dataUri,
       width: metadata.width,
       height: metadata.height,
     };
   } finally {
-    if (isRaw) {
-      image.destroy();
-    }
+    await destroyRasterInput(image);
   }
 }
 
@@ -256,13 +261,18 @@ export function parseSvgSize(source: string): { width: number; height: number } 
   const tag = source.match(/<svg\b[^>]*>/iu)?.[0] ?? '';
   const width = cssNumber(tag.match(/\bwidth\s*=\s*["']([^"']+)/iu)?.[1]);
   const height = cssNumber(tag.match(/\bheight\s*=\s*["']([^"']+)/iu)?.[1]);
-  const viewBox = tag.match(/\bviewBox\s*=\s*["']\s*[-+\d.e]+\s+[-+\d.e]+\s+([-+\d.e]+)\s+([-+\d.e]+)/iu);
-  const resolvedWidth = width ?? (viewBox?.[1] ? Number(viewBox[1]) : undefined);
-  const resolvedHeight = height ?? (viewBox?.[2] ? Number(viewBox[2]) : undefined);
-  if (!resolvedWidth || !resolvedHeight || !Number.isFinite(resolvedWidth) || !Number.isFinite(resolvedHeight)) {
+  const viewBox = tag.match(/\bviewBox\s*=\s*["']\s*([-+\d.e]+)\s+[-+\d.e]+\s+([-+\d.e]+)\s+([-+\d.e]+)\s*["']/iu);
+  const viewBoxWidth = cssNumber(viewBox?.[2]);
+  const viewBoxHeight = cssNumber(viewBox?.[3]);
+  const resolvedWidth = width ?? viewBoxWidth;
+  const resolvedHeight = height ?? viewBoxHeight;
+  const aspectWidth = viewBoxWidth && viewBoxHeight ? viewBoxWidth / viewBoxHeight : undefined;
+  const sizedWidth = width ?? (height && aspectWidth ? height * aspectWidth : resolvedWidth);
+  const sizedHeight = height ?? (width && aspectWidth ? width / aspectWidth : resolvedHeight);
+  if (!sizedWidth || !sizedHeight || !Number.isFinite(sizedWidth) || !Number.isFinite(sizedHeight)) {
     throw new Error('SVG has no usable dimensions.');
   }
-  return { width: resolvedWidth, height: resolvedHeight };
+  return { width: sizedWidth, height: sizedHeight };
 }
 
 function cssNumber(value: string | undefined): number | undefined {
@@ -277,7 +287,7 @@ export function createDrawioXml(pages: DrawioPage[]): string {
     const id = `page-${index + 1}`;
     const cellId = `image-${index + 1}`;
     const value = escapeXml(page.dataUri);
-    return `<diagram id="${id}" name="${escapeXml(name)}"><mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="${cellId}" style="shape=image;image=${value};imageAspect=0;" vertex="1" parent="1"><mxGeometry width="${page.width}" height="${page.height}" as="geometry"/></mxCell></root></mxGraphModel></diagram>`;
+    return `<diagram id="${id}" name="${escapeXml(name)}"><mxGraphModel pageWidth="${page.width}" pageHeight="${page.height}"><root><mxCell id="0"/><mxCell id="1" parent="0"/><mxCell id="${cellId}" style="shape=image;image=${value};imageAspect=0;" vertex="1" parent="1"><mxGeometry width="${page.width}" height="${page.height}" as="geometry"/></mxCell></root></mxGraphModel></diagram>`;
   });
   return `<mxfile host="app.diagrams.net">${diagrams.join('')}</mxfile>`;
 }
@@ -294,32 +304,6 @@ function uniquePageName(value: string, used: Set<string>): string {
 
 function escapeXml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function mimeFor(sourcePath: string): string {
-  switch (sourceFormatForPath(sourcePath)) {
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'webp':
-      return 'image/webp';
-    case 'avif':
-      return 'image/avif';
-    case 'gif':
-      return 'image/gif';
-    case 'tiff':
-      return 'image/tiff';
-    case 'png':
-    case 'raw':
-    case 'drawio':
-    case 'editable-drawio-png':
-    case 'editable-drawio-svg':
-    case 'eps':
-    case 'mermaid':
-    case 'pdf':
-    case 'svg':
-    case undefined:
-      return 'image/png';
-  }
 }
 
 async function executePdfToSvg(
