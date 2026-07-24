@@ -30,6 +30,7 @@ import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_command.js';
+import { withWorkspaceSettings } from '../helpers/workspace_settings.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
@@ -110,6 +111,55 @@ suite('JPEGに変換コマンド', () => {
 
   test('.mermaidファイルを読み取り可能なJPEGへ変換する', async () => {
     await assertMermaidFileConvertsToJpeg('source.mermaid');
+  });
+
+  test('outputPath.convertToJpegが設定されている場合はデフォルト出力パスより優先する', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const customOutputPath = path.join(temporaryDirectory, 'custom-source.jpeg');
+      await copyFile(fixturePngPath, sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          'latex-graphics-helper.outputPath.convertToJpeg': '${fileDirname}/custom-${fileBasenameNoExtension}.jpeg',
+          'latex-graphics-helper.outputPath.convertPngToJpeg': '${fileDirname}/pair-${fileBasenameNoExtension}.jpeg',
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_JPEG_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertReadableJpeg(customOutputPath);
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.jpeg'));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test('outputPath.convertToJpegが空文字の場合はペア別設定へfallbackする', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const pairOutputPath = path.join(temporaryDirectory, 'pair-source.jpeg');
+      await copyFile(fixturePngPath, sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          'latex-graphics-helper.outputPath.convertToJpeg': '',
+          'latex-graphics-helper.outputPath.convertPngToJpeg': '${fileDirname}/pair-${fileBasenameNoExtension}.jpeg',
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_JPEG_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertReadableJpeg(pairOutputPath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 });
 
@@ -201,4 +251,10 @@ async function assertFileExists(filePath: string): Promise<void> {
 
 function replaceExtension(filePath: string, extension: string): string {
   return path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}${extension}`);
+}
+
+async function assertFileDoesNotExist(filePath: string): Promise<void> {
+  await assert.rejects(access(filePath), (error) => {
+    return error instanceof Error && 'code' in error && error.code === 'ENOENT';
+  });
 }

@@ -33,6 +33,7 @@ import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_command.js';
+import { withWorkspaceSettings } from '../helpers/workspace_settings.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
@@ -131,6 +132,55 @@ suite('AVIFに変換コマンド', () => {
       await vscode.commands.executeCommand(CONVERT_TO_AVIF_COMMAND, vscode.Uri.file(sourcePath));
 
       await assertFileDoesNotExist(path.join(temporaryDirectory, 'source-1.avif'));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test('outputPath.convertToAvifが設定されている場合はデフォルト出力パスより優先する', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const customOutputPath = path.join(temporaryDirectory, 'custom-source.avif');
+      await copyFile(fixturePngPath, sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          'latex-graphics-helper.outputPath.convertToAvif': '${fileDirname}/custom-${fileBasenameNoExtension}.avif',
+          'latex-graphics-helper.outputPath.convertPngToAvif': '${fileDirname}/pair-${fileBasenameNoExtension}.avif',
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_AVIF_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertReadableAvif(customOutputPath);
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.avif'));
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
+  });
+
+  test('outputPath.convertToAvifが空文字の場合はペア別設定へfallbackする', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
+
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      const pairOutputPath = path.join(temporaryDirectory, 'pair-source.avif');
+      await copyFile(fixturePngPath, sourcePath);
+
+      await withWorkspaceSettings(
+        {
+          'latex-graphics-helper.outputPath.convertToAvif': '',
+          'latex-graphics-helper.outputPath.convertPngToAvif': '${fileDirname}/pair-${fileBasenameNoExtension}.avif',
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_AVIF_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertReadableAvif(pairOutputPath);
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
