@@ -96,7 +96,7 @@ export async function convertPdfToJpeg(vscodeWindow: Page, fileName: string): Pr
   const pdfEntry = explorer.getByRole('treeitem', { name: fileName });
   await expect(pdfEntry).toBeVisible();
   await selectExplorerEntry(pdfEntry);
-  await pdfEntry.click({ button: 'right' });
+  await pdfEntry.press('Shift+F10');
 
   const convertMenu = vscodeWindow.getByRole('menuitem', { name: 'Convert' });
   await expect(convertMenu).toBeVisible();
