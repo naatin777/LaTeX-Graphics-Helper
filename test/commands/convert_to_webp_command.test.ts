@@ -23,6 +23,8 @@
 import assert from 'node:assert/strict';
 import { access, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+
+import { CONVERT_TO_WEBP_COMMAND } from '../../src/commands/conversion/convert_to_webp.js';
 import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
@@ -34,7 +36,6 @@ import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_comm
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
-const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
 const generatedSvgWidth = 31;
 const generatedSvgHeight = 19;
 

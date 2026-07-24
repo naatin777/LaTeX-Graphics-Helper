@@ -16,6 +16,7 @@ import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
+import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import { convertToSvgFiles, type ConvertToSvgJob } from '../../operations/conversion/convert_to_svg.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
 
@@ -107,12 +108,16 @@ async function createJobs(
 
   const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
   const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
-  const outputPath = resolveOutputPath(outputTemplate, {
-    sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
-    workspacePath: workspace.uri.fsPath,
-    workspaceName: workspace.name,
-    ...(page !== undefined && { page }),
-  });
+  const outputPath = resolveOutputPath(
+    outputTemplate,
+    {
+      sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
+      workspacePath: workspace.uri.fsPath,
+      workspaceName: workspace.name,
+      ...(page !== undefined && { page }),
+    },
+    { allowedExtensions: ['.svg'] },
+  );
 
   return [
     {
@@ -139,18 +144,23 @@ async function createPdfJobs(
 
   const outputTemplate =
     outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToSvg', DEFAULT_PDF_OUTPUT_PATH);
+  assertPageTemplateForSplitOutput(outputTemplate, pageCount);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
     return {
       sourcePath,
       workspacePath: workspace.uri.fsPath,
-      outputPath: resolveOutputPath(outputTemplate, {
-        sourcePath,
-        workspacePath: workspace.uri.fsPath,
-        workspaceName: workspace.name,
-        page: String(page),
-      }),
+      outputPath: resolveOutputPath(
+        outputTemplate,
+        {
+          sourcePath,
+          workspacePath: workspace.uri.fsPath,
+          workspaceName: workspace.name,
+          page: formatOutputPage(page, pageCount),
+        },
+        { allowedExtensions: ['.svg'] },
+      ),
       page,
     };
   });

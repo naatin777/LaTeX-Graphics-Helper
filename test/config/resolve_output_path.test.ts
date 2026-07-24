@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
+import { logicalSourcePathForOutputTemplate } from '../../src/application/policy/source_format.js';
 import { resolveOutputPath, type OutputPathContext } from '../../src/config/output/resolve_output_path.js';
 
 type OutputPathPlatform = 'win32' | 'posix';
 type ResolveOutputPathWithPlatform = (
   templatePath: string,
   context: OutputPathContext,
-  options: { platform: OutputPathPlatform },
+  options: { platform: OutputPathPlatform; allowedExtensions?: readonly string[] },
 ) => string;
 
 // Implementation Phaseで追加するplatform注入契約を、失敗テスト段階でも型安全に呼び出す。
@@ -157,6 +158,27 @@ suite('出力パスのテンプレート解決', () => {
         }),
       /Invalid output path for POSIX:.*NUL/,
     );
+  });
+
+  test('許容拡張子以外を拒否する', () => {
+    assert.throws(
+      () => resolveOutputPath('output/result.pdf', posixContext(), { allowedExtensions: ['.png'] }),
+      /Invalid output extension.*\.pdf/,
+    );
+    assert.doesNotThrow(() => resolveOutputPath('output/result.PNG', posixContext(), { allowedExtensions: ['.png'] }));
+  });
+
+  test('Draw.io compound source nameを論理名として展開する', () => {
+    const result = resolveOutputPathWithPlatform(
+      '${fileDirname}/${fileBasenameNoExtension}.png',
+      {
+        ...posixContext(),
+        sourcePath: logicalSourcePathForOutputTemplate('/workspace/figures/diagram.drawio.png'),
+      },
+      { platform: 'posix', allowedExtensions: ['.png'] },
+    );
+
+    assert.strictEqual(result, '/workspace/figures/diagram.png');
   });
 });
 

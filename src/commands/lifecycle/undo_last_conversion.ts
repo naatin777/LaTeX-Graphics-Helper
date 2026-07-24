@@ -17,7 +17,7 @@ import { userMessage } from '../shared/user_messages.js';
 
 export const UNDO_LAST_CONVERSION_COMMAND = 'latex-graphics-helper.undoLastConversion';
 
-let lastConversion: ConversionUndoRecord | undefined;
+const conversionHistory: ConversionUndoRecord[] = [];
 
 export async function rememberLastConversion(
   outputs: ConversionOutput[],
@@ -32,12 +32,8 @@ export async function rememberLastConversion(
     throw error instanceof Error ? error : new Error(String(error));
   }
 
-  const previousConversion = lastConversion;
-  lastConversion = record;
-  await cleanupConversionArtifacts(
-    [...toArtifactRoots(previousConversion?.outputs), ...toArtifactRoots(record.outputs, true)],
-    outputChannel,
-  );
+  conversionHistory.push(record);
+  await cleanupConversionArtifacts(toArtifactRoots(record.outputs, true), outputChannel);
   return record.id;
 }
 
@@ -47,18 +43,19 @@ export async function undoLastConversionCommand(
 ): Promise<void> {
   const outputChannel = dependencies?.outputChannel;
   try {
-    if (!lastConversion) {
+    const record = conversionHistory.at(-1);
+    if (!record) {
       await vscode.window.showInformationMessage(userMessage('message.undo.none'));
       return;
     }
 
-    if (expectedId && expectedId !== lastConversion.id) {
+    if (expectedId && expectedId !== record.id) {
       await vscode.window.showWarningMessage(userMessage('message.undo.newerConversionCompleted'));
       return;
     }
 
-    await undoConversionOutputs(lastConversion, outputChannel);
-    lastConversion = undefined;
+    await undoConversionOutputs(record, outputChannel);
+    conversionHistory.pop();
     await vscode.window.showInformationMessage(userMessage('message.undo.removedLastOutput'));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

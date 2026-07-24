@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import {
   isEditableDrawioImagePath,
+  isRasterImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
 import {
@@ -16,12 +17,14 @@ import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
+import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import {
   convertToAvifFiles,
   type AvifOutputOptions,
   type ConvertToAvifJob,
 } from '../../operations/conversion/convert_to_avif.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
+import { createRasterFrameJobs } from './create_raster_frame_jobs.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
@@ -51,10 +54,12 @@ export async function convertToAvifCommand(
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToAvif');
-    const jobs = (
-      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
-    ).flat();
     const maxInputPixels = getMaxInputPixels(configuration);
+    const jobs = (
+      await Promise.all(
+        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
+      )
+    ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
@@ -93,6 +98,7 @@ async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
+  maxInputPixels: number,
 ): Promise<ConvertToAvifJob[]> {
   assertFileScheme(sourceUri);
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
@@ -114,12 +120,27 @@ async function createJobs(
 
   const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
   const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
-  const outputPath = resolveOutputPath(outputTemplate, {
-    sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
-    workspacePath: workspace.uri.fsPath,
-    workspaceName: workspace.name,
-    ...(page !== undefined && { page }),
-  });
+  if (isRasterImagePath(sourcePath)) {
+    return createRasterFrameJobs({
+      sourcePath,
+      workspacePath: workspace.uri.fsPath,
+      workspaceName: workspace.name,
+      outputTemplate,
+      allowedExtensions: ['.avif'],
+      maxInputPixels,
+      createJob: (job) => job,
+    });
+  }
+  const outputPath = resolveOutputPath(
+    outputTemplate,
+    {
+      sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
+      workspacePath: workspace.uri.fsPath,
+      workspaceName: workspace.name,
+      ...(page !== undefined && { page }),
+    },
+    { allowedExtensions: ['.avif'] },
+  );
 
   return [
     {
@@ -146,18 +167,23 @@ async function createPdfJobs(
 
   const outputTemplate =
     outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToAvif', DEFAULT_PDF_OUTPUT_PATH);
+  assertPageTemplateForSplitOutput(outputTemplate, pageCount);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
     return {
       sourcePath,
       workspacePath: workspace.uri.fsPath,
-      outputPath: resolveOutputPath(outputTemplate, {
-        sourcePath,
-        workspacePath: workspace.uri.fsPath,
-        workspaceName: workspace.name,
-        page: String(page),
-      }),
+      outputPath: resolveOutputPath(
+        outputTemplate,
+        {
+          sourcePath,
+          workspacePath: workspace.uri.fsPath,
+          workspaceName: workspace.name,
+          page: formatOutputPage(page, pageCount),
+        },
+        { allowedExtensions: ['.avif'] },
+      ),
       page,
     };
   });

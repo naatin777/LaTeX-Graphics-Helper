@@ -33,6 +33,8 @@ import sharp from 'sharp';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
+import { CONVERT_TO_PDF_COMMAND } from '../../src/commands/conversion/convert_to_pdf.js';
+
 import { logicalSourcePathForOutputTemplate } from '../../src/application/policy/source_format.js';
 import { outputTemplateForSource } from '../../src/commands/conversion/convert_to_pdf.js';
 
@@ -41,7 +43,6 @@ import { withWorkspaceSettings } from '../helpers/workspace_settings.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const fixturePngPath = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
-const CONVERT_TO_PDF_COMMAND = 'latex-graphics-helper.convertToPdf';
 const generatedImageWidth = 17;
 const generatedImageHeight = 13;
 const generatedSvgWidth = 31;

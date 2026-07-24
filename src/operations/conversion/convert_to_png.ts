@@ -32,8 +32,8 @@ const pngDefinition: RasterConversionDefinition = {
   operationName: 'convert-to-png',
   stagingDirectoryName: 'convert-to-png',
   resultExtension: 'png',
-  encoder: async (sourcePath, outputPath, maxInputPixels) => {
-    await openRasterInput(sourcePath, maxInputPixels).png().toFile(outputPath);
+  encoder: async (sourcePath, outputPath, maxInputPixels, page) => {
+    await openRasterInput(sourcePath, maxInputPixels, page).png().toFile(outputPath);
   },
   unsupportedInputMessage: (sourcePath) => `Unsupported input for PNG conversion: ${sourcePath}`,
 };

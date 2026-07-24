@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 
 import { isDrawioPath } from '../../application/policy/source_format.js';
 import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
+import { readOutputPathTemplate } from '../../config/output/output_path_settings.js';
+import { assertPageTemplateForSplitOutput } from '../../config/output/page_template.js';
 import { convertDrawioToPdfFiles, type DrawioPdfJob } from '../../operations/conversion/convert_drawio_to_pdf.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
@@ -78,8 +80,16 @@ async function runDrawioPdfCommand(options: {
     }
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const configuredOutputTemplate = configuration.get<string>(options.outputSetting, options.defaultOutputPath);
-    const outputTemplate = configuredOutputTemplate.trim() ? configuredOutputTemplate : options.defaultOutputPath;
+    const command = options.outputMode === 'page-pdfs' ? 'convertDrawioToPdf' : 'convertDrawioToPdfDirectly';
+    const outputTemplate = readOutputPathTemplate(
+      configuration,
+      command,
+      options.outputSetting,
+      options.defaultOutputPath,
+    );
+    if (options.outputMode === 'page-pdfs') {
+      assertPageTemplateForSplitOutput(outputTemplate, 2);
+    }
     const jobs = sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate));
     const drawioPath = readDrawioExecutablePath(configuration);
 

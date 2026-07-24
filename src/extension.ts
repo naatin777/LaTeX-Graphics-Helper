@@ -18,6 +18,11 @@ import { convertToJpegCommand, CONVERT_TO_JPEG_COMMAND } from './commands/conver
 import { convertToPngCommand, CONVERT_TO_PNG_COMMAND } from './commands/conversion/convert_to_png.js';
 import { convertToSvgCommand, CONVERT_TO_SVG_COMMAND } from './commands/conversion/convert_to_svg.js';
 import { convertToWebpCommand, CONVERT_TO_WEBP_COMMAND } from './commands/conversion/convert_to_webp.js';
+import { convertToGifCommand, CONVERT_TO_GIF_COMMAND } from './commands/conversion/convert_to_gif.js';
+import { convertToTiffCommand, CONVERT_TO_TIFF_COMMAND } from './commands/conversion/convert_to_tiff.js';
+import { convertToEpsCommand, CONVERT_TO_EPS_COMMAND } from './commands/conversion/convert_to_eps.js';
+import { convertToRawCommand, CONVERT_TO_RAW_COMMAND } from './commands/conversion/convert_to_raw.js';
+import { convertToDrawioCommand, CONVERT_TO_DRAWIO_COMMAND } from './commands/conversion/convert_to_drawio.js';
 import {
   combineImagesToPdfCommand,
   COMBINE_IMAGES_TO_PDF_COMMAND,
@@ -59,6 +64,11 @@ export const PUBLIC_COMMAND_IDS = [
   CONVERT_TO_WEBP_COMMAND,
   CONVERT_TO_AVIF_COMMAND,
   CONVERT_TO_SVG_COMMAND,
+  CONVERT_TO_GIF_COMMAND,
+  CONVERT_TO_TIFF_COMMAND,
+  CONVERT_TO_EPS_COMMAND,
+  CONVERT_TO_RAW_COMMAND,
+  CONVERT_TO_DRAWIO_COMMAND,
   COMBINE_IMAGES_TO_PDF_COMMAND,
   TOGGLE_SAFE_MODE_COMMAND,
 ] as const;
@@ -101,6 +111,13 @@ function registerCommands(context: vscode.ExtensionContext, dependencies: Comman
   registerFileCommand(context, CONVERT_TO_WEBP_COMMAND, (uri, uris) => convertToWebpCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_AVIF_COMMAND, (uri, uris) => convertToAvifCommand(uri, uris, dependencies));
   registerFileCommand(context, CONVERT_TO_SVG_COMMAND, (uri, uris) => convertToSvgCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_TO_GIF_COMMAND, (uri, uris) => convertToGifCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_TO_TIFF_COMMAND, (uri, uris) => convertToTiffCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_TO_EPS_COMMAND, (uri, uris) => convertToEpsCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_TO_RAW_COMMAND, (uri, uris) => convertToRawCommand(uri, uris, dependencies));
+  registerFileCommand(context, CONVERT_TO_DRAWIO_COMMAND, (uri, uris) =>
+    convertToDrawioCommand(uri, uris, dependencies),
+  );
   registerFileCommand(context, COMBINE_IMAGES_TO_PDF_COMMAND, (uri, uris) =>
     combineImagesToPdfCommand(uri, uris, dependencies),
   );

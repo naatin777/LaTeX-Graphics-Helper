@@ -17,6 +17,63 @@ import {
 } from '../../src/operations/conversion/convert_to_png.js';
 
 suite('PNGに変換する処理', () => {
+  test('Raw pixelsをsidecarどおりにPNGへ変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-png-raw-'));
+    try {
+      const sourcePath = path.join(workspacePath, 'source.raw');
+      const outputPath = path.join(workspacePath, 'output.png');
+      await writeFile(sourcePath, Buffer.from([255, 0, 0, 0, 255, 0]));
+      await writeFile(`${sourcePath}.json`, JSON.stringify({ width: 2, height: 1, channels: 3 }));
+
+      await convertToPngFiles({
+        jobs: [{ sourcePath, outputPath, workspacePath }],
+        pdftocairoPath: 'pdftocairo',
+        ghostscriptPath: 'gs',
+        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawio: { drawioPath: 'drawio' },
+        runtime: { resolveConflicts: async () => 'overwrite' },
+      });
+
+      assert.deepStrictEqual((await sharp(outputPath).metadata()).width, 2);
+      assert.deepStrictEqual((await sharp(outputPath).metadata()).height, 1);
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('GIF、アニメーションWebP、TIFFのframeを個別に変換する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-png-frames-'));
+
+    try {
+      for (const format of ['gif', 'webp', 'tiff'] as const) {
+        const sourcePath = path.join(workspacePath, `source.${format}`);
+        await writeAnimatedRaster(sourcePath, format);
+        await convertToPngFiles({
+          jobs: [1, 2].map((page) => ({
+            sourcePath,
+            outputPath: path.join(workspacePath, `${format}-${page}.png`),
+            workspacePath,
+            page,
+          })),
+          pdftocairoPath: 'pdftocairo',
+          ghostscriptPath: 'gs',
+          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawio: { drawioPath: 'drawio' },
+          runtime: { resolveConflicts: async () => 'overwrite' },
+        });
+
+        assert.ok(
+          (await sharp(await readFile(path.join(workspacePath, `${format}-1.png`))).stats()).channels[0]!.mean > 200,
+        );
+        assert.ok(
+          (await sharp(await readFile(path.join(workspacePath, `${format}-2.png`))).stats()).channels[2]!.mean > 200,
+        );
+      }
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
   test('編集可能なDraw.io画像はPDFを経由してPNGへ変換する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-convert-to-png-'));
 
@@ -82,6 +139,17 @@ suite('PNGに変換する処理', () => {
     }
   });
 });
+
+async function writeAnimatedRaster(filePath: string, format: 'gif' | 'webp' | 'tiff'): Promise<void> {
+  const red = await sharp({ create: { width: 4, height: 4, channels: 4, background: '#ff0000' } })
+    .png()
+    .toBuffer();
+  const blue = await sharp({ create: { width: 4, height: 4, channels: 4, background: '#0000ff' } })
+    .png()
+    .toBuffer();
+  const output = sharp([red, blue], { join: { animated: true } });
+  await (format === 'gif' ? output.gif() : format === 'webp' ? output.webp() : output.tiff()).toFile(filePath);
+}
 
 async function assertReadablePng(filePath: string): Promise<void> {
   const buffer = await readFile(filePath);

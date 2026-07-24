@@ -16,7 +16,7 @@ const inputFormats = ['gif', 'tiff'] as const;
 const outputFormats = ['pdf', 'png', 'jpeg', 'webp', 'avif'] as const;
 
 suite('GIF/TIFFの出力経路', () => {
-  test('GIF/TIFFを各supported outputへ変換し、先頭frame/pageだけを使う', async () => {
+  test('GIF/TIFFを各supported outputへ変換し、PDFでは全frame/pageを保持する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-additional-image-output-'));
 
     try {
@@ -105,7 +105,7 @@ async function writeAnimatedImageFixture(filePath: string, format: (typeof input
 async function assertFirstFrameOutput(outputFormat: (typeof outputFormats)[number], filePath: string): Promise<void> {
   if (outputFormat === 'pdf') {
     const document = await PDFDocument.load(await readFile(filePath));
-    assert.strictEqual(document.getPageCount(), 1);
+    assert.strictEqual(document.getPageCount(), 2);
     const page = document.getPage(0);
     assert.strictEqual(page.getWidth(), 4);
     assert.strictEqual(page.getHeight(), 4);

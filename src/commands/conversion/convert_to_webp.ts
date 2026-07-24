@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import {
   isEditableDrawioImagePath,
+  isRasterImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
 import {
@@ -16,18 +17,26 @@ import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
 import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
+import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import {
   convertToWebpFiles,
   type ConvertToWebpJob,
   type WebpOutputOptions,
 } from '../../operations/conversion/convert_to_webp.js';
 import { assertExistingPathInWorkspace } from '../../security/workspace_path.js';
+import { createRasterFrameJobs, readRasterAnimationMetadata } from './create_raster_frame_jobs.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import { assertFileScheme, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
+import {
+  abortError,
+  assertFileScheme,
+  isAbortError,
+  readDrawioOptions,
+  selectedUris,
+} from '../shared/command_utils.js';
 
 export const CONVERT_TO_WEBP_COMMAND = 'latex-graphics-helper.convertToWebp';
 
@@ -51,10 +60,12 @@ export async function convertToWebpCommand(
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToWebp');
-    const jobs = (
-      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
-    ).flat();
     const maxInputPixels = getMaxInputPixels(configuration);
+    const jobs = (
+      await Promise.all(
+        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
+      )
+    ).flat();
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
@@ -93,6 +104,7 @@ async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
   outputFormatOutputTemplate: string | undefined,
+  maxInputPixels: number,
 ): Promise<ConvertToWebpJob[]> {
   assertFileScheme(sourceUri);
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
@@ -114,12 +126,52 @@ async function createJobs(
 
   const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
   const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
-  const outputPath = resolveOutputPath(outputTemplate, {
-    sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
-    workspacePath: workspace.uri.fsPath,
-    workspaceName: workspace.name,
-    ...(page !== undefined && { page }),
-  });
+  if (isRasterImagePath(sourcePath)) {
+    if (extension === '.gif') {
+      const animation = await readRasterAnimationMetadata(sourcePath, maxInputPixels);
+      if (animation !== undefined) {
+        const mode = await chooseGifAnimationMode(sourcePath);
+        if (mode === 'preserve') {
+          return [
+            {
+              sourcePath,
+              workspacePath: workspace.uri.fsPath,
+              outputPath: resolveOutputPath(
+                outputTemplate,
+                {
+                  sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
+                  workspacePath: workspace.uri.fsPath,
+                  workspaceName: workspace.name,
+                },
+                { allowedExtensions: ['.webp'] },
+              ),
+              animation,
+            },
+          ];
+        }
+      }
+    }
+
+    return createRasterFrameJobs({
+      sourcePath,
+      workspacePath: workspace.uri.fsPath,
+      workspaceName: workspace.name,
+      outputTemplate,
+      allowedExtensions: ['.webp'],
+      maxInputPixels,
+      createJob: (job) => job,
+    });
+  }
+  const outputPath = resolveOutputPath(
+    outputTemplate,
+    {
+      sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
+      workspacePath: workspace.uri.fsPath,
+      workspaceName: workspace.name,
+      ...(page !== undefined && { page }),
+    },
+    { allowedExtensions: ['.webp'] },
+  );
 
   return [
     {
@@ -129,6 +181,34 @@ async function createJobs(
       ...(page !== undefined && { page: Number(page) }),
     },
   ];
+}
+
+async function chooseGifAnimationMode(sourcePath: string): Promise<'preserve' | 'split'> {
+  const selected = await vscode.window.showQuickPick(
+    [
+      {
+        label: 'Preserve animation',
+        description: 'Create one animated WebP and retain frame timing and loop count.',
+        mode: 'preserve' as const,
+      },
+      {
+        label: 'Split frames',
+        description: 'Create one WebP file per GIF frame.',
+        mode: 'split' as const,
+      },
+    ],
+    {
+      title: `Animated GIF: ${path.basename(sourcePath)}`,
+      placeHolder: 'Choose how to convert the animation',
+      ignoreFocusOut: true,
+    },
+  );
+
+  if (selected === undefined) {
+    throw abortError('Animated GIF conversion cancelled.');
+  }
+
+  return selected.mode;
 }
 
 async function createPdfJobs(
@@ -146,18 +226,23 @@ async function createPdfJobs(
 
   const outputTemplate =
     outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToWebp', DEFAULT_PDF_OUTPUT_PATH);
+  assertPageTemplateForSplitOutput(outputTemplate, pageCount);
 
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
     return {
       sourcePath,
       workspacePath: workspace.uri.fsPath,
-      outputPath: resolveOutputPath(outputTemplate, {
-        sourcePath,
-        workspacePath: workspace.uri.fsPath,
-        workspaceName: workspace.name,
-        page: String(page),
-      }),
+      outputPath: resolveOutputPath(
+        outputTemplate,
+        {
+          sourcePath,
+          workspacePath: workspace.uri.fsPath,
+          workspaceName: workspace.name,
+          page: formatOutputPage(page, pageCount),
+        },
+        { allowedExtensions: ['.webp'] },
+      ),
       page,
     };
   });

@@ -16,6 +16,7 @@ import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } 
 import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
+import { destroyRasterInput, openRasterInput } from './raster_input.js';
 import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
@@ -73,23 +74,28 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
     for (let index = 0; index < options.jobs.length; index += 1) {
       runtime?.signal?.throwIfAborted();
       const job = options.jobs[index]!;
-      const pdfPath = path.join(stagingRootPath, `page-${index + 1}.pdf`);
-      const writeOptions: WriteSourceAsPdfOptions = {
-        sourcePath: job.sourcePath,
-        outputPath: pdfPath,
-        workspacePath: options.workspacePath,
-        maxInputPixels: configuredMaxInputPixels,
-        svgToPdf: svgToPdfOptions(options),
-        scratchOptions: scratchOptions(options),
-      };
-      if (runtime?.signal !== undefined) {
-        writeOptions.signal = runtime.signal;
+      const pageCount = await sourcePageCount(job.sourcePath, configuredMaxInputPixels);
+      for (let page = 1; page <= pageCount; page += 1) {
+        runtime?.signal?.throwIfAborted();
+        const pdfPath = path.join(stagingRootPath, `page-${index + 1}-${page}.pdf`);
+        const writeOptions: WriteSourceAsPdfOptions = {
+          sourcePath: job.sourcePath,
+          outputPath: pdfPath,
+          workspacePath: options.workspacePath,
+          maxInputPixels: configuredMaxInputPixels,
+          svgToPdf: svgToPdfOptions(options),
+          scratchOptions: scratchOptions(options),
+          ...(pageCount > 1 ? { page } : {}),
+        };
+        if (runtime?.signal !== undefined) {
+          writeOptions.signal = runtime.signal;
+        }
+        if (options.ghostscriptPath !== undefined) {
+          writeOptions.ghostscriptPath = options.ghostscriptPath;
+        }
+        await writeSourceAsPdf(writeOptions);
+        pdfPaths.push(pdfPath);
       }
-      if (options.ghostscriptPath !== undefined) {
-        writeOptions.ghostscriptPath = options.ghostscriptPath;
-      }
-      await writeSourceAsPdf(writeOptions);
-      pdfPaths.push(pdfPath);
       runtime?.reportProgress?.(index + 1, options.jobs.length);
     }
 
@@ -129,6 +135,20 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
   } catch (error) {
     await cleanupConversionArtifacts(artifacts, runtime?.outputChannel, error);
     throw error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+async function sourcePageCount(sourcePath: string, maxInputPixels: number): Promise<number> {
+  if (!isRasterImagePath(sourcePath)) {
+    return 1;
+  }
+
+  const image = openRasterInput(sourcePath, maxInputPixels, undefined, true);
+  try {
+    const metadata = await image.metadata();
+    return Math.max(1, metadata.pages ?? 1);
+  } finally {
+    await destroyRasterInput(image);
   }
 }
 

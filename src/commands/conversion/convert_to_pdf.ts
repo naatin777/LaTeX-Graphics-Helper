@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import {
   isEditableDrawioImagePath,
+  isRasterImagePath,
   logicalSourcePathForOutputTemplate,
 } from '../../application/policy/source_format.js';
 import {
@@ -51,6 +52,7 @@ const PDF_IMAGE_EXTENSIONS = [
   '.mmd',
   '.mermaid',
   '.eps',
+  '.raw',
   '.drawio.png',
   '.dio.png',
   '.drawio.svg',
@@ -125,14 +127,18 @@ async function convertSelectedSourcesToPdf(
     const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawio = readDrawioOptions(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
-    const jobs = sourceUris.map((sourceUri) =>
-      createJob(
-        sourceUri,
-        outputTemplateForSource(sourceUri, configuration, outputTemplate, outputFormatOutputTemplate),
-        logicalSourcePathForOutputTemplate(sourceUri.fsPath),
-        messages.supportedExtensions,
-      ),
-    );
+    const jobs = (
+      await Promise.all(
+        sourceUris.map((sourceUri) =>
+          createJobs(
+            sourceUri,
+            outputTemplateForSource(sourceUri, configuration, outputTemplate, outputFormatOutputTemplate),
+            logicalSourcePathForOutputTemplate(sourceUri.fsPath),
+            messages.supportedExtensions,
+          ),
+        ),
+      )
+    ).flat();
     await runOutputConversion({
       operationName: messages.operationName,
       ...(messages.outputChannel !== undefined && { outputChannel: messages.outputChannel }),
@@ -229,12 +235,12 @@ export function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration
   };
 }
 
-function createJob(
+async function createJobs(
   sourceUri: vscode.Uri,
   outputTemplate: string,
   templateSourcePath: string,
   supportedExtensions: readonly string[],
-): ConvertToPdfJob {
+): Promise<ConvertToPdfJob[]> {
   if (sourceUri.scheme !== 'file') {
     throw new Error(`Only local image files are supported: ${sourceUri.toString()}`);
   }
@@ -250,13 +256,33 @@ function createJob(
     throw new Error(`Unsupported input format: ${sourceUri.fsPath}`);
   }
 
-  return {
-    sourcePath: sourceUri.fsPath,
-    workspacePath: workspace.uri.fsPath,
-    outputPath: resolveOutputPath(outputTemplate, {
-      sourcePath: templateSourcePath,
+  if (isRasterImagePath(sourceUri.fsPath)) {
+    return [
+      {
+        sourcePath: sourceUri.fsPath,
+        outputPath: resolveOutputPath(
+          outputTemplate,
+          {
+            sourcePath: templateSourcePath,
+            workspacePath: workspace.uri.fsPath,
+            workspaceName: workspace.name,
+          },
+          { allowedExtensions: ['.pdf'] },
+        ),
+        workspacePath: workspace.uri.fsPath,
+      },
+    ];
+  }
+
+  return [
+    {
+      sourcePath: sourceUri.fsPath,
       workspacePath: workspace.uri.fsPath,
-      workspaceName: workspace.name,
-    }),
-  };
+      outputPath: resolveOutputPath(outputTemplate, {
+        sourcePath: templateSourcePath,
+        workspacePath: workspace.uri.fsPath,
+        workspaceName: workspace.name,
+      }),
+    },
+  ];
 }

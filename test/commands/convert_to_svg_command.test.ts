@@ -23,14 +23,14 @@ import assert from 'node:assert/strict';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CONVERT_TO_SVG_COMMAND } from '../../src/commands/conversion/convert_to_svg.js';
+
 import { PDFDocument } from 'pdf-lib';
 import { createSandbox } from 'sinon';
 import * as vscode from 'vscode';
 
 import { runCommandAndClearNotificationsUntilDone } from '../helpers/vscode_command.js';
 import { withWorkspaceSettings } from '../helpers/workspace_settings.js';
-
-const CONVERT_TO_SVG_COMMAND = 'latex-graphics-helper.convertToSvg';
 
 suite('SVGに変換コマンド', () => {
   let sandbox: sinon.SinonSandbox;

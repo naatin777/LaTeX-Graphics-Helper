@@ -21,6 +21,8 @@ import {
   destroyRasterInput,
   isRasterInputPixelLimitError,
   openRasterInput,
+  rawByteLength,
+  readRawSidecar,
   rasterInputPixelLimitMessage,
 } from '../conversion/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
@@ -328,6 +330,27 @@ async function validateRasterInput(
   signal?: AbortSignal,
 ): Promise<PreflightReport> {
   signal?.throwIfAborted();
+  let rawSidecar;
+  if (format === 'raw') {
+    try {
+      rawSidecar = readRawSidecar(sourcePath);
+      const expectedBytes = rawByteLength(rawSidecar);
+      if (fileSize !== expectedBytes) {
+        return {
+          sourcePath,
+          format,
+          fileSize,
+          result: 'error',
+          reason: `Raw byte length mismatch: expected ${expectedBytes} bytes, got ${fileSize}`,
+          details: { fileSize, expectedBytes, ...rawSidecar },
+        };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { sourcePath, format, fileSize, result: 'error', reason: message };
+    }
+  }
+
   const image = openRasterInput(sourcePath, maxInputPixels);
   let dimensions: { width: number; height: number } | undefined;
 
@@ -352,6 +375,7 @@ async function validateRasterInput(
       width: metadata.width,
       height: metadata.height,
       format: metadata.format,
+      ...(rawSidecar !== undefined && rawSidecar),
     };
 
     if (metadata.pages !== undefined && metadata.pages > 1) {

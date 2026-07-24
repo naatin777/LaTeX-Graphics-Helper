@@ -15,14 +15,33 @@ import { access, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:f
 import os from 'node:os';
 import path from 'node:path';
 
-import { rememberLastConversion } from '../../src/commands/lifecycle/undo_last_conversion.js';
+import { createSandbox, type SinonSandbox } from 'sinon';
+import * as vscode from 'vscode';
+
+import {
+  rememberLastConversion,
+  undoLastConversionCommand,
+} from '../../src/commands/lifecycle/undo_last_conversion.js';
 import {
   createConversionUndoRecord,
   undoConversionOutputs,
 } from '../../src/operations/lifecycle/undo_last_conversion.js';
 
 suite('直前変換の取り消し処理', () => {
-  test('新しいUndo recordの作成で古いbackupを削除し、現在のbackupは保持する', async () => {
+  let sandbox: SinonSandbox;
+
+  setup(() => {
+    sandbox = createSandbox();
+    sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+    sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
+    sandbox.stub(vscode.window, 'showWarningMessage').resolves(undefined);
+  });
+
+  teardown(() => {
+    sandbox.restore();
+  });
+
+  test('複数のUndo recordを保持し、直近recordのbackupを保持する', async () => {
     const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-undo-workspace-'));
     const firstOutputPath = path.join(workspacePath, 'first.pdf');
     const secondOutputPath = path.join(workspacePath, 'second.pdf');
@@ -55,8 +74,34 @@ suite('直前変換の取り消し処理', () => {
         },
       ]);
 
-      await assert.rejects(access(firstBackupPath));
+      await assert.doesNotReject(access(firstBackupPath));
       await assert.doesNotReject(access(secondBackupPath));
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('複数回のUndoを新しい変換から順に適用できる', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-undo-workspace-'));
+    const outputPath = path.join(workspacePath, 'output.pdf');
+    const firstRoot = path.join(workspacePath, '.latex-graphics-helper', 'first');
+    const secondRoot = path.join(workspacePath, '.latex-graphics-helper', 'second');
+
+    try {
+      await writeFixture(outputPath, 'first');
+      const firstRecordId = await rememberLastConversion([{ outputPath, workspacePath, stagingRootPath: firstRoot }]);
+
+      const secondBackupPath = path.join(secondRoot, 'output.previous');
+      await writeFixture(secondBackupPath, 'first');
+      await writeFixture(outputPath, 'second');
+      const secondRecordId = await rememberLastConversion([
+        { outputPath, workspacePath, previousFilePath: secondBackupPath, stagingRootPath: secondRoot },
+      ]);
+
+      await undoLastConversionCommand(secondRecordId);
+      assert.strictEqual(await readFile(outputPath, 'utf8'), 'first');
+      await undoLastConversionCommand(firstRecordId);
+      await assert.rejects(access(outputPath));
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

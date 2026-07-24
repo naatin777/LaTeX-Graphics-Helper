@@ -15,13 +15,14 @@ import {
 import sharp from 'sharp';
 import { errorMessage, isAbortError } from '../../commands/shared/command_utils.js';
 
-import { isEditableDrawioImagePath, isMermaidPath } from '../../application/policy/source_format.js';
+import { isEditableDrawioImagePath, isMermaidPath, isRasterImagePath } from '../../application/policy/source_format.js';
 import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import { convertEpsToPdf } from './eps_to_pdf.js';
 import {
   destroyRasterInput,
   isRasterInputPixelLimitError,
   openRasterInput,
+  readRasterAnimationMetadata,
   rasterInputPixelLimitMessage,
 } from './raster_input.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
@@ -93,6 +94,7 @@ export interface ConvertToPdfJob {
   sourcePath: string;
   outputPath: string;
   workspacePath: string;
+  page?: number;
 }
 
 export interface WriteSourceAsPdfOptions {
@@ -101,6 +103,7 @@ export interface WriteSourceAsPdfOptions {
   workspacePath: string;
   signal?: AbortSignal;
   maxInputPixels?: number;
+  page?: number;
   svgToPdf?: SvgToPdfOptions;
   mermaid?: MermaidPuppeteerOptions;
   drawio?: DrawioToPdfOptions;
@@ -202,6 +205,9 @@ async function stageSourceToPdf(
   if (maxInputPixels !== undefined) {
     writeOptions.maxInputPixels = maxInputPixels;
   }
+  if (job.page !== undefined) {
+    writeOptions.page = job.page;
+  }
   if (signal !== undefined) {
     writeOptions.signal = signal;
   }
@@ -245,6 +251,14 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
   } = options;
   const extension = path.extname(sourcePath).toLowerCase();
 
+  if (options.page === undefined && isRasterImagePath(sourcePath)) {
+    const animation = await readRasterAnimationMetadata(sourcePath, maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS);
+    if (animation !== undefined) {
+      await writeAnimatedRasterAsPdf(options, animation.pages);
+      return;
+    }
+  }
+
   if (extension === '.pdf') {
     await assertWritablePathInWorkspace(outputPath, workspacePath);
     await mkdir(path.dirname(outputPath), { recursive: true });
@@ -278,7 +292,27 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
     workspacePath,
     signal,
     maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS,
+    options.page,
   );
+}
+
+async function writeAnimatedRasterAsPdf(options: WriteSourceAsPdfOptions, pageCount: number): Promise<void> {
+  const document = await PDFDocument.create();
+
+  for (let page = 1; page <= pageCount; page += 1) {
+    options.signal?.throwIfAborted();
+    const framePath = `${options.outputPath}.frame-${page}.pdf`;
+    await writeSourceAsPdf({ ...options, outputPath: framePath, page });
+    const frameDocument = await PDFDocument.load(await readFile(framePath));
+    const pages = await document.copyPages(frameDocument, frameDocument.getPageIndices());
+    for (const frame of pages) {
+      document.addPage(frame);
+    }
+  }
+
+  options.signal?.throwIfAborted();
+  await mkdir(path.dirname(options.outputPath), { recursive: true });
+  await writeFile(options.outputPath, await document.save());
 }
 
 async function writeDrawioAsPdf(
@@ -407,9 +441,10 @@ async function writeRasterImageAsPdf(
   workspacePath: string,
   signal: AbortSignal | undefined,
   maxInputPixels: number,
+  framePage?: number,
 ): Promise<void> {
   signal?.throwIfAborted();
-  const metadataImage = openRasterInput(sourcePath, maxInputPixels);
+  const metadataImage = openRasterInput(sourcePath, maxInputPixels, framePage);
   let width: number;
   let height: number;
 
@@ -436,7 +471,7 @@ async function writeRasterImageAsPdf(
     signal?.throwIfAborted();
   }
 
-  const encodingImage = openRasterInput(sourcePath, maxInputPixels);
+  const encodingImage = openRasterInput(sourcePath, maxInputPixels, framePage);
   let imageBuffer: Buffer;
   try {
     signal?.throwIfAborted();

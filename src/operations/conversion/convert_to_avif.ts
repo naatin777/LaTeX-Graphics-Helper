@@ -38,8 +38,8 @@ export async function convertToAvifFiles(options: ConvertToAvifFilesOptions): Pr
     operationName: 'convert-to-avif',
     stagingDirectoryName: 'convert-to-avif',
     resultExtension: 'avif',
-    encoder: async (sourcePath, outputPath, maxInputPixels) => {
-      await openRasterInput(sourcePath, maxInputPixels).avif({ effort: options.avif.effort }).toFile(outputPath);
+    encoder: async (sourcePath, outputPath, maxInputPixels, page) => {
+      await openRasterInput(sourcePath, maxInputPixels, page).avif({ effort: options.avif.effort }).toFile(outputPath);
     },
     unsupportedInputMessage: (sourcePath) => `Unsupported input for AVIF conversion: ${sourcePath}`,
   };
