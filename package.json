@@ -48,6 +48,8 @@
     "check:all": "npm run check && npm run check:nls",
     "check:fix": "npm run lint:fix && npm run format:fix",
     "test": "vscode-test",
+    "test:coverage": "npm run build && npm run test:coverage:run",
+    "test:coverage:run": "vscode-test --coverage --coverage-output coverage/vscode --coverage-reporter text-summary --coverage-reporter html --coverage-reporter lcov",
     "test:playwright": "playwright test --project=vscode-electron",
     "test:playwright:vsix": "playwright test --project=vscode-electron",
     "package": "npm run build && npm run package:vsix",

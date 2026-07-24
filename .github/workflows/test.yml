@@ -21,13 +21,13 @@ jobs:
         include:
           - os: ubuntu-latest
             label: Linux
-            test_command: xvfb-run npm test
+            test_command: xvfb-run npm run test:coverage:run
           - os: macos-latest
             label: macOS
-            test_command: npm test
+            test_command: npm run test:coverage:run
           - os: windows-latest
             label: Windows
-            test_command: npm test
+            test_command: npm run test:coverage:run
     steps:
       - uses: actions/checkout@v7
 
@@ -70,7 +70,7 @@ jobs:
         run: .github/scripts/verify-image-tools-windows.ps1
         shell: pwsh
 
-      - name: Run Node and VS Code Extension Host tests
+      - name: Run VS Code Extension Host tests with coverage
         run: ${{ matrix.test_command }}
         shell: bash
         env:
@@ -80,6 +80,24 @@ jobs:
         name: Run Webview component tests
         run: npm run test:webview
         shell: bash
+
+      - if: always()
+        name: Upload VS Code coverage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: vscode-extension-host-coverage-${{ matrix.label }}
+          path: coverage/vscode/
+          if-no-files-found: ignore
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/vscode/lcov.info
+          disable_search: true
+          fail_ci_if_error: false
+          flags: extension-host
+          name: extension-host-${{ matrix.label }}
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - if: failure()
         uses: actions/upload-artifact@v7

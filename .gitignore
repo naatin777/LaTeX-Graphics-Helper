@@ -11,3 +11,4 @@ media/
 .codex/rules/
 .serena/
 *.vsix
+coverage/
