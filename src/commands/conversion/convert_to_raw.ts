@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 
-import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { readOutputPathTemplate } from '../../config/output/output_path_settings.js';
+import { getMaxInputPixels } from '../../config/raster_input.js';
+import { isRasterImagePath } from '../../application/policy/source_format.js';
 import { convertToRawFiles, type ConvertToRawJob } from '../../operations/conversion/convert_to_raw.js';
-import { assertWritablePathInWorkspace } from '../../security/workspace_path.js';
+import { createRasterFrameJobs } from './create_raster_frame_jobs.js';
 import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
@@ -12,7 +13,7 @@ import { userMessage } from '../shared/user_messages.js';
 
 export const CONVERT_TO_RAW_COMMAND = 'latex-graphics-helper.convertToRaw';
 
-const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.raw';
+const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.raw';
 
 export async function convertToRawCommand(
   uri?: vscode.Uri,
@@ -33,13 +34,16 @@ export async function convertToRawCommand(
       'outputPath.convertToRaw',
       DEFAULT_OUTPUT_PATH,
     );
-    const jobs = await Promise.all(sourceUris.map((sourceUri) => createJob(sourceUri, outputTemplate)));
+    const maxInputPixels = getMaxInputPixels(configuration);
+    const jobs = (
+      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, outputTemplate, maxInputPixels)))
+    ).flat();
     await runOutputConversion({
       operationName: 'convert-to-raw',
       ...(outputChannel !== undefined && { outputChannel }),
       resolveConflicts: resolveOutputConflicts,
       messages: createOutputConversionMessages('RAW', sourceUris.length),
-      run: (runtime) => convertToRawFiles({ jobs, runtime }),
+      run: (runtime) => convertToRawFiles({ jobs, maxInputPixels, runtime }),
     });
   } catch (error) {
     if (isAbortError(error)) {
@@ -52,7 +56,11 @@ export async function convertToRawCommand(
   }
 }
 
-async function createJob(sourceUri: vscode.Uri, outputTemplate: string): Promise<ConvertToRawJob> {
+async function createJobs(
+  sourceUri: vscode.Uri,
+  outputTemplate: string,
+  maxInputPixels: number,
+): Promise<ConvertToRawJob[]> {
   assertFileScheme(sourceUri);
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
   if (!workspace) {
@@ -60,15 +68,17 @@ async function createJob(sourceUri: vscode.Uri, outputTemplate: string): Promise
   }
 
   const sourcePath = sourceUri.fsPath;
-  const outputPath = resolveOutputPath(
+  if (!isRasterImagePath(sourcePath)) {
+    throw new Error(`Unsupported input for RAW conversion: ${sourcePath}`);
+  }
+
+  return createRasterFrameJobs({
+    sourcePath,
+    workspacePath: workspace.uri.fsPath,
+    workspaceName: workspace.name,
     outputTemplate,
-    {
-      sourcePath,
-      workspacePath: workspace.uri.fsPath,
-      workspaceName: workspace.name,
-    },
-    { allowedExtensions: ['.raw'] },
-  );
-  await assertWritablePathInWorkspace(outputPath, workspace.uri.fsPath);
-  return { sourcePath, outputPath, workspacePath: workspace.uri.fsPath };
+    allowedExtensions: ['.raw'],
+    maxInputPixels,
+    createJob: (job) => job,
+  });
 }

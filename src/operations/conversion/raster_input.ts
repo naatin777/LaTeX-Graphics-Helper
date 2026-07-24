@@ -17,10 +17,23 @@ export interface RasterAnimationMetadata {
 }
 
 export interface RawSidecar {
+  version: 1;
   width: number;
   height: number;
   channels: 1 | 2 | 3 | 4;
+  depth: 'uchar';
+  colourspace: string;
+  alpha: boolean;
+  layout: 'interleaved';
 }
+
+// ponytail: v1 restricts to uchar with fixed colourspace/alpha per channel count
+const RAW_SIDECAR_CONSTRAINTS: Record<number, { colourspace: string; alpha: boolean }> = {
+  1: { colourspace: 'b-w', alpha: false },
+  2: { colourspace: 'b-w', alpha: true },
+  3: { colourspace: 'srgb', alpha: false },
+  4: { colourspace: 'srgb', alpha: true },
+};
 
 export function openRasterInput(
   sourcePath: string,
@@ -29,10 +42,11 @@ export function openRasterInput(
   animated = false,
 ): RasterInput {
   if (path.extname(sourcePath).toLowerCase() === '.raw') {
+    const sidecar = readRawSidecar(sourcePath);
     return sharp(readFileSync(sourcePath), {
       limitInputPixels: maxInputPixels,
       failOn: 'warning',
-      raw: readRawSidecar(sourcePath),
+      raw: { width: sidecar.width, height: sidecar.height, channels: sidecar.channels },
     });
   }
 
@@ -98,18 +112,43 @@ export function readRawSidecar(sourcePath: string): RawSidecar {
 
   const candidate = value as Record<string, unknown>;
   if (
+    candidate.version !== 1 ||
     !isPositiveInteger(candidate.width) ||
     !isPositiveInteger(candidate.height) ||
-    (candidate.channels !== 1 && candidate.channels !== 2 && candidate.channels !== 3 && candidate.channels !== 4)
+    (candidate.channels !== 1 && candidate.channels !== 2 && candidate.channels !== 3 && candidate.channels !== 4) ||
+    candidate.depth !== 'uchar' ||
+    typeof candidate.colourspace !== 'string' ||
+    candidate.colourspace.length === 0 ||
+    typeof candidate.alpha !== 'boolean' ||
+    candidate.layout !== 'interleaved'
   ) {
-    throw new Error(`Invalid Raw sidecar: ${sidecarPath}; expected positive width, height, and channels 1-4.`);
+    throw new Error(
+      `Invalid Raw sidecar: ${sidecarPath}; expected version 1, uchar depth, dimensions, colourspace, alpha, and interleaved layout.`,
+    );
   }
 
-  return { width: candidate.width, height: candidate.height, channels: candidate.channels };
+  const expected = RAW_SIDECAR_CONSTRAINTS[candidate.channels as 1 | 2 | 3 | 4]!;
+  if (candidate.colourspace !== expected.colourspace || candidate.alpha !== expected.alpha) {
+    throw new Error(
+      `Invalid Raw sidecar: ${sidecarPath}; channels ${candidate.channels} requires colourspace '${expected.colourspace}' and alpha ${expected.alpha}, got colourspace '${candidate.colourspace}' and alpha ${candidate.alpha}.`,
+    );
+  }
+
+  return {
+    version: 1,
+    width: candidate.width,
+    height: candidate.height,
+    channels: candidate.channels,
+    depth: candidate.depth,
+    colourspace: candidate.colourspace,
+    alpha: candidate.alpha,
+    layout: 'interleaved',
+  };
 }
 
 export function rawByteLength(sidecar: RawSidecar): number {
-  const byteLength = sidecar.width * sidecar.height * sidecar.channels;
+  const bytesPerSample = { uchar: 1, ushort: 2, float: 4, double: 8 }[sidecar.depth];
+  const byteLength = sidecar.width * sidecar.height * sidecar.channels * bytesPerSample;
   if (!Number.isSafeInteger(byteLength)) {
     throw new Error('Raw sidecar dimensions produce an unsafe byte length.');
   }

@@ -23,7 +23,19 @@ suite('PNGに変換する処理', () => {
       const sourcePath = path.join(workspacePath, 'source.raw');
       const outputPath = path.join(workspacePath, 'output.png');
       await writeFile(sourcePath, Buffer.from([255, 0, 0, 0, 255, 0]));
-      await writeFile(`${sourcePath}.json`, JSON.stringify({ width: 2, height: 1, channels: 3 }));
+      await writeFile(
+        `${sourcePath}.json`,
+        JSON.stringify({
+          version: 1,
+          width: 2,
+          height: 1,
+          channels: 3,
+          depth: 'uchar',
+          colourspace: 'srgb',
+          alpha: false,
+          layout: 'interleaved',
+        }),
+      );
 
       await convertToPngFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],

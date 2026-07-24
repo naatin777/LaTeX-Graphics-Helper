@@ -24,6 +24,8 @@ suite('Draw.ioへの集約変換', () => {
   test('SVGサイズはwidth/heightとviewBoxを判定する', () => {
     assert.deepStrictEqual(parseSvgSize('<svg width="12pt" height="8pt"/>'), { width: 12, height: 8 });
     assert.deepStrictEqual(parseSvgSize('<svg viewBox="0 0 640 480"/>'), { width: 640, height: 480 });
+    assert.deepStrictEqual(parseSvgSize('<svg width="320" viewBox="0 0 640 480"/>'), { width: 320, height: 240 });
+    assert.deepStrictEqual(parseSvgSize('<svg height="240" viewBox="0 0 640 480"/>'), { width: 320, height: 240 });
     assert.throws(() => parseSvgSize('<svg/>'), /dimensions/);
   });
 
@@ -57,6 +59,51 @@ suite('Draw.ioへの集約変換', () => {
       assert.deepStrictEqual(calls, [1, 2]);
       assert.strictEqual((xml.match(/shape=image/g) ?? []).length, 3);
       assert.match(xml, /data:image\/svg\+xml;base64/);
+    } finally {
+      await rm(workspacePath, { recursive: true, force: true });
+    }
+  });
+
+  test('ラスターの全フレームをPNGデータURIへ正規化し、ページ寸法を設定する', async () => {
+    const workspacePath = await mkdtemp(path.join(os.tmpdir(), 'lgh-to-drawio-raster-frames-'));
+    try {
+      const red = await sharp({ create: { width: 20, height: 10, channels: 4, background: 'red' } })
+        .png()
+        .toBuffer();
+      const blue = await sharp({ create: { width: 20, height: 10, channels: 4, background: 'blue' } })
+        .png()
+        .toBuffer();
+      const inputs = [
+        ['animated.gif', 'gif'],
+        ['animated.webp', 'webp'],
+        ['multipage.tiff', 'tiff'],
+      ] as const;
+      for (const [name, format] of inputs) {
+        await sharp([red, blue], { join: { animated: true } })
+          [format]()
+          .toFile(path.join(workspacePath, name));
+      }
+
+      const outputPath = path.join(workspacePath, 'result.drawio');
+      await convertToDrawioFiles({
+        jobs: [
+          {
+            inputs: inputs.map(([name]) => ({ sourcePath: path.join(workspacePath, name) })),
+            outputPath,
+            workspacePath,
+          },
+        ],
+        drawioPath: 'drawio',
+        ghostscriptPath: 'gs',
+        runId: 'raster-frames',
+        runtime: { resolveConflicts: async () => 'overwrite' },
+      });
+
+      const xml = await readFile(outputPath, 'utf8');
+      assert.strictEqual((xml.match(/shape=image/g) ?? []).length, 6);
+      assert.strictEqual((xml.match(/data:image\/png;base64,/g) ?? []).length, 6);
+      assert.strictEqual((xml.match(/pageWidth="20" pageHeight="10"/g) ?? []).length, 6);
+      assert.strictEqual((xml.match(/<mxGeometry width="20" height="10"/g) ?? []).length, 6);
     } finally {
       await rm(workspacePath, { recursive: true, force: true });
     }

@@ -1,30 +1,35 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import sharp from 'sharp';
+import sharp, { type OutputInfo } from 'sharp';
 
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import type { CommittedConversionOutput, PreparedConversionOutput } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
+import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
+import {
+  destroyRasterInput,
+  openRasterInput,
+  readRawSidecar as readRawSidecarValue,
+  type RawSidecar,
+} from './raster_input.js';
 
-export interface RawSidecar {
-  width: number;
-  height: number;
-  channels: 1 | 2 | 3 | 4;
-}
+export type { RawSidecar };
 
 export interface ConvertToRawJob {
   sourcePath: string;
   outputPath: string;
   workspacePath: string;
+  page?: number;
 }
 
 export interface ConvertToRawFilesOptions {
   jobs: ConvertToRawJob[];
   runtime: ConversionRuntime;
   runId?: string;
+  maxInputPixels?: number;
 }
 
 export async function convertToRawFiles(options: ConvertToRawFilesOptions): Promise<CommittedConversionOutput[]> {
@@ -43,6 +48,7 @@ export async function convertToRawFiles(options: ConvertToRawFilesOptions): Prom
   options.runtime.signal?.throwIfAborted();
   await assertPreflightPassed(options.jobs, {
     ...preflightOptionsFromRuntime(options.runtime),
+    maxInputPixels: options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS,
   });
 
   return runStagedConversionBatch({
@@ -64,12 +70,30 @@ export async function convertToRawFiles(options: ConvertToRawFilesOptions): Prom
       runtime.signal?.throwIfAborted();
 
       const image =
-        sidecar === undefined ? sharp(job.sourcePath) : sharp(await readFile(job.sourcePath), { raw: sidecar });
-      const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
+        sidecar === undefined
+          ? openRasterInput(job.sourcePath, options.maxInputPixels ?? DEFAULT_MAX_INPUT_PIXELS, job.page)
+          : sharp(await readFile(job.sourcePath), {
+              raw: { width: sidecar.width, height: sidecar.height, channels: sidecar.channels },
+            });
+      let data: Buffer;
+      let info: OutputInfo;
+      let colourspace: RawSidecar['colourspace'];
+      try {
+        const metadata = await image.metadata();
+        ({ data, info } = await image.raw({ depth: sidecar?.depth ?? 'uchar' }).toBuffer({ resolveWithObject: true }));
+        colourspace = metadata.space;
+      } finally {
+        await destroyRasterInput(image);
+      }
       const outputSidecar: RawSidecar = {
+        version: 1,
         width: info.width,
         height: info.height,
         channels: toRawChannels(info.channels),
+        depth: sidecar?.depth ?? 'uchar',
+        colourspace,
+        alpha: info.hasAlpha,
+        layout: 'interleaved',
       };
       await writeFile(stagedOutputPath, data);
       runtime.signal?.throwIfAborted();
@@ -103,18 +127,7 @@ export async function readRawSidecar(sourcePath: string, workspacePath: string):
   await assertExistingPathInWorkspace(sourcePath, workspacePath);
   await assertExistingPathInWorkspace(sidecarPath, workspacePath);
 
-  let value: unknown;
-  try {
-    value = JSON.parse(await readFile(sidecarPath, 'utf8')) as unknown;
-  } catch (error) {
-    throw new Error(`Invalid Raw sidecar: ${sidecarPath}`, { cause: error });
-  }
-
-  if (!isRawSidecar(value)) {
-    throw new Error(`Invalid Raw sidecar: ${sidecarPath}; expected positive width, height, and channels 1-4.`);
-  }
-
-  return value;
+  return readRawSidecarValue(sourcePath);
 }
 
 function toRawChannels(value: number): RawSidecar['channels'] {
@@ -123,21 +136,4 @@ function toRawChannels(value: number): RawSidecar['channels'] {
   }
 
   throw new Error(`Unsupported raw channel count: ${value}`);
-}
-
-function isRawSidecar(value: unknown): value is RawSidecar {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-
-  const candidate = value as Record<string, unknown>;
-  return (
-    isPositiveInteger(candidate.width) &&
-    isPositiveInteger(candidate.height) &&
-    (candidate.channels === 1 || candidate.channels === 2 || candidate.channels === 3 || candidate.channels === 4)
-  );
-}
-
-function isPositiveInteger(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }

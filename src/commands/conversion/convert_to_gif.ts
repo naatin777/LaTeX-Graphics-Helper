@@ -25,24 +25,26 @@ import type { CommandDependencies } from '../shared/command_dependencies.js';
 import { createOutputConversionMessages, runOutputConversion } from '../lifecycle/run_output_conversion.js';
 import { resolveOutputConflicts } from '../lifecycle/safe_mode.js';
 import { userMessage } from '../shared/user_messages.js';
-import {
-  abortError,
-  assertFileScheme,
-  isAbortError,
-  readDrawioOptions,
-  selectedUris,
-} from '../shared/command_utils.js';
+import { assertFileScheme, isAbortError, readDrawioOptions, selectedUris } from '../shared/command_utils.js';
 
 export const CONVERT_TO_GIF_COMMAND = 'latex-graphics-helper.convertToGif';
+export const CONVERT_TO_GIF_PRESERVE_COMMAND = 'latex-graphics-helper.convertToGifPreserveAnimation';
+export const CONVERT_TO_GIF_SEPARATELY_COMMAND = 'latex-graphics-helper.convertToGifSeparately';
 
 const DEFAULT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}.gif';
+const DEFAULT_SPLIT_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.gif';
 const DEFAULT_PDF_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}-${page}.gif';
 const DEFAULT_DRAWIO_OUTPUT_PATH = '${fileDirname}/${fileBasenameNoExtension}/${page}.gif';
+
+export interface ConvertToGifCommandOptions {
+  outputMode?: 'auto' | 'preserve' | 'split';
+}
 
 export async function convertToGifCommand(
   uri?: vscode.Uri,
   uris?: vscode.Uri[],
   dependencies?: CommandDependencies,
+  options?: ConvertToGifCommandOptions,
 ): Promise<void> {
   const outputChannel = dependencies?.outputChannel;
   try {
@@ -51,11 +53,19 @@ export async function convertToGifCommand(
       throw new Error('No files were selected.');
     }
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToGif');
+    const outputPathKey =
+      options?.outputMode === 'preserve'
+        ? 'outputPath.convertToGifPreserveAnimation'
+        : options?.outputMode === 'split'
+          ? 'outputPath.convertToGifSeparately'
+          : 'outputPath.convertToGif';
+    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, outputPathKey);
     const maxInputPixels = getMaxInputPixels(configuration);
     const jobs = (
       await Promise.all(
-        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
+        sourceUris.map((sourceUri) =>
+          createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels, options?.outputMode),
+        ),
       )
     ).flat();
     await runOutputConversion({
@@ -90,6 +100,7 @@ async function createJobs(
   configuration: vscode.WorkspaceConfiguration,
   configuredTemplate: string | undefined,
   maxInputPixels: number,
+  outputMode?: 'auto' | 'preserve' | 'split',
 ): Promise<ConvertToGifJob[]> {
   assertFileScheme(sourceUri);
   const workspace = vscode.workspace.getWorkspaceFolder(sourceUri);
@@ -105,31 +116,26 @@ async function createJobs(
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     return createPdfJobs(sourcePath, workspace, configuration, configuredTemplate);
   }
-  const outputTemplate = outputTemplateForSource(sourcePath, configuration, configuredTemplate);
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, configuredTemplate, outputMode);
   if (isRasterImagePath(sourcePath)) {
-    if (extension === '.webp') {
-      const animation = await readRasterAnimationMetadata(sourcePath, maxInputPixels);
-      if (animation !== undefined) {
-        const mode = await chooseWebpAnimationMode(sourcePath);
-        if (mode === 'preserve') {
-          return [
+    const animation = extension === '.webp' ? await readRasterAnimationMetadata(sourcePath, maxInputPixels) : undefined;
+    if (animation !== undefined && outputMode !== 'split') {
+      return [
+        {
+          sourcePath,
+          workspacePath: workspace.uri.fsPath,
+          outputPath: resolveOutputPath(
+            outputTemplate,
             {
-              sourcePath,
+              sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
               workspacePath: workspace.uri.fsPath,
-              outputPath: resolveOutputPath(
-                outputTemplate,
-                {
-                  sourcePath: logicalSourcePathForOutputTemplate(sourcePath),
-                  workspacePath: workspace.uri.fsPath,
-                  workspaceName: workspace.name,
-                },
-                { allowedExtensions: ['.gif'] },
-              ),
-              animation,
+              workspaceName: workspace.name,
             },
-          ];
-        }
-      }
+            { allowedExtensions: ['.gif'] },
+          ),
+          animation,
+        },
+      ];
     }
     return createRasterFrameJobs({
       sourcePath,
@@ -159,28 +165,6 @@ async function createJobs(
       ...(page !== undefined && { page: Number(page) }),
     },
   ];
-}
-
-async function chooseWebpAnimationMode(sourcePath: string): Promise<'preserve' | 'split'> {
-  const selected = await vscode.window.showQuickPick(
-    [
-      {
-        label: 'Preserve animation',
-        description: 'Create one animated GIF and retain frame timing and loop count.',
-        mode: 'preserve' as const,
-      },
-      { label: 'Split frames', description: 'Create one GIF file per WebP frame.', mode: 'split' as const },
-    ],
-    {
-      title: `Animated WebP: ${path.basename(sourcePath)}`,
-      placeHolder: 'Choose how to convert the animation',
-      ignoreFocusOut: true,
-    },
-  );
-  if (selected === undefined) {
-    throw abortError('Animated WebP conversion cancelled.');
-  }
-  return selected.mode;
 }
 
 async function createPdfJobs(
@@ -220,32 +204,34 @@ function outputTemplateForSource(
   sourcePath: string,
   configuration: vscode.WorkspaceConfiguration,
   configuredTemplate: string | undefined,
+  outputMode?: 'auto' | 'preserve' | 'split',
 ): string {
   if (configuredTemplate !== undefined) {
     return configuredTemplate;
   }
+  const splitDefault = outputMode === 'split' ? DEFAULT_SPLIT_OUTPUT_PATH : undefined;
   if (isEditableDrawioImagePath(sourcePath)) {
     return configuration.get<string>('outputPath.convertDrawioToGif', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
   switch (path.extname(sourcePath).toLowerCase()) {
     case '.png':
-      return configuration.get<string>('outputPath.convertPngToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertPngToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.jpg':
     case '.jpeg':
-      return configuration.get<string>('outputPath.convertJpegToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertJpegToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.webp':
-      return configuration.get<string>('outputPath.convertWebpToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertWebpToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.avif':
-      return configuration.get<string>('outputPath.convertAvifToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertAvifToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.tif':
     case '.tiff':
-      return configuration.get<string>('outputPath.convertTiffToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertTiffToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.svg':
-      return configuration.get<string>('outputPath.convertSvgToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertSvgToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.mmd':
     case '.mermaid':
-      return configuration.get<string>('outputPath.convertMermaidToGif', DEFAULT_OUTPUT_PATH);
+      return configuration.get<string>('outputPath.convertMermaidToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     default:
-      return DEFAULT_OUTPUT_PATH;
+      return splitDefault ?? DEFAULT_OUTPUT_PATH;
   }
 }
