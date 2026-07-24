@@ -76,11 +76,14 @@ export async function convertToWebpCommand(
         ),
       )
     ).flat();
-    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioOptions(configuration);
+    const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
+    const drawioTools = readDrawioOptions(configuration);
     const webp = readWebpOutputOptions(configuration);
-    const pdftocairoPath = readPdftocairoExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const pdftocairoTools = { pdftocairoPath: readPdftocairoExecutablePath(configuration), platform: process.platform };
+    const ghostscriptTools = {
+      ghostscriptPath: readGhostscriptExecutablePath(configuration),
+      platform: process.platform,
+    };
     await runOutputConversion({
       operationName: 'convert-to-webp',
       ...(outputChannel !== undefined && { outputChannel }),
@@ -90,12 +93,11 @@ export async function convertToWebpCommand(
         convertToWebpFiles({
           jobs,
           maxInputPixels,
-          pdftocairoPath,
-          ghostscriptPath,
-          mermaid,
-          drawio,
+          pdftocairoTools,
+          ghostscriptTools,
+          mermaidTools,
+          drawioTools,
           webp,
-          platform: process.platform,
           runtime,
         }),
     });

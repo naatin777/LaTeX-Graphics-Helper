@@ -77,11 +77,13 @@ export async function convertToGifCommand(
         convertToGifFiles({
           jobs,
           maxInputPixels,
-          pdftocairoPath: readPdftocairoExecutablePath(configuration),
-          ghostscriptPath: readGhostscriptExecutablePath(configuration),
-          mermaid: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
-          drawio: readDrawioOptions(configuration),
-          platform: process.platform,
+          pdftocairoTools: { pdftocairoPath: readPdftocairoExecutablePath(configuration), platform: process.platform },
+          ghostscriptTools: {
+            ghostscriptPath: readGhostscriptExecutablePath(configuration),
+            platform: process.platform,
+          },
+          mermaidTools: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
+          drawioTools: readDrawioOptions(configuration),
           runtime,
         }),
     });

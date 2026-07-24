@@ -51,7 +51,7 @@ export async function combineImagesToPdfCommand(
 
     await assertWritablePathInWorkspace(outputPath, workspacePath);
 
-    const svgToPdf = readSvgToPdfOptions(configuration);
+    const svgToPdfTools = readSvgToPdfOptions(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     const jobs = previewedUris.map((sourceUri) => ({ sourcePath: sourceUri.fsPath }));
 
@@ -67,7 +67,7 @@ export async function combineImagesToPdfCommand(
           workspacePath,
           runtime,
           maxInputPixels: getMaxInputPixels(configuration),
-          svgToPdf,
+          svgToPdfTools,
           ghostscriptPath,
           platform: process.platform,
         }),

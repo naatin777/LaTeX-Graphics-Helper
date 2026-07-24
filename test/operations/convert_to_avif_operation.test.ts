@@ -36,14 +36,29 @@ suite('AVIFに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: {
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          runPdfToPng: async (pdfPath, pngPath, page) => {
+            pdfToPngCalls.push({ sourcePath: pdfPath, outputPath: pngPath, page });
+            await sharp({
+              create: {
+                width: 12,
+                height: 8,
+                channels: 4,
+                background: '#285078',
+              },
+            })
+              .png()
+              .toFile(pngPath);
+          },
+        },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: {
           browserChannel: 'chrome',
           theme: 'default',
           backgroundColor: 'white',
         },
-        drawio: {
+        drawioTools: {
           drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);
@@ -54,19 +69,6 @@ suite('AVIFに変換する処理', () => {
         },
         avif: {
           effort: 0,
-        },
-        runPdfToPng: async (pdfPath, pngPath, page) => {
-          pdfToPngCalls.push({ sourcePath: pdfPath, outputPath: pngPath, page });
-          await sharp({
-            create: {
-              width: 12,
-              height: 8,
-              channels: 4,
-              background: '#285078',
-            },
-          })
-            .png()
-            .toFile(pngPath);
         },
         runtime: {},
         runId: 'test-run',

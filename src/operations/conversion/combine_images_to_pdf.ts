@@ -12,7 +12,7 @@ import {
   type CommitConversionOutputsOptions,
   type CommittedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
-import { writeSourceAsPdf, type SvgToPdfOptions, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
+import { writeSourceAsPdf, type WriteSourceAsPdfOptions } from './convert_to_pdf.js';
 import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
@@ -21,6 +21,7 @@ import {
   type RsvgToolScratchOptions,
   type RunRsvgConvert,
 } from '../external_tools/run_rsvg_convert_with_ascii_scratch.js';
+import type { SvgToPdfTools } from './tools/index.js';
 
 export interface CombineImagesJob {
   sourcePath: string;
@@ -33,7 +34,7 @@ export interface CombineImagesToPdfOptions {
   runtime?: ConversionRuntime;
   maxInputPixels?: number;
   runId?: string;
-  svgToPdf?: SvgToPdfOptions;
+  svgToPdfTools?: SvgToPdfTools;
   rsvgConvertPath?: string;
   runRsvgConvert?: RunRsvgConvert;
   ghostscriptPath?: string;
@@ -83,7 +84,7 @@ export async function combineImagesToPdf(options: CombineImagesToPdfOptions): Pr
           outputPath: pdfPath,
           workspacePath: options.workspacePath,
           maxInputPixels: configuredMaxInputPixels,
-          svgToPdf: svgToPdfOptions(options),
+          svgToPdfTools: svgToPdfOptions(options),
           scratchOptions: scratchOptions(options),
           ...(pageCount > 1 ? { page } : {}),
         };
@@ -165,13 +166,13 @@ function validateJobs(jobs: CombineImagesJob[]): void {
   }
 }
 
-function svgToPdfOptions(options: CombineImagesToPdfOptions): SvgToPdfOptions {
-  if (options.svgToPdf !== undefined) {
+function svgToPdfOptions(options: CombineImagesToPdfOptions): SvgToPdfTools {
+  if (options.svgToPdfTools !== undefined) {
     if (options.runRsvgConvert === undefined) {
-      return options.svgToPdf;
+      return options.svgToPdfTools;
     }
 
-    return { ...options.svgToPdf, runRsvgConvert: options.runRsvgConvert };
+    return { ...options.svgToPdfTools, runRsvgConvert: options.runRsvgConvert };
   }
 
   return {

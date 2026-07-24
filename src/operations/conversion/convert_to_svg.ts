@@ -19,17 +19,12 @@ import {
 } from '../lifecycle/commit_conversion_outputs.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import type { LineOutputChannel } from '../external_tools/external_tool_ascii_scratch.js';
-import type { MermaidPuppeteerOptions, RunDrawio } from './convert_to_pdf.js';
+import type { DrawioTools, MermaidTools, PdftocairoTools, RunPdfToSvg } from './tools/index.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
-import {
-  runPdftocairoWithAsciiScratch,
-  type PdfToolScratchOptions,
-} from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
+import { runPdftocairoWithAsciiScratch } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 import { destroyRasterInput, openRasterInput } from './raster_input.js';
-
-export type { MermaidPuppeteerOptions };
 
 const execFileAsync = promisify(execFile);
 
@@ -40,19 +35,12 @@ export interface ConvertToSvgJob {
   page?: number;
 }
 
-export interface DrawioToSvgOptions {
-  drawioPath: string;
-  runDrawio?: RunDrawio;
-}
-
-export type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
-
-export interface ConvertToSvgFilesOptions extends PdfToolScratchOptions {
+export interface ConvertToSvgFilesOptions {
   jobs: ConvertToSvgJob[];
-  pdftocairoPath: string;
-  ghostscriptPath: string;
-  mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioToSvgOptions;
+  pdftocairoTools: PdftocairoTools;
+  ghostscriptTools: { ghostscriptPath: string; platform?: NodeJS.Platform; scratchBaseCandidates?: readonly string[] };
+  mermaidTools: MermaidTools;
+  drawioTools: DrawioTools;
   runtime?: ConversionRuntime;
   runPdfToSvg?: RunPdfToSvg;
   runId?: string;
@@ -85,12 +73,11 @@ export async function convertToSvgFiles(options: ConvertToSvgFilesOptions): Prom
         job,
         index,
         currentRunId,
-        options.pdftocairoPath,
-        options.ghostscriptPath,
-        options.mermaid,
-        options.drawio,
+        options.pdftocairoTools,
+        options.ghostscriptTools,
+        options.mermaidTools,
+        options.drawioTools,
         options.runPdfToSvg,
-        options,
         batchRuntime.outputChannel,
         maxInputPixels,
         batchRuntime.signal,
@@ -102,12 +89,11 @@ async function stageSvgConversion(
   job: ConvertToSvgJob,
   index: number,
   runId: string,
-  pdftocairoPath: string,
-  ghostscriptPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToSvgOptions,
+  pdftocairoTools: PdftocairoTools,
+  ghostscriptTools: { ghostscriptPath: string; platform?: NodeJS.Platform; scratchBaseCandidates?: readonly string[] },
+  mermaidTools: MermaidTools,
+  drawioTools: DrawioTools,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: PdfToolScratchOptions,
   outputChannel: LineOutputChannel | undefined,
   maxInputPixels: number,
   signal?: AbortSignal,
@@ -125,12 +111,11 @@ async function stageSvgConversion(
   await writeSourceAsSvg(
     job,
     stagedOutputPath,
-    pdftocairoPath,
-    ghostscriptPath,
-    mermaid,
-    drawio,
+    pdftocairoTools,
+    ghostscriptTools,
+    mermaidTools,
+    drawioTools,
     runPdfToSvg,
-    scratchOptions,
     outputChannel,
     maxInputPixels,
     signal,
@@ -150,12 +135,11 @@ async function stageSvgConversion(
 async function writeSourceAsSvg(
   job: ConvertToSvgJob,
   outputPath: string,
-  pdftocairoPath: string,
-  ghostscriptPath: string,
-  mermaid: MermaidPuppeteerOptions,
-  drawio: DrawioToSvgOptions,
+  pdftocairoTools: PdftocairoTools,
+  ghostscriptTools: { ghostscriptPath: string; platform?: NodeJS.Platform; scratchBaseCandidates?: readonly string[] },
+  mermaidTools: MermaidTools,
+  drawioTools: DrawioTools,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: PdfToolScratchOptions,
   outputChannel: LineOutputChannel | undefined,
   maxInputPixels: number,
   signal?: AbortSignal,
@@ -163,7 +147,7 @@ async function writeSourceAsSvg(
   const extension = path.extname(job.sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(job.sourcePath)) {
-    await writeDrawioAsSvg(job.sourcePath, outputPath, job.workspacePath, drawio, signal);
+    await writeDrawioAsSvg(job.sourcePath, outputPath, job.workspacePath, drawioTools, signal);
     return;
   }
 
@@ -172,11 +156,10 @@ async function writeSourceAsSvg(
       job.sourcePath,
       outputPath,
       job.workspacePath,
-      ghostscriptPath,
-      pdftocairoPath,
+      ghostscriptTools,
+      pdftocairoTools,
       job.page,
       runPdfToSvg,
-      scratchOptions,
       outputChannel,
       signal,
     );
@@ -188,10 +171,9 @@ async function writeSourceAsSvg(
       job.sourcePath,
       outputPath,
       job.workspacePath,
-      pdftocairoPath,
+      pdftocairoTools,
       job.page,
       runPdfToSvg,
-      scratchOptions,
       outputChannel,
       signal,
     );
@@ -203,18 +185,17 @@ async function writeSourceAsSvg(
     return;
   }
 
-  await writeMermaidAsSvg(job.sourcePath, outputPath, job.workspacePath, mermaid, signal);
+  await writeMermaidAsSvg(job.sourcePath, outputPath, job.workspacePath, mermaidTools, signal);
 }
 
 async function writeEpsAsSvg(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  ghostscriptPath: string,
-  pdftocairoPath: string,
+  ghostscriptTools: { ghostscriptPath: string; platform?: NodeJS.Platform; scratchBaseCandidates?: readonly string[] },
+  pdftocairoTools: PdftocairoTools,
   page: number | undefined,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: PdfToolScratchOptions,
   outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -226,7 +207,7 @@ async function writeEpsAsSvg(
   const epsOptions: Parameters<typeof convertEpsToPdf>[0] = {
     epsPath: sourcePath,
     workspacePath,
-    ghostscriptPath,
+    ghostscriptPath: ghostscriptTools.ghostscriptPath,
     stagingDirectory: epsStaging,
   };
   if (signal !== undefined) {
@@ -235,11 +216,11 @@ async function writeEpsAsSvg(
   if (outputChannel !== undefined) {
     epsOptions.outputChannel = outputChannel;
   }
-  if (scratchOptions.scratchBaseCandidates !== undefined) {
-    epsOptions.scratchBaseCandidates = scratchOptions.scratchBaseCandidates;
+  if (ghostscriptTools.scratchBaseCandidates !== undefined) {
+    epsOptions.scratchBaseCandidates = ghostscriptTools.scratchBaseCandidates;
   }
-  if (scratchOptions.platform !== undefined) {
-    epsOptions.platform = scratchOptions.platform;
+  if (ghostscriptTools.platform !== undefined) {
+    epsOptions.platform = ghostscriptTools.platform;
   }
 
   const { pdfPath } = await convertEpsToPdf(epsOptions);
@@ -249,10 +230,9 @@ async function writeEpsAsSvg(
     pdfPath,
     outputPath,
     workspacePath,
-    pdftocairoPath,
+    pdftocairoTools,
     page ?? 1,
     runPdfToSvg,
-    scratchOptions,
     outputChannel,
     signal,
   );
@@ -262,7 +242,7 @@ async function writeDrawioAsSvg(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  drawio: DrawioToSvgOptions,
+  drawio: DrawioTools,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -289,10 +269,9 @@ async function writePdfPageAsSvg(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  pdftocairoPath: string,
+  pdftocairoTools: PdftocairoTools,
   page = 1,
   runPdfToSvg: RunPdfToSvg | undefined,
-  scratchOptions: PdfToolScratchOptions,
   outputChannel: LineOutputChannel | undefined,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -306,7 +285,7 @@ async function writePdfPageAsSvg(
       sourcePath,
       outputPath,
       scratchOutputFileName: 'output.svg',
-      scratch: scratchOptions,
+      scratch: pdftocairoTools,
       signal,
       outputChannel,
       run: async (toolSourcePath, toolOutputPath) => {
@@ -316,7 +295,7 @@ async function writePdfPageAsSvg(
         }
 
         await execFileAsync(
-          pdftocairoPath,
+          pdftocairoTools.pdftocairoPath,
           ['-svg', '-f', String(page), '-l', String(page), toolSourcePath, toolOutputPath],
           {
             encoding: 'utf8',
@@ -339,7 +318,7 @@ async function writeMermaidAsSvg(
   sourcePath: string,
   outputPath: string,
   workspacePath: string,
-  mermaid: MermaidPuppeteerOptions,
+  mermaid: MermaidTools,
   signal?: AbortSignal,
 ): Promise<void> {
   signal?.throwIfAborted();
@@ -455,7 +434,7 @@ function asSvgOutputPath(outputPath: string): `${string}.svg` {
   return outputPath as unknown as `${string}.svg`;
 }
 
-function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {
+function createMermaidPuppeteerConfig(options: MermaidTools): Record<string, unknown> {
   const config: Record<string, unknown> = { headless: true };
   if (options.executablePath) {
     config.executablePath = options.executablePath;

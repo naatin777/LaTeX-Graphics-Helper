@@ -1,13 +1,13 @@
 import type { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 
-import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
+import type { MermaidTools } from './tools/index.js';
 
 type MermaidCliRunOptions = NonNullable<Parameters<typeof runMermaidCli>[2]>;
 type MermaidCliParseMmdOptions = NonNullable<MermaidCliRunOptions['parseMMDOptions']>;
 type MermaidCliConfig = NonNullable<MermaidCliParseMmdOptions['mermaidConfig']>;
 
 export function createMermaidCliRenderOptions(
-  options: Pick<MermaidPuppeteerOptions, 'theme' | 'backgroundColor'> = {
+  options: Pick<MermaidTools, 'theme' | 'backgroundColor'> = {
     theme: 'default',
     backgroundColor: 'white',
   },

@@ -81,7 +81,7 @@ export async function convertToDrawioCommand(
           drawioPath,
           ghostscriptPath: readGhostscriptExecutablePath(configuration),
           pdftocairoPath: readPdftocairoExecutablePath(configuration),
-          mermaid: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
+          mermaidTools: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
           maxInputPixels: getMaxInputPixels(configuration),
           runtime,
         }),

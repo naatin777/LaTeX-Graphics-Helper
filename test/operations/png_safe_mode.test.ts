@@ -21,11 +21,8 @@ import { fileURLToPath } from 'node:url';
 
 import { PDFDocument } from 'pdf-lib';
 
-import {
-  convertToPdfFiles,
-  type ConvertToPdfJob,
-  type RunDrawio,
-} from '../../src/operations/conversion/convert_to_pdf.js';
+import { convertToPdfFiles, type ConvertToPdfJob } from '../../src/operations/conversion/convert_to_pdf.js';
+import type { RunDrawio } from '../../src/operations/conversion/tools/drawio_tools.js';
 import {
   createConversionUndoRecord,
   undoConversionOutputs,
@@ -167,7 +164,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(calls),
       },
@@ -192,7 +189,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },
@@ -215,7 +212,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },

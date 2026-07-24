@@ -1,29 +1,26 @@
 import {
   type CommittedConversionOutput,
   convertRasterFiles,
-  type DrawioOptions,
   type RasterConversionDefinition,
   type RasterJob,
-  type RunPdfToPng,
 } from './raster_conversion.js';
 import { openRasterInput } from './raster_input.js';
 import { DEFAULT_MAX_INPUT_PIXELS } from '../../config/raster_input.js';
-import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
-import { type PdfToolScratchOptions } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
+import type { DrawioTools } from './tools/drawio_tools.js';
+import type { GhostscriptTools } from './tools/ghostscript_tools.js';
+import type { MermaidTools } from './tools/mermaid_tools.js';
+import type { PdftocairoTools } from './tools/pdftocairo_tools.js';
 
 export type ConvertToTiffJob = RasterJob;
-export type DrawioToTiffOptions = DrawioOptions;
-export type { RunPdfToPng };
 
-export interface ConvertToTiffFilesOptions extends PdfToolScratchOptions {
+export interface ConvertToTiffFilesOptions {
   jobs: ConvertToTiffJob[];
   runtime: ConversionRuntime;
-  pdftocairoPath: string;
-  ghostscriptPath: string;
-  mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioToTiffOptions;
-  runPdfToPng?: RunPdfToPng | undefined;
+  pdftocairoTools: PdftocairoTools;
+  ghostscriptTools: GhostscriptTools;
+  mermaidTools: MermaidTools;
+  drawioTools: DrawioTools;
   runId?: string | undefined;
   maxInputPixels?: number;
 }

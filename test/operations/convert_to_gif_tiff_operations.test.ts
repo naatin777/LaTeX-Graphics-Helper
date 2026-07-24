@@ -16,10 +16,10 @@ suite('GIF/TIFFに変換する処理', () => {
       const sourcePath = path.join(workspacePath, 'source.gif');
       await writeAnimatedGif(sourcePath);
       const common = {
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         runtime: {},
       };
 

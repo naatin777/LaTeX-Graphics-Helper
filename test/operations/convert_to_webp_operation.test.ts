@@ -34,10 +34,10 @@ suite('WebPに変換する処理', () => {
             animation: { pages: 2, pageHeight: 8, delay: [100, 250], loop: 3 },
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         webp: { effort: 0 },
         runtime: {},
         runId: 'animation-test',
@@ -64,10 +64,10 @@ suite('WebPに変換する処理', () => {
       await assert.rejects(
         convertToWebpFiles({
           jobs: [{ sourcePath, outputPath, workspacePath, animation: { pages: 2, pageHeight: 8 } }],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-          drawio: { drawioPath: 'drawio' },
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs' },
+          mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawioTools: { drawioPath: 'drawio' },
           webp: { effort: 0 },
           runtime: {},
           runId: 'animation-failure-test',
@@ -99,14 +99,22 @@ suite('WebPに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: {
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          runPdfToPng: async (sourcePath, outputPath, page) => {
+            pdfToPngCalls.push({ sourcePath, outputPath, page });
+            await sharp({ create: { width: 4, height: 4, channels: 4, background: '#ff0000' } })
+              .png()
+              .toFile(outputPath);
+          },
+        },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: {
           browserChannel: 'chrome',
           theme: 'default',
           backgroundColor: 'white',
         },
-        drawio: {
+        drawioTools: {
           drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);
@@ -117,19 +125,6 @@ suite('WebPに変換する処理', () => {
         },
         webp: {
           effort: 0,
-        },
-        runPdfToPng: async (pdfPath, pngPath, page) => {
-          pdfToPngCalls.push({ sourcePath: pdfPath, outputPath: pngPath, page });
-          await sharp({
-            create: {
-              width: 12,
-              height: 8,
-              channels: 4,
-              background: '#285078',
-            },
-          })
-            .png()
-            .toFile(pngPath);
         },
         runtime: {},
         runId: 'test-run',

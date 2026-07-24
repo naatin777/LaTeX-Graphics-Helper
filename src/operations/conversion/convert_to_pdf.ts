@@ -5,13 +5,7 @@ import { promisify } from 'node:util';
 
 import { run as runMermaidCli } from '@mermaid-js/mermaid-cli';
 import { PDFDocument, type PDFPage } from 'pdf-lib';
-import {
-  launch,
-  type Browser,
-  type ChromeReleaseChannel,
-  type LaunchOptions,
-  type SupportedBrowser,
-} from 'puppeteer-core';
+import { launch, type Browser, type LaunchOptions } from 'puppeteer-core';
 import sharp from 'sharp';
 import { errorMessage, isAbortError } from '../../commands/shared/command_utils.js';
 
@@ -38,32 +32,23 @@ import { runExternalTool } from '../external_tools/run_external_tool.js';
 import {
   runRsvgConvertWithAsciiScratch,
   type RsvgToolScratchOptions,
-  type RunRsvgConvert,
 } from '../external_tools/run_rsvg_convert_with_ascii_scratch.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
+import type { DrawioTools, MermaidTools, SvgToPdfEngine, SvgToPdfTools } from './tools/index.js';
 
 const DEFAULT_SUPPORTED_IMAGE_EXTENSIONS = ['.png'] as const;
 const SVG_EXTENSION = '.svg';
 const execFileAsync = promisify(execFile);
 
-export type SvgToPdfEngine = 'puppeteer' | 'rsvg-convert';
+export type { SvgToPdfEngine };
 
-export interface SvgToPdfOptions {
-  engine: SvgToPdfEngine;
-  rsvgConvertPath: string;
-  puppeteerBrowser: SupportedBrowser;
-  puppeteerBrowserChannel: ChromeReleaseChannel;
-  puppeteerExecutablePath?: string;
-  runRsvgConvert?: RunRsvgConvert;
-}
-
-export function validateSvgToPdfOptions(options: SvgToPdfOptions): void {
+export function validateSvgToPdfOptions(options: SvgToPdfTools): void {
   if (options.engine === 'puppeteer' && options.puppeteerBrowser === 'firefox' && !options.puppeteerExecutablePath) {
     throw new Error('puppeteer.executablePath must be set when puppeteer.browser is firefox.');
   }
 }
 
-export function createSvgPuppeteerLaunchOptions(options: SvgToPdfOptions): LaunchOptions {
+export function createSvgPuppeteerLaunchOptions(options: SvgToPdfTools): LaunchOptions {
   validateSvgToPdfOptions(options);
 
   return {
@@ -75,20 +60,6 @@ export function createSvgPuppeteerLaunchOptions(options: SvgToPdfOptions): Launc
       : { channel: options.puppeteerBrowserChannel }),
   };
 }
-
-export interface MermaidPuppeteerOptions {
-  browserChannel: string;
-  executablePath?: string;
-  theme: string;
-  backgroundColor: string;
-}
-
-export interface DrawioToPdfOptions {
-  drawioPath: string;
-  runDrawio?: RunDrawio;
-}
-
-export type RunDrawio = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 
 export interface ConvertToPdfJob {
   sourcePath: string;
@@ -104,9 +75,9 @@ export interface WriteSourceAsPdfOptions {
   signal?: AbortSignal;
   maxInputPixels?: number;
   page?: number;
-  svgToPdf?: SvgToPdfOptions;
-  mermaid?: MermaidPuppeteerOptions;
-  drawio?: DrawioToPdfOptions;
+  svgToPdfTools?: SvgToPdfTools;
+  mermaidTools?: MermaidTools;
+  drawioTools?: DrawioTools;
   scratchOptions?: RsvgToolScratchOptions;
   ghostscriptPath?: string;
 }
@@ -116,9 +87,9 @@ export interface ConvertToPdfFilesOptions {
   runtime?: ConversionRuntime;
   runId?: string;
   supportedExtensions?: readonly string[];
-  svgToPdf?: SvgToPdfOptions;
-  mermaid?: MermaidPuppeteerOptions;
-  drawio?: DrawioToPdfOptions;
+  svgToPdfTools?: SvgToPdfTools;
+  mermaidTools?: MermaidTools;
+  drawioTools?: DrawioTools;
   ghostscriptPath?: string;
   platform?: NodeJS.Platform;
   maxInputPixels?: number;
@@ -163,9 +134,9 @@ export async function convertToPdfFiles(options: ConvertToPdfFilesOptions): Prom
         index,
         currentRunId,
         batchRuntime.signal,
-        options.svgToPdf,
-        options.mermaid,
-        options.drawio,
+        options.svgToPdfTools,
+        options.mermaidTools,
+        options.drawioTools,
         scratchOptions,
         options.ghostscriptPath,
         maxInputPixels,
@@ -178,9 +149,9 @@ async function stageSourceToPdf(
   index: number,
   runId: string,
   signal?: AbortSignal,
-  svgToPdf?: SvgToPdfOptions,
-  mermaid?: MermaidPuppeteerOptions,
-  drawio?: DrawioToPdfOptions,
+  svgToPdfTools?: SvgToPdfTools,
+  mermaidTools?: MermaidTools,
+  drawioTools?: DrawioTools,
   scratchOptions: RsvgToolScratchOptions = {},
   ghostscriptPath?: string,
   maxInputPixels?: number,
@@ -211,14 +182,14 @@ async function stageSourceToPdf(
   if (signal !== undefined) {
     writeOptions.signal = signal;
   }
-  if (svgToPdf !== undefined) {
-    writeOptions.svgToPdf = svgToPdf;
+  if (svgToPdfTools !== undefined) {
+    writeOptions.svgToPdfTools = svgToPdfTools;
   }
-  if (mermaid !== undefined) {
-    writeOptions.mermaid = mermaid;
+  if (mermaidTools !== undefined) {
+    writeOptions.mermaidTools = mermaidTools;
   }
-  if (drawio !== undefined) {
-    writeOptions.drawio = drawio;
+  if (drawioTools !== undefined) {
+    writeOptions.drawioTools = drawioTools;
   }
   if (ghostscriptPath !== undefined) {
     writeOptions.ghostscriptPath = ghostscriptPath;
@@ -243,9 +214,9 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
     workspacePath,
     signal,
     maxInputPixels,
-    svgToPdf,
-    mermaid,
-    drawio,
+    svgToPdfTools,
+    mermaidTools,
+    drawioTools,
     scratchOptions = {},
     ghostscriptPath,
   } = options;
@@ -267,17 +238,17 @@ export async function writeSourceAsPdf(options: WriteSourceAsPdfOptions): Promis
   }
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    await writeDrawioAsPdf(sourcePath, outputPath, workspacePath, signal, drawio);
+    await writeDrawioAsPdf(sourcePath, outputPath, workspacePath, signal, drawioTools);
     return;
   }
 
   if (isMermaidPath(sourcePath)) {
-    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaid);
+    await writeMermaidAsPdf(sourcePath, outputPath, workspacePath, signal, mermaidTools);
     return;
   }
 
   if (extension === SVG_EXTENSION) {
-    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdf, scratchOptions);
+    await writeSvgAsPdf(sourcePath, outputPath, workspacePath, signal, svgToPdfTools, scratchOptions);
     return;
   }
 
@@ -320,7 +291,7 @@ async function writeDrawioAsPdf(
   outputPath: string,
   workspacePath: string,
   signal?: AbortSignal,
-  drawio: DrawioToPdfOptions = { drawioPath: 'drawio' },
+  drawio: DrawioTools = { drawioPath: 'drawio' },
 ): Promise<void> {
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(outputPath, workspacePath);
@@ -348,7 +319,7 @@ async function writeMermaidAsPdf(
   outputPath: string,
   workspacePath: string,
   signal?: AbortSignal,
-  mermaid?: MermaidPuppeteerOptions,
+  mermaid?: MermaidTools,
 ): Promise<void> {
   signal?.throwIfAborted();
   await assertWritablePathInWorkspace(outputPath, workspacePath);
@@ -372,7 +343,7 @@ async function writeMermaidAsPdf(
 }
 
 function createMermaidPuppeteerConfig(
-  options: MermaidPuppeteerOptions = { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+  options: MermaidTools = { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
 ): Record<string, unknown> {
   const config: Record<string, unknown> = { headless: true };
   if (options.executablePath) {
@@ -512,7 +483,7 @@ async function writeSvgAsPdf(
   outputPath: string,
   workspacePath: string,
   signal?: AbortSignal,
-  svgToPdf?: SvgToPdfOptions,
+  svgToPdf?: SvgToPdfTools,
   scratchOptions: RsvgToolScratchOptions = {},
 ): Promise<void> {
   const options = svgToPdf ?? {
@@ -553,7 +524,7 @@ async function readSvgSize(sourcePath: string): Promise<{ width: number; height:
 async function writeSvgAsPdfWithRsvgConvert(
   sourcePath: string,
   outputPath: string,
-  options: SvgToPdfOptions,
+  options: SvgToPdfTools,
   scratchOptions: RsvgToolScratchOptions,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -579,7 +550,7 @@ async function writeSvgAsPdfWithPuppeteer(
   sourcePath: string,
   outputPath: string,
   size: { width: number; height: number },
-  options: SvgToPdfOptions,
+  options: SvgToPdfTools,
   signal?: AbortSignal,
 ): Promise<void> {
   const rawSvg = await readFile(sourcePath, 'utf8');

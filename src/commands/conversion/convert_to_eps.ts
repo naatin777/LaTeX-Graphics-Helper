@@ -36,7 +36,7 @@ export async function convertToEpsCommand(
     }
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const jobs = (await Promise.all(sourceUris.map((sourceUri) => createEpsJobs(sourceUri, configuration)))).flat();
-    const svgToPdf = readSvgToPdfOptions(configuration);
+    const svgToPdfTools = readSvgToPdfOptions(configuration);
     await runOutputConversion({
       operationName: 'convert-to-eps',
       ...(dependencies?.outputChannel === undefined ? {} : { outputChannel: dependencies.outputChannel }),
@@ -47,8 +47,8 @@ export async function convertToEpsCommand(
           jobs,
           runtime,
           ghostscriptPath: readGhostscriptExecutablePath(configuration),
-          svgToPdf,
-          mermaid: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
+          svgToPdfTools,
+          mermaidTools: readMermaidPuppeteerOptions(configuration, 'convertToPdf'),
           maxInputPixels: getMaxInputPixels(configuration),
           platform: process.platform,
         }),
