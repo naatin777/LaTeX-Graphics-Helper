@@ -23,8 +23,8 @@ import {
   validateSvgToPdfOptions,
   type ConvertToPdfJob,
   type SvgToPdfEngine,
-  type SvgToPdfOptions,
 } from '../../operations/conversion/convert_to_pdf.js';
+import type { SvgToPdfTools } from '../../operations/conversion/tools/index.js';
 import type { LineOutputChannel } from '../../operations/external_tools/external_tool_ascii_scratch.js';
 
 import type { CommandDependencies } from '../shared/command_dependencies.js';
@@ -122,10 +122,10 @@ async function convertSelectedSourcesToPdf(
       messages.outputFormatOutputPathKey === undefined
         ? undefined
         : readOutputFormatOutputTemplate(configuration, messages.outputFormatOutputPathKey);
-    const svgToPdf = readSvgToPdfOptions(configuration);
-    validateSvgToPdfOptions(svgToPdf);
-    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioOptions(configuration);
+    const svgToPdfTools = readSvgToPdfOptions(configuration);
+    validateSvgToPdfOptions(svgToPdfTools);
+    const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
+    const drawioTools = readDrawioOptions(configuration);
     const ghostscriptPath = readGhostscriptExecutablePath(configuration);
     const jobs = (
       await Promise.all(
@@ -156,9 +156,9 @@ async function convertSelectedSourcesToPdf(
           jobs,
           maxInputPixels,
           supportedExtensions: messages.supportedExtensions,
-          svgToPdf,
-          mermaid,
-          drawio,
+          svgToPdfTools,
+          mermaidTools,
+          drawioTools,
           ghostscriptPath,
           operationName: messages.operationName,
           runtime,
@@ -223,7 +223,7 @@ export function outputTemplateForSource(
   }
 }
 
-export function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfOptions {
+export function readSvgToPdfOptions(configuration: vscode.WorkspaceConfiguration): SvgToPdfTools {
   const executablePath = readPuppeteerExecutablePath(configuration, 'convertToPdf.svg.puppeteer.executablePath');
 
   return {

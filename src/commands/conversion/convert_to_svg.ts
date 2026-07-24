@@ -51,10 +51,13 @@ export async function convertToSvgCommand(
     const jobs = (
       await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate)))
     ).flat();
-    const puppeteer = readMermaidPuppeteerOptions(configuration, 'convertToSvg');
-    const drawio = readDrawioOptions(configuration);
-    const pdftocairoPath = readPdftocairoExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToSvg');
+    const drawioTools = readDrawioOptions(configuration);
+    const pdftocairoTools = { pdftocairoPath: readPdftocairoExecutablePath(configuration), platform: process.platform };
+    const ghostscriptTools = {
+      ghostscriptPath: readGhostscriptExecutablePath(configuration),
+      platform: process.platform,
+    };
     await runOutputConversion({
       operationName: 'convert-to-svg',
       ...(outputChannel !== undefined && { outputChannel }),
@@ -64,12 +67,11 @@ export async function convertToSvgCommand(
         convertToSvgFiles({
           jobs,
           maxInputPixels,
-          pdftocairoPath,
-          ghostscriptPath,
-          mermaid: puppeteer,
-          drawio,
+          pdftocairoTools,
+          ghostscriptTools,
+          mermaidTools,
+          drawioTools,
           runtime,
-          platform: process.platform,
         }),
     });
   } catch (error) {

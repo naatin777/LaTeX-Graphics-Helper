@@ -60,11 +60,14 @@ export async function convertToAvifCommand(
         sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
       )
     ).flat();
-    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioOptions(configuration);
+    const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
+    const drawioTools = readDrawioOptions(configuration);
     const avif = readAvifOutputOptions(configuration);
-    const pdftocairoPath = readPdftocairoExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const pdftocairoTools = { pdftocairoPath: readPdftocairoExecutablePath(configuration), platform: process.platform };
+    const ghostscriptTools = {
+      ghostscriptPath: readGhostscriptExecutablePath(configuration),
+      platform: process.platform,
+    };
     await runOutputConversion({
       operationName: 'convert-to-avif',
       ...(outputChannel !== undefined && { outputChannel }),
@@ -74,12 +77,11 @@ export async function convertToAvifCommand(
         convertToAvifFiles({
           jobs,
           maxInputPixels,
-          pdftocairoPath,
-          ghostscriptPath,
-          mermaid,
-          drawio,
+          pdftocairoTools,
+          ghostscriptTools,
+          mermaidTools,
+          drawioTools,
           avif,
-          platform: process.platform,
           runtime,
         }),
     });

@@ -34,10 +34,10 @@ suite('WebPに変換する処理', () => {
             animation: { pages: 2, pageHeight: 8, delay: [100, 250], loop: 3 },
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         webp: { effort: 0 },
         runtime: {},
         runId: 'animation-test',
@@ -64,10 +64,10 @@ suite('WebPに変換する処理', () => {
       await assert.rejects(
         convertToWebpFiles({
           jobs: [{ sourcePath, outputPath, workspacePath, animation: { pages: 2, pageHeight: 8 } }],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-          drawio: { drawioPath: 'drawio' },
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs' },
+          mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawioTools: { drawioPath: 'drawio' },
           webp: { effort: 0 },
           runtime: {},
           runId: 'animation-failure-test',
@@ -99,14 +99,14 @@ suite('WebPに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: {
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: {
           browserChannel: 'chrome',
           theme: 'default',
           backgroundColor: 'white',
         },
-        drawio: {
+        drawioTools: {
           drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);

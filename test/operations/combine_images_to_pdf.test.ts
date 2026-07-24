@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 
 import { readGhostscriptExecutablePath } from '../../src/config/external_tools/external_tool_paths.js';
 import { combineImagesToPdf } from '../../src/operations/conversion/combine_images_to_pdf.js';
-import type { SvgToPdfOptions } from '../../src/operations/conversion/convert_to_pdf.js';
+import type { SvgToPdfTools } from '../../src/operations/conversion/tools/index.js';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const VALID_PNG = path.join(testDirectory, '..', '..', '..', 'test', 'fixtures', 'test.png');
@@ -189,7 +189,7 @@ suite('画像→1PDF結合', () => {
       const sourcePdf = await PDFDocument.create();
       sourcePdf.addPage([7, 11]);
       const calls: string[][] = [];
-      const svgToPdf: SvgToPdfOptions = {
+      const svgToPdfTools: SvgToPdfTools = {
         engine: 'rsvg-convert',
         rsvgConvertPath: 'configured-rsvg-convert',
         puppeteerBrowser: 'chrome',
@@ -207,7 +207,7 @@ suite('画像→1PDF結合', () => {
         jobs: [{ sourcePath }],
         outputPath,
         workspacePath,
-        svgToPdf,
+        svgToPdfTools,
         platform: 'linux',
       });
 
@@ -233,7 +233,7 @@ suite('画像→1PDF結合', () => {
           outputPath,
           workspacePath,
           ghostscriptPath: GHOSTSCRIPT_PATH,
-          svgToPdf: createStubSvgToPdfOptions(),
+          svgToPdfTools: createStubSvgToPdfOptions(),
           platform: process.platform,
         });
 
@@ -256,7 +256,7 @@ suite('画像→1PDF結合', () => {
         outputPath,
         workspacePath,
         ghostscriptPath: GHOSTSCRIPT_PATH,
-        svgToPdf: createStubSvgToPdfOptions(),
+        svgToPdfTools: createStubSvgToPdfOptions(),
         platform: process.platform,
       });
 
@@ -431,7 +431,7 @@ async function writeAnimatedImageFixture(
   await (format === 'gif' ? output.gif() : output.tiff()).toFile(filePath);
 }
 
-function createStubSvgToPdfOptions(): SvgToPdfOptions {
+function createStubSvgToPdfOptions(): SvgToPdfTools {
   return {
     engine: 'rsvg-convert',
     rsvgConvertPath: 'configured-rsvg-convert',

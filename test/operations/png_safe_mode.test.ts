@@ -167,7 +167,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(calls),
       },
@@ -192,7 +192,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },
@@ -215,7 +215,7 @@ suite('PNG変換のSafe Mode', () => {
     const outputs = await convertToPdfFiles({
       jobs,
       supportedExtensions: editableDrawioImageExtensions,
-      drawio: {
+      drawioTools: {
         drawioPath: 'drawio',
         runDrawio: createPdfWritingDrawioRunner(),
       },

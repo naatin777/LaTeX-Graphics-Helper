@@ -20,12 +20,8 @@ import {
   validateAsciiScratchOutput,
   type LineOutputChannel,
 } from '../external_tools/external_tool_ascii_scratch.js';
-import {
-  writeSourceAsPdf,
-  type DrawioToPdfOptions,
-  type MermaidPuppeteerOptions,
-  type SvgToPdfOptions,
-} from './convert_to_pdf.js';
+import { writeSourceAsPdf } from './convert_to_pdf.js';
+import type { DrawioTools, MermaidTools, RunGhostscript, SvgToPdfTools } from './tools/index.js';
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { isMermaidPath, isSupportedImageInputPath } from '../../application/policy/source_format.js';
 
@@ -39,17 +35,13 @@ export interface ConvertToEpsJob {
   page?: number;
 }
 
-export interface RunGhostscript {
-  (executable: string, args: string[], signal?: AbortSignal): Promise<void>;
-}
-
 export interface ConvertToEpsFilesOptions {
   jobs: ConvertToEpsJob[];
   runtime: ConversionRuntime;
   ghostscriptPath: string;
-  svgToPdf?: SvgToPdfOptions;
-  mermaid?: MermaidPuppeteerOptions;
-  drawio?: DrawioToPdfOptions;
+  svgToPdfTools?: SvgToPdfTools;
+  mermaidTools?: MermaidTools;
+  drawioTools?: DrawioTools;
   maxInputPixels?: number;
   runGhostscript?: RunGhostscript;
   runId?: string;
@@ -108,14 +100,14 @@ async function stageSourceToEps(
   if (job.page !== undefined) {
     writeOptions.page = job.page;
   }
-  if (options.svgToPdf !== undefined) {
-    writeOptions.svgToPdf = options.svgToPdf;
+  if (options.svgToPdfTools !== undefined) {
+    writeOptions.svgToPdfTools = options.svgToPdfTools;
   }
-  if (options.mermaid !== undefined) {
-    writeOptions.mermaid = options.mermaid;
+  if (options.mermaidTools !== undefined) {
+    writeOptions.mermaidTools = options.mermaidTools;
   }
-  if (options.drawio !== undefined) {
-    writeOptions.drawio = options.drawio;
+  if (options.drawioTools !== undefined) {
+    writeOptions.drawioTools = options.drawioTools;
   }
   await writeSourceAsPdf(writeOptions);
   runtime.signal?.throwIfAborted();

@@ -55,10 +55,13 @@ export async function convertToPngCommand(
         sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
       )
     ).flat();
-    const mermaid = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
-    const drawio = readDrawioOptions(configuration);
-    const pdftocairoPath = readPdftocairoExecutablePath(configuration);
-    const ghostscriptPath = readGhostscriptExecutablePath(configuration);
+    const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
+    const drawioTools = readDrawioOptions(configuration);
+    const pdftocairoTools = { pdftocairoPath: readPdftocairoExecutablePath(configuration), platform: process.platform };
+    const ghostscriptTools = {
+      ghostscriptPath: readGhostscriptExecutablePath(configuration),
+      platform: process.platform,
+    };
     await runOutputConversion({
       operationName: 'convert-to-png',
       ...(outputChannel !== undefined && { outputChannel }),
@@ -68,11 +71,10 @@ export async function convertToPngCommand(
         convertToPngFiles({
           jobs,
           maxInputPixels,
-          pdftocairoPath,
-          ghostscriptPath,
-          mermaid,
-          drawio,
-          platform: process.platform,
+          pdftocairoTools,
+          ghostscriptTools,
+          mermaidTools,
+          drawioTools,
           runtime,
         }),
     });

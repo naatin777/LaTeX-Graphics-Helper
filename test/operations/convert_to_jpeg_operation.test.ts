@@ -10,11 +10,8 @@ import path from 'node:path';
 import { PDFDocument } from 'pdf-lib';
 import sharp from 'sharp';
 
-import {
-  convertToJpegFiles,
-  type ConvertToJpegJob,
-  type DrawioToJpegOptions,
-} from '../../src/operations/conversion/convert_to_jpeg.js';
+import { convertToJpegFiles, type ConvertToJpegJob } from '../../src/operations/conversion/convert_to_jpeg.js';
+import type { DrawioTools } from '../../src/operations/conversion/tools/drawio_tools.js';
 
 suite('JPEGに変換する処理', () => {
   test('編集可能なDraw.io画像はPDFを経由してJPEGへ変換する', async () => {
@@ -25,7 +22,7 @@ suite('JPEGに変換する処理', () => {
       const outputPath = path.join(workspacePath, 'source.jpeg');
       await writeFile(sourcePath, 'editable drawio image placeholder');
       const drawioCalls: string[][] = [];
-      const drawio: DrawioToJpegOptions = {
+      const drawio: DrawioTools = {
         drawioPath: 'drawio',
         runDrawio: async (_executable, args) => {
           drawioCalls.push(args);
@@ -47,10 +44,10 @@ suite('JPEGに変換する処理', () => {
 
       await convertToJpegFiles({
         jobs: [job],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio,
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: drawio,
         runPdfToPng: async (pdfPath, pngPath, page) => {
           assert.ok(pdfPath.endsWith('.pdf'));
           assert.strictEqual(page, 1);

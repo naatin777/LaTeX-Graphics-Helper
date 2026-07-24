@@ -57,10 +57,10 @@ suite('EPSの出力経路', () => {
 
       await convertToPngFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: PDFTOCAIRO_PATH,
-        ghostscriptPath: GHOSTSCRIPT_PATH,
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: PDFTOCAIRO_PATH },
+        ghostscriptTools: { ghostscriptPath: GHOSTSCRIPT_PATH },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
@@ -83,10 +83,10 @@ suite('EPSの出力経路', () => {
 
       await convertToJpegFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: PDFTOCAIRO_PATH,
-        ghostscriptPath: GHOSTSCRIPT_PATH,
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: PDFTOCAIRO_PATH },
+        ghostscriptTools: { ghostscriptPath: GHOSTSCRIPT_PATH },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
 
@@ -108,10 +108,10 @@ suite('EPSの出力経路', () => {
 
       await convertToWebpFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: PDFTOCAIRO_PATH,
-        ghostscriptPath: GHOSTSCRIPT_PATH,
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: PDFTOCAIRO_PATH },
+        ghostscriptTools: { ghostscriptPath: GHOSTSCRIPT_PATH },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         webp: { effort: 0 },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
@@ -134,10 +134,10 @@ suite('EPSの出力経路', () => {
 
       await convertToAvifFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: PDFTOCAIRO_PATH,
-        ghostscriptPath: GHOSTSCRIPT_PATH,
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: PDFTOCAIRO_PATH },
+        ghostscriptTools: { ghostscriptPath: GHOSTSCRIPT_PATH },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         avif: { effort: 0 },
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });
@@ -160,10 +160,10 @@ suite('EPSの出力経路', () => {
 
       await convertToSvgFiles({
         jobs: [{ sourcePath, outputPath, workspacePath }],
-        pdftocairoPath: PDFTOCAIRO_PATH,
-        ghostscriptPath: GHOSTSCRIPT_PATH,
-        mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-        drawio: { drawioPath: 'drawio' },
+        pdftocairoTools: { pdftocairoPath: PDFTOCAIRO_PATH },
+        ghostscriptTools: { ghostscriptPath: GHOSTSCRIPT_PATH },
+        mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+        drawioTools: { drawioPath: 'drawio' },
         runId: 'test-run',
         runtime: { resolveConflicts: async () => 'overwrite' as const },
       });

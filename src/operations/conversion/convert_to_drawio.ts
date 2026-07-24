@@ -15,7 +15,7 @@ import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_bat
 import { assertExistingPathInWorkspace, assertWritablePathInWorkspace } from '../../security/workspace_path.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { destroyRasterInput, openRasterInput, readRasterAnimationMetadata } from './raster_input.js';
-import type { MermaidPuppeteerOptions } from './convert_to_pdf.js';
+import type { MermaidTools } from './tools/mermaid_tools.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
 import type { ChromeReleaseChannel } from 'puppeteer-core';
 
@@ -31,21 +31,6 @@ export interface ConvertToDrawioJob {
   workspacePath: string;
 }
 
-export interface ConvertToDrawioOptions {
-  jobs: ConvertToDrawioJob[];
-  pdftocairoPath?: string;
-  ghostscriptPath: string;
-  mermaid?: MermaidPuppeteerOptions;
-  runtime?: ConversionRuntime;
-  runId?: string;
-  maxInputPixels?: number;
-  runPdfToSvg?: RunPdfToSvg;
-  runGhostscript?: RunGhostscript;
-  runMermaid?: RunMermaid;
-  drawioPath: string;
-  runDrawio?: RunDrawio;
-}
-
 export type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
 export type RunGhostscript = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
 export type RunMermaid = (sourcePath: string, outputPath: string, signal?: AbortSignal) => Promise<void>;
@@ -55,6 +40,21 @@ export type RunDrawio = (
   signal?: AbortSignal,
   outputChannel?: ConversionRuntime['outputChannel'],
 ) => Promise<void>;
+
+export interface ConvertToDrawioOptions {
+  jobs: ConvertToDrawioJob[];
+  pdftocairoPath?: string;
+  ghostscriptPath: string;
+  mermaidTools?: MermaidTools;
+  runtime?: ConversionRuntime;
+  runId?: string;
+  maxInputPixels?: number;
+  runPdfToSvg?: RunPdfToSvg;
+  runGhostscript?: RunGhostscript;
+  runMermaid?: RunMermaid;
+  drawioPath: string;
+  runDrawio?: RunDrawio;
+}
 
 export async function convertToDrawioFiles(options: ConvertToDrawioOptions): Promise<CommittedConversionOutput[]> {
   if (options.jobs.length === 0) {
@@ -143,7 +143,7 @@ async function stageDrawio(
     } else if (isMermaidPath(input.sourcePath)) {
       const svgPath = path.join(stageDirectory, `${inputIndex}.svg`);
       await (
-        options.runMermaid ?? ((source, output, signal) => executeMermaid(source, output, signal, options.mermaid))
+        options.runMermaid ?? ((source, output, signal) => executeMermaid(source, output, signal, options.mermaidTools))
       )(input.sourcePath, svgPath, runtime.signal);
       pages.push(await svgPage(svgPath, input));
     } else {
@@ -340,7 +340,7 @@ async function executeMermaid(
   sourcePath: string,
   outputPath: string,
   signal: AbortSignal | undefined,
-  options?: MermaidPuppeteerOptions,
+  options?: MermaidTools,
 ): Promise<void> {
   signal?.throwIfAborted();
   await runMermaidCli(sourcePath as `${string}.mmd`, outputPath as `${string}.svg`, {

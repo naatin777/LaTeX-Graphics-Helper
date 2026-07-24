@@ -37,14 +37,14 @@ suite('SVGに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: {
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: {
           browserChannel: 'chrome',
           theme: 'default',
           backgroundColor: 'white',
         },
-        drawio: {
+        drawioTools: {
           drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);
@@ -83,10 +83,10 @@ suite('SVGに変換する処理', () => {
       await assert.rejects(
         convertToSvgFiles({
           jobs: [{ sourcePath, outputPath, workspacePath, page: 1 }],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-          drawio: {
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs' },
+          mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawioTools: {
             drawioPath: 'drawio',
             runDrawio: async (_executable, args) => {
               await writeFile(args[args.indexOf('-o') + 1]!, '<html>not svg</html>');
@@ -120,14 +120,14 @@ suite('SVGに変換する処理', () => {
               page: 1,
             },
           ],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: {
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs' },
+          mermaidTools: {
             browserChannel: 'chrome',
             theme: 'default',
             backgroundColor: 'white',
           },
-          drawio: {
+          drawioTools: {
             drawioPath: 'drawio',
             runDrawio: async () => {
               throw errorWithStderr('spawn drawio ENOENT', 'drawio missing');
@@ -155,11 +155,10 @@ suite('SVGに変換する処理', () => {
       await assert.rejects(
         convertToSvgFiles({
           jobs: [{ sourcePath, outputPath, workspacePath, page: 1 }],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-          drawio: { drawioPath: 'drawio' },
-          platform: 'linux',
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs', platform: 'linux' },
+          mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+          drawioTools: { drawioPath: 'drawio' },
           runPdfToSvg: async (_sourcePath, toolOutputPath) => {
             await writeFile(toolOutputPath, '');
           },
@@ -193,14 +192,14 @@ suite('SVGに変換する処理', () => {
               page: 1,
             },
           ],
-          pdftocairoPath: 'pdftocairo',
-          ghostscriptPath: 'gs',
-          mermaid: {
+          pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+          ghostscriptTools: { ghostscriptPath: 'gs' },
+          mermaidTools: {
             browserChannel: 'chrome',
             theme: 'default',
             backgroundColor: 'white',
           },
-          drawio: {
+          drawioTools: {
             drawioPath: 'drawio',
           },
           runPdfToSvg: async () => {

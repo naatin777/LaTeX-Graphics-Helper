@@ -36,14 +36,14 @@ suite('AVIFに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoPath: 'pdftocairo',
-        ghostscriptPath: 'gs',
-        mermaid: {
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        ghostscriptTools: { ghostscriptPath: 'gs' },
+        mermaidTools: {
           browserChannel: 'chrome',
           theme: 'default',
           backgroundColor: 'white',
         },
-        drawio: {
+        drawioTools: {
           drawioPath: 'drawio',
           runDrawio: async (_executable, args) => {
             drawioCalls.push(args);

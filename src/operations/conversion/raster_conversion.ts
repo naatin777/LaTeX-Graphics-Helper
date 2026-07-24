@@ -26,15 +26,12 @@ import {
 
 export type { CommittedConversionOutput, OutputConflictDecision, PreparedConversionOutput };
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
-import type { MermaidPuppeteerOptions, RunDrawio } from './convert_to_pdf.js';
+import type { DrawioTools, GhostscriptTools, MermaidTools, PdftocairoTools } from './tools/index.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import { createMermaidCliRenderOptions } from './mermaid_render_options.js';
 import { runExternalTool } from '../external_tools/run_external_tool.js';
-import {
-  runPdftocairoWithAsciiScratch,
-  type PdfToolScratchOptions,
-} from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
+import { runPdftocairoWithAsciiScratch } from '../external_tools/run_pdftocairo_with_ascii_scratch.js';
 import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_batch.js';
 
 const execFileAsync = promisify(execFile);
@@ -46,11 +43,6 @@ export type RasterEncoder = (
   page?: number,
   animation?: RasterAnimationMetadata,
 ) => Promise<void>;
-
-export interface DrawioOptions {
-  drawioPath: string;
-  runDrawio?: RunDrawio;
-}
 
 export interface RasterConversionDefinition {
   operationName: string;
@@ -68,34 +60,25 @@ export interface RasterJob {
   animation?: RasterAnimationMetadata;
 }
 
-export type RunPdfToPng = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
-
-export interface ConvertToRasterFilesOptions extends PdfToolScratchOptions {
+export interface ConvertToRasterFilesOptions {
   jobs: RasterJob[];
   runtime: ConversionRuntime;
-  pdftocairoPath: string;
-  ghostscriptPath: string;
-  mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioOptions;
+  pdftocairoTools: PdftocairoTools;
+  ghostscriptTools: GhostscriptTools;
+  mermaidTools: MermaidTools;
+  drawioTools: DrawioTools;
   maxInputPixels: number;
-  runPdfToPng?: RunPdfToPng | undefined;
   runId?: string | undefined;
   definition: RasterConversionDefinition;
-}
-
-interface RasterStageTools {
-  pdftocairoPath: string;
-  ghostscriptPath: string;
-  mermaid: MermaidPuppeteerOptions;
-  drawio: DrawioOptions;
-  runPdfToPng: RunPdfToPng | undefined;
 }
 
 interface RasterStageContext {
   runId: string;
   runtime: ConversionRuntime;
-  tools: RasterStageTools;
-  scratch: PdfToolScratchOptions;
+  pdftocairoTools: PdftocairoTools;
+  ghostscriptTools: GhostscriptTools;
+  mermaidTools: MermaidTools;
+  drawioTools: DrawioTools;
   definition: RasterConversionDefinition;
   maxInputPixels: number;
 }
@@ -128,17 +111,6 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
   options.runtime.signal?.throwIfAborted();
 
   const runId = options.runId ?? `${Date.now()}-${crypto.randomUUID()}`;
-  const tools: RasterStageTools = {
-    pdftocairoPath: options.pdftocairoPath,
-    ghostscriptPath: options.ghostscriptPath,
-    mermaid: options.mermaid,
-    drawio: options.drawio,
-    runPdfToPng: options.runPdfToPng,
-  };
-  const scratch: PdfToolScratchOptions = {
-    platform: options.platform,
-    scratchBaseCandidates: options.scratchBaseCandidates,
-  };
   return runStagedConversionBatch({
     jobs: options.jobs,
     operationName: options.definition.operationName,
@@ -148,8 +120,10 @@ export async function convertRasterFiles(options: ConvertToRasterFilesOptions): 
       stageRasterConversion(job, index, {
         runId: stageRunId,
         runtime: stageRuntime,
-        tools,
-        scratch,
+        pdftocairoTools: options.pdftocairoTools,
+        ghostscriptTools: options.ghostscriptTools,
+        mermaidTools: options.mermaidTools,
+        drawioTools: options.drawioTools,
         definition: options.definition,
         maxInputPixels: options.maxInputPixels,
       }),
@@ -233,8 +207,8 @@ async function writeDrawioAsRaster(
   await mkdir(path.dirname(pdfPath), { recursive: true });
   context.runtime.signal?.throwIfAborted();
 
-  await (context.tools.drawio.runDrawio ?? executeDrawio)(
-    context.tools.drawio.drawioPath,
+  await (context.drawioTools.runDrawio ?? executeDrawio)(
+    context.drawioTools.drawioPath,
     ['-x', '-f', 'pdf', '-o', pdfPath, job.sourcePath],
     context.runtime.signal,
   );
@@ -261,18 +235,23 @@ async function writePdfPageAsRaster(request: RasterRenderRequest, context: Raste
     sourcePath: request.sourcePath,
     outputPath: pngPath,
     scratchOutputFileName: 'output.png',
-    scratch: context.scratch,
+    scratch: context.pdftocairoTools,
     signal: context.runtime.signal,
     outputChannel: context.runtime.outputChannel,
     run: async (toolSourcePath, toolOutputPath) => {
-      if (context.tools.runPdfToPng) {
-        await context.tools.runPdfToPng(toolSourcePath, toolOutputPath, request.page ?? 1, context.runtime.signal);
+      if (context.pdftocairoTools.runPdfToPng) {
+        await context.pdftocairoTools.runPdfToPng(
+          toolSourcePath,
+          toolOutputPath,
+          request.page ?? 1,
+          context.runtime.signal,
+        );
         return;
       }
 
       const outputPrefix = toolOutputPath.slice(0, -path.extname(toolOutputPath).length);
       await execFileAsync(
-        context.tools.pdftocairoPath,
+        context.pdftocairoTools.pdftocairoPath,
         [
           '-png',
           '-singlefile',
@@ -305,9 +284,9 @@ async function writeMermaidAsRaster(request: RasterRenderRequest, context: Raste
   try {
     await runMermaidCli(request.sourcePath, asPngOutputPath(pngPath), {
       outputFormat: 'png',
-      puppeteerConfig: createMermaidPuppeteerConfig(context.tools.mermaid),
+      puppeteerConfig: createMermaidPuppeteerConfig(context.mermaidTools),
       quiet: true,
-      ...createMermaidCliRenderOptions(context.tools.mermaid),
+      ...createMermaidCliRenderOptions(context.mermaidTools),
     });
   } catch (error) {
     if (isAbortError(error)) {
@@ -329,7 +308,7 @@ async function writeEpsAsRaster(job: RasterJob, paths: RasterStagePaths, context
   const epsOptions: EpsToPdfOptions = {
     epsPath: job.sourcePath,
     workspacePath: job.workspacePath,
-    ghostscriptPath: context.tools.ghostscriptPath,
+    ghostscriptPath: context.ghostscriptTools.ghostscriptPath,
     stagingDirectory: epsStaging,
   };
   if (context.runtime.signal !== undefined) {
@@ -338,11 +317,11 @@ async function writeEpsAsRaster(job: RasterJob, paths: RasterStagePaths, context
   if (context.runtime.outputChannel !== undefined) {
     epsOptions.outputChannel = context.runtime.outputChannel;
   }
-  if (context.scratch.scratchBaseCandidates !== undefined) {
-    epsOptions.scratchBaseCandidates = context.scratch.scratchBaseCandidates;
+  if (context.ghostscriptTools.scratchBaseCandidates !== undefined) {
+    epsOptions.scratchBaseCandidates = context.ghostscriptTools.scratchBaseCandidates;
   }
-  if (context.scratch.platform !== undefined) {
-    epsOptions.platform = context.scratch.platform;
+  if (context.ghostscriptTools.platform !== undefined) {
+    epsOptions.platform = context.ghostscriptTools.platform;
   }
   const { pdfPath } = await convertEpsToPdf(epsOptions);
 
@@ -432,7 +411,7 @@ export function asPngOutputPath(outputPath: string): `${string}.png` {
   return outputPath as unknown as `${string}.png`;
 }
 
-export function createMermaidPuppeteerConfig(options: MermaidPuppeteerOptions): Record<string, unknown> {
+export function createMermaidPuppeteerConfig(options: MermaidTools): Record<string, unknown> {
   const config: Record<string, unknown> = { headless: true };
   if (options.executablePath) {
     config.executablePath = options.executablePath;

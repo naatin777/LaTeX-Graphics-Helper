@@ -57,10 +57,10 @@ async function convertImage(
 
   const common = {
     jobs: [job],
-    pdftocairoPath: 'pdftocairo',
-    ghostscriptPath: 'gs',
-    mermaid: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
-    drawio: { drawioPath: 'drawio' },
+    pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+    ghostscriptTools: { ghostscriptPath: 'gs' },
+    mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
+    drawioTools: { drawioPath: 'drawio' },
     runtime,
     runId: `${inputFormat}-${outputFormat}`,
   };
