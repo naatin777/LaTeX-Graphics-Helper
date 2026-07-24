@@ -44,24 +44,26 @@ suite('JPEGに変換する処理', () => {
 
       await convertToJpegFiles({
         jobs: [job],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          runPdfToPng: async (pdfPath, pngPath, page) => {
+            assert.ok(pdfPath.endsWith('.pdf'));
+            assert.strictEqual(page, 1);
+            await sharp({
+              create: {
+                width: 32,
+                height: 24,
+                channels: 4,
+                background: '#285078',
+              },
+            })
+              .png()
+              .toFile(pngPath);
+          },
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: drawio,
-        runPdfToPng: async (pdfPath, pngPath, page) => {
-          assert.ok(pdfPath.endsWith('.pdf'));
-          assert.strictEqual(page, 1);
-          await sharp({
-            create: {
-              width: 32,
-              height: 24,
-              channels: 4,
-              background: '#285078',
-            },
-          })
-            .png()
-            .toFile(pngPath);
-        },
         runtime: { resolveConflicts: async () => 'overwrite' },
       });
 

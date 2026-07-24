@@ -106,13 +106,13 @@ const routes: readonly PdfConversionRoute[] = [
     convert: async (context, runPdfTool) => {
       await convertToPngFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
-        runPdfToPng: runPdfTool,
         runtime: {},
         runId: 'windows-pdftocairo-png',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
@@ -125,13 +125,13 @@ const routes: readonly PdfConversionRoute[] = [
     convert: async (context, runPdfTool) => {
       await convertToJpegFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
-        runPdfToPng: runPdfTool,
         runtime: {},
         runId: 'windows-pdftocairo-jpeg',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
@@ -144,14 +144,14 @@ const routes: readonly PdfConversionRoute[] = [
     convert: async (context, runPdfTool) => {
       await convertToWebpFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         webp: { effort: 0 },
-        runPdfToPng: runPdfTool,
         runtime: {},
         runId: 'windows-pdftocairo-webp',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
@@ -164,14 +164,14 @@ const routes: readonly PdfConversionRoute[] = [
     convert: async (context, runPdfTool) => {
       await convertToAvifFilesWithScratch({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         avif: { effort: 0 },
-        runPdfToPng: runPdfTool,
         runtime: {},
         runId: 'windows-pdftocairo-avif',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
@@ -185,11 +185,16 @@ const routes: readonly PdfConversionRoute[] = [
       await convertToSvgFilesWithScratch({
         jobs: [createJob(context)],
         pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
-        ghostscriptTools: { ghostscriptPath: 'gs' },
+        ghostscriptTools: {
+          ghostscriptPath: 'gs',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+        },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         runPdfToSvg: runPdfTool,
         runId: 'windows-pdftocairo-svg',
+        platform: 'win32',
         scratchBaseCandidates: [context.scratchBasePath],
       });
     },
