@@ -241,7 +241,8 @@ suite('package.jsonの変換メニュー定義', () => {
     for (const setting of Object.values(CONVERSION_CONTEXT_MENU_SETTINGS)) {
       assert.ok(convertSubmenu?.when?.includes(setting.property), `${setting.property} is not on the convert submenu`);
     }
-    assert.ok(convertSubmenu?.when?.includes('resourceExtname =~ /^\\.(gif|tif|tiff|eps)$/i'));
+    assert.ok(convertSubmenu?.when?.includes('resourceExtname =~ /^\\.gif$/i'));
+    assert.ok(convertSubmenu?.when?.includes('resourceExtname =~ /^\\.tiff?$/i'));
 
     for (const [command, settings] of Object.entries(expectedSettingsByCommand)) {
       const entry = commandEntries.get(command);
@@ -261,7 +262,8 @@ suite('package.jsonの変換メニュー定義', () => {
 
     assert.ok(combineImagesToSinglePdf?.when?.includes(CONTEXT_MENU_ENABLED));
     assert.ok(combineImagesToSinglePdf?.when?.includes(COMPOUND_DRAWIO_NOT_MATCH));
-    assert.ok(combineImagesToSinglePdf?.when?.includes('resourceExtname =~ /^\\.(gif|tif|tiff|eps)$/i'));
+    assert.ok(combineImagesToSinglePdf?.when?.includes('resourceExtname =~ /^\\.gif$/i'));
+    assert.ok(combineImagesToSinglePdf?.when?.includes('resourceExtname =~ /^\\.tiff?$/i'));
     assert.ok(!combineImagesToSinglePdf?.when?.includes(CONVERSION_CONTEXT_MENU_SETTINGS.drawio.property));
   });
 
@@ -492,6 +494,39 @@ suite('package.jsonの変換メニュー定義', () => {
     assert.ok(paletteHidden.has(CONVERT_TO_WEBP_SEPARATELY_COMMAND));
     assert.ok(paletteHidden.has(CONVERT_TO_GIF_PRESERVE_COMMAND));
     assert.ok(paletteHidden.has(CONVERT_TO_GIF_SEPARATELY_COMMAND));
+  });
+
+  test('WebP preserve/splitは.gifのみ、GIF preserve/splitは.webpのみに表示する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const findEntry = (command: string) => convertMenu.find((e) => e.command === command);
+
+    const webpPreserve = findEntry(CONVERT_TO_WEBP_PRESERVE_COMMAND);
+    const webpSeparately = findEntry(CONVERT_TO_WEBP_SEPARATELY_COMMAND);
+    const gifPreserve = findEntry(CONVERT_TO_GIF_PRESERVE_COMMAND);
+    const gifSeparately = findEntry(CONVERT_TO_GIF_SEPARATELY_COMMAND);
+
+    assert.ok(webpPreserve?.when?.includes('resourceExtname =~ /^\\.gif$/i'));
+    assert.ok(!webpPreserve?.when?.includes('.webp'), 'WebP preserve should not match .webp');
+    assert.ok(webpSeparately?.when?.includes('resourceExtname =~ /^\\.gif$/i'));
+    assert.ok(!webpSeparately?.when?.includes('.webp'), 'WebP separately should not match .webp');
+
+    assert.ok(gifPreserve?.when?.includes('resourceExtname =~ /^\\.webp$/i'));
+    assert.ok(!gifPreserve?.when?.includes('.gif'), 'GIF preserve should not match .gif');
+    assert.ok(gifSeparately?.when?.includes('resourceExtname =~ /^\\.webp$/i'));
+    assert.ok(!gifSeparately?.when?.includes('.gif'), 'GIF separately should not match .gif');
+  });
+
+  test('通常のWebPコマンドは.gifを除外し、通常のGIFコマンドは.webpを除外する', async () => {
+    const packageJson = await readJson<PackageJson>('package.json');
+    const convertMenu = packageJson.contributes.menus[CONVERT_SUBMENU] ?? [];
+    const findEntry = (command: string) => convertMenu.find((e) => e.command === command);
+
+    const webp = findEntry(CONVERT_TO_WEBP_COMMAND);
+    const gif = findEntry(CONVERT_TO_GIF_COMMAND);
+
+    assert.ok(!webp?.when?.includes('gif'), 'Standard WebP should not match .gif');
+    assert.ok(!gif?.when?.includes('.webp'), 'Standard GIF should not match .webp');
   });
 
   test('日本語の変換メニューには出力形式のラベルを使う', async () => {

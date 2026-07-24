@@ -45,13 +45,6 @@ export async function convertToRawFiles(options: ConvertToRawFilesOptions): Prom
     ]),
   );
   const sidecars = await Promise.all(options.jobs.map((job) => readRawSidecar(job.sourcePath, job.workspacePath)));
-  for (const [i, sidecar] of sidecars.entries()) {
-    if (sidecar !== undefined && sidecar.depth !== 'uchar') {
-      throw new Error(
-        `Raw re-input only supports uchar depth: ${options.jobs[i]!.sourcePath} has depth '${sidecar.depth}'.`,
-      );
-    }
-  }
   options.runtime.signal?.throwIfAborted();
   await assertPreflightPassed(options.jobs, {
     ...preflightOptionsFromRuntime(options.runtime),
