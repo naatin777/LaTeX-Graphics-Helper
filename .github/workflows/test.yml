@@ -97,7 +97,6 @@ jobs:
           fail_ci_if_error: false
           flags: extension-host
           name: extension-host-${{ matrix.label }}
-          token: ${{ secrets.CODECOV_TOKEN }}
 
       - if: failure()
         uses: actions/upload-artifact@v7
