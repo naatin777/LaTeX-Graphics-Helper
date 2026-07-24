@@ -53,34 +53,6 @@ const svgFixturePath = path.resolve(
 const complexSourceFileName =
   '　日本語 English 한국어 中文 العربية हिन्दी ไทย עברית Ελληνικά Русский 🌹 ＡＢＣ１２３①.pdf';
 
-interface WindowsScratchOptions {
-  platform: NodeJS.Platform;
-  scratchBaseCandidates: readonly string[];
-}
-
-type ConvertToPngFilesWithScratch = (
-  options: Parameters<typeof convertToPngFiles>[0] & WindowsScratchOptions,
-) => ReturnType<typeof convertToPngFiles>;
-type ConvertToJpegFilesWithScratch = (
-  options: Parameters<typeof convertToJpegFiles>[0] & WindowsScratchOptions,
-) => ReturnType<typeof convertToJpegFiles>;
-type ConvertToWebpFilesWithScratch = (
-  options: Parameters<typeof convertToWebpFiles>[0] & WindowsScratchOptions,
-) => ReturnType<typeof convertToWebpFiles>;
-type ConvertToAvifFilesWithScratch = (
-  options: Parameters<typeof convertToAvifFiles>[0] & WindowsScratchOptions,
-) => ReturnType<typeof convertToAvifFiles>;
-type ConvertToSvgFilesWithScratch = (
-  options: Parameters<typeof convertToSvgFiles>[0] & WindowsScratchOptions,
-) => ReturnType<typeof convertToSvgFiles>;
-
-// Implementation Phaseで追加するplatform・scratch候補の注入契約を、失敗テストでも型安全に呼ぶ。
-const convertToPngFilesWithScratch = convertToPngFiles as ConvertToPngFilesWithScratch;
-const convertToJpegFilesWithScratch = convertToJpegFiles as ConvertToJpegFilesWithScratch;
-const convertToWebpFilesWithScratch = convertToWebpFiles as ConvertToWebpFilesWithScratch;
-const convertToAvifFilesWithScratch = convertToAvifFiles as ConvertToAvifFilesWithScratch;
-const convertToSvgFilesWithScratch = convertToSvgFiles as ConvertToSvgFilesWithScratch;
-
 type RunPdfTool = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
 
 interface ConversionContext {
@@ -104,16 +76,19 @@ const routes: readonly PdfConversionRoute[] = [
     outputExtension: '.png',
     toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
-      await convertToPngFilesWithScratch({
+      await convertToPngFiles({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+          runPdfToPng: runPdfTool,
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         runtime: {},
         runId: 'windows-pdftocairo-png',
-        platform: 'win32',
-        scratchBaseCandidates: [context.scratchBasePath],
       });
     },
     assertOutput: (outputPath) => assertRasterFormat(outputPath, 'png'),
@@ -123,16 +98,19 @@ const routes: readonly PdfConversionRoute[] = [
     outputExtension: '.jpeg',
     toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
-      await convertToJpegFilesWithScratch({
+      await convertToJpegFiles({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+          runPdfToPng: runPdfTool,
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         runtime: {},
         runId: 'windows-pdftocairo-jpeg',
-        platform: 'win32',
-        scratchBaseCandidates: [context.scratchBasePath],
       });
     },
     assertOutput: (outputPath) => assertRasterFormat(outputPath, 'jpeg'),
@@ -142,17 +120,20 @@ const routes: readonly PdfConversionRoute[] = [
     outputExtension: '.webp',
     toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
-      await convertToWebpFilesWithScratch({
+      await convertToWebpFiles({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+          runPdfToPng: runPdfTool,
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         webp: { effort: 0 },
         runtime: {},
         runId: 'windows-pdftocairo-webp',
-        platform: 'win32',
-        scratchBaseCandidates: [context.scratchBasePath],
       });
     },
     assertOutput: (outputPath) => assertRasterFormat(outputPath, 'webp'),
@@ -162,17 +143,20 @@ const routes: readonly PdfConversionRoute[] = [
     outputExtension: '.avif',
     toolOutputFileName: 'output.png',
     convert: async (context, runPdfTool) => {
-      await convertToAvifFilesWithScratch({
+      await convertToAvifFiles({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo', runPdfToPng: runPdfTool },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+          runPdfToPng: runPdfTool,
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: { browserChannel: 'chrome', theme: 'default', backgroundColor: 'white' },
         drawioTools: { drawioPath: 'drawio' },
         avif: { effort: 0 },
         runtime: {},
         runId: 'windows-pdftocairo-avif',
-        platform: 'win32',
-        scratchBaseCandidates: [context.scratchBasePath],
       });
     },
     assertOutput: (outputPath) => assertRasterFormat(outputPath, 'heif'),
@@ -182,9 +166,13 @@ const routes: readonly PdfConversionRoute[] = [
     outputExtension: '.svg',
     toolOutputFileName: 'output.svg',
     convert: async (context, runPdfTool) => {
-      await convertToSvgFilesWithScratch({
+      await convertToSvgFiles({
         jobs: [createJob(context)],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          platform: 'win32',
+          scratchBaseCandidates: [context.scratchBasePath],
+        },
         ghostscriptTools: {
           ghostscriptPath: 'gs',
           platform: 'win32',
@@ -194,8 +182,6 @@ const routes: readonly PdfConversionRoute[] = [
         drawioTools: { drawioPath: 'drawio' },
         runPdfToSvg: runPdfTool,
         runId: 'windows-pdftocairo-svg',
-        platform: 'win32',
-        scratchBaseCandidates: [context.scratchBasePath],
       });
     },
     assertOutput: assertSvgOutput,
