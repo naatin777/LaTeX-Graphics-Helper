@@ -99,7 +99,15 @@ suite('WebPに変換する処理', () => {
             page: 1,
           },
         ],
-        pdftocairoTools: { pdftocairoPath: 'pdftocairo' },
+        pdftocairoTools: {
+          pdftocairoPath: 'pdftocairo',
+          runPdfToPng: async (sourcePath, outputPath, page) => {
+            pdfToPngCalls.push({ sourcePath, outputPath, page });
+            await sharp({ create: { width: 4, height: 4, channels: 4, background: '#ff0000' } })
+              .png()
+              .toFile(outputPath);
+          },
+        },
         ghostscriptTools: { ghostscriptPath: 'gs' },
         mermaidTools: {
           browserChannel: 'chrome',
