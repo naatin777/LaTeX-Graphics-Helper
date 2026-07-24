@@ -8,7 +8,7 @@ type OutputPathPlatform = 'win32' | 'posix';
 type ResolveOutputPathWithPlatform = (
   templatePath: string,
   context: OutputPathContext,
-  options: { platform: OutputPathPlatform },
+  options: { platform: OutputPathPlatform; allowedExtensions?: readonly string[] },
 ) => string;
 
 // Implementation Phaseで追加するplatform注入契約を、失敗テスト段階でも型安全に呼び出す。
@@ -169,13 +169,13 @@ suite('出力パスのテンプレート解決', () => {
   });
 
   test('Draw.io compound source nameを論理名として展開する', () => {
-    const result = resolveOutputPath(
+    const result = resolveOutputPathWithPlatform(
       '${fileDirname}/${fileBasenameNoExtension}.png',
       {
         ...posixContext(),
         sourcePath: logicalSourcePathForOutputTemplate('/workspace/figures/diagram.drawio.png'),
       },
-      { allowedExtensions: ['.png'] },
+      { platform: 'posix', allowedExtensions: ['.png'] },
     );
 
     assert.strictEqual(result, '/workspace/figures/diagram.png');
