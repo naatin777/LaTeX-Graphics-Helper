@@ -70,7 +70,8 @@ jobs:
         run: .github/scripts/verify-image-tools-windows.ps1
         shell: pwsh
 
-      - name: Run VS Code Extension Host tests with coverage
+      - id: coverage-test
+        name: Run VS Code Extension Host tests with coverage
         run: ${{ matrix.test_command }}
         shell: bash
         env:
@@ -89,14 +90,13 @@ jobs:
           path: coverage/vscode/
           if-no-files-found: ignore
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - if: steps.build.outcome == 'success' && steps.coverage-test.outcome == 'success'
+        name: Upload coverage for aggregation
+        uses: actions/upload-artifact@v7
         with:
-          files: ./coverage/vscode/lcov.info
-          disable_search: true
-          fail_ci_if_error: false
-          flags: extension-host
-          name: extension-host-${{ matrix.label }}
+          name: octocov-${{ matrix.label }}
+          path: coverage/vscode/lcov.info
+          if-no-files-found: error
 
       - if: failure()
         uses: actions/upload-artifact@v7
@@ -110,3 +110,24 @@ jobs:
         run: |
           node --input-type=module -e "import { rm } from 'node:fs/promises'; await rm('.vscode-test-ci-data', { recursive: true, force: true, maxRetries: 20, retryDelay: 200 });"
         shell: bash
+
+  coverage-report:
+    name: Coverage report
+    runs-on: ubuntu-latest
+    needs: test
+
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v7
+        with:
+          pattern: octocov-*
+
+      - name: Publish coverage report
+        uses: k1LoW/octocov-action@v1

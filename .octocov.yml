@@ -1,0 +1,14 @@
+coverage:
+  paths:
+    - octocov-Linux
+    - octocov-macOS
+    - octocov-Windows
+
+comment:
+  if: is_pull_request
+  updatePrevious: true
+  hideFooterLink: false
+
+summary:
+  if: true
+  hideFooterLink: false
