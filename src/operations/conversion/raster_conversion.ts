@@ -20,11 +20,10 @@ import {
 } from './raster_input.js';
 import {
   type CommittedConversionOutput,
-  type OutputConflictDecision,
   type PreparedConversionOutput,
 } from '../lifecycle/commit_conversion_outputs.js';
 
-export type { CommittedConversionOutput, OutputConflictDecision, PreparedConversionOutput };
+export type { CommittedConversionOutput };
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import type { DrawioTools, GhostscriptTools, MermaidTools, PdftocairoTools } from './tools/index.js';
 import { convertEpsToPdf, type EpsToPdfOptions } from './eps_to_pdf.js';
@@ -36,7 +35,7 @@ import { runStagedConversionBatch } from '../lifecycle/run_staged_conversion_bat
 
 const execFileAsync = promisify(execFile);
 
-export type RasterEncoder = (
+type RasterEncoder = (
   sourcePath: string,
   outputPath: string,
   maxInputPixels: number,
@@ -403,7 +402,7 @@ function isSupportedSourcePath(sourcePath: string): boolean {
   );
 }
 
-export function asPngOutputPath(outputPath: string): `${string}.png` {
+function asPngOutputPath(outputPath: string): `${string}.png` {
   if (!outputPath.toLowerCase().endsWith('.png')) {
     throw new Error(`PNG output path must end with .png: ${outputPath}`);
   }
@@ -411,7 +410,7 @@ export function asPngOutputPath(outputPath: string): `${string}.png` {
   return outputPath as unknown as `${string}.png`;
 }
 
-export function createMermaidPuppeteerConfig(options: MermaidTools): Record<string, unknown> {
+function createMermaidPuppeteerConfig(options: MermaidTools): Record<string, unknown> {
   const config: Record<string, unknown> = { headless: true };
   if (options.executablePath) {
     config.executablePath = options.executablePath;

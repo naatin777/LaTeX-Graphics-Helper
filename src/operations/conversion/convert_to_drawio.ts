@@ -20,7 +20,7 @@ import { runExternalTool } from '../external_tools/run_external_tool.js';
 import type { ChromeReleaseChannel } from 'puppeteer-core';
 
 const execFileAsync = promisify(execFile);
-export interface DrawioInput {
+interface DrawioInput {
   sourcePath: string;
   pageName?: string;
 }
@@ -31,10 +31,10 @@ export interface ConvertToDrawioJob {
   workspacePath: string;
 }
 
-export type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
-export type RunGhostscript = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
-export type RunMermaid = (sourcePath: string, outputPath: string, signal?: AbortSignal) => Promise<void>;
-export type RunDrawio = (
+type RunPdfToSvg = (sourcePath: string, outputPath: string, page: number, signal?: AbortSignal) => Promise<void>;
+type RunGhostscript = (executable: string, args: string[], signal?: AbortSignal) => Promise<void>;
+type RunMermaid = (sourcePath: string, outputPath: string, signal?: AbortSignal) => Promise<void>;
+type RunDrawio = (
   executable: string,
   args: string[],
   signal?: AbortSignal,

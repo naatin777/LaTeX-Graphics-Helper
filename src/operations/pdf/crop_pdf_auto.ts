@@ -31,7 +31,7 @@ export interface CropPdfJob {
   outputPath: string;
 }
 
-export interface GhostscriptResult {
+interface GhostscriptResult {
   stdout: string;
   stderr: string;
 }

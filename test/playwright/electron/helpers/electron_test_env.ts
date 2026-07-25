@@ -11,8 +11,8 @@ import { cropConfigureFixture } from '../../../helpers/crop_configure_fixture.js
 import { writeVscodeUserSettings } from './vscode_electron_test.js';
 import { installPackagedVsix } from './packaged_vsix.js';
 
-export const vscodeVersion = '1.128.0';
-export const temporaryBase = process.platform === 'win32' ? tmpdir() : '/tmp';
+const vscodeVersion = '1.128.0';
+const temporaryBase = process.platform === 'win32' ? tmpdir() : '/tmp';
 
 export interface ElectronTestEnv {
   electronApp: ElectronApplication;

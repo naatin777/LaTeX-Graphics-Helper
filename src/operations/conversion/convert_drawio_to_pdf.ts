@@ -34,7 +34,7 @@ export interface ConvertDrawioToPdfOptions {
   runDrawio?: RunDrawio;
 }
 
-export type RunDrawio = (
+type RunDrawio = (
   executable: string,
   args: string[],
   signal?: AbortSignal,

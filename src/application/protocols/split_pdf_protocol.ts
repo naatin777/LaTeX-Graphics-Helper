@@ -61,7 +61,7 @@ export interface SplitPdfPageGroupRow {
   outputName: string;
 }
 
-export type SplitPdfPageParseFailureKind = 'required' | 'malformed' | 'wholeNumber' | 'descending' | 'outOfRange';
+type SplitPdfPageParseFailureKind = 'required' | 'malformed' | 'wholeNumber' | 'descending' | 'outOfRange';
 
 export type SplitPdfPageParseFailure = {
   ok: false;

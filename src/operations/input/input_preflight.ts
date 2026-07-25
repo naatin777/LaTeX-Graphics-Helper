@@ -27,7 +27,7 @@ import {
 } from '../conversion/raster_input.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 
-export type PreflightResult = 'ok' | 'warning' | 'error';
+type PreflightResult = 'ok' | 'warning' | 'error';
 
 export interface PreflightReport {
   sourcePath: string;
@@ -58,7 +58,7 @@ export interface AssertPreflightPassedOptions {
 const PREFLIGHT_CONCURRENCY = 2;
 const EPS_INSPECTION_BYTES = 64 * 1024;
 
-export type PreflightValidator = (sourcePath: string) => Promise<PreflightReport>;
+type PreflightValidator = (sourcePath: string) => Promise<PreflightReport>;
 
 export interface PreflightBatchOptions {
   signal?: AbortSignal;

@@ -23,7 +23,7 @@ import {
 } from '../external_tools/run_rsvg_convert_with_ascii_scratch.js';
 import type { SvgToPdfTools } from './tools/index.js';
 
-export interface CombineImagesJob {
+interface CombineImagesJob {
   sourcePath: string;
 }
 

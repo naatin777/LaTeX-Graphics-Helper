@@ -16,8 +16,6 @@ import {
   type RawSidecar,
 } from './raster_input.js';
 
-export type { RawSidecar };
-
 export interface ConvertToRawJob {
   sourcePath: string;
   outputPath: string;
@@ -118,7 +116,7 @@ export async function convertToRawFiles(options: ConvertToRawFilesOptions): Prom
   });
 }
 
-export async function readRawSidecar(sourcePath: string, workspacePath: string): Promise<RawSidecar | undefined> {
+async function readRawSidecar(sourcePath: string, workspacePath: string): Promise<RawSidecar | undefined> {
   if (!sourcePath.toLowerCase().endsWith('.raw')) {
     return undefined;
   }

@@ -2,14 +2,6 @@ import * as vscode from 'vscode';
 
 const NOTIFICATION_CLEAR_INTERVAL_MS = 500;
 
-export async function runCommandAndClearNotifications<T>(
-  commandExecution: Thenable<T>,
-  waitBeforeClear: () => Promise<void>,
-): Promise<T> {
-  await waitBeforeClear();
-  return runCommandAndClearNotificationsUntilDone(commandExecution);
-}
-
 export async function runCommandAndClearNotificationsUntilDone<T>(commandExecution: Thenable<T>): Promise<T> {
   const commandPromise = Promise.resolve(commandExecution);
   const completion = waitForCompletion(commandPromise);

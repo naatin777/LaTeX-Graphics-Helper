@@ -3,8 +3,6 @@ import { copyFile, mkdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { PDFDocument } from 'pdf-lib';
-
 import { assertPreflightPassed, preflightOptionsFromRuntime } from '../input/input_preflight.js';
 import type { ConversionRuntime } from '../lifecycle/conversion_runtime.js';
 import {
@@ -140,7 +138,7 @@ async function stageSourceToEps(
   return { stagedOutputPath, outputPath: job.outputPath, workspacePath: job.workspacePath, stagingRootPath };
 }
 
-export async function runPdfToEps(options: {
+async function runPdfToEps(options: {
   pdfPath: string;
   epsPath: string;
   ghostscriptPath: string;
@@ -200,7 +198,7 @@ export async function runPdfToEps(options: {
   await validateGeneratedEps(options.epsPath);
 }
 
-export async function validateGeneratedEps(epsPath: string): Promise<void> {
+async function validateGeneratedEps(epsPath: string): Promise<void> {
   const fileStat = await stat(epsPath);
   if (!fileStat.isFile() || fileStat.size === 0) {
     throw new Error(`EPS conversion produced empty output: ${epsPath}`);
@@ -247,13 +245,4 @@ function validateJobs(jobs: ConvertToEpsJob[], supportedExtensions: readonly str
       throw new Error(`Unsupported input format: ${job.sourcePath}`);
     }
   }
-}
-
-export async function assertPdfHasPages(pdfPath: string): Promise<number> {
-  const document = await PDFDocument.load(await readFile(pdfPath));
-  const pages = document.getPageCount();
-  if (pages === 0) {
-    throw new Error(`PDF has no pages: ${pdfPath}`);
-  }
-  return pages;
 }

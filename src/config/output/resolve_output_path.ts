@@ -8,7 +8,7 @@ export interface OutputPathContext {
   dateNow?: number;
 }
 
-export type OutputPathPlatform = 'win32' | 'posix';
+type OutputPathPlatform = 'win32' | 'posix';
 
 export interface ResolveOutputPathOptions {
   platform?: OutputPathPlatform;
@@ -41,7 +41,7 @@ export function resolveOutputPath(
   return outputPath;
 }
 
-export function validateOutputExtension(outputPath: string, allowedExtensions: readonly string[] | undefined): void {
+function validateOutputExtension(outputPath: string, allowedExtensions: readonly string[] | undefined): void {
   if (allowedExtensions === undefined) {
     return;
   }

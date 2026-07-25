@@ -23,14 +23,14 @@ export interface CropBox {
   top: number;
 }
 
-export type CropTarget =
+type CropTarget =
   | { type: 'all' }
   | {
       type: 'selected';
       pages: number[];
     };
 
-export interface CropPdfConfigureJob {
+interface CropPdfConfigureJob {
   sourcePath: string;
   workspacePath: string;
   outputPath: string;

@@ -19,7 +19,7 @@ export interface SplitPdfJob {
   outputPathForPage: (page: number) => string;
 }
 
-export interface SplitPdfPageGroupsJob {
+interface SplitPdfPageGroupsJob {
   sourcePath: string;
   workspacePath: string;
   pageGroups?: number[][];

@@ -34,12 +34,7 @@ export interface EpsToPdfOptions {
   runGhostscript?: RunGhostscript;
 }
 
-export type RunGhostscript = (
-  executable: string,
-  args: string[],
-  timeout: number,
-  signal?: AbortSignal,
-) => Promise<void>;
+type RunGhostscript = (executable: string, args: string[], timeout: number, signal?: AbortSignal) => Promise<void>;
 
 /**
  * Converts an EPS file to a single-page PDF via Ghostscript.
