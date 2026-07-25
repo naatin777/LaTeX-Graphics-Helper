@@ -28,6 +28,16 @@ export function defineWebviewTestConfig(config: WebviewTestConfig) {
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
       clearMocks: true,
       restoreMocks: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text-summary', 'html', 'lcov'],
+        reportsDirectory: resolve(webviewRoot, '../coverage/webview', config.appName),
+        include: [
+          resolve(webviewRoot, 'apps', config.appName, 'src/**/*.{ts,tsx}'),
+          resolve(webviewRoot, 'shared/**/*.{ts,tsx}'),
+        ],
+        exclude: ['**/*.test.{ts,tsx}', '**/*.d.ts'],
+      },
     },
   });
 }
