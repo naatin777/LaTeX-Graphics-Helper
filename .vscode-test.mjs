@@ -26,9 +26,10 @@ export default defineConfig({
     },
   ],
   coverage: {
+    // include globs currently discard the Extension Host V8 entries after remapping.
+    // Keep source discovery anchored by srcDir and exclude only known non-source files.
     includeAll: process.platform !== "win32",
-    include: ["**/*.ts"],
     reporter: ["text-summary", "html", "lcov"],
-    exclude: ["**/*.d.ts", "**/test/**"],
+    exclude: ["**/*.d.ts", "**/test/**", "**/scripts/**"],
   },
 });
