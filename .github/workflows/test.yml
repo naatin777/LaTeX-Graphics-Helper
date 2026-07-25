@@ -118,7 +118,7 @@ jobs:
         shell: bash
 
       - name: Install pinned Vitest coverage provider
-        run: npm install --no-save --package-lock=false @vitest/coverage-v8@4.1.10
+        run: npm install --no-save --package-lock=false --legacy-peer-deps @vitest/coverage-v8@4.1.10
         shell: bash
 
       - name: Run Crop PDF Webview tests with coverage
