@@ -26,8 +26,9 @@ export default defineConfig({
     },
   ],
   coverage: {
-    includeAll: true,
+    includeAll: process.platform !== "win32",
+    include: ["**/*.ts"],
     reporter: ["text-summary", "html", "lcov"],
-    exclude: ["src/**/*.d.ts", "**/test/**"],
+    exclude: ["**/*.d.ts", "**/test/**"],
   },
 });
