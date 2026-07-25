@@ -1,8 +1,8 @@
+repository: ${GITHUB_REPOSITORY}/${OCTOCOV_OS}
+
 coverage:
   paths:
-    - octocov-Linux/lcov.info
-    - octocov-macOS/lcov.info
-    - octocov-Windows/lcov.info
+    - ${OCTOCOV_COVERAGE_PATH}
 
 testExecutionTime:
   if: false

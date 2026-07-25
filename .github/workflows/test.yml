@@ -112,22 +112,35 @@ jobs:
         shell: bash
 
   coverage-report:
-    name: Coverage report
+    name: Coverage report (${{ matrix.label }})
     runs-on: ubuntu-latest
     needs: test
+    if: success()
 
     permissions:
       contents: read
       actions: read
       pull-requests: write
 
+    strategy:
+      fail-fast: false
+      matrix:
+        label:
+          - Linux
+          - macOS
+          - Windows
+
     steps:
       - uses: actions/checkout@v7
 
-      - name: Download coverage reports
+      - name: Download ${{ matrix.label }} coverage
         uses: actions/download-artifact@v7
         with:
-          pattern: octocov-*
+          name: octocov-${{ matrix.label }}
+          path: coverage-${{ matrix.label }}
 
-      - name: Publish coverage report
+      - name: Publish ${{ matrix.label }} coverage report
         uses: k1LoW/octocov-action@v1
+        env:
+          OCTOCOV_OS: ${{ matrix.label }}
+          OCTOCOV_COVERAGE_PATH: coverage-${{ matrix.label }}/lcov.info
