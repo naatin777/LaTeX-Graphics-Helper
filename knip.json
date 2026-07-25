@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "test/**/*.test.ts",
+    "test/**/*.spec.ts",
+    "webview/apps/*/src/main.tsx",
+    "webview/apps/*/src/app.test.tsx",
+    "webview/apps/*/vite.config.ts",
+    "webview/apps/*/vitest.config.ts",
+    "scripts/*.mjs",
+    ".vscode-test.mjs"
+  ],
+  "project": ["src/**/*.ts", "test/**/*.ts", "webview/**/*.{ts,tsx}", "scripts/*.mjs"],
+  "ignoreDependencies": [
+    "@commitlint/types",
+    "@types/mocha",
+    "@types/node",
+    "@types/sinon",
+    "@types/vscode",
+    "@types/xml2js",
+    "@vscode/test-electron",
+    "@vscode/vsce"
+  ],
+  "ignoreFiles": ["webview/apps/crop_pdf/src/pdf/pdfjs.ts", "webview/shared/pdf/render_first_page.ts"]
+}
