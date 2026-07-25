@@ -1,11 +1,14 @@
 coverage:
   paths:
-    - octocov-Linux
-    - octocov-macOS
-    - octocov-Windows
+    - octocov-Linux/lcov.info
+    - octocov-macOS/lcov.info
+    - octocov-Windows/lcov.info
+
+testExecutionTime:
+  if: false
 
 comment:
-  if: is_pull_request
+  if: is_pull_request && github.event.pull_request.head.repo.full_name == env.GITHUB_REPOSITORY
   updatePrevious: true
   hideFooterLink: false
 
