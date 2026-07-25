@@ -30,6 +30,6 @@ export default defineConfig({
     // Keep source discovery anchored by srcDir and exclude only known non-source files.
     includeAll: process.platform !== "win32",
     reporter: ["text-summary", "html", "lcov"],
-    exclude: ["**/*.d.ts", "**/scripts/**"],
+    exclude: ["**/*.d.ts", "**/test/**", "**/scripts/**"],
   },
 });
