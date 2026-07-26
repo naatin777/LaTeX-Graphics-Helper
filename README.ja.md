@@ -19,7 +19,7 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・Draw.io ファ�
 
 ### 変換
 
-- **出力形式を選ぶ変換**: Explorer の右クリックメニューでは `変換 > PDF` / `変換 > PNG` / `変換 > JPEG` / `変換 > WebP` / `変換 > AVIF` / `変換 > SVG` のように、出力形式を選んで変換します。
+- **出力形式を選ぶ変換**: Explorer の右クリックメニューでは `変換 > PDF` / `変換 > PNG` / `変換 > JPEG` / `変換 > WebP` / `変換 > AVIF` / `変換 > GIF` / `変換 > TIFF` / `変換 > EPS` / `変換 > Raw` / `変換 > SVG` のように、出力形式を選んで変換します。
 - **PDF / 画像 / SVG / Mermaid / editable Draw.io の変換**: 対応入力を、選択した出力形式へまとめて変換します。
 - **混在選択**: 同じ出力形式へ変換できる複数形式のファイルを、1回の操作で変換できます。
 - **ネイティブDraw.ioのPDF変換**: `.drawio` / `.dio` をページごとのPDF、または全ページを含む1つのPDFへ変換できます。
@@ -43,11 +43,14 @@ PDF の分割、トリミング、PDF・画像・SVG・Mermaid・Draw.io ファ�
 | JPEG へ変換                     | `.pdf`, `.png`, `.webp`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io 画像          | `.jpeg`                     | 図版ファイルを JPEG に変換              | PDF入力ではPoppler                                       |
 | WebP へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io 画像  | `.webp`                     | 図版ファイルを WebP に変換              | PDF入力ではPoppler                                       |
 | AVIF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io 画像  | `.avif`                     | 図版ファイルを AVIF に変換              | PDF入力ではPoppler                                       |
-| SVG へ変換                      | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io 画像                                                          | `.svg`                      | 図版ファイルを SVG に変換               | PDF入力はPoppler、MermaidはChrome、editable画像はDraw.io |
+| GIF へ変換                      | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io 画像 | `.gif`                      | 図版ファイルを GIF に変換               | PDF入力ではPoppler                                       |
+| TIFF へ変換                     | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.gif`, `.svg`, Mermaid, editable Draw.io 画像          | `.tiff`                     | 図版ファイルを TIFF に変換              | PDF入力ではPoppler                                       |
+| EPS へ変換                      | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid                | `.eps`                      | 図版ファイルを EPS に変換               | PDF入力ではPoppler、非PDFではGhostscript                 |
+| SVG へ変換                      | `.pdf`, `.eps`, `.mmd`, `.mermaid`, editable Draw.io 画像                                                  | `.svg`                      | 図版ファイルを SVG に変換               | PDF入力はPoppler、MermaidはChrome、editable画像はDraw.io |
 | PDF の LaTeX 挿入               | `.pdf`                                                                                                     | LaTeX コード                | `figure` / `includegraphics` を自動生成 | 不要                                                     |
 | クリップボード画像の LaTeX 挿入 | クリップボード画像                                                                                         | 画像ファイル + LaTeX コード | スクリーンショット等を LaTeX に貼り付け | 出力形式により異なります                                 |
 
-GIF/TIFF入力は先頭page/frameだけを使用します。EPS入力はこのreleaseでは対応していません。
+GIF/TIFF入力は先頭page/frameだけを使用します。EPS入力はこのreleaseで対応しています。
 
 ## インストール方法
 

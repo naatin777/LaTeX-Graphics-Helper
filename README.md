@@ -19,7 +19,7 @@ It provides PDF splitting and cropping, conversion between PDF, image, SVG, Merm
 
 ### Conversion
 
-- **Output-format based conversion**: In the Explorer context menu, choose output formats such as `Convert > PDF`, `Convert > PNG`, `Convert > JPEG`, `Convert > WebP`, `Convert > AVIF`, or `Convert > SVG`.
+- **Output-format based conversion**: In the Explorer context menu, choose output formats such as `Convert > PDF`, `Convert > PNG`, `Convert > JPEG`, `Convert > WebP`, `Convert > AVIF`, `Convert > GIF`, `Convert > TIFF`, `Convert > EPS`, `Convert > Raw`, or `Convert > SVG`.
 - **PDF / image / SVG / Mermaid / editable Draw.io conversion**: Convert supported inputs to the selected output format.
 - **Native Draw.io PDF conversion**: Convert `.drawio` and `.dio` files into one PDF per page or one PDF containing all pages.
 - **Mixed selection**: Convert multiple supported input formats to the same output format in one operation.
@@ -55,11 +55,14 @@ You can install this extension in one of the following ways:
 | Convert to JPEG        | `.pdf`, `.png`, `.webp`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io images          | `.jpeg`                 | Convert figure files to JPEG               | Poppler for PDF input                                            |
 | Convert to WebP        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io images  | `.webp`                 | Convert figure files to WebP               | Poppler for PDF input                                            |
 | Convert to AVIF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io images  | `.avif`                 | Convert figure files to AVIF               | Poppler for PDF input                                            |
-| Convert to SVG         | `.pdf`, `.mmd`, `.mermaid`, editable Draw.io images                                                          | `.svg`                  | Convert figure files to SVG                | Poppler for PDF, Chrome for Mermaid, Draw.io for editable images |
+| Convert to GIF         | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.tif`, `.tiff`, `.svg`, Mermaid, editable Draw.io images | `.gif`                  | Convert figure files to GIF                | Poppler for PDF input                                            |
+| Convert to TIFF        | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.gif`, `.svg`, Mermaid, editable Draw.io images          | `.tiff`                 | Convert figure files to TIFF               | Poppler for PDF input                                            |
+| Convert to EPS         | `.pdf`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.avif`, `.gif`, `.tif`, `.tiff`, `.svg`, Mermaid                  | `.eps`                  | Convert figure files to EPS                | Poppler for PDF input, Ghostscript for non-PDF                   |
+| Convert to SVG         | `.pdf`, `.eps`, `.mmd`, `.mermaid`, editable Draw.io images                                                  | `.svg`                  | Convert figure files to SVG                | Poppler for PDF, Chrome for Mermaid, Draw.io for editable images |
 | Insert PDF into LaTeX  | `.pdf`                                                                                                       | LaTeX code              | Generate `figure` / `includegraphics` code | None                                                             |
 | Insert clipboard image | Clipboard image                                                                                              | Image file + LaTeX code | Paste screenshots into LaTeX               | Depends on output format                                         |
 
-GIF/TIFF input uses only the first page/frame. EPS input is not supported by this release.
+GIF/TIFF input uses only the first page/frame. EPS input is supported by this release.
 
 ## Required Tools
 

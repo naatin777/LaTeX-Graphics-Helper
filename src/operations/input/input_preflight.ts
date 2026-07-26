@@ -57,6 +57,7 @@ export interface AssertPreflightPassedOptions {
 
 const PREFLIGHT_CONCURRENCY = 2;
 const EPS_INSPECTION_BYTES = 64 * 1024;
+const PDF_DEEP_INSPECTION_MAX_BYTES = 50 * 1024 * 1024;
 
 type PreflightValidator = (sourcePath: string) => Promise<PreflightReport>;
 
@@ -172,17 +173,17 @@ export async function assertPreflightPassed(
     options?.outputChannel?.appendLine(formatPreflightReport(report));
   }
 
+  if (!result.canProceed) {
+    const reasons = result.errors.map((error) => `${error.sourcePath}: ${error.reason ?? 'unknown error'}`).join('\n');
+    throw new Error(`Preflight validation failed:\n${reasons}`);
+  }
+
   if (result.warnings.length > 0 && options?.onConfirmWarnings !== undefined) {
     const proceed = await options.onConfirmWarnings(result.warnings);
     if (!proceed) {
       const error = new DOMException('Cancelled by user after preflight warnings', 'AbortError');
       throw error;
     }
-  }
-
-  if (!result.canProceed) {
-    const reasons = result.errors.map((error) => `${error.sourcePath}: ${error.reason ?? 'unknown error'}`).join('\n');
-    throw new Error(`Preflight validation failed:\n${reasons}`);
   }
 }
 
@@ -265,6 +266,16 @@ async function validatePdfInput(sourcePath: string, format: SourceFormat, fileSi
 
     if (header !== '%PDF-') {
       return { sourcePath, format, fileSize, result: 'error', reason: 'Not a valid PDF file' };
+    }
+
+    if (fileSize > PDF_DEEP_INSPECTION_MAX_BYTES) {
+      return {
+        sourcePath,
+        format,
+        fileSize,
+        result: 'ok',
+        details: { fileSize, skippedDeepInspection: true },
+      };
     }
 
     const inputBuffer = await readFile(sourcePath);
