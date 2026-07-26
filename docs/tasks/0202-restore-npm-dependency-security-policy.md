@@ -39,7 +39,7 @@ pnpm→npm移行時にwarningだけだったnpm version制約を`devEngines.pack
 
 ## audit policy
 
-`npm audit --audit-level=high`: `@vscode/test-cli`→`mocha`→`serialize-javascript`にhigh 1・moderate 2。すべてdev-only(VSIX非同梱)・fix未提供。policy復元とvulnerability更新を分離し、CI gateへは追加しない。`audit fix --force`・advisory ignore・audit無効化は使わない。
+当時の`npm audit --audit-level=high`では`@vscode/test-cli`→`mocha`→`serialize-javascript`にhigh 1・moderate 2があり、すべてdev-only(VSIX非同梱)・fix未提供だった。policy復元とvulnerability更新を分離し、CI gateへは追加しない。現在はTask 0203のoverrideによりserialize-javascriptは7.0.5へ解決され、残るhighはdev-onlyの`brace-expansion` chainである。`audit fix --force`・advisory ignore・audit無効化は使わない。
 
 ## 変更ファイル
 
@@ -70,10 +70,10 @@ darwin-arm64 localで確認(Node 22.0.0/22.12.0/22.22.2はnvmで実測)。Linux/
 
 ## 残risk
 
-- dev-only `serialize-javascript` high(vsce-test-cli chain、fixなし)。別taskで対応。
+- dev-only依存の監査警告は別taskで管理する。serialize-javascriptはTask 0203で対応済み、現在のfull auditでは`brace-expansion` highが残る。
 - `lefthook`のversion付きapproval(`lefthook@2.1.10: true`)はnpm 12.0.1でlockfile identityと一致せず機能しないため、exact pin + name承認とした。version更新検知はlockfile不一致で行われる。
 - `keytar`/`@vscode/vsce-sign`はlockfileに`resolved` URLがなくversion pin不可。`puppeteer`はversion付きdeny。lockfile完全化は broad update回避のため今回見送り。
 
 ## 追加で必要なtask
 
-- 0203(候補): dev test tooling(`@vscode/test-cli`/`mocha`)のserialize-javascript vulnerability更新。breaking可能性の評価を含む。
+- 0203: dev test toolingのserialize-javascript vulnerability更新。完了済み。残るbrace-expansionは別のbreaking dependency判断として扱う。

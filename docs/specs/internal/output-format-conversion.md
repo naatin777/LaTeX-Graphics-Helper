@@ -6,6 +6,19 @@
 
 command層は選択された入力をbatchとして受け取り、入力ごとのformat-specific processingへ渡す。入力判定、outputPathの解決、Safe Mode、Undo、progress、cancellationは、それぞれの共通boundaryへ接続し、format-specific coreへVS Code APIを渡さない。
 
+## Output path and template source
+
+出力path templateは、次の優先順位で解決する。
+
+1. `outputPaths.<command>`
+2. `outputPath.<command>`
+3. legacy pair-specific `outputPath.convertXToY`
+4. command固有のdefault
+
+legacy pair-specific設定は、[ADR-0020](../../adr/0020-preserve-legacy-output-path-fallback.md)に従いv1系でfallbackとして維持する。
+
+templateの`${file}`、`${fileBasename}`、`${fileBasenameNoExtension}`などのsource系変数は、変換対象として扱う論理入力pathを基準にする。editable Draw.io画像（`.drawio.png`、`.dio.png`、`.drawio.svg`、`.dio.svg`）ではwrapper suffixを除いたpathを使用する。通常の入力では元の入力pathをそのまま使用し、元ファイルpath専用の追加template変数は提供しない。
+
 ## Batch transaction
 
 1回のcommand実行に対応するoperation rootを作り、入力ごとの中間artifactと完成artifactをfinal pathから分離して保持する。

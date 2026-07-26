@@ -2,7 +2,7 @@
 
 ## Status
 
-Todo
+Done — 2026-07-26
 
 ## 目的
 
@@ -14,6 +14,12 @@ editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`
 - 既存の論理入力パス基準との関係を決める
 - 通常ファイルでの挙動を決める
 - 実装する場合の次タスクを作れる状態になっている
+
+## 決定
+
+元ファイルpath専用のtemplate変数は追加しない。editable Draw.io画像では既存の論理入力pathが`.drawio`または`.dio`のwrapper suffixを除いており、`${file}`、`${fileBasename}`、`${fileBasenameNoExtension}`などの既存変数で出力名を決められるためである。
+
+通常ファイルでは論理入力pathは元の入力pathと同じであり、既存template変数の意味を変更しない。rawのeditable Draw.io画像pathを別名で参照する要求が出た場合は、入力path semanticsとLaTeX用途への影響を確認する独立taskに分ける。
 
 ## 変更可能なファイル
 
@@ -34,4 +40,4 @@ editable Draw.io画像（`.drawio.png` / `.dio.png` / `.drawio.svg` / `.dio.svg`
 
 ## 確認方法
 
-- 追加する場合・しない場合の判断理由が記録されていることを確認する
+- 追加しない判断理由と、editable Draw.io画像・通常ファイルの挙動を内部specへ記録した。

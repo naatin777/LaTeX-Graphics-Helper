@@ -1,14 +1,18 @@
 # 0205: Organize test contracts
 
+## Status
+
+Done — 2026-07-26
+
 ## Objective
 
 v1の公開機能と安全性contractに対して、意味のあるテストEvidenceを不足・重複・誤認のない構成へ整理する。
 
 ## Baseline
 
-- branch: `next/v1`
+- branch: `next/v1` (work was completed before the follow-up documentation branch)
 - baseline commit: `f8722ff9e5b47e940a5bbeaad743bc676f940571`
-- final commit: `<project-root>/HEAD (local branch task/0205-organize-test-contracts)`
+- final verification commit: `b4c6eac` (`fix: harden v1 release safety`)
 
 ## Current state (before changes)
 
@@ -21,10 +25,10 @@ v1の公開機能と安全性contractに対して、意味のあるテストEvid
 
 ### Test file count and case count (after)
 
-- 63 Mocha test files (~355 test cases, removed 1 file, added ~11 cases)
+- 63 Mocha test files (current Extension Host run: 415 passing; historical task count was ~355)
 - 1 Playwright spec file, 8 test cases (split from 1 to 8)
 - 3 Webview test files, 4 test cases
-- Total: 67 files, ~367 cases
+- Total: 67 files, 427 cases in the current release verification
 
 ### Runtime scope
 
@@ -56,7 +60,7 @@ v1の公開機能と安全性contractに対して、意味のあるテストEvid
 2. **content oracle per format**: Current oracle is page count/dimensions for most formats. Strengthening to pixel-level comparison for all formats needs fixture selection and tolerance baseline.
 3. **PR packaging evidence scope**: `test:playwright:vsix` runs only on Linux in PR. Whether 3 OS packaging smoke is required for all PRs is a maintainer/CI cost decision.
 
-## Verification (macOS local)
+## Verification (macOS local, task snapshot)
 
 | Command                                     | Result | Cases       | Duration | Notes                     |
 | ------------------------------------------- | ------ | ----------- | -------- | ------------------------- |
@@ -90,6 +94,8 @@ v1の公開機能と安全性contractに対して、意味のあるテストEvid
 - `docs/foundation/test-runtime-inventory.md`: marked as historical snapshot
 - `docs/foundation/evidence-gaps.md`: marked as historical snapshot
 - `docs/foundation/capability-catalog.md`: marked as historical snapshot
+
+The current release verification also confirms `check:all`, 415 Extension Host cases, 4 Webview cases, and 8 packaged VSIX Electron cases. GitHub Check, Test, and Playwright jobs passed for `b4c6eac`.
 
 ## Unverified
 

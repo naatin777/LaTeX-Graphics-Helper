@@ -2,7 +2,7 @@
 
 ## Current Task
 
-- [0205: Organize test contracts](0205-organize-test-contracts.md) — v1の公開機能と安全性contractに対して、意味のあるテストEvidenceを不足・重複・誤認のない構成へ整理する
+- なし
 
 ## Task boundaries
 
@@ -50,9 +50,7 @@ _No pending implementation tasks._
 
 ### Migration and conditional maintenance
 
-- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md)
-- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md)
-- [0203: dev test toolingのserialize-javascript vulnerabilityを更新する](0203-update-dev-test-tooling-serialize-javascript.md)
+_No pending migration tasks._
 
 ## Not Planned
 
@@ -70,6 +68,10 @@ _No pending implementation tasks._
 
 ## Recent Completed
 
+- [0205: v1のtest contractを整理する](0205-organize-test-contracts.md) — Done — Evidence matrix and runtime records synchronized
+- [0100: editable Draw.io画像用の元ファイル名テンプレート変数を決める](0100-design-original-source-template-variables.md) — Done — 追加変数なし
+- [0098: 既存ペア別outputPath設定の移行方針を決める](0098-decide-pair-output-path-settings-migration.md) — Done — v1系でlegacy fallbackを維持
+- [0203: dev test toolingのserialize-javascript vulnerabilityを更新する](0203-update-dev-test-tooling-serialize-javascript.md) — Done — overrideで7.0.5へ解決
 - [0096: 複数画像を1つのPDFへ結合する仕様を決める](0096-design-combine-images-to-single-pdf.md) — Spec + 実装完了
 - [0101: sharp更新のDependabot対応を再評価する](0101-evaluate-sharp-dependabot-update.md) — Done — Superseded
 - [0202: npm移行で失われた依存install security policyを復元する](0202-restore-npm-dependency-security-policy.md)

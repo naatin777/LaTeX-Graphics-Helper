@@ -24,10 +24,11 @@ LaTeX Graphics Helper は、VS Code 上で PDF・画像・Draw.io・LaTeX への
 - ConversionRuntime consistently used across all operations
 - Menu conditions aligned with implementation format support
 - Version-tag consistency validation in release workflow
+- v1 safety hardening, output validation, test Evidence, and packaged VSIX smoke verification
 
 ## In progress
 
-- v1 release pre-release fixes (release validation, menu alignment, CI triggers, preflight error order, PDF memory, docs sync)
+- なし。次の作業が必要な場合は `docs/tasks/README.md` のCurrent Taskへ追加する。
 
 ## Non-goals
 
