@@ -72,16 +72,16 @@
 - Expected test impact: PDF/SVGの実変換、external tool failure、cleanup、Safe Modeの全suite。
 - Reversibility: 形式固有のまま小さいhelperを導入できる。
 
-### legacy outputPath設定の移行
+### legacy outputPath設定の移行（解決済み）
 
 - Area: configuration
 - Type: Architecture
-- Concrete problem: 出力形式基準の`outputPath.*`を優先しつつ、既存の入力形式・出力形式ペア別keyをfallbackとして保持している。
+- Concrete problem: 出力形式基準commandと入力/出力pair基準のoutput path keyが混同されていた。
 - Evidence: `src/config/output/output_path_settings.ts`、`package.json`の`outputPath.*`設定、`docs/specs/product/output-format-conversion.md`。
-- Trigger: 次のmajor versionの計画を決めるとき。
-- Why not now: 既存設定を突然無効にせず、利用実態を確認してから廃止時期を決める。
+- Trigger: output path naming policyを変更するとき。
+- Why not now: ADR-0021でpair-specific設定を正本とし、形式基準設定をmanifestと実装から外した。
 - Related files: `package.json`、`package.nls.json`、`package.nls.ja.json`、`src/config/output/output_path_settings.ts`、`src/commands/conversion/convert_*.ts`。
-- Expected test impact: output format優先、空文字fallback、複数ページtemplateの回帰確認が必要。
-- Reversibility: legacy keyをfallbackとして残したまま移行案内だけを更新できる。
+- Expected test impact: pair-specific singular outputと`outputPaths` page outputの回帰確認が必要。
+- Reversibility: ADR-0021を置き換え、設定migrationを別taskとして扱う。
 
 ---

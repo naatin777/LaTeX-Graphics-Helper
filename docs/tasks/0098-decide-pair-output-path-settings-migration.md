@@ -17,13 +17,12 @@ Done — 2026-07-26
 
 ## 決定
 
-- legacy pair-specific設定はv1系の間、fallbackとして維持する。
-- 優先順位は`outputPaths.<command>`、`outputPath.<command>`、legacy pair-specific設定、defaultの順とする。
-- v1ではdeprecated表示を追加しない。新しい設定例では`outputPaths.<command>`または`outputPath.<command>`を使用する。
-- 削除またはdeprecated化はv2以降の互換性判断へ分離する。
-- 削除しない理由は、既存利用者の出力先をv1で変えず、利用状況のEvidenceなしに警告や削除を行わないためである。
+- command IDは`convertToPdf`などの出力形式基準を維持する。
+- `${page}`を含まない単一出力は`outputPath.convertXToY`を正本とする。
+- `${page}`を含む複数出力は`outputPaths` objectの`convertXToY` entryを正本とする。
+- `outputPath.convertToY`と`outputPaths.convertToY`は使用しない。
 
-永続判断は[ADR-0020](../adr/0020-preserve-legacy-output-path-fallback.md)に記録した。
+永続判断は[ADR-0021](../adr/0021-use-pair-specific-output-path-settings.md)に記録した。
 
 ## 変更可能なファイル
 
@@ -45,4 +44,4 @@ Done — 2026-07-26
 
 ## 確認方法
 
-- 移行判断がADRと内部specに記録され、現在のfallback実装の優先順位と一致することを確認した。
+- 移行判断がADRと内部specに記録され、command IDとoutput path keyの粒度が一致することを確認した。

@@ -29,7 +29,7 @@ async function assertAnimatedInputIsSplit(
   );
   const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
   const sandbox = createSandbox();
-  const key = `outputPath.convertTo${outputFormat === 'gif' ? 'Gif' : 'Tiff'}`;
+  const key = outputFormat === 'gif' ? 'convertTiffToGif' : 'convertGifToTiff';
   const template = `\${fileDirname}/\${fileBasenameNoExtension}-\${page}.${outputFormat}`;
 
   try {
@@ -37,8 +37,13 @@ async function assertAnimatedInputIsSplit(
     sandbox.stub(vscode.window, 'showErrorMessage').resolves(undefined);
     const sourcePath = path.join(workspacePath, `source.${format}`);
     await writeAnimatedImage(sourcePath, format);
-    await configuration.update(key, template, vscode.ConfigurationTarget.Workspace);
-    await command(vscode.Uri.file(sourcePath));
+    const outputPaths = configuration.get<Record<string, string>>('outputPaths', {});
+    await configuration.update(
+      'outputPaths',
+      { ...outputPaths, [key]: template },
+      vscode.ConfigurationTarget.Workspace,
+    );
+    await command(vscode.Uri.file(sourcePath), undefined);
 
     const outputPath = path.join(workspacePath, `source-1.${outputFormat}`);
     const metadata = await sharp(await readFile(outputPath)).metadata();
@@ -46,7 +51,7 @@ async function assertAnimatedInputIsSplit(
     assert.strictEqual(metadata.pages ?? 1, 1);
   } finally {
     sandbox.restore();
-    await configuration.update(key, undefined, vscode.ConfigurationTarget.Workspace);
+    await configuration.update('outputPaths', undefined, vscode.ConfigurationTarget.Workspace);
     await rm(workspacePath, { recursive: true, force: true });
   }
 }

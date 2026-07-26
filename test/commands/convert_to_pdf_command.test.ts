@@ -152,7 +152,7 @@ suite('PDFに変換コマンド', () => {
     await assertMermaidFileConvertsToPdf('source.mermaid');
   });
 
-  test('outputPath.convertToPdfが設定されている場合はペア別設定より優先する', async () => {
+  test('outputPath.convertPngToPdfが設定されている場合は指定した出力先を使う', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -162,8 +162,7 @@ suite('PDFに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToPdf': '${fileDirname}/to-pdf-${fileBasenameNoExtension}.pdf',
-          'latex-graphics-helper.outputPath.convertPngToPdf': '${fileDirname}/pair-${fileBasenameNoExtension}.pdf',
+          'latex-graphics-helper.outputPath.convertPngToPdf': '${fileDirname}/to-pdf-${fileBasenameNoExtension}.pdf',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
@@ -171,22 +170,32 @@ suite('PDFに変換コマンド', () => {
       );
 
       await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.pdf'));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'source.pdf'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test('outputPath.convertToPdfが空文字の場合はペア別設定へfallbackする', async () => {
-    await assertConvertToPdfOutputPathFallsBackToPairSetting('');
-  });
+  test('空のpair-specific outputPath設定は既定値へfallbackする', async () => {
+    const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
-  test('outputPath.convertToPdfが空白のみの場合はペア別設定へfallbackする', async () => {
-    await assertConvertToPdfOutputPathFallsBackToPairSetting('   ');
-  });
+    try {
+      const sourcePath = path.join(temporaryDirectory, 'source.png');
+      await copyFile(fixturePngPath, sourcePath);
 
-  test('outputPath.convertToPdfが未設定の場合はペア別設定へfallbackする', async () => {
-    await assertConvertToPdfOutputPathFallsBackToPairSetting(undefined);
+      await withWorkspaceSettings(
+        {
+          'latex-graphics-helper.outputPath.convertPngToPdf': '',
+        },
+        async () => {
+          await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
+        },
+      );
+
+      await assertPdfPageSizeMatchesImage(path.join(temporaryDirectory, 'source.pdf'), sourcePath);
+    } finally {
+      await removeTemporaryDirectory(temporaryDirectory);
+    }
   });
 
   test('大文字拡張子のファイルを変換する', async () => {
@@ -231,13 +240,13 @@ suite('PDFに変換コマンド', () => {
     const sourceUri = vscode.Uri.file(path.join('workspace', 'source.drawio.png'));
 
     assert.strictEqual(
-      outputTemplateForSource(sourceUri, configuration, 'unused.pdf', undefined),
+      outputTemplateForSource(sourceUri, configuration, 'unused.pdf'),
       '${fileDirname}/${fileBasenameNoExtension}.pdf',
     );
 
     settings['outputPath.convertDrawioToPdfDirectly'] = '${fileDirname}/direct-${fileBasenameNoExtension}.pdf';
     assert.strictEqual(
-      outputTemplateForSource(sourceUri, configuration, 'unused.pdf', undefined),
+      outputTemplateForSource(sourceUri, configuration, 'unused.pdf'),
       '${fileDirname}/direct-${fileBasenameNoExtension}.pdf',
     );
   });
@@ -310,32 +319,6 @@ async function assertMermaidFileConvertsToPdf(fileName: string): Promise<void> {
     await runCommandAndClearNotificationsUntilDone(commandExecution);
 
     await assertReadablePdfWithAtLeastOnePage(replaceExtension(sourcePath, '.pdf'));
-  } finally {
-    await removeTemporaryDirectory(temporaryDirectory);
-  }
-}
-
-async function assertConvertToPdfOutputPathFallsBackToPairSetting(
-  convertToPdfTemplate: string | undefined,
-): Promise<void> {
-  const temporaryDirectory = await createTemporaryWorkspaceDirectory();
-
-  try {
-    const sourcePath = path.join(temporaryDirectory, 'source.png');
-    const outputPath = path.join(temporaryDirectory, 'pair-source.pdf');
-    await copyFile(fixturePngPath, sourcePath);
-
-    await withWorkspaceSettings(
-      {
-        'latex-graphics-helper.outputPath.convertToPdf': convertToPdfTemplate,
-        'latex-graphics-helper.outputPath.convertPngToPdf': '${fileDirname}/pair-${fileBasenameNoExtension}.pdf',
-      },
-      async () => {
-        await vscode.commands.executeCommand(CONVERT_TO_PDF_COMMAND, vscode.Uri.file(sourcePath));
-      },
-    );
-
-    await assertPdfPageSizeMatchesImage(outputPath, sourcePath);
   } finally {
     await removeTemporaryDirectory(temporaryDirectory);
   }

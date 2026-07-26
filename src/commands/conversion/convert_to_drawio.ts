@@ -40,12 +40,7 @@ export async function convertToDrawioCommand(
     if (!workspace) {
       throw new Error(`The file must be inside an open workspace: ${first.fsPath}`);
     }
-    const template = readOutputPathTemplate(
-      configuration,
-      'convertToDrawio',
-      'outputPath.convertToDrawio',
-      DEFAULT_OUTPUT_PATH,
-    );
+    const template = readOutputPathTemplate(configuration, 'outputPath.convertToDrawio', DEFAULT_OUTPUT_PATH);
     const outputPath = resolveOutputPath(
       template,
       {

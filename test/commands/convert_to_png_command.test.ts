@@ -121,7 +121,12 @@ suite('PNGに変換コマンド', () => {
       );
 
       await withWorkspaceSettings(
-        { 'latex-graphics-helper.outputPath.convertToPng': '${fileDirname}/${fileBasenameNoExtension}-${page}.png' },
+        {
+          'latex-graphics-helper.outputPaths': {
+            convertGifToPng: '${fileDirname}/${fileBasenameNoExtension}-${page}.png',
+            convertTiffToPng: '${fileDirname}/${fileBasenameNoExtension}-${page}.png',
+          },
+        },
         async () => {
           const commandExecution = vscode.commands.executeCommand(
             CONVERT_TO_PNG_COMMAND,
@@ -183,7 +188,7 @@ suite('PNGに変換コマンド', () => {
     }
   });
 
-  test('outputPath.convertToPngが設定されている場合はペア別設定より優先してpageを展開する', async () => {
+  test('outputPaths.convertPdfToPngが設定されている場合はpageを展開する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -194,10 +199,9 @@ suite('PNGに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToPng':
-            '${fileDirname}/to-png-${fileBasenameNoExtension}-${page}.png',
-          'latex-graphics-helper.outputPath.convertPdfToPng':
-            '${fileDirname}/pair-${fileBasenameNoExtension}-${page}.png',
+          'latex-graphics-helper.outputPaths': {
+            convertPdfToPng: '${fileDirname}/to-png-${fileBasenameNoExtension}-${page}.png',
+          },
         },
         async () => {
           const commandExecution = vscode.commands.executeCommand(CONVERT_TO_PNG_COMMAND, vscode.Uri.file(sourcePath));
@@ -207,8 +211,6 @@ suite('PNGに変換コマンド', () => {
 
       await assertReadablePng(firstOutputPath);
       await assertReadablePng(secondOutputPath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source-1.png'));
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source-2.png'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

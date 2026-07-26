@@ -15,7 +15,7 @@ import {
 } from '../../config/external_tools/external_tool_paths.js';
 import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate, readOutputPathsTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import { convertToGifFiles, type ConvertToGifJob } from '../../operations/conversion/convert_to_gif.js';
@@ -53,19 +53,10 @@ export async function convertToGifCommand(
       throw new Error('No files were selected.');
     }
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const outputPathKey =
-      options?.outputMode === 'preserve'
-        ? 'outputPath.convertToGifPreserveAnimation'
-        : options?.outputMode === 'split'
-          ? 'outputPath.convertToGifSeparately'
-          : 'outputPath.convertToGif';
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, outputPathKey);
     const maxInputPixels = getMaxInputPixels(configuration);
     const jobs = (
       await Promise.all(
-        sourceUris.map((sourceUri) =>
-          createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels, options?.outputMode),
-        ),
+        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, maxInputPixels, options?.outputMode)),
       )
     ).flat();
     await runOutputConversion({
@@ -100,7 +91,6 @@ export async function convertToGifCommand(
 async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
-  configuredTemplate: string | undefined,
   maxInputPixels: number,
   outputMode?: 'auto' | 'preserve' | 'split',
 ): Promise<ConvertToGifJob[]> {
@@ -116,9 +106,9 @@ async function createJobs(
   }
   if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
-    return createPdfJobs(sourcePath, workspace, configuration, configuredTemplate);
+    return createPdfJobs(sourcePath, workspace, configuration);
   }
-  const outputTemplate = outputTemplateForSource(sourcePath, configuration, configuredTemplate, outputMode);
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputMode);
   if (isRasterImagePath(sourcePath)) {
     const animation = extension === '.webp' ? await readRasterAnimationMetadata(sourcePath, maxInputPixels) : undefined;
     if (animation !== undefined && outputMode !== 'split') {
@@ -174,14 +164,12 @@ async function createPdfJobs(
   sourcePath: string,
   workspace: vscode.WorkspaceFolder,
   configuration: vscode.WorkspaceConfiguration,
-  configuredTemplate: string | undefined,
 ): Promise<ConvertToGifJob[]> {
   const pageCount = (await PDFDocument.load(await readFile(sourcePath))).getPageCount();
   if (pageCount === 0) {
     throw new Error(`PDF has no pages: ${sourcePath}`);
   }
-  const outputTemplate =
-    configuredTemplate ?? configuration.get<string>('outputPath.convertPdfToGif', DEFAULT_PDF_OUTPUT_PATH);
+  const outputTemplate = readOutputPathsTemplate(configuration, 'convertPdfToGif', DEFAULT_PDF_OUTPUT_PATH);
   assertPageTemplateForSplitOutput(outputTemplate, pageCount);
   return Array.from({ length: pageCount }, (_value, index) => {
     const page = index + 1;
@@ -206,34 +194,34 @@ async function createPdfJobs(
 function outputTemplateForSource(
   sourcePath: string,
   configuration: vscode.WorkspaceConfiguration,
-  configuredTemplate: string | undefined,
   outputMode?: 'auto' | 'preserve' | 'split',
 ): string {
-  if (configuredTemplate !== undefined) {
-    return configuredTemplate;
-  }
   const splitDefault = outputMode === 'split' ? DEFAULT_SPLIT_OUTPUT_PATH : undefined;
+  const readPairTemplate = (key: string, defaultValue: string): string => {
+    const pageTemplate = readOutputPathsTemplate(configuration, key, '');
+    return pageTemplate || readOutputPathTemplate(configuration, `outputPath.${key}`, splitDefault ?? defaultValue);
+  };
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>('outputPath.convertDrawioToGif', DEFAULT_DRAWIO_OUTPUT_PATH);
+    return readOutputPathsTemplate(configuration, 'convertDrawioToGif', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
   switch (path.extname(sourcePath).toLowerCase()) {
     case '.png':
-      return configuration.get<string>('outputPath.convertPngToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertPngToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.jpg':
     case '.jpeg':
-      return configuration.get<string>('outputPath.convertJpegToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertJpegToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.webp':
-      return configuration.get<string>('outputPath.convertWebpToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertWebpToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.avif':
-      return configuration.get<string>('outputPath.convertAvifToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertAvifToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.tif':
     case '.tiff':
-      return configuration.get<string>('outputPath.convertTiffToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertTiffToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.svg':
-      return configuration.get<string>('outputPath.convertSvgToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertSvgToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     case '.mmd':
     case '.mermaid':
-      return configuration.get<string>('outputPath.convertMermaidToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertMermaidToGif', splitDefault ?? DEFAULT_OUTPUT_PATH);
     default:
       return splitDefault ?? DEFAULT_OUTPUT_PATH;
   }

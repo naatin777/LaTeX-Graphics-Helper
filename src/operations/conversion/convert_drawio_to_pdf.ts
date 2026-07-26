@@ -284,7 +284,7 @@ function validateJobs(jobs: DrawioPdfJob[], outputMode: 'page-pdfs' | 'single-pd
     }
 
     if (outputMode === 'page-pdfs' && !job.outputTemplate.includes('${page}')) {
-      throw new Error('outputPath.convertDrawioToPdf must contain ${page} for split Draw.io conversion.');
+      throw new Error('outputPaths.convertDrawioToPdf must contain ${page} for split Draw.io conversion.');
     }
   }
 }

@@ -8,14 +8,13 @@ command層は選択された入力をbatchとして受け取り、入力ごと�
 
 ## Output path and template source
 
-出力path templateは、次の優先順位で解決する。
+command IDは`convertToPdf`などの出力形式基準とする。出力path templateは入力形式と出力形式のpairを基準にする。
 
-1. `outputPaths.<command>`
-2. `outputPath.<command>`
-3. legacy pair-specific `outputPath.convertXToY`
-4. command固有のdefault
+- `${page}`を含まない単一出力は`outputPath.convertXToY`から読む。
+- `${page}`を含む複数出力は`outputPaths` objectの`convertXToY` entryから読む。
+- `outputPath.convertToY`と`outputPaths` object内の`convertToY` entryは読まない。
 
-legacy pair-specific設定は、[ADR-0020](../../adr/0020-preserve-legacy-output-path-fallback.md)に従いv1系でfallbackとして維持する。
+この命名と粒度は[ADR-0021](../../adr/0021-use-pair-specific-output-path-settings.md)を正本とする。
 
 templateの`${file}`、`${fileBasename}`、`${fileBasenameNoExtension}`などのsource系変数は、変換対象として扱う論理入力pathを基準にする。editable Draw.io画像（`.drawio.png`、`.dio.png`、`.drawio.svg`、`.dio.svg`）ではwrapper suffixを除いたpathを使用する。通常の入力では元の入力pathをそのまま使用し、元ファイルpath専用の追加template変数は提供しない。
 

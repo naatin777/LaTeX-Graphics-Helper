@@ -113,7 +113,7 @@ suite('JPEGに変換コマンド', () => {
     await assertMermaidFileConvertsToJpeg('source.mermaid');
   });
 
-  test('outputPath.convertToJpegが設定されている場合はデフォルト出力パスより優先する', async () => {
+  test('outputPath.convertPngToJpegが設定されている場合は指定した出力先を使う', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -123,8 +123,7 @@ suite('JPEGに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToJpeg': '${fileDirname}/custom-${fileBasenameNoExtension}.jpeg',
-          'latex-graphics-helper.outputPath.convertPngToJpeg': '${fileDirname}/pair-${fileBasenameNoExtension}.jpeg',
+          'latex-graphics-helper.outputPath.convertPngToJpeg': '${fileDirname}/custom-${fileBasenameNoExtension}.jpeg',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_JPEG_COMMAND, vscode.Uri.file(sourcePath));
@@ -132,31 +131,29 @@ suite('JPEGに変換コマンド', () => {
       );
 
       await assertReadableJpeg(customOutputPath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.jpeg'));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'source.jpeg'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test('outputPath.convertToJpegが空文字の場合はペア別設定へfallbackする', async () => {
+  test('空のpair-specific outputPath設定は既定値へfallbackする', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const sourcePath = path.join(temporaryDirectory, 'source.png');
-      const pairOutputPath = path.join(temporaryDirectory, 'pair-source.jpeg');
       await copyFile(fixturePngPath, sourcePath);
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToJpeg': '',
-          'latex-graphics-helper.outputPath.convertPngToJpeg': '${fileDirname}/pair-${fileBasenameNoExtension}.jpeg',
+          'latex-graphics-helper.outputPath.convertPngToJpeg': '',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_JPEG_COMMAND, vscode.Uri.file(sourcePath));
         },
       );
 
-      await assertReadableJpeg(pairOutputPath);
+      await assertReadableJpeg(path.join(temporaryDirectory, 'source.jpeg'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

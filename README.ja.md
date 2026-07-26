@@ -163,7 +163,7 @@ Draw.io Desktop は以下からインストールしてください。
 
 出力ファイル名や LaTeX snippet の候補も VS Code の設定から変更できます。
 
-`outputPath.convertToPdf`などの出力形式別設定を優先し、空、空白のみ、または未設定の場合はlegacyの入力形式と出力形式のペア別設定へfallbackします。legacy設定は互換性のために保持し、次のmajor version前に利用実態を確認して廃止時期を決めます。
+command IDは`convertToPdf`などの出力形式基準ですが、出力先設定は入力形式と出力形式のpairを基準にします。単一出力は`outputPath.convertPngToPdf`などを使い、`${page}`を含む複数出力は`outputPaths` objectの`convertPdfToPng`などを使います。出力形式基準の`outputPath.convertToPdf`とcommand基準の`outputPaths.convertToPdf`は使用しません。
 
 ## Output パネル
 

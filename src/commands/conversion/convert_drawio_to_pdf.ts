@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { isDrawioPath } from '../../application/policy/source_format.js';
 import { readDrawioExecutablePath } from '../../config/external_tools/external_tool_paths.js';
-import { readOutputPathTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate, readOutputPathsTemplate } from '../../config/output/output_path_settings.js';
 import { assertPageTemplateForSplitOutput } from '../../config/output/page_template.js';
 import { convertDrawioToPdfFiles, type DrawioPdfJob } from '../../operations/conversion/convert_drawio_to_pdf.js';
 
@@ -25,7 +25,6 @@ export async function convertDrawioToPagePdfsCommand(
 ): Promise<void> {
   const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
     outputMode: 'page-pdfs' as const,
-    outputSetting: 'outputPath.convertDrawioToPdf' as const,
     defaultOutputPath: DEFAULT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf',
   };
@@ -48,7 +47,6 @@ export async function convertDrawioToSinglePdfCommand(
 ): Promise<void> {
   const commandOptions: Parameters<typeof runDrawioPdfCommand>[0] = {
     outputMode: 'single-pdf' as const,
-    outputSetting: 'outputPath.convertDrawioToPdfDirectly' as const,
     defaultOutputPath: DEFAULT_DIRECT_OUTPUT_PATH,
     operationName: 'convert-drawio-to-pdf-directly',
   };
@@ -68,7 +66,6 @@ async function runDrawioPdfCommand(options: {
   uri?: vscode.Uri;
   uris?: vscode.Uri[];
   outputMode: 'page-pdfs' | 'single-pdf';
-  outputSetting: 'outputPath.convertDrawioToPdf' | 'outputPath.convertDrawioToPdfDirectly';
   defaultOutputPath: string;
   operationName: string;
   outputChannel?: CommandDependencies['outputChannel'];
@@ -80,11 +77,10 @@ async function runDrawioPdfCommand(options: {
     }
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const command = options.outputMode === 'page-pdfs' ? 'convertDrawioToPdf' : 'convertDrawioToPdfDirectly';
-    const outputTemplate = readOutputPathTemplate(
+    const readTemplate = options.outputMode === 'page-pdfs' ? readOutputPathsTemplate : readOutputPathTemplate;
+    const outputTemplate = readTemplate(
       configuration,
-      command,
-      options.outputSetting,
+      options.outputMode === 'page-pdfs' ? 'convertDrawioToPdf' : 'outputPath.convertDrawioToPdfDirectly',
       options.defaultOutputPath,
     );
     if (options.outputMode === 'page-pdfs') {

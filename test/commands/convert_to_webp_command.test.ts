@@ -137,7 +137,7 @@ suite('WebPに変換コマンド', () => {
     }
   });
 
-  test('outputPath.convertToWebpが設定されている場合はデフォルト出力パスより優先する', async () => {
+  test('outputPath.convertPngToWebpが設定されている場合は指定した出力先を使う', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -147,8 +147,7 @@ suite('WebPに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToWebp': '${fileDirname}/custom-${fileBasenameNoExtension}.webp',
-          'latex-graphics-helper.outputPath.convertPngToWebp': '${fileDirname}/pair-${fileBasenameNoExtension}.webp',
+          'latex-graphics-helper.outputPath.convertPngToWebp': '${fileDirname}/custom-${fileBasenameNoExtension}.webp',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_WEBP_COMMAND, vscode.Uri.file(sourcePath));
@@ -156,31 +155,29 @@ suite('WebPに変換コマンド', () => {
       );
 
       await assertReadableWebp(customOutputPath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.webp'));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'source.webp'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test('outputPath.convertToWebpが空文字の場合はペア別設定へfallbackする', async () => {
+  test('空のpair-specific outputPath設定は既定値へfallbackする', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const sourcePath = path.join(temporaryDirectory, 'source.png');
-      const pairOutputPath = path.join(temporaryDirectory, 'pair-source.webp');
       await copyFile(fixturePngPath, sourcePath);
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToWebp': '',
-          'latex-graphics-helper.outputPath.convertPngToWebp': '${fileDirname}/pair-${fileBasenameNoExtension}.webp',
+          'latex-graphics-helper.outputPath.convertPngToWebp': '',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_WEBP_COMMAND, vscode.Uri.file(sourcePath));
         },
       );
 
-      await assertReadableWebp(pairOutputPath);
+      await assertReadableWebp(path.join(temporaryDirectory, 'source.webp'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

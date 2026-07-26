@@ -15,7 +15,7 @@ import {
 } from '../../config/external_tools/external_tool_paths.js';
 import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate, readOutputPathsTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import {
@@ -61,19 +61,10 @@ export async function convertToWebpCommand(
     }
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const outputPathKey =
-      options?.outputMode === 'preserve'
-        ? 'outputPath.convertToWebpPreserveAnimation'
-        : options?.outputMode === 'split'
-          ? 'outputPath.convertToWebpSeparately'
-          : 'outputPath.convertToWebp';
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, outputPathKey);
     const maxInputPixels = getMaxInputPixels(configuration);
     const jobs = (
       await Promise.all(
-        sourceUris.map((sourceUri) =>
-          createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels, options?.outputMode),
-        ),
+        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, maxInputPixels, options?.outputMode)),
       )
     ).flat();
     const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
@@ -115,7 +106,6 @@ export async function convertToWebpCommand(
 async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
   maxInputPixels: number,
   outputMode?: 'auto' | 'preserve' | 'split',
 ): Promise<ConvertToWebpJob[]> {
@@ -134,11 +124,11 @@ async function createJobs(
 
   if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
-    return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
+    return createPdfJobs(sourcePath, workspace, configuration);
   }
 
   const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
-  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate, outputMode);
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputMode);
   if (isRasterImagePath(sourcePath)) {
     const animation = extension === '.gif' ? await readRasterAnimationMetadata(sourcePath, maxInputPixels) : undefined;
     if (animation !== undefined && outputMode !== 'split') {
@@ -196,7 +186,6 @@ async function createPdfJobs(
   sourcePath: string,
   workspace: vscode.WorkspaceFolder,
   configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToWebpJob[]> {
   const document = await PDFDocument.load(await readFile(sourcePath));
   const pageCount = document.getPageCount();
@@ -205,8 +194,7 @@ async function createPdfJobs(
     throw new Error(`PDF has no pages: ${sourcePath}`);
   }
 
-  const outputTemplate =
-    outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToWebp', DEFAULT_PDF_OUTPUT_PATH);
+  const outputTemplate = readOutputPathsTemplate(configuration, 'convertPdfToWebp', DEFAULT_PDF_OUTPUT_PATH);
   assertPageTemplateForSplitOutput(outputTemplate, pageCount);
 
   return Array.from({ length: pageCount }, (_value, index) => {
@@ -232,37 +220,36 @@ async function createPdfJobs(
 function outputTemplateForSource(
   sourcePath: string,
   configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
   outputMode?: 'auto' | 'preserve' | 'split',
 ): string {
-  if (outputFormatOutputTemplate !== undefined) {
-    return outputFormatOutputTemplate;
-  }
-
   const splitDefault = outputMode === 'split' ? DEFAULT_SPLIT_OUTPUT_PATH : undefined;
   const extension = path.extname(sourcePath).toLowerCase();
+  const readPairTemplate = (key: string, defaultValue: string): string => {
+    const pageTemplate = readOutputPathsTemplate(configuration, key, '');
+    return pageTemplate || readOutputPathTemplate(configuration, `outputPath.${key}`, splitDefault ?? defaultValue);
+  };
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>('outputPath.convertDrawioToWebp', DEFAULT_DRAWIO_OUTPUT_PATH);
+    return readOutputPathsTemplate(configuration, 'convertDrawioToWebp', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
     case '.png': {
-      return configuration.get<string>('outputPath.convertPngToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertPngToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
     }
     case '.jpg':
     case '.jpeg': {
-      return configuration.get<string>('outputPath.convertJpegToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertJpegToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
     }
     case '.avif': {
-      return configuration.get<string>('outputPath.convertAvifToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertAvifToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
     }
     case '.svg': {
-      return configuration.get<string>('outputPath.convertSvgToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertSvgToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
     }
     case '.mmd':
     case '.mermaid': {
-      return configuration.get<string>('outputPath.convertMermaidToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
+      return readPairTemplate('convertMermaidToWebp', splitDefault ?? DEFAULT_OUTPUT_PATH);
     }
     default: {
       return splitDefault ?? DEFAULT_OUTPUT_PATH;

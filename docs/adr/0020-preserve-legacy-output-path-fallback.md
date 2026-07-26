@@ -2,7 +2,7 @@
 
 ## ステータス
 
-採用
+置き換え済み
 
 ## 日付
 
@@ -47,3 +47,4 @@ v2以降でlegacy fallbackを削除またはdeprecated化する場合は、別AD
 - `docs/specs/internal/output-format-conversion.md`
 - `docs/tasks/0098-decide-pair-output-path-settings-migration.md`
 - `docs/tasks/0100-design-original-source-template-variables.md`
+- [ADR-0021](0021-use-pair-specific-output-path-settings.md)

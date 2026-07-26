@@ -20,7 +20,7 @@
 // - cancellation tokenのUI操作
 
 import assert from 'node:assert/strict';
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { CONVERT_TO_SVG_COMMAND } from '../../src/commands/conversion/convert_to_svg.js';
@@ -95,7 +95,7 @@ suite('SVGに変換コマンド', () => {
     }
   });
 
-  test('outputPath.convertToSvgが設定されている場合はペア別設定より優先してpageを展開する', async () => {
+  test('outputPaths.convertPdfToSvgが設定されている場合はpageを展開する', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -106,10 +106,9 @@ suite('SVGに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToSvg':
-            '${fileDirname}/to-svg-${fileBasenameNoExtension}-${page}.svg',
-          'latex-graphics-helper.outputPath.convertPdfToSvg':
-            '${fileDirname}/pair-${fileBasenameNoExtension}-${page}.svg',
+          'latex-graphics-helper.outputPaths': {
+            convertPdfToSvg: '${fileDirname}/to-svg-${fileBasenameNoExtension}-${page}.svg',
+          },
         },
         async () => {
           const commandExecution = vscode.commands.executeCommand(CONVERT_TO_SVG_COMMAND, vscode.Uri.file(sourcePath));
@@ -119,8 +118,6 @@ suite('SVGに変換コマンド', () => {
 
       await assertGeneratedSvg(firstOutputPath);
       await assertGeneratedSvg(secondOutputPath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source-1.svg'));
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source-2.svg'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
@@ -188,10 +185,4 @@ async function assertGeneratedSvg(filePath: string): Promise<void> {
 
 function replaceExtension(filePath: string, extension: string): string {
   return path.join(path.dirname(filePath), `${path.basename(filePath, path.extname(filePath))}${extension}`);
-}
-
-async function assertFileDoesNotExist(filePath: string): Promise<void> {
-  await assert.rejects(access(filePath), (error) => {
-    return error instanceof Error && 'code' in error && error.code === 'ENOENT';
-  });
 }

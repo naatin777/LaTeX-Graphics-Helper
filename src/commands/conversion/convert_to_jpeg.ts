@@ -15,7 +15,7 @@ import {
 } from '../../config/external_tools/external_tool_paths.js';
 import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate, readOutputPathsTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import { convertToJpegFiles, type ConvertToJpegJob } from '../../operations/conversion/convert_to_jpeg.js';
@@ -48,12 +48,9 @@ export async function convertToJpegCommand(
     }
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const outputFormatOutputTemplate = readOutputFormatOutputTemplate(configuration, 'outputPath.convertToJpeg');
     const maxInputPixels = getMaxInputPixels(configuration);
     const jobs = (
-      await Promise.all(
-        sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, outputFormatOutputTemplate, maxInputPixels)),
-      )
+      await Promise.all(sourceUris.map((sourceUri) => createJobs(sourceUri, configuration, maxInputPixels)))
     ).flat();
     const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
     const drawioTools = readDrawioOptions(configuration);
@@ -92,7 +89,6 @@ export async function convertToJpegCommand(
 async function createJobs(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
   maxInputPixels: number,
 ): Promise<ConvertToJpegJob[]> {
   assertFileScheme(sourceUri);
@@ -110,11 +106,11 @@ async function createJobs(
 
   if (extension === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
-    return createPdfJobs(sourcePath, workspace, configuration, outputFormatOutputTemplate);
+    return createPdfJobs(sourcePath, workspace, configuration);
   }
 
   const page = isEditableDrawioImagePath(sourcePath) ? '1' : undefined;
-  const outputTemplate = outputTemplateForSource(sourcePath, configuration, outputFormatOutputTemplate);
+  const outputTemplate = outputTemplateForSource(sourcePath, configuration);
   if (isRasterImagePath(sourcePath)) {
     return createRasterFrameJobs({
       sourcePath,
@@ -151,7 +147,6 @@ async function createPdfJobs(
   sourcePath: string,
   workspace: vscode.WorkspaceFolder,
   configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
 ): Promise<ConvertToJpegJob[]> {
   const document = await PDFDocument.load(await readFile(sourcePath));
   const pageCount = document.getPageCount();
@@ -160,8 +155,7 @@ async function createPdfJobs(
     throw new Error(`PDF has no pages: ${sourcePath}`);
   }
 
-  const outputTemplate =
-    outputFormatOutputTemplate ?? configuration.get<string>('outputPath.convertPdfToJpeg', DEFAULT_PDF_OUTPUT_PATH);
+  const outputTemplate = readOutputPathsTemplate(configuration, 'convertPdfToJpeg', DEFAULT_PDF_OUTPUT_PATH);
   assertPageTemplateForSplitOutput(outputTemplate, pageCount);
 
   return Array.from({ length: pageCount }, (_value, index) => {
@@ -184,37 +178,29 @@ async function createPdfJobs(
   });
 }
 
-function outputTemplateForSource(
-  sourcePath: string,
-  configuration: vscode.WorkspaceConfiguration,
-  outputFormatOutputTemplate: string | undefined,
-): string {
-  if (outputFormatOutputTemplate !== undefined) {
-    return outputFormatOutputTemplate;
-  }
-
+function outputTemplateForSource(sourcePath: string, configuration: vscode.WorkspaceConfiguration): string {
   const extension = path.extname(sourcePath).toLowerCase();
 
   if (isEditableDrawioImagePath(sourcePath)) {
-    return configuration.get<string>('outputPath.convertDrawioToJpeg', DEFAULT_DRAWIO_OUTPUT_PATH);
+    return readOutputPathsTemplate(configuration, 'convertDrawioToJpeg', DEFAULT_DRAWIO_OUTPUT_PATH);
   }
 
   switch (extension) {
     case '.png': {
-      return configuration.get<string>('outputPath.convertPngToJpeg', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertPngToJpeg', DEFAULT_OUTPUT_PATH);
     }
     case '.webp': {
-      return configuration.get<string>('outputPath.convertWebpToJpeg', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertWebpToJpeg', DEFAULT_OUTPUT_PATH);
     }
     case '.avif': {
-      return configuration.get<string>('outputPath.convertAvifToJpeg', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertAvifToJpeg', DEFAULT_OUTPUT_PATH);
     }
     case '.svg': {
-      return configuration.get<string>('outputPath.convertSvgToJpeg', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertSvgToJpeg', DEFAULT_OUTPUT_PATH);
     }
     case '.mmd':
     case '.mermaid': {
-      return configuration.get<string>('outputPath.convertMermaidToJpeg', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertMermaidToJpeg', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;

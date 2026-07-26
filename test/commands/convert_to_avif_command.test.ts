@@ -137,7 +137,7 @@ suite('AVIFに変換コマンド', () => {
     }
   });
 
-  test('outputPath.convertToAvifが設定されている場合はデフォルト出力パスより優先する', async () => {
+  test('outputPath.convertPngToAvifが設定されている場合は指定した出力先を使う', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
@@ -147,8 +147,7 @@ suite('AVIFに変換コマンド', () => {
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToAvif': '${fileDirname}/custom-${fileBasenameNoExtension}.avif',
-          'latex-graphics-helper.outputPath.convertPngToAvif': '${fileDirname}/pair-${fileBasenameNoExtension}.avif',
+          'latex-graphics-helper.outputPath.convertPngToAvif': '${fileDirname}/custom-${fileBasenameNoExtension}.avif',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_AVIF_COMMAND, vscode.Uri.file(sourcePath));
@@ -156,31 +155,29 @@ suite('AVIFに変換コマンド', () => {
       );
 
       await assertReadableAvif(customOutputPath);
-      await assertFileDoesNotExist(path.join(temporaryDirectory, 'pair-source.avif'));
+      await assertFileDoesNotExist(path.join(temporaryDirectory, 'source.avif'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }
   });
 
-  test('outputPath.convertToAvifが空文字の場合はペア別設定へfallbackする', async () => {
+  test('空のpair-specific outputPath設定は既定値へfallbackする', async () => {
     const temporaryDirectory = await createTemporaryWorkspaceDirectory();
 
     try {
       const sourcePath = path.join(temporaryDirectory, 'source.png');
-      const pairOutputPath = path.join(temporaryDirectory, 'pair-source.avif');
       await copyFile(fixturePngPath, sourcePath);
 
       await withWorkspaceSettings(
         {
-          'latex-graphics-helper.outputPath.convertToAvif': '',
-          'latex-graphics-helper.outputPath.convertPngToAvif': '${fileDirname}/pair-${fileBasenameNoExtension}.avif',
+          'latex-graphics-helper.outputPath.convertPngToAvif': '',
         },
         async () => {
           await vscode.commands.executeCommand(CONVERT_TO_AVIF_COMMAND, vscode.Uri.file(sourcePath));
         },
       );
 
-      await assertReadableAvif(pairOutputPath);
+      await assertReadableAvif(path.join(temporaryDirectory, 'source.avif'));
     } finally {
       await removeTemporaryDirectory(temporaryDirectory);
     }

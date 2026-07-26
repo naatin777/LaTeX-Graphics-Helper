@@ -8,7 +8,7 @@ import { isRasterImagePath, logicalSourcePathForOutputTemplate } from '../../app
 import { readGhostscriptExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import { getMaxInputPixels } from '../../config/raster_input.js';
 import { readMermaidPuppeteerOptions } from '../../config/rendering/mermaid_puppeteer_options.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate, readOutputPathsTemplate } from '../../config/output/output_path_settings.js';
 import { assertPageTemplateForSplitOutput, formatOutputPage } from '../../config/output/page_template.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { convertToEpsFiles, type ConvertToEpsJob } from '../../operations/conversion/convert_to_eps.js';
@@ -72,22 +72,20 @@ export async function createEpsJobs(
     throw new Error(`The file must be inside an open workspace: ${sourceUri.fsPath}`);
   }
   const sourcePath = sourceUri.fsPath;
-  const outputTemplate =
-    readOutputFormatOutputTemplate(configuration, 'outputPath.convertToEps') ?? DEFAULT_OUTPUT_PATH;
-
   if (path.extname(sourcePath).toLowerCase() === '.pdf') {
     await assertExistingPathInWorkspace(sourcePath, workspace.uri.fsPath);
     const pageCount = (await PDFDocument.load(await readFile(sourcePath))).getPageCount();
     if (pageCount === 0) {
       throw new Error(`PDF has no pages: ${sourcePath}`);
     }
-    const template =
-      readOutputFormatOutputTemplate(configuration, 'outputPath.convertToEps') ?? DEFAULT_PDF_OUTPUT_PATH;
+    const template = readOutputPathsTemplate(configuration, 'convertPdfToEps', DEFAULT_PDF_OUTPUT_PATH);
     assertPageTemplateForSplitOutput(template, pageCount);
     return Array.from({ length: pageCount }, (_value, index) =>
       createJob(sourcePath, workspace, template, index + 1, pageCount),
     );
   }
+
+  const outputTemplate = outputPathTemplateForSource(sourcePath, configuration);
 
   if (isRasterImagePath(sourcePath)) {
     return createRasterFrameJobs({
@@ -115,6 +113,27 @@ export async function createEpsJobs(
       ),
     },
   ];
+}
+
+function outputPathTemplateForSource(sourcePath: string, configuration: vscode.WorkspaceConfiguration): string {
+  switch (path.extname(sourcePath).toLowerCase()) {
+    case '.png':
+      return readOutputPathTemplate(configuration, 'outputPath.convertPngToEps', DEFAULT_OUTPUT_PATH);
+    case '.jpg':
+    case '.jpeg':
+      return readOutputPathTemplate(configuration, 'outputPath.convertJpegToEps', DEFAULT_OUTPUT_PATH);
+    case '.webp':
+      return readOutputPathTemplate(configuration, 'outputPath.convertWebpToEps', DEFAULT_OUTPUT_PATH);
+    case '.avif':
+      return readOutputPathTemplate(configuration, 'outputPath.convertAvifToEps', DEFAULT_OUTPUT_PATH);
+    case '.svg':
+      return readOutputPathTemplate(configuration, 'outputPath.convertSvgToEps', DEFAULT_OUTPUT_PATH);
+    case '.mmd':
+    case '.mermaid':
+      return readOutputPathTemplate(configuration, 'outputPath.convertMermaidToEps', DEFAULT_OUTPUT_PATH);
+    default:
+      return DEFAULT_OUTPUT_PATH;
+  }
 }
 
 function createJob(

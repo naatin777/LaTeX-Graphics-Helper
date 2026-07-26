@@ -102,7 +102,7 @@ Main settings:
 
 Output paths and LaTeX snippet candidates can also be changed from VS Code settings.
 
-Output-format settings such as `outputPath.convertToPdf` take precedence. When they are empty, whitespace-only, or unset, the legacy input/output pair-specific setting is used. The legacy settings remain as a compatibility fallback and are planned for review before the next major version.
+Command IDs use output-format names such as `convertToPdf`, but output paths use input/output pair names. Use `outputPath.convertPngToPdf` for a single output and an `outputPaths` entry such as `convertPdfToPng` when the template includes `${page}`. Format-based `outputPath.convertToPdf` settings and command-based `outputPaths.convertToPdf` entries are not used.
 
 ## Output Panel
 

@@ -16,7 +16,7 @@ import {
   readMermaidPuppeteerOptions,
   readPuppeteerExecutablePath,
 } from '../../config/rendering/mermaid_puppeteer_options.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import {
   convertToPdfFiles,
@@ -88,7 +88,6 @@ export async function convertToPdfCommand(
     successKey: 'message.convertToPdf.success',
     failedKey: 'message.convertToPdf.failed',
     cancelledKey: 'message.convertToPdf.cancelled',
-    outputFormatOutputPathKey: 'outputPath.convertToPdf',
     operationName: 'convert-to-pdf',
     ...(outputChannel !== undefined && { outputChannel }),
   });
@@ -103,7 +102,6 @@ async function convertSelectedSourcesToPdf(
     successKey: 'message.convertPngToPdf.success' | 'message.convertToPdf.success';
     failedKey: 'message.convertPngToPdf.failed' | 'message.convertToPdf.failed';
     cancelledKey: 'message.convertPngToPdf.cancelled' | 'message.convertToPdf.cancelled';
-    outputFormatOutputPathKey?: 'outputPath.convertToPdf';
     operationName: string;
     outputChannel?: LineOutputChannel;
   },
@@ -117,11 +115,7 @@ async function convertSelectedSourcesToPdf(
 
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
     const maxInputPixels = getMaxInputPixels(configuration);
-    const outputTemplate = configuration.get<string>('outputPath.convertPngToPdf', DEFAULT_OUTPUT_PATH);
-    const outputFormatOutputTemplate =
-      messages.outputFormatOutputPathKey === undefined
-        ? undefined
-        : readOutputFormatOutputTemplate(configuration, messages.outputFormatOutputPathKey);
+    const outputTemplate = readOutputPathTemplate(configuration, 'outputPath.convertPngToPdf', DEFAULT_OUTPUT_PATH);
     const svgToPdfTools = readSvgToPdfOptions(configuration);
     validateSvgToPdfOptions(svgToPdfTools);
     const mermaidTools = readMermaidPuppeteerOptions(configuration, 'convertToPdf');
@@ -132,7 +126,7 @@ async function convertSelectedSourcesToPdf(
         sourceUris.map((sourceUri) =>
           createJobs(
             sourceUri,
-            outputTemplateForSource(sourceUri, configuration, outputTemplate, outputFormatOutputTemplate),
+            outputTemplateForSource(sourceUri, configuration, outputTemplate),
             logicalSourcePathForOutputTemplate(sourceUri.fsPath),
             messages.supportedExtensions,
           ),
@@ -179,12 +173,7 @@ export function outputTemplateForSource(
   sourceUri: vscode.Uri,
   configuration: vscode.WorkspaceConfiguration,
   pngOutputTemplate: string,
-  outputFormatOutputTemplate: string | undefined,
 ): string {
-  if (outputFormatOutputTemplate !== undefined) {
-    return outputFormatOutputTemplate;
-  }
-
   const sourcePath = sourceUri.fsPath;
   const extension = path.extname(sourcePath).toLowerCase();
 
@@ -202,20 +191,20 @@ export function outputTemplateForSource(
     }
     case '.jpg':
     case '.jpeg': {
-      return configuration.get<string>('outputPath.convertJpegToPdf', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertJpegToPdf', DEFAULT_OUTPUT_PATH);
     }
     case '.webp': {
-      return configuration.get<string>('outputPath.convertWebpToPdf', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertWebpToPdf', DEFAULT_OUTPUT_PATH);
     }
     case '.avif': {
-      return configuration.get<string>('outputPath.convertAvifToPdf', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertAvifToPdf', DEFAULT_OUTPUT_PATH);
     }
     case '.svg': {
-      return configuration.get<string>('outputPath.convertSvgToPdf', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertSvgToPdf', DEFAULT_OUTPUT_PATH);
     }
     case '.mmd':
     case '.mermaid': {
-      return configuration.get<string>('outputPath.convertMermaidToPdf', DEFAULT_OUTPUT_PATH);
+      return readOutputPathTemplate(configuration, 'outputPath.convertMermaidToPdf', DEFAULT_OUTPUT_PATH);
     }
     default: {
       return DEFAULT_OUTPUT_PATH;

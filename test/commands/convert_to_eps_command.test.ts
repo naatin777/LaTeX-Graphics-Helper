@@ -40,7 +40,7 @@ suite('Convert to EPS command jobs', () => {
     }
   });
 
-  test('outputPath.convertToEpsが設定されている場合はカスタムテンプレートを使う', async () => {
+  test('outputPaths.convertPdfToEpsが設定されている場合はカスタムテンプレートを使う', async () => {
     const workspace = vscode.workspace.workspaceFolders?.[0];
     assert.ok(workspace);
     const root = await mkdtemp(path.join(workspace.uri.fsPath, 'lgh-convert-to-eps-output-path-'));
@@ -53,8 +53,8 @@ suite('Convert to EPS command jobs', () => {
       await writeFile(sourcePath, await document.save());
       const configuration = {
         get<T>(key: string, defaultValue: T): T {
-          if (key === 'outputPath.convertToEps') {
-            return '${fileDirname}/custom-${fileBasenameNoExtension}-${page}.eps' as T;
+          if (key === 'outputPaths') {
+            return { convertPdfToEps: '${fileDirname}/custom-${fileBasenameNoExtension}-${page}.eps' } as T;
           }
           return defaultValue;
         },

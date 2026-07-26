@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { logicalSourcePathForOutputTemplate } from '../../application/policy/source_format.js';
 import { readGhostscriptExecutablePath } from '../../config/external_tools/external_tool_paths.js';
 import { getMaxInputPixels } from '../../config/raster_input.js';
-import { readOutputFormatOutputTemplate } from '../../config/output/output_path_settings.js';
+import { readOutputPathTemplate } from '../../config/output/output_path_settings.js';
 import { resolveOutputPath } from '../../config/output/resolve_output_path.js';
 import { combineImagesToPdf } from '../../operations/conversion/combine_images_to_pdf.js';
 import { assertWritablePathInWorkspace } from '../../security/workspace_path.js';
@@ -42,7 +42,8 @@ export async function combineImagesToPdfCommand(
     const workspaceFolder = requireSingleWorkspace(previewedUris);
     const workspacePath = workspaceFolder.uri.fsPath;
     const configuration = vscode.workspace.getConfiguration('latex-graphics-helper');
-    const outputTemplate = readOutputFormatOutputTemplate(configuration, OUTPUT_PATH_SETTING);
+    const configuredTemplate = readOutputPathTemplate(configuration, OUTPUT_PATH_SETTING, '').trim();
+    const outputTemplate = configuredTemplate || undefined;
     const outputPath = await resolveCombineOutputPath(previewedUris, workspaceFolder, outputTemplate);
 
     if (outputPath === undefined) {
