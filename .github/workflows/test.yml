@@ -3,6 +3,9 @@ name: Test VSCode Extension
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
