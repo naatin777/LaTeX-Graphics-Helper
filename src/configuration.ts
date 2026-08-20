@@ -1,6 +1,8 @@
 import * as os from 'node:os';
 
-import type { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core';
+import type { ChromeReleaseChannel, SupportedBrowser } from 'puppeteer-core' with {
+    'resolution-mode': 'import',
+};
 import * as vscode from 'vscode';
 
 import type {
