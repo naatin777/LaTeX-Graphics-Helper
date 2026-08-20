@@ -1,4 +1,3 @@
-import { launch } from 'puppeteer-core';
 import * as vscode from 'vscode';
 
 import type { AppConfig } from '../configuration';
@@ -14,6 +13,7 @@ export async function convertSvgToPdf(
 ) {
     const outputPath = generatePathFromTemplate(outputTemplatePath, inputPath, workspaceFolder);
     const svgContent = await vscode.workspace.fs.readFile(vscode.Uri.file(inputPath));
+    const { launch } = await import('puppeteer-core');
 
     let browser;
     try {
@@ -23,7 +23,7 @@ export async function convertSvgToPdf(
             executablePath: appConfig.execPathPuppeteer,
         });
         const page = await browser.newPage();
-        await page.setContent(svgContent.toString(), { waitUntil: 'networkidle2' });
+        await page.setContent(svgContent.toString(), { waitUntil: 'load' });
         await page.pdf({ path: outputPath });
         await cropPdf(appConfig, outputPath, outputPath, workspaceFolder);
     } catch (error) {
