@@ -44,7 +44,7 @@ suite('PDF画像変換の安全性', () => {
         const source = path.join(sourceDir, 'source.pdf') as PdfPath;
         await rename(input, source);
         const output = path.join(outputDir, 'image.svg') as SvgTemplatePath;
-        stub(exec, 'execFileInWorkspace').callsFake(async (_command, args) => {
+        const execStub = stub(exec, 'execFileInWorkspace').callsFake(async (_command, args) => {
             await writeFile(args[1], '<svg/>');
             return '';
         });
@@ -54,6 +54,7 @@ suite('PDF画像変換の安全性', () => {
                 output,
             ]);
             assert.strictEqual(await readFile(output, 'utf8'), '<svg/>');
+            assert.deepStrictEqual(execStub.firstCall.args[3], { allowStderr: true });
         } finally {
             await chmod(sourceDir, 0o755);
         }

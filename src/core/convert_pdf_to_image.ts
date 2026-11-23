@@ -65,6 +65,7 @@ async function convertPdfToImage(
                 appConfig.execPathPdftocairo,
                 [pdfPath, basePath, ...args],
                 workspaceFolder,
+                { allowStderr: true },
             );
             await createFolder(outputPath as PngPath | JpegPath | SvgPath);
             const generatedPath =
