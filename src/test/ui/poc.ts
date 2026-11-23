@@ -255,6 +255,12 @@ async function main(): Promise<void> {
             timeoutMs: Math.min(options.timeout, 60_000),
         });
         result.checks.notifications = await collectNotifications(page);
+        const notifications = result.checks.notifications;
+        assert.equal(
+            notifications.hasError,
+            false,
+            `VS Code reported an error notification: ${notifications.text}`,
+        );
         const output = result.checks.output;
         log(
             `Verified ${output.outputs.length} split PDFs; input unchanged=${output.input.unchanged}`,
