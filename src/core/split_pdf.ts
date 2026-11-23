@@ -10,6 +10,7 @@ export async function splitPdf(
     outputTemplatePath: PdfTemplatePath,
     workspaceFolder: vscode.WorkspaceFolder,
     pages: string[] = [],
+    sourcePath: PdfPath = inputPath,
 ): Promise<PdfPath[]> {
     const pdfBuffer = await vscode.workspace.fs.readFile(vscode.Uri.file(inputPath));
     const pdfDocument = await PDFDocument.load(pdfBuffer);
@@ -20,7 +21,7 @@ export async function splitPdf(
     for (let i = 0; i < pdfPages.length; i++) {
         const outputPath = generatePathFromTemplate(
             outputTemplatePath,
-            inputPath,
+            sourcePath,
             workspaceFolder,
             pages[i] ?? (i + 1).toString(),
         );

@@ -34,7 +34,7 @@ const commandIds = [
     'latex-graphics-helper.convertSvgToPdf',
 ];
 
-suite('VS Code command e2e Test Suite', () => {
+suite('VS Codeコマンド e2e テストスイート', () => {
     suiteSetup(async () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
         await vscode.workspace
@@ -57,7 +57,7 @@ suite('VS Code command e2e Test Suite', () => {
         restore();
     });
 
-    test('should register all contributed commands', async () => {
+    test('提供されているすべてのコマンドが登録されている', async () => {
         const registeredCommands = await vscode.commands.getCommands(true);
 
         for (const commandId of commandIds) {
@@ -68,7 +68,7 @@ suite('VS Code command e2e Test Suite', () => {
         }
     });
 
-    test('should show both Draw.io PDF conversions for editable PNG and SVG files', async () => {
+    test('編集可能なPNGとSVGファイルに対してDraw.ioの2つのPDF変換を表示する', async () => {
         const extension = vscode.extensions.getExtension('naatin777.latex-graphics-helper');
         assert.ok(extension);
 
@@ -103,7 +103,7 @@ suite('VS Code command e2e Test Suite', () => {
         assert.ok(svgToPdfEntry.when.includes('!(resourceFilename =~'));
     });
 
-    test('should export a Draw.io file directly to a single PDF', async () => {
+    test('Draw.ioファイルを直接1つのPDFへエクスポートする', async () => {
         const workspaceFolder: vscode.WorkspaceFolder = {
             uri: vscode.Uri.file('/workspace'),
             name: 'workspace',
@@ -141,7 +141,7 @@ suite('VS Code command e2e Test Suite', () => {
         ]);
     });
 
-    test('should export an editable Draw.io PNG directly to a PDF', async () => {
+    test('編集可能なDraw.io PNGを直接PDFへエクスポートする', async () => {
         const workspaceFolder: vscode.WorkspaceFolder = {
             uri: vscode.Uri.file('/workspace'),
             name: 'workspace',
@@ -180,7 +180,7 @@ suite('VS Code command e2e Test Suite', () => {
         assert.strictEqual(execFileInWorkspaceStub.callCount, 1);
     });
 
-    test('should show an error when commands are invoked without selected files', async () => {
+    test('ファイルを選択せずにコマンドを実行するとエラーを表示する', async () => {
         const showErrorMessageStub = stub(vscode.window, 'showErrorMessage').resolves(undefined);
 
         for (const commandId of commandIds) {
@@ -193,7 +193,7 @@ suite('VS Code command e2e Test Suite', () => {
         }
     });
 
-    test('should split a PDF selected from the explorer', async () => {
+    test('エクスプローラーで選択したPDFを分割する', async () => {
         const directory = await createTestDirectory('split-pdf-command');
 
         try {
@@ -215,7 +215,7 @@ suite('VS Code command e2e Test Suite', () => {
         }
     });
 
-    test('should merge PDFs selected from the explorer into the chosen output file', async () => {
+    test('エクスプローラーで選択したPDFを指定した出力ファイルへ結合する', async () => {
         const directory = await createTestDirectory('merge-pdf-command');
 
         try {
@@ -243,7 +243,7 @@ suite('VS Code command e2e Test Suite', () => {
         }
     });
 
-    test('should convert a PNG selected from the explorer to a PDF', async () => {
+    test('エクスプローラーで選択したPNGをPDFへ変換する', async () => {
         const directory = await createTestDirectory('convert-png-command');
 
         try {

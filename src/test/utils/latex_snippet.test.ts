@@ -3,7 +3,7 @@ import * as assert from 'node:assert';
 import type { AppConfig } from '../../configuration';
 import { LatexSnippet } from '../../utils/latex_snippet';
 
-suite('LatexSnippet Test Suite', () => {
+suite('LatexSnippet のテストスイート', () => {
     let appConfig: AppConfig;
 
     setup(() => {
@@ -17,39 +17,39 @@ suite('LatexSnippet Test Suite', () => {
         } as AppConfig;
     });
 
-    test('should append text', () => {
+    test('テキストを追加する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.appendText('hello');
         assert.strictEqual(snippet.snippet.value, 'hello');
     });
 
-    test('should append placeholder', () => {
+    test('プレースホルダーを追加する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.appendPlaceholder('caption');
         assert.strictEqual(snippet.snippet.value, '${1:caption}');
     });
 
-    test('should append choices for figure placement', () => {
+    test('図の配置の選択肢を追加する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.appendFigurePlacement();
         assert.strictEqual(snippet.snippet.value, '${1|h,t,b,p,!|}');
     });
 
-    test('should append single option for figure placement if only one', () => {
+    test('図の配置オプションが1つだけの場合は単一の選択肢を追加する', () => {
         appConfig.figurePlacementOptions = ['[H]'];
         const snippet = new LatexSnippet(appConfig);
         snippet.appendFigurePlacement();
         assert.strictEqual(snippet.snippet.value, '[H]');
     });
 
-    test('should append choices for figure alignment', () => {
+    test('図の揃え位置の選択肢を追加する', () => {
         appConfig.figureAlignmentOptions = ['centering'];
         const snippet = new LatexSnippet(appConfig);
         snippet.appendFigureAlignment();
         assert.strictEqual(snippet.snippet.value, 'centering');
     });
 
-    test('should append choices for graphics options', () => {
+    test('graphics オプションの選択肢を追加する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.appendGraphicsOptions();
         assert.strictEqual(
@@ -58,7 +58,7 @@ suite('LatexSnippet Test Suite', () => {
         );
     });
 
-    test('should append command with option and argument', () => {
+    test('オプションと引数を伴うコマンドを追加する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.appendCommand(
             'includegraphics',
@@ -71,7 +71,7 @@ suite('LatexSnippet Test Suite', () => {
         );
     });
 
-    test('should wrap content in an environment', () => {
+    test('内容を環境で囲む', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.wrapEnvironment('figure', () => {
             snippet.lineBreak();
@@ -83,7 +83,7 @@ suite('LatexSnippet Test Suite', () => {
         );
     });
 
-    test('should handle indentation', () => {
+    test('インデントを処理する', () => {
         const snippet = new LatexSnippet(appConfig);
         snippet.wrapEnvironment('figure', () => {
             snippet.lineBreak();
@@ -99,7 +99,7 @@ suite('LatexSnippet Test Suite', () => {
         );
     });
 
-    test('should convert path to posix path', () => {
+    test('パスを POSIX パスに変換する', () => {
         const snippet = new LatexSnippet(appConfig);
         assert.strictEqual(
             snippet.convertToLatexPath('C:\\Users\\test\\file.txt'),

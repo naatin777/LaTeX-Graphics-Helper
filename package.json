@@ -20,11 +20,9 @@
         "url": "https://github.com/naatin777/LaTeX-Graphics-Helper"
     },
     "publisher": "naatin777",
-    "packageManager": "pnpm@10.28.2",
     "engines": {
-        "vscode": "^1.105.0",
-        "node": ">=22",
-        "pnpm": ">=10.28.2"
+        "vscode": "^1.107.0",
+        "node": ">=22"
     },
     "main": "./out/extension.js",
     "scripts": {
@@ -35,57 +33,61 @@
         "lint:fix": "oxlint --fix src",
         "format": "oxfmt --check src",
         "format:fix": "oxfmt src",
-        "check": "pnpm run lint && pnpm run format && pnpm run typecheck",
-        "check:fix": "pnpm run lint:fix && pnpm run format:fix",
+        "check": "npm run lint && npm run format && npm run typecheck",
+        "check:fix": "npm run lint:fix && npm run format:fix",
         "clean": "rm -rf out",
-        "test": "pnpm run compile && vscode-test",
-        "package": "pnpm run compile && vsce package",
-        "release:patch": "pnpm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-        "release:minor": "pnpm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
-        "release:major": "pnpm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
+        "test": "npm run compile && vscode-test",
+        "test:ui": "npm run compile && node out/test/ui/poc.js",
+        "package": "npm run compile && vsce package",
+        "release:patch": "npm version patch -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:minor": "npm version minor -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD",
+        "release:major": "npm version major -m \"chore: bump extension version to %s\" && git push --follow-tags origin HEAD"
     },
     "dependencies": {
         "pdf-lib": "^1.17.1",
-        "puppeteer-core": "^25.12.0",
-        "vscode-uri": "^3.1.0",
+        "puppeteer-core": "^25.16.0",
+        "vscode-uri": "^3.2.0",
         "xml2js": "^0.6.2"
     },
     "devDependencies": {
         "@types/mocha": "^10.0.10",
         "@types/node": "^22.18.3",
-        "@types/sinon": "^21.0.1",
-        "@types/vscode": "^1.105.0",
+        "@types/sinon": "^22.0.2",
+        "@types/vscode": "1.107.0",
         "@types/xml2js": "^0.4.14",
         "@vscode/test-cli": "^0.0.15",
         "@vscode/test-electron": "^3.1.0",
-        "@vscode/vsce": "^4.0.0",
-        "lefthook": "^2.1.9",
-        "mocha": "^12.0.2",
-        "ovsx": "^1.2.0",
-        "oxfmt": "^0.70.0",
-        "oxlint": "^1.85.0",
-        "sinon": "^22.0.0",
-        "typescript": "^6.0.3"
+        "@vscode/vsce": "^4.1.0",
+        "lefthook": "^2.2.2",
+        "mocha": "^12.0.3",
+        "ovsx": "^1.3.0",
+        "oxfmt": "^0.75.0",
+        "oxlint": "^1.90.0",
+        "playwright-core": "^1.64.1",
+        "sinon": "^22.1.0",
+        "typescript": "^7.0.2"
     },
-    "pnpm": {
-        "overrides": {
-            "serialize-javascript": "^7.0.3",
-            "mocha>diff": "8.0.3",
-            "ws@^8.0.0": "8.21.3",
-            "brace-expansion@^2.0.0": "2.1.7",
-            "brace-expansion@^5.0.0": "5.0.12",
-            "undici@^7.0.0": "7.29.1",
-            "js-yaml@^4.0.0": "4.3.2",
-            "linkify-it@^5.0.0": "5.0.2",
-            "fast-uri@^3.0.0": "3.1.7",
-            "follow-redirects": "1.16.1",
-            "markdown-it@^14.0.0": "14.3.3",
-            "qs": "6.16.0",
-            "ip-address@^10.0.0": "10.4.0"
-        },
-        "onlyBuiltDependencies": [
-            "lefthook"
-        ]
+    "overrides": {
+        "serialize-javascript": "^7.1.3",
+        "mocha>diff": "8.0.3",
+        "ws@^8.0.0": "8.21.3",
+        "brace-expansion@^2.0.0": "2.1.7",
+        "brace-expansion@^5.0.0": "5.0.12",
+        "undici@^7.0.0": "7.30.1",
+        "js-yaml@^4.0.0": "4.3.2",
+        "linkify-it@^5.0.0": "5.0.2",
+        "fast-uri@^3.0.0": "3.1.9",
+        "follow-redirects": "1.16.1",
+        "markdown-it@^14.0.0": "14.3.3",
+        "qs": "6.16.1",
+        "ip-address@^10.0.0": "10.4.0",
+        "diff": "^9.0.0",
+        "minimatch": "^11.0.9",
+        "glob": "^14.0.6"
+    },
+    "allowScripts": {
+        "lefthook": true,
+        "@vscode/vsce-sign": true
     },
     "contributes": {
         "menus": {
