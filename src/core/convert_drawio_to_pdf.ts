@@ -60,6 +60,7 @@ export async function convertDrawioToPdf(
         let conversionInputPath = inputPath;
 
         if (isEditableDrawioImage(inputPath)) {
+            // Keep the `.drawio` suffix so Draw.io reads the extracted file as XML.
             conversionInputPath = (await reserveTemporaryPath('.drawio')) as DrawioPath;
             await execFileInWorkspace(
                 appConfig.execPathDrawio,
@@ -68,6 +69,8 @@ export async function convertDrawioToPdf(
             );
         }
 
+        // `-x` and `-f` must stay separate for Draw.io Desktop 30.3.14 compatibility,
+        // and `--crop` prevents a single diagram from spilling onto multiple A4 pages.
         await execFileInWorkspace(
             appConfig.execPathDrawio,
             [conversionInputPath, '-o', temporaryPdfPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],

@@ -205,6 +205,7 @@ suite('convert_drawio_to_pdf テストスイート', () => {
         assert.deepStrictEqual(xmlArgs.slice(0, 3), ['-x', '-f', 'xml']);
         assert.strictEqual(xmlArgs[3], '-o');
         assert.strictEqual(path.dirname(xmlArgs[4]), directory);
+        assert.strictEqual(path.extname(xmlArgs[4]), '.drawio');
         assert.strictEqual(xmlArgs[5], inputPath);
 
         const pdfExportArgs = drawioCalls[1].args[1];
@@ -212,6 +213,7 @@ suite('convert_drawio_to_pdf テストスイート', () => {
         assert.strictEqual(pdfExportArgs[1], '-o');
         assert.deepStrictEqual(pdfExportArgs.slice(3), ['-x', '-f', 'pdf', '-t', '-a', '--crop']);
         assert.strictEqual(path.dirname(pdfExportArgs[2]), directory);
+        assert.strictEqual(path.extname(pdfExportArgs[2]), '.pdf');
 
         assert.deepStrictEqual(
             await listFiles(directory),
