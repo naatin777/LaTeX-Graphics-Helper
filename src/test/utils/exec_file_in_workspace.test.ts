@@ -32,6 +32,26 @@ suite('exec_file_in_workspace のテストスイート', () => {
         });
     });
 
+    test('allowStderr を指定すると正常終了時の stderr を無視する', async () => {
+        const command = 'node';
+        const args = ['-e', 'console.error("harmless warning"); console.log("ok")'];
+
+        const stdout = await execFileInWorkspace(command, args, workspaceFolder, {
+            allowStderr: true,
+        });
+
+        assert.strictEqual(stdout.trim(), 'ok');
+    });
+
+    test('allowStderr を指定しても異常終了時はエラーを投げる', async () => {
+        const command = 'node';
+        const args = ['-e', 'console.error("fatal"); process.exit(1)'];
+
+        await assert.rejects(
+            execFileInWorkspace(command, args, workspaceFolder, { allowStderr: true }),
+        );
+    });
+
     test('execFile がエラーを返した場合はエラーを投げる', async () => {
         const command = 'a_non_existent_command_that_will_fail';
         const args: string[] = [];

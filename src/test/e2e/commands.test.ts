@@ -138,6 +138,7 @@ suite('VS Codeコマンド e2e テストスイート', () => {
                 '--crop',
             ],
             workspaceFolder,
+            { allowStderr: true },
         ]);
     });
 
@@ -176,6 +177,7 @@ suite('VS Codeコマンド e2e テストスイート', () => {
                 '--crop',
             ],
             workspaceFolder,
+            { allowStderr: true },
         ]);
         assert.strictEqual(execFileInWorkspaceStub.callCount, 1);
     });

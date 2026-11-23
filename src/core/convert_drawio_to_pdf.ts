@@ -66,6 +66,7 @@ export async function convertDrawioToPdf(
                 appConfig.execPathDrawio,
                 ['-x', '-f', 'xml', '-o', conversionInputPath, inputPath],
                 workspaceFolder,
+                { allowStderr: true },
             );
         }
 
@@ -75,6 +76,7 @@ export async function convertDrawioToPdf(
             appConfig.execPathDrawio,
             [conversionInputPath, '-o', temporaryPdfPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
             workspaceFolder,
+            { allowStderr: true },
         );
         await cropPdf(appConfig, temporaryPdfPath, temporaryPdfPath, workspaceFolder);
         const drawioTabs = await getDrawioTabs(conversionInputPath);
@@ -111,6 +113,7 @@ export async function convertDrawioToPdfDirectly(
         appConfig.execPathDrawio,
         [inputPath, '-o', outputPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
         workspaceFolder,
+        { allowStderr: true },
     );
 
     return outputPath;
