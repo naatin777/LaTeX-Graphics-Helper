@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import type { Path, TemplatePath } from '../../type';
 import { generatePathFromTemplate } from '../../utils/generate_path_from_template';
 
-suite('generate_path_from_template Test Suite', () => {
+suite('generate_path_from_template のテストスイート', () => {
     const sourcePath = '/path/to/my/file.pdf' as Path;
     const workspaceFolder: vscode.WorkspaceFolder = {
         uri: vscode.Uri.file('/path/to'),
@@ -26,7 +26,7 @@ suite('generate_path_from_template Test Suite', () => {
         clock.restore();
     });
 
-    test('should replace ${workspaceFolder}', () => {
+    test('${workspaceFolder} を置換する', () => {
         const template = '${workspaceFolder}/output.pdf' as TemplatePath;
         const expected = path.join(workspaceFolder.uri.fsPath, 'output.pdf');
         assert.strictEqual(
@@ -35,7 +35,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${workspaceFolderBasename}', () => {
+    test('${workspaceFolderBasename} を置換する', () => {
         const template = '${workspaceFolderBasename}/output.pdf' as TemplatePath;
         const expected = path.join(workspaceFolder.name, 'output.pdf');
         assert.strictEqual(
@@ -44,7 +44,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${file}', () => {
+    test('${file} を置換する', () => {
         const template = '${file}.bak' as TemplatePath;
         const expected = `${sourcePath}.bak`;
         assert.strictEqual(
@@ -53,7 +53,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${relativeFile}', () => {
+    test('${relativeFile} を置換する', () => {
         const template = 'bak/${relativeFile}' as TemplatePath;
         const expected = path.join('bak', path.relative(workspaceFolder.uri.fsPath, sourcePath));
         assert.strictEqual(
@@ -62,7 +62,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${relativeFileDirname}', () => {
+    test('${relativeFileDirname} を置換する', () => {
         const template = '${relativeFileDirname}/output.pdf' as TemplatePath;
         const expected = path.join(
             path.dirname(path.relative(workspaceFolder.uri.fsPath, sourcePath)),
@@ -74,7 +74,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${fileBasename}', () => {
+    test('${fileBasename} を置換する', () => {
         const template = 'pre_${fileBasename}' as TemplatePath;
         const expected = `pre_${path.basename(sourcePath)}`;
         assert.strictEqual(
@@ -83,7 +83,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${fileBasenameNoExtension}', () => {
+    test('${fileBasenameNoExtension} を置換する', () => {
         const template = '${fileBasenameNoExtension}.txt' as TemplatePath;
         const expected = `${path.basename(sourcePath, path.extname(sourcePath))}.txt`;
         assert.strictEqual(
@@ -92,7 +92,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${fileDirname}', () => {
+    test('${fileDirname} を置換する', () => {
         const template = '${fileDirname}/newfile.txt' as TemplatePath;
         const expected = path.join(path.dirname(sourcePath), 'newfile.txt');
         assert.strictEqual(
@@ -101,7 +101,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${fileExtname}', () => {
+    test('${fileExtname} を置換する', () => {
         const template = 'file${fileExtname}' as TemplatePath;
         const expected = `file${path.extname(sourcePath)}`;
         assert.strictEqual(
@@ -110,7 +110,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${page}', () => {
+    test('${page} を置換する', () => {
         const template = 'page-${page}.pdf' as TemplatePath;
         const page = '3';
         const expected = `page-${page}.pdf`;
@@ -120,7 +120,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should replace ${dateNow}', () => {
+    test('${dateNow} を置換する', () => {
         const template = 'backup-${dateNow}' as TemplatePath;
         assert.strictEqual(
             generatePathFromTemplate(template, sourcePath, workspaceFolder),
@@ -128,7 +128,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should handle multiple replacements', () => {
+    test('複数のプレースホルダーをまとめて置換する', () => {
         const template = '${fileDirname}/${fileBasenameNoExtension}-${page}.png' as TemplatePath;
         const page = '1';
         const expected = path.join(
@@ -141,7 +141,7 @@ suite('generate_path_from_template Test Suite', () => {
         );
     });
 
-    test('should handle multiple replacements all', () => {
+    test('すべてのプレースホルダーをまとめて置換する', () => {
         const inputPath = '/path/to/my/file.pdf';
         const anotherWorkspaceFolder: vscode.WorkspaceFolder = {
             uri: vscode.Uri.file('/workspace'),

@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { LatexDropEditProvider } from '../../edit_provider/latex_drop_edit_provider';
 import { createPdf, createTestDirectory, deleteDirectory } from './helpers';
 
-suite('LaTeX drop edit provider e2e Test Suite', () => {
+suite('LaTeXドロップ編集プロバイダー e2e テストスイート', () => {
     suiteSetup(async () => {
         await vscode.extensions.getExtension('naatin777.latex-graphics-helper')!.activate();
 
@@ -42,7 +42,7 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
         );
     });
 
-    test('should create a figure snippet for a dropped PDF URI', async () => {
+    test('ドロップされたPDFのURIに対してfigureスニペットを生成する', async () => {
         const directory = await createTestDirectory('drop-single-pdf');
 
         try {
@@ -70,7 +70,7 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
         }
     });
 
-    test('should create minipage snippets for multiple dropped PDF URIs', async () => {
+    test('複数のPDFがドロップされたときminipageスニペットを生成する', async () => {
         const directory = await createTestDirectory('drop-multiple-pdfs');
 
         try {
@@ -104,7 +104,7 @@ suite('LaTeX drop edit provider e2e Test Suite', () => {
         }
     });
 
-    test('should not provide an edit when dropped data does not contain URI list text', async () => {
+    test('ドロップされたデータにURIリストのテキストが含まれない場合は編集を提供しない', async () => {
         const directory = await createTestDirectory('drop-without-uri-list');
 
         try {

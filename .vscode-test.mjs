@@ -9,6 +9,7 @@ fs.mkdirSync(workspaceFolder, { recursive: true });
 
 export default defineConfig({
 	files: 'out/test/**/*.test.js',
+	version: '1.107.0',
 	workspaceFolder,
 	mocha: {
 		timeout: 20000,

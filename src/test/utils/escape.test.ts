@@ -4,12 +4,12 @@ import * as vscode from 'vscode';
 
 import { escapeLatex, escapeLatexLabel } from '../../utils/escape';
 
-suite('Escape Test Suite', () => {
+suite('エスケープのテストスイート', () => {
     suiteTeardown(() => {
         vscode.window.showInformationMessage('All tests done!');
     });
 
-    test('escapeLatex', () => {
+    test('escapeLatex が LaTeX の特殊文字をエスケープする', () => {
         assert.strictEqual(escapeLatex('123 abc &#$@|'), '123 abc \\&\\#\\$@\\textbar ');
         assert.strictEqual(
             escapeLatex('!<>><?'),
@@ -22,7 +22,7 @@ suite('Escape Test Suite', () => {
         );
     });
 
-    test('escapeLatexLabel', () => {
+    test('escapeLatexLabel がラベル用に文字を除去する', () => {
         assert.strictEqual(escapeLatexLabel('a\\b%c{d}e&f#g'), 'abcde&fg');
         assert.strictEqual(escapeLatexLabel('_}{{}_\\+##+\\-%%-'), '__++--');
         assert.strictEqual(escapeLatexLabel('a&1b%[2c]&3'), 'a&1b[2c]&3');

@@ -1,5 +1,13 @@
 # Change Log
 
+## Unreleased
+
+- Protect existing files from collisions with Draw.io split-conversion intermediates and clean up intermediates after errors.
+- Protect existing files from PDF-to-image conversion intermediates and remove intermediates after failures.
+- Update runtime and development dependencies, including security fixes for transitive packages.
+- Use npm for dependency installation and extension packaging.
+- Raise the minimum VS Code version to 1.107.0.
+
 ## 0.5.2
 
 - Use Draw.io's native `--crop` option during PDF export to prevent diagrams from being split across multiple A4 pages

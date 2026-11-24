@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import * as vscode from 'vscode';
@@ -40,45 +42,54 @@ export async function convertDrawioToPdf(
     workspaceFolder: vscode.WorkspaceFolder,
 ): Promise<PdfPath[]> {
     const outputBasePath = getDrawioOutputBasePath(inputPath);
-    const drawioInputPath = `${inputPath}.drawio` as DrawioPath;
-    const temporaryPdfPath = `${outputBasePath}.pdf` as PdfPath;
+    const logicalPdfPath = `${outputBasePath}.pdf` as PdfPath;
+    const temporaryPaths: string[] = [];
 
-    if (isEditableDrawioImage(inputPath)) {
+    async function reserveTemporaryPath(extension: string): Promise<string> {
+        const temporaryPath = path.join(
+            path.dirname(inputPath),
+            `.latex-graphics-helper-${randomUUID()}${extension}`,
+        );
+        await writeFile(temporaryPath, '', { flag: 'wx' });
+        temporaryPaths.push(temporaryPath);
+        return temporaryPath;
+    }
+
+    try {
+        const temporaryPdfPath = (await reserveTemporaryPath('.pdf')) as PdfPath;
+        let conversionInputPath = inputPath;
+
+        if (isEditableDrawioImage(inputPath)) {
+            // Keep the `.drawio` suffix so Draw.io reads the extracted file as XML.
+            conversionInputPath = (await reserveTemporaryPath('.drawio')) as DrawioPath;
+            await execFileInWorkspace(
+                appConfig.execPathDrawio,
+                ['-x', '-f', 'xml', '-o', conversionInputPath, inputPath],
+                workspaceFolder,
+                { allowStderr: true },
+            );
+        }
+
+        // `-x` and `-f` must stay separate for Draw.io Desktop 30.3.14 compatibility,
+        // and `--crop` prevents a single diagram from spilling onto multiple A4 pages.
         await execFileInWorkspace(
             appConfig.execPathDrawio,
-            ['-x', '-f', 'xml', '-o', drawioInputPath, inputPath],
+            [conversionInputPath, '-o', temporaryPdfPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
             workspaceFolder,
+            { allowStderr: true },
         );
+        await cropPdf(appConfig, temporaryPdfPath, temporaryPdfPath, workspaceFolder);
+        const drawioTabs = await getDrawioTabs(conversionInputPath);
+        return await splitPdf(
+            temporaryPdfPath,
+            outputTemplatePath,
+            workspaceFolder,
+            drawioTabs,
+            logicalPdfPath,
+        );
+    } finally {
+        await Promise.allSettled(temporaryPaths.map((temporaryPath) => unlink(temporaryPath)));
     }
-
-    const conversionInputPath = isEditableDrawioImage(inputPath) ? drawioInputPath : inputPath;
-
-    await execFileInWorkspace(
-        appConfig.execPathDrawio,
-        [conversionInputPath, '-o', temporaryPdfPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
-        workspaceFolder,
-    );
-    await cropPdf(appConfig, temporaryPdfPath, temporaryPdfPath, workspaceFolder);
-    const drawioTabs = await getDrawioTabs(conversionInputPath);
-    const outputPaths = await splitPdf(
-        temporaryPdfPath,
-        outputTemplatePath,
-        workspaceFolder,
-        drawioTabs,
-    );
-    await vscode.workspace.fs.delete(vscode.Uri.file(temporaryPdfPath), {
-        recursive: true,
-        useTrash: false,
-    });
-
-    if (isEditableDrawioImage(inputPath)) {
-        await vscode.workspace.fs.delete(vscode.Uri.file(drawioInputPath), {
-            recursive: true,
-            useTrash: false,
-        });
-    }
-
-    return outputPaths;
 }
 
 /**
@@ -102,6 +113,7 @@ export async function convertDrawioToPdfDirectly(
         appConfig.execPathDrawio,
         [inputPath, '-o', outputPath, '-x', '-f', 'pdf', '-t', '-a', '--crop'],
         workspaceFolder,
+        { allowStderr: true },
     );
 
     return outputPath;

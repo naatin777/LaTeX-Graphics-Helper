@@ -1,6 +1,7 @@
 .vscode/**
 .vscode-test/**
 src/**
+out/test/**
 .gitignore
 .npmrc
 .yarnrc
@@ -8,9 +9,10 @@ vsc-extension-quickstart.md
 **/tsconfig.json
 **/*.map
 **/*.ts
+test/**
 **/.vscode-test.*
 .github/**
 lefthook.yml
 .oxlintrc.json
 .oxfmtrc.json
-pnpm-lock.yaml
+package-lock.json

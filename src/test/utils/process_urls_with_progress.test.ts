@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { localeMap } from '../../locale_map';
 import { processUrisWithProgress } from '../../utils/process_urls_with_progress';
 
-suite('process_urls_with_progress Test Suite', () => {
+suite('process_urls_with_progress のテストスイート', () => {
     let getWorkspaceFolderStub: SinonStub;
     let progressReportStub: SinonStub;
     let taskStub: SinonStub;
@@ -28,7 +28,7 @@ suite('process_urls_with_progress Test Suite', () => {
         restore();
     });
 
-    test('should process all uris successfully', async () => {
+    test('すべての URI を正常に処理する', async () => {
         const mockProgress = {
             report: progressReportStub,
         };
@@ -55,7 +55,7 @@ suite('process_urls_with_progress Test Suite', () => {
         });
     });
 
-    test('should return errors for failed tasks', async () => {
+    test('失敗したタスクのエラーを返す', async () => {
         const mockProgress = {
             report: progressReportStub,
         };
@@ -77,7 +77,7 @@ suite('process_urls_with_progress Test Suite', () => {
         assert.strictEqual(progressReportStub.callCount, 2);
     });
 
-    test('should return error if workspace folder is not found', async () => {
+    test('ワークスペースフォルダーが見つからない場合はエラーを返す', async () => {
         const mockProgress = {
             report: progressReportStub,
         };
@@ -93,7 +93,7 @@ suite('process_urls_with_progress Test Suite', () => {
         assert.strictEqual(progressReportStub.callCount, 1);
     });
 
-    test('should handle empty uri list', async () => {
+    test('URI のリストが空の場合を処理する', async () => {
         const mockProgress = {
             report: progressReportStub,
         };

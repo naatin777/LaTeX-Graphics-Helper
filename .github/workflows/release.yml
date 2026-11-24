@@ -14,22 +14,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.9
-        with:
-          version: 10.28.2
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '22'
-          cache: pnpm
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Package extension
-        run: pnpm run package
+        run: npm run package
 
       - name: GitHub Release (VSIX + Full Changelog compare link)
         env:
@@ -50,7 +45,7 @@ jobs:
           fi
 
       - name: Publish to Visual Studio Marketplace
-        run: pnpm exec vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
+        run: npx --no-install vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
 
       - name: Publish to Open VSX Registry
-        run: pnpm exec ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
+        run: npx --no-install ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
