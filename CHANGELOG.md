@@ -1,11 +1,13 @@
 # Change Log
 
-## Unreleased
+## 0.6.7
 
 - Protect existing files from collisions with Draw.io split-conversion intermediates and clean up intermediates after errors.
 - Protect existing files from PDF-to-image conversion intermediates and remove intermediates after failures.
+- Tolerate benign stderr warnings from Draw.io and pdftocairo on first launch / Linux.
 - Update runtime and development dependencies, including security fixes for transitive packages.
-- Use npm for dependency installation and extension packaging.
+- Use npm for dependency installation and extension packaging, with an npm audit gate in CI.
+- Convert the Playwright UI PoC to TypeScript.
 - Raise the minimum VS Code version to 1.107.0.
 
 ## 0.5.2
