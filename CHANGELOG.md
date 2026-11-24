@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.6.8
+
+- Publish to Open VSX using OIDC trusted publishing instead of a personal access token.
+
 ## 0.6.7
 
 - Protect existing files from collisions with Draw.io split-conversion intermediates and clean up intermediates after errors.
