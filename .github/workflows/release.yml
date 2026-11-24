@@ -49,5 +49,5 @@ jobs:
       - name: Publish to Visual Studio Marketplace (Trusted Publishing / OIDC)
         run: npx --no-install vsce publish --packagePath *.vsix --oidc
 
-      - name: Publish to Open VSX Registry
-        run: npx --no-install ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
+      - name: Publish to Open VSX Registry (Trusted Publishing / OIDC)
+        run: npx --no-install ovsx publish *.vsix --trusted-publishing
