@@ -43,7 +43,7 @@ jobs:
           if gh release view "$tag" --repo "$repo" >/dev/null 2>&1; then
             gh release upload "$tag" *.vsix --repo "$repo" --clobber
           else
-            gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
+            gh release create "$tag" *.vsix --repo "$repo" --title "$tag" --notes "$notes"
           fi
 
       - name: Publish to Visual Studio Marketplace (Trusted Publishing / OIDC)
