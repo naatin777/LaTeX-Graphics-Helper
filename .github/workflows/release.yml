@@ -4,12 +4,14 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -31,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           repo="${{ github.repository }}"
-          tag="${{ github.ref_name }}"
+          tag="v$(node -p "require('./package.json').version")"
           prev=$(gh api "repos/$repo/releases/latest" --jq .tag_name 2>/dev/null || true)
           if [[ -n "$prev" ]]; then
             notes="**Full Changelog**: https://github.com/$repo/compare/$prev...$tag"
@@ -44,8 +46,8 @@ jobs:
             gh release create "$tag" *.vsix --repo "$repo" --notes "$notes"
           fi
 
-      - name: Publish to Visual Studio Marketplace
-        run: npx --no-install vsce publish --packagePath *.vsix --pat ${{ secrets.VSCE_PAT }}
+      - name: Publish to Visual Studio Marketplace (Trusted Publishing / OIDC)
+        run: npx --no-install vsce publish --packagePath *.vsix --oidc
 
       - name: Publish to Open VSX Registry
         run: npx --no-install ovsx publish *.vsix --pat ${{ secrets.OVSX_PAT }}
